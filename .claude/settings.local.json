@@ -1,0 +1,19 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(go mod tidy:*)",
+      "Bash(where:*)",
+      "Bash(node:*)",
+      "Bash(dir:*)",
+      "Bash(winget install:*)",
+      "Bash(\"C:/Program Files/Go/bin/go.exe\" version)",
+      "Bash(\"C:/Program Files/Go/bin/go.exe\" mod tidy)",
+      "Bash(GOPROXY=https://goproxy.cn,direct \"C:/Program Files/Go/bin/go.exe\" mod tidy:*)",
+      "Bash(\"C:/Program Files/Go/bin/go.exe\" env -w GOPROXY=https://goproxy.cn,direct)",
+      "Bash(\"C:/Program Files/Go/bin/go.exe\" build -o server.exe ./cmd/server)",
+      "Bash(curl:*)",
+      "Bash(powershell -Command:*)",
+      "Bash(\"E:/projects/tlog/backend/server.exe\")"
+    ]
+  }
+}

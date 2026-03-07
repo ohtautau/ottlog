@@ -1,0 +1,99 @@
+{
+  "pages": [
+    {
+      "path": "pages/index/index",
+      "style": {
+        "navigationBarTitleText": "Life Station"
+      }
+    },
+    {
+      "path": "pages/login/index",
+      "style": {
+        "navigationBarTitleText": "登录"
+      }
+    },
+    {
+      "path": "pages/blog/index",
+      "style": {
+        "navigationBarTitleText": "笔记"
+      }
+    },
+    {
+      "path": "pages/blog/detail",
+      "style": {
+        "navigationBarTitleText": "笔记详情"
+      }
+    },
+    {
+      "path": "pages/blog/edit",
+      "style": {
+        "navigationBarTitleText": "编辑笔记"
+      }
+    },
+    {
+      "path": "pages/todo/index",
+      "style": {
+        "navigationBarTitleText": "每日清单"
+      }
+    },
+    {
+      "path": "pages/pomodoro/index",
+      "style": {
+        "navigationBarTitleText": "番茄钟"
+      }
+    },
+    {
+      "path": "pages/timeline/index",
+      "style": {
+        "navigationBarTitleText": "时间轴"
+      }
+    },
+    {
+      "path": "pages/pool/index",
+      "style": {
+        "navigationBarTitleText": "空闲事项"
+      }
+    },
+    {
+      "path": "pages/stats/index",
+      "style": {
+        "navigationBarTitleText": "数据统计"
+      }
+    }
+  ],
+  "globalStyle": {
+    "navigationBarTextStyle": "white",
+    "navigationBarTitleText": "Life Station",
+    "navigationBarBackgroundColor": "#1a1a2e",
+    "backgroundColor": "#0f0f1a",
+    "backgroundTextStyle": "dark"
+  },
+  "tabBar": {
+    "color": "#999999",
+    "selectedColor": "#64b5f6",
+    "backgroundColor": "#1a1a2e",
+    "borderStyle": "black",
+    "list": [
+      {
+        "pagePath": "pages/index/index",
+        "text": "首页"
+      },
+      {
+        "pagePath": "pages/blog/index",
+        "text": "笔记"
+      },
+      {
+        "pagePath": "pages/todo/index",
+        "text": "清单"
+      },
+      {
+        "pagePath": "pages/pomodoro/index",
+        "text": "番茄钟"
+      },
+      {
+        "pagePath": "pages/stats/index",
+        "text": "统计"
+      }
+    ]
+  }
+}
