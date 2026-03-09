@@ -14,7 +14,11 @@
       "Bash(curl:*)",
       "Bash(powershell -Command:*)",
       "Bash(\"E:/projects/tlog/backend/server.exe\")",
-      "Bash(wc:*)"
+      "Bash(wc:*)",
+      "Bash(find:*)",
+      "Bash(ls:*)",
+      "Bash(env)",
+      "Bash(code --list-extensions:*)"
     ]
   }
 }
