@@ -1,7 +1,21 @@
-*.db
-*.exe
+# .NET / Visual Studio
+**/bin/
+**/obj/
+.vs/
+**/.vs/
+*.user
+*.suo
+
+# Frontend
 node_modules/
+.next/
 dist/
+
+# Local configuration and data
 .env
-.DS_Store
-nul
+.env.*
+!.env.example
+*.db
+*.db-shm
+*.db-wal
+*.log
