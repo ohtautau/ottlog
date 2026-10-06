@@ -2,6 +2,8 @@
 
 用户于 2026-10-06 确认采用此方案（[C69](decisions.md#githubvercel-与-supabasec69)）。网站为 Next.js 16，GitHub 仓库为 `ohtautau/ottlog`，Vercel 项目 Root Directory 必须选择 `web`。
 
+网站、后端与部署源码已推送到 `main`，源码提交为 [12ff106](https://github.com/ohtautau/ottlog/commit/12ff1060678be44f3362cc4c5e2205bc7570a4cd)。本次上传排除了小程序目录、个人数据库／导出、会话密钥、本机配置、构建产物和依赖；小程序源码与其他未提交文件仍保留在本机。使用已有仓库原来的公开属性，没有修改可见性。
+
 ## 当前架构
 
 ```text
@@ -21,6 +23,14 @@ Vercel 的 Next.js 部署不包含这个 .NET 后端。先为原 API 保留或�
 
 ```powershell
 dotnet build backend/Ottlog.Api/Ottlog.Api.csproj -c PersonalTools
+# 第一个终端：启动隔离的本地 API（5229），不会使用日常 App_Data。
+$cloudLocalData = Join-Path (Get-Location) '.tmp/cloud-local-api'
+dotnet run --project backend/Ottlog.Api/Ottlog.Api.csproj --launch-profile http -- --Data:Directory=$cloudLocalData
+```
+
+在第二个终端从仓库根目录启动网页：
+
+```powershell
 cd web
 npm.cmd ci
 npm.cmd run dev
@@ -67,6 +77,6 @@ Vercel 连接建立后，后续 `git push` 才能触发自动部署。目前本�
 
 ## 本次验证与尚未完成
 
-相关本地检查见 [开发说明](development.md#云部署与共用数据c69)。云项目创建、服务器配置、真实密钥、数据库实际建表／迁移、Vercel 部署、DNS 与微信实机验证均须在对应账号中完成；提供代码与模拟测试不代表这些步骤已完成。
+相关本地检查见 [开发说明](development.md#云部署与共用数据c69)。GitHub 上传已完成并读取远端分支核对；本次临时开发服务已停止。云项目创建、服务器配置、真实密钥、数据库实际建表／迁移、Vercel 部署、DNS 与微信实机验证均须在对应账号中完成；提供代码与模拟测试不代表这些步骤已完成。`ohtautau.com` 的公开访问检查未能在本次工具环境完成，不据此判断实际 DNS 或服务状态。
 
 官方资料：[Vercel 构建设置](https://vercel.com/docs/builds/configure-a-build)、[Supabase Next.js 快速接入](https://supabase.com/docs/guides/getting-started/quickstarts/nextjs)、[Supabase 密钥](https://supabase.com/docs/guides/getting-started/api-keys)、[数据库连接](https://supabase.com/docs/guides/database/connecting-to-postgres)、[PostgREST upsert](https://docs.postgrest.org/en/stable/references/api/tables_views.html#upsert)。本项目采用原 API 接入 Supabase，保留已有登录与数据兼容。

@@ -8,6 +8,8 @@
 
 ## 云部署与共用数据（C69）
 
+网站、API 与部署文件已推送到 GitHub `main`（源码提交 `12ff106`），并通过 GitHub 读取分支确认。上传 309 个已检查文件，未提交小程序目录或其他原有未跟踪文件；没有上传个人数据库、导出、密钥、本机配置或构建产物。
+
 2026-10-06 本地验证：网页 `npm.cmd run build` 通过（23 条路由）；`npm.cmd run dev -- --hostname 127.0.0.1 --port 3100` 正常启动。`node scripts/check-shared-api.mjs` 在独立临时库验证桌面／375×667 首页、网页代理、相同账号分别登录网页／小程序式直接请求、全部九个工具双向读写、原 ID 与游客隔离。此检查不是微信实机或线上 Supabase 测试。
 
 后端 `dotnet build backend/Ottlog.Api/Ottlog.Api.csproj --no-restore -c PersonalTools` 零警告／错误；`dotnet run --project backend/Ottlog.Api/Verification --no-restore` 129 项通过，包含新增 19 项 Supabase 假 HTTP 检查：账号／键隔离、JSON 与 Unicode、同主键重试、远端失败不改旧值、健康检查、仅服务器 apikey、配置与容量拒绝。`scripts/personal-tools-test.py` 验证原 SQLite 账号／CSRF／容量、重启持久化与升级；`scripts/export-supabase-tools-test.py` 验证只读导出、ID／Unicode／SQL 引号、拒绝覆盖与游客。所有记录均为合成测试数据。
