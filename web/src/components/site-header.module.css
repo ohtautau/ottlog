@@ -1,0 +1,24 @@
+.header { position: relative; z-index: 30; }
+.brandRow { display: flex; align-items: center; min-height: 80px; max-width: 2300px; }
+.dock { position: fixed; right: 0; top: 20px; z-index: 100; display: flex; align-items: flex-start; }
+.toggle { display: grid; place-items: center; gap: 3px; width: 48px; padding: 10px 5px; border: 2px solid #6081a9; border-right: 0; background: #203753; color: #e5efff; cursor: pointer; }
+.toggle > span { font: 500 25px/1 Arial,sans-serif; }
+.toggle small { font: 500 11px/1.5 var(--copy-font); }
+.drawer { width: 0; max-height: calc(100dvh - 40px); overflow: hidden auto; background: #15253af7; box-shadow: -6px 6px 0 #07122060; visibility: hidden; transition: width .28s ease, visibility .28s; overscroll-behavior: contain; }
+.dock[data-open=true] .drawer { width: min(330px, calc(100vw - 58px)); visibility: visible; border: 2px solid #6081a9; border-right: 0; }
+.label { padding: 22px 22px 8px; margin: 0; font: 600 11px/1.8 var(--copy-font); letter-spacing: .1em; color: #95b2d8; white-space: nowrap; }
+.navigation { display: grid; gap: 3px; padding: 0 12px 12px; font-size: 15px; }
+.navigation > a { border: 0; border-left: 3px solid transparent; padding: 11px 15px; white-space: nowrap; }
+.navigation > a:hover, .navigation > a[aria-current=page] { background: #2a4466; color: #fff; border-left-color: #84b4fa; }
+.account { display: grid; gap: 18px; padding: 20px 26px; border-top: 2px solid #385371; font-size: 13px; }
+.account :global(.account-menu > div) { position: static; border: 0; box-shadow: none; min-width: 0; padding: 16px 0 0; background: transparent; }
+@media(max-width:620px) { .brandRow { min-height: 72px; padding: 12px 20px; }.brandRow :global(.logo img) { width: 38px; height: 38px; }.brandRow :global(.brand-wordmark) { font-size: 27px; }.dock { top: 12px; }.drawer { max-height: calc(100dvh - 24px); } }
+@media(prefers-reduced-motion:reduce) { .drawer { transition: none; } }
+
+/* Tool pages keep only the floating navigation drawer. */
+:global(body:has([data-tool-workspace])) .brandRow { display:none; }
+:global(body:has([data-tool-workspace])) .dock { top:50%; transform:translateY(-50%); }
+:global(body:has([data-tool-workspace])) .drawer { max-height:calc(100dvh - 32px); }
+@media(max-width:760px) {
+  :global(body:has([data-tool-workspace])) .toggle { width:32px; padding:8px 2px; }
+}

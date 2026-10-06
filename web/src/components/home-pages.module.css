@@ -1,0 +1,63 @@
+.frame { position: relative; height: 100%; min-height: 0; }
+.viewport { height: 100%; overflow-y: auto; overflow-x: hidden; scroll-snap-type: y mandatory; scrollbar-width: none; overscroll-behavior-y: contain; }
+.viewport::-webkit-scrollbar { display: none; }
+.viewport:focus-visible { outline: 2px solid #85b5ff; outline-offset: -2px; }
+.panel { position: relative; min-height: 100%; scroll-snap-align: start; scroll-snap-stop: always; padding: 30px clamp(24px, 5vw, 140px) 50px; display: flex; flex-direction: column; justify-content: center; }
+.content { width: 100%; max-width: 1920px; margin: auto; transition: opacity .65s ease, transform .8s cubic-bezier(.2,.7,.2,1); }
+.panel[data-active=false] > .content { opacity: .4; transform: translateY(35px); }
+.welcome :global(.hero) { padding: 0 0 24px; gap: clamp(32px, 5vw, 110px); align-items: center; }
+.welcome :global(.hero h1.resting-title) { font-size: clamp(42px, min(5.2vw, 8vh), 90px); margin-bottom: 16px; }
+.welcome :global(.hero .eyebrow) { margin-bottom: 18px; }
+.welcome :global(.hero-description) { margin: 12px 0; }
+.welcome :global(.hero-art) { min-height: 0; width: min(100%, 48vh, 540px); aspect-ratio: 1; height: auto; justify-self: center; padding: 22px; }
+.welcome :global(.hero-mark) { min-height: 0; width: auto; max-width: 85%; height: 65%; object-fit: contain; }
+.welcome :global(.art-bottom) { font-size: 18px; }
+.welcome :global(.poster-arrow) { font-size: 32px; }
+.welcome :global(.motto-banner) { position: relative; z-index: 2; padding: 16px 22px; }
+.welcome :global(section[aria-label="快速添加格言"]) { top: auto; bottom: calc(100% + 12px); }
+.scrollHint { display: flex; align-items: center; gap: 18px; align-self: center; margin-top: 18px; border: 0; background: transparent; color: #b4c8e3; font: 500 12px/1.5 var(--copy-font); cursor: pointer; }
+.scrollHint span { font-size: 22px; animation: nudge 2s ease-in-out infinite; }
+.recent :global(.home-content) { padding: 0; grid-template-columns: minmax(0,1fr) 260px; gap: 36px; }
+.recent :global(.journal-home-grid) { grid-template-columns: repeat(3,minmax(0,1fr)); gap: 18px; }
+.recent :global(.about) { padding-top: 12px; }
+.recent :global(.avatar) { display: none; }
+.recent :global(.about h2) { font-size: 26px; }
+.progress { position: absolute; z-index: 8; right: 8px; top: 50%; transform: translateY(-50%); display: flex; flex-direction: row-reverse; align-items: center; gap: 0; }
+.toggle { width: 42px; display: grid; justify-items: center; gap: 12px; padding: 12px 0; border: 0; background: #102035e8; color: #dce8fa; cursor: pointer; font: 600 11px/1.5 var(--copy-font); }
+.track { display: block; width: 4px; height: 80px; background: #45617f; overflow: hidden; }
+.track i { display: block; height: 50%; background: #6ca7ff; transition: transform .6s ease; }
+.links { display: grid; max-width: 0; overflow: hidden; opacity: 0; transition: max-width .3s ease, opacity .3s ease; background: #14243af5; }
+.progress:hover .links, .progress:focus-within .links, .progress[data-expanded=true] .links { max-width: 230px; opacity: 1; }
+.links button { display: flex; gap: 16px; align-items: center; white-space: nowrap; padding: 18px; border: 0; border-left: 3px solid transparent; background: transparent; color: #bdcde3; font: 600 14px/1.5 var(--copy-font); cursor: pointer; }
+.links button[aria-current], .links button:hover { border-left-color: #78acfa; background: #263f60; color: white; }
+.links small { font-size: 11px; }
+.progress button:focus-visible, .scrollHint:focus-visible { outline: 3px solid #9bc4ff; outline-offset: -3px; }
+@keyframes nudge { 50% { transform: translateY(5px); } }
+@media (max-width:1100px) {
+  .recent :global(.home-content) { grid-template-columns: minmax(0,1fr); }
+  .recent :global(.topics) { display: flex; flex-wrap: wrap; }
+  .recent :global(.about-line), .recent :global(.about > p) { display: none; }
+}
+@media (max-width:700px) {
+  .panel { padding: 24px 46px 32px 20px; }
+  .welcome :global(.hero) { grid-template-columns: minmax(0,1fr); position: relative; gap: 16px; }
+  .welcome :global(.hero h1.resting-title) { font-size: clamp(38px, 9vw, 58px); }
+  .welcome :global(.hero-art) { position: absolute; right: 0; top: 100px; width: 76px; height: 76px; padding: 8px; border-width: 2px; box-shadow: 4px 4px var(--shadow); }
+  .welcome :global(.hero-mark) { width: 100%; height: 100%; max-width: 100%; margin: 0; }
+  .welcome :global(.art-caption), .welcome :global(.art-bottom) { display: none; }
+  .welcome :global(.hero-description) { font-size: 13px; }
+  .welcome :global(.hero .button) { margin-top: 4px; padding: 8px 16px; }
+  .welcome :global(.hero .eyebrow) { font-size: 10px; }
+  .welcome :global(.motto-banner) { padding: 12px; gap: 8px; }
+  .welcome :global(.motto-text) { font-size: 17px; }
+  .welcome :global(.motto-symbol) { display: none; }
+  .recent :global(.journal-home-grid) { grid-template-columns: minmax(0,1fr); }
+  .recent :global(.section-heading h2) { font-size: 26px; }
+  .progress { right: 2px; }
+  .toggle { width: 32px; }
+}
+@media (prefers-reduced-motion:reduce) {
+  .content, .links, .track i { transition: none; }
+  .panel[data-active=false] > .content { opacity: 1; transform: none; }
+  .scrollHint span { animation: none; }
+}

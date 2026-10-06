@@ -1,0 +1,43 @@
+.row { display:contents; }
+.row .arrow {
+  position:fixed; top:50%; transform:translateY(-50%); z-index:6; display:grid; place-items:center;
+  width:44px; height:100px; padding:0;
+  border:0; background:transparent; box-shadow:none;
+  color:#bfd1c8; cursor:pointer; touch-action:manipulation;
+  transition:background .25s,border-color .25s,box-shadow .25s,color .25s;
+}
+.arrow:first-child { left:max(12px,env(safe-area-inset-left)); --step-nudge:-2px; }
+.arrow:last-child { right:max(12px,env(safe-area-inset-right)); --step-nudge:2px; }
+.arrow::after {
+  content:''; position:absolute; top:22%; bottom:22%; width:1px;
+  background:linear-gradient(transparent,#b8d6c3,transparent); opacity:.16; transform:scaleY(.55);
+  transition:opacity .25s,transform .35s;
+}
+.arrow:first-child::after { right:0; }
+.arrow:last-child::after { left:0; }
+.arrow svg {
+  width:12px; height:56px; fill:none; stroke:currentColor; stroke-width:1.7;
+  stroke-linecap:round; stroke-linejoin:round; opacity:.65;
+  transition:transform .3s cubic-bezier(.2,.7,.2,1),opacity .25s;
+}
+.row .arrow:is(:hover,:focus-visible):not(:disabled) {
+  background:#a4cebf0d; color:#f1e8d4;
+  box-shadow:inset 0 0 14px #a4cebf09;
+}
+.arrow:is(:hover,:focus-visible):not(:disabled)::after { opacity:.65; transform:scaleY(1); }
+.arrow:is(:hover,:focus-visible):not(:disabled) svg { opacity:1; transform:translateX(var(--step-nudge)); }
+.arrow:active:not(:disabled) svg { transform:translateX(var(--step-nudge)) scale(.88); }
+.row .arrow:disabled { cursor:default; box-shadow:none; }
+.arrow:disabled svg { opacity:.18; }
+.arrow:disabled::after { opacity:.06; }
+.row .arrow:focus-visible { outline:1px solid #f1e8d4; outline-offset:-4px; }
+@media(max-width:700px) {
+  .row .arrow { width:36px; height:88px; }
+  .arrow:first-child { left:max(4px,env(safe-area-inset-left)); }
+  .arrow:last-child { right:max(4px,env(safe-area-inset-right)); }
+  .arrow svg { width:10px; height:48px; }
+}
+@media(prefers-reduced-motion:reduce) {
+  .row .arrow,.arrow::after,.arrow svg { transition:none; }
+  .arrow:is(:hover,:focus-visible,:active):not(:disabled) svg { transform:none; }
+}

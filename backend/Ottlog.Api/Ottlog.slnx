@@ -1,3 +1,10 @@
 <Solution>
   <Project Path="Ottlog.Api.csproj" />
+  <Project Path="../../web/Ottlog.Web.esproj">
+    <Build />
+  </Project>
+  <Project Path="../../miniprogram/Ottlog.MiniProgram.esproj">
+    <Build />
+    <Deploy />
+  </Project>
 </Solution>

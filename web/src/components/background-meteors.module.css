@@ -1,0 +1,18 @@
+.sky { position: fixed; inset: 0; z-index: -1; overflow: hidden; pointer-events: none; contain: strict; }
+.meteor { position: absolute; inset: 0; opacity: 0; animation: ribbon-reveal 24s 1s cubic-bezier(.22,.7,.3,1) infinite both; }
+.meteor:nth-child(2) { animation-delay: 9s; }
+.meteor:nth-child(3) { animation-delay: 17s; }
+.meteor i { position: absolute; left: 50%; top: 34%; display: block; width: clamp(3600px,480vw,7200px); height: 120px; background: #285ac4; box-shadow: 0 44px 0 #183778; transform: translateX(-50%) rotate(-24deg); transform-origin: center; }
+.meteor:nth-child(2) i { top: 62%; width: clamp(2800px,360vw,5200px); transform: translateX(-50%) rotate(18deg); }
+.meteor:nth-child(3) i { top: 18%; }
+.sky[data-paused=true] .meteor { animation-play-state: paused; }
+@keyframes ribbon-reveal {
+  0% { opacity: .5; clip-path: inset(0 0 100% 0); }
+  9%,17% { opacity: .5; clip-path: inset(0); }
+  24%,100% { opacity: .5; clip-path: inset(100% 0 0 0); }
+}
+@media(max-width:600px) {
+  .meteor i { height: 80px; box-shadow: 0 28px 0 #183778; }
+}
+@media(prefers-reduced-motion:reduce) { .sky { display: none; } .meteor { animation: none; } }
+:global(body:has([data-city="immersive"])) .sky { display: none; }

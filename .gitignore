@@ -19,3 +19,20 @@ dist/
 *.db-shm
 *.db-wal
 *.log
+test-results/
+playwright-report/
+*.tsbuildinfo
+**/App_Data/
+**/TestResults/
+backups/
+deploy/.env
+miniprogram/project.private.config.json
+deploy/admin-password.txt
+miniprogram/audit*.json
+.tools/
+**/__pycache__/
+
+# Cloud CLI state and local publication manifests
+.vercel/
+supabase/.temp/
+.tmp/

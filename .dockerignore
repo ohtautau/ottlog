@@ -1,0 +1,12 @@
+**/node_modules
+**/.next
+**/bin
+**/obj
+**/App_Data
+**/.vs
+**/test-results
+**/dist
+**/.env*
+**/admin-password.txt
+backups
+.git

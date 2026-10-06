@@ -1,0 +1,38 @@
+.diary { margin: 48px 0; padding: 28px; background: #192b40; border: 3px solid #527395; }
+.heading { display: flex; justify-content: space-between; align-items: center; gap: 16px; flex-wrap: wrap; }
+.heading p { font-size: 11px; color: #a5c7e6; letter-spacing: .1em; }
+.heading h2 { font-size: clamp(24px, 4vw, 38px); margin: 8px 0 20px; }
+.diary button { padding: 10px 14px; background: #234f94; border: 2px solid #83a9d7; color: #eef5ff; }
+.diary button:hover { background: #bed6ed; color: #10263c; }
+.date { display: flex; align-items: end; gap: 16px; margin: 20px 0; }
+.date label { max-width: 240px; }
+.totals { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+.totals > div { padding: 20px; background: #112238; border-top: 4px solid #8bb7ea; }
+.totals > div:nth-child(2) { border-color: #96ceb1; }
+.totals > div:nth-child(3) { border-color: #dea880; }
+.totals span { font-size: 14px; color: #bbcde1; }
+.totals strong { display: block; font: 700 clamp(24px, 4vw, 42px)/1.6 Arial, sans-serif; overflow-wrap: anywhere; }
+.totals small { font-size: 15px; }
+.hint, .entries p { font-size: 13px; color: #b8cce0; line-height: 1.8; }
+.form { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; padding: 20px 0; }
+.form label { min-width: 0; }
+.name, .form > .actions { grid-column: 1 / -1; }
+.actions { display: flex; gap: 12px; }
+.entries { padding: 0; list-style: none; }
+.entries li { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 18px 0; border-bottom: 2px solid #3c5773; flex-wrap: wrap; }
+.entries li > div { overflow-wrap: anywhere; min-width: 0; }
+.history { margin-top: 24px; }
+.history summary { cursor: pointer; padding: 12px 0; }
+.history > div { display: grid; gap: 8px; max-height: 360px; overflow: auto; }
+.history button { text-align: left; background: #172b42; }
+.history span { display: block; font-size: 12px; margin-top: 5px; }
+@media(max-width:540px) { .diary { padding: 16px; } .totals { gap: 8px; } .totals > div { padding: 12px 8px; } .date { flex-wrap: wrap; } .form { grid-template-columns: 1fr; } }
+
+:global([data-tool-workspace]) .diary { margin:0; padding:20px 24px; border-width:1px; border-top-width:3px; }
+:global([data-tool-workspace]) .heading h2 { font-size:28px; margin:4px 0 10px; }
+:global([data-tool-workspace]) .heading p { margin:0 0 6px; }
+:global([data-tool-workspace]) .date { margin:12px 0; }
+:global([data-tool-workspace]) .totals > div { padding:14px 18px; }
+:global([data-tool-workspace]) .totals strong { font-size:34px; line-height:1.4; }
+:global([data-tool-workspace]) .history { margin-top:12px; }
+@media(max-width:760px) { :global([data-tool-workspace]) .diary { padding:14px; }:global([data-tool-workspace]) .heading h2 { font-size:24px; }:global([data-tool-workspace]) .totals > div { padding:10px; } }

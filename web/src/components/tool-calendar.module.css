@@ -1,0 +1,18 @@
+.calendar { min-width:0; padding:24px; background:#192b3d; border-top:4px solid #8aafff; }
+.head { display:flex; align-items:center; justify-content:space-between; gap:16px; margin-bottom:24px; }.head > div > span { font-size:9px; color:#a9b8cc; letter-spacing:.14em; }.head h3 { margin:8px 0 0; font:800 32px/1 var(--display-font); font-variant-numeric:tabular-nums; }.head small { color:#8aafff; }.controls { display:flex; align-items:center; gap:7px; }.controls button { min-width:36px; height:36px; padding:5px 10px; background:#213b50; border:2px solid #506f8a; font-size:12px; border-radius:0; }
+.week,.days { display:grid; grid-template-columns:repeat(7,minmax(0,1fr)); gap:7px; }.week { margin-bottom:10px; text-align:center; color:#94a9bd; font-size:11px; }.days button { display:flex; flex-direction:column; align-items:flex-start; justify-content:space-between; gap:6px; min-width:0; min-height:62px; padding:10px; background:#203447; border:2px solid transparent; border-radius:0; transition:background .16s,border-color .16s,transform .16s; }.days button > span { font-size:14px; font-weight:650; font-variant-numeric:tabular-nums; }.days button small { align-self:flex-end; color:#8aafff; font-size:10px; }.days button[data-count=true] { background:#2b4356; }.days button[aria-current=date] { border-color:#7894bf; }.days button[aria-pressed=true] { background:#a8ceae; color:#152e2e; border-color:#a8ceae; box-shadow:2px 2px #405c53; }.days button[aria-pressed=true] small { color:#234b40; }.days button:hover { border-color:#a8ceae; transform:translateY(-2px); }.blank { opacity:.15; background:#203447; }.foot { display:flex; flex-wrap:wrap; gap:10px; justify-content:space-between; font-size:10px; color:#a9b8cc; margin-top:20px; }.foot strong { color:#a8ceae; }
+@media(max-width:600px) { .calendar { padding:16px; }.head h3 { font-size:27px; }.controls button { min-width:32px; padding:5px 8px; }.week,.days { gap:4px; }.days button { min-height:48px; padding:5px; }.days button > span { font-size:12px; }.days button small { font-size:9px; } }
+@media(prefers-reduced-motion:reduce) { .days button { transition:none; transform:none!important; } }
+
+/* Compact calendar within a single-screen desktop workspace, including six-week months. */
+@media(min-width:761px) {
+ :global([data-tool-workspace]) .calendar { padding:14px 18px; }
+ :global([data-tool-workspace]) .head { margin-bottom:12px; }
+ :global([data-tool-workspace]) .head h3 { font-size:26px; margin-top:4px; }
+ :global([data-tool-workspace]) .head > div > span { display:none; }
+ :global([data-tool-workspace]) .week { margin-bottom:6px; }
+ :global([data-tool-workspace]) .week,:global([data-tool-workspace]) .days { gap:4px; }
+ :global([data-tool-workspace]) .days button { min-height:clamp(30px,calc((100dvh - 570px) / 6),56px); padding:5px 8px; flex-direction:row; align-items:center; gap:4px; }
+ :global([data-tool-workspace]) .days button small { align-self:center; }
+ :global([data-tool-workspace]) .foot { margin-top:10px; }
+}

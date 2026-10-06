@@ -1,0 +1,49 @@
+.title { position: relative; overflow: clip; overflow-clip-margin: 6px; }
+.title h1 .words { display: flex; flex-direction: column; align-items: flex-start; width: fit-content; max-width: 100%; border-bottom: 0; padding-top: .65em; padding-bottom: .26em; gap: .2em; white-space: nowrap; }
+.growthRow { display: flex; align-items: baseline; padding-left: .25em; }
+.perch, .growth { position: relative; display: inline-block; }
+.perch { color: var(--rest-accent); text-shadow: 3px 4px 0 #304761; transform: rotate(-2deg); }
+.join { font-size: .52em; color: #a8b6c9; margin: 0 .08em; }
+.period { font-size: .7em; color: #9abcad; }
+.branch { position: absolute; bottom: -.12em; left: 0; width: 100%; height: .16em; color: #aa9473; overflow: visible; }
+.flight { position: absolute; width: 16.66%; height: .29em; bottom: .94em; z-index: 1; pointer-events: none; opacity: 0; animation: bird-arrive 4s var(--arrival) ease-out both; }
+.bird { display: block; width: 100%; height: 100%; overflow: visible; transform: scaleX(var(--facing)); }
+.birdBody { transform-origin: 40px 42px; animation: bird-settle 4s var(--arrival) ease-out both; }
+.wing { transform-origin: 40px 37px; animation: wing-beat 4s var(--arrival) linear both; }
+.growth { color: var(--growth-accent); isolation: isolate; }
+.growingText { position: relative; z-index: 1; display: inline-block; transform-origin: center bottom; animation: word-grow 3600s ease-out both; animation-delay: calc(0s - var(--living-elapsed, 0s)); text-shadow: 2px 4px 0 #34564c; -webkit-text-stroke: .4px #b9d3b3; }
+.sprout { position: absolute; z-index: 0; right: -.2em; top: -.43em; width: .7em; height: .7em; pointer-events: none; overflow: visible; }
+.stem { stroke-dasharray: 1; stroke-dashoffset: 1; animation: stem-grow linear both; animation-delay: calc(0s - var(--living-elapsed, 0s)); }
+.stemBase { animation-duration: 45s; }
+.stemMiddle { animation-duration: 360s; animation-delay: calc(45s - var(--living-elapsed, 0s)); }
+.stemTip { animation-duration: 2175s; animation-delay: calc(405s - var(--living-elapsed, 0s)); }
+.branchLeft { animation-duration: 270s; animation-delay: calc(45s - var(--living-elapsed, 0s)); }
+.branchRight { animation-duration: 1080s; animation-delay: calc(405s - var(--living-elapsed, 0s)); }
+.leafOne, .leafTwo, .leafThree { transform-box: view-box; transform: scale(0); }
+.leafOne { transform-origin: 22px 53px; animation: leaf-grow 945s calc(315s - var(--living-elapsed, 0s)) ease-out forwards; }
+.leafTwo { transform-origin: 85px 37px; animation: leaf-grow 1215s calc(1485s - var(--living-elapsed, 0s)) ease-out forwards; }
+.leafThree { transform-origin: 67px 13px; animation: leaf-grow 1020s calc(2580s - var(--living-elapsed, 0s)) ease-out forwards; }
+.title[data-paused=true] *, .title[data-paused=true] *::before { animation-play-state: paused !important; }
+@keyframes bird-arrive {
+  0% { opacity: 0; transform: translate(var(--from-x), -1.15em); }
+  8% { opacity: 1; }
+  68% { opacity: 1; transform: translate(calc(var(--from-x) * .12), -.25em); }
+  88% { opacity: 1; transform: translate(0, -.035em); }
+  95% { opacity: 1; transform: translate(0, .025em); }
+  100% { opacity: 1; transform: translate(0, 0); }
+}
+@keyframes bird-settle { 0%,85%,100% { transform: rotate(0); } 93% { transform: rotate(7deg); } }
+@keyframes wing-beat {
+  0%,10%,20%,30%,40%,50%,60%,70% { transform: rotate(-65deg) scaleY(.6); }
+  5%,15%,25%,35%,45%,55%,65%,75% { transform: rotate(25deg); }
+  90%,100% { transform: rotate(-12deg) scaleY(.75); }
+}
+@keyframes word-grow { from { transform: scaleY(.9); } to { transform: scaleY(1.08); } }
+@keyframes stem-grow { from { stroke-dashoffset: 1; opacity: 0; } 0.1% { opacity: 1; } to { stroke-dashoffset: 0; opacity: 1; } }
+@keyframes leaf-grow { from { transform: scale(0) rotate(-25deg); } to { transform: scale(1) rotate(0); } }
+@media (prefers-reduced-motion: reduce) {
+  .title * { animation: none !important; }
+  .flight { opacity: 1; transform: none; }
+  .stem { stroke-dashoffset: 0; }
+  .leafOne, .leafTwo, .leafThree { transform: none; }
+}

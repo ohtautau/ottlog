@@ -1,0 +1,9 @@
+<Project Sdk="Microsoft.VisualStudio.JavaScript.Sdk/1.0.6578810">
+  <PropertyGroup>
+    <StartupCommand>npm.cmd run dev -- --port 3000</StartupCommand>
+    <ShouldRunBuildScript>false</ShouldRunBuildScript>
+    <BuildCommand>npm.cmd run build</BuildCommand>
+    <PublishCommand>npm.cmd run build</PublishCommand>
+    <DefaultItemExcludes>$(DefaultItemExcludes);.next\**;test-results\**;playwright-report\**</DefaultItemExcludes>
+  </PropertyGroup>
+</Project>

@@ -1,0 +1,31 @@
+.page { position:fixed; inset:0; z-index:10; overflow:auto; background:#14242c; color:#f1e8d4; padding:64px 24px; font-family:var(--body-font); }
+.page * { box-sizing:border-box; }
+.paper { width:min(780px,100%); margin:auto; }
+.eyebrow { color:#a9bdb4; font-size:11px; letter-spacing:.14em; }
+.page h1 { font-size:clamp(30px,5vw,58px); color:#f1e8d4; margin:20px 0 30px; }
+.page h2 { color:#f1e8d4; }
+.page p { line-height:1.8; }
+.page label { display:block; margin:18px 0; font-size:13px; }
+.page input,.page textarea { display:block; width:100%; margin-top:8px; padding:14px; border:1px solid #81998e; border-radius:0; background:#203941; color:#f1e8d4; font:inherit; font-size:16px; }
+.page a,.page button { color:#f1e8d4; background:#254d62; border:1px solid #81998e; border-radius:0; padding:11px 16px; text-decoration:none; cursor:pointer; font:inherit; font-size:13px; }
+.page button:disabled { opacity:.4; cursor:default; }
+.page :focus-visible { outline:2px solid #f1e8d4; outline-offset:4px; }
+.actions { display:flex; flex-wrap:wrap; gap:12px; align-items:center; margin:24px 0; }
+.status { font-size:11px; color:#abc0b7; }
+.candidates { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:8px; }
+.candidate { background:#14242cf5; border:1px solid #81998e; padding:10px 14px; color:#f1e8d4; text-align:left; cursor:pointer; font:inherit; min-width:0; }
+.candidate strong,.candidate small,.candidate span { display:block; }
+.candidate strong { font-size:16px; }
+.candidate small { font-size:10px; color:#b9cabe; margin-top:3px; }
+.candidate span { font-size:10px; line-height:1.4; margin-top:5px; }
+.candidate:hover { background:#35514b; }
+.candidate:focus-visible { outline:2px solid #f1e8d4; }
+.recommendationLabel { font-size:10px; color:#f1e8d4; margin:0 0 6px; text-align:center; }
+.row { padding:18px 0; border-bottom:1px solid #81998e60; }
+.row h2 { font-size:20px; margin:0 0 8px; }
+.row small { display:block; color:#a9bdb4; }
+.tags { display:flex; flex-wrap:wrap; gap:6px; }
+.tags span { border:1px solid #81998e70; padding:3px 8px; font-size:11px; }
+.grid { display:grid; grid-template-columns:1fr 1fr; gap:0 18px; }
+@media(max-width:700px) { .page { padding:32px 18px; }.candidate { padding:8px 7px; }.candidate strong { font-size:12px; }.candidate small { font-size:9px; }.candidate span { font-size:9px; }.grid { grid-template-columns:1fr; } }
+@media(prefers-reduced-motion:no-preference) { .paper { animation:appear .35s ease-out; } @keyframes appear { from { opacity:0; transform:translateY(12px); } to { opacity:1; transform:none; } } }

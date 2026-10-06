@@ -1,0 +1,9 @@
+[
+  {
+    "Name": "Ottlog",
+    "Projects": [
+      { "Path": "Ottlog.Api.csproj", "Action": "Start", "DebugTarget": "Ottlog" },
+      { "Path": "..\\..\\web\\Ottlog.Web.esproj", "Action": "None" }
+    ]
+  }
+]

@@ -1,5 +1,25 @@
 @Ottlog.Api_HostAddress = http://localhost:5229
 
+GET {{Ottlog.Api_HostAddress}}/api/posts
+Accept: application/json
+
+###
+
+GET {{Ottlog.Api_HostAddress}}/api/posts/hello-ottlog
+Accept: application/json
+
+###
+
+GET {{Ottlog.Api_HostAddress}}/api/categories
+Accept: application/json
+
+###
+
+GET {{Ottlog.Api_HostAddress}}/api/posts?q=Markdown&category=技术探索
+Accept: application/json
+
+###
+
 GET {{Ottlog.Api_HostAddress}}/
 Accept: application/json
 
