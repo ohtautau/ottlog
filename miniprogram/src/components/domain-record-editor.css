@@ -1,0 +1,4 @@
+.domain-sheet-record-edit { height: min(560PX,100%); max-height: 100%; }
+.record-edit-meta { display: flex; align-items: center; justify-content: space-between; gap: 8PX; margin: 0; color: var(--domain-muted); font-size: 13PX; line-height: 1.5; }
+.record-edit-loading { display: flex; align-items: center; justify-content: space-between; gap: 8PX; }
+.record-edit-info { display: block; font-size: 14PX; line-height: 1.5; color: var(--domain-muted); }

@@ -1,0 +1,28 @@
+const assert = require('node:assert/strict');
+const fs = require('node:fs');
+const path = require('node:path');
+const ts = require('typescript');
+const moduleValue = { exports: {} };
+const calls = [], taro = { switchTab: options => { calls.push(options.url); return Promise.resolve(); } };
+const source = ts.transpileModule(fs.readFileSync(path.join(__dirname, '../src/lib/home-creation-navigation.ts'), 'utf8'), { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2020 } }).outputText;
+new Function('exports', 'module', 'require', source)(moduleValue.exports, moduleValue, id => { assert.equal(id, '@tarojs/taro'); return { default: taro }; });
+const { openHomeCreation, takeHomeCreation } = moduleValue.exports;
+(async () => {
+  await openHomeCreation('habit', 'guest');
+  assert.equal(takeHomeCreation('domain'), null);
+  assert.deepEqual(takeHomeCreation('habit'), { target: 'habit', owner: 'guest' });
+  assert.equal(takeHomeCreation('habit'), null, 'Returning to the page cannot reopen creation');
+  await openHomeCreation('domain', 'reader:one');
+  assert.deepEqual(takeHomeCreation('domain'), { target: 'domain', owner: 'reader:one' });
+  assert.deepEqual(calls, ['/pages/daily/index', '/pages/domains/index']);
+  taro.switchTab = () => Promise.reject(new Error('navigation failed'));
+  await assert.rejects(openHomeCreation('habit', 'guest'), /navigation failed/);
+  assert.equal(takeHomeCreation('habit'), null);
+  let rejectOld;
+  taro.switchTab = () => new Promise((resolve, reject) => { rejectOld = reject; });
+  const older = openHomeCreation('habit', 'guest').catch(() => {});
+  taro.switchTab = () => Promise.resolve();
+  await openHomeCreation('domain', 'guest'); rejectOld(new Error('late failure')); await older;
+  assert.deepEqual(takeHomeCreation('domain'), { target: 'domain', owner: 'guest' }, 'A late failure cannot cancel a newer launch');
+  console.log('PASS home creation navigation: correct tab, captured owner, one-shot intent, failure cleanup and late-navigation isolation.');
+})().catch(error => { console.error(error); process.exitCode = 1; });

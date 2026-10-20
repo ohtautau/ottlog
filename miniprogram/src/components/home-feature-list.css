@@ -1,0 +1,17 @@
+.home-feature-list { --control-font-family: "PingFang SC", "Microsoft YaHei", "Noto Sans CJK SC", "Noto Sans SC", sans-serif; --control-line-height: 20PX; display: flex; flex-direction: column; gap: 16PX; }
+.home-feature-group { min-width: 0; }
+.home-feature-entry { position: relative; min-width: 0; }
+.home-feature-list.is-sorting .home-feature-entry { padding-bottom: 44PX; border-radius: 10PX; background: var(--control-background,#20313c); }
+.home-feature-heading { display: block; }
+.home-feature-grid { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 6PX; }
+.home-feature-option { display: flex; align-items: center; justify-content: flex-start; gap: 8PX; min-width: 0; margin: 0; text-align: left; }
+.home-feature-option .shortcut-icon { flex: none; width: 24PX; height: 24PX; }
+.home-feature-name { display: block; flex: 1; min-width: 0; font-family: inherit; font-size: inherit; font-weight: inherit; line-height: inherit; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.home-feature-rank { flex: none; color: #9cafb9; font-size: 12PX; line-height: var(--control-line-height); font-variant-numeric: tabular-nums; }
+/* Draw the navigation mark without Unicode font or emoji fallback on phones. */
+.home-feature-arrow { position: relative; display: block; flex: none; width: 12PX; height: var(--control-line-height); color: #9cafb9; pointer-events: none; }
+.home-feature-arrow::before { position: absolute; content: ''; left: 1PX; top: 10PX; width: 11PX; height: 1PX; background: currentColor; transform: rotate(-45deg); }
+.home-feature-arrow::after { position: absolute; content: ''; right: 1PX; top: 6PX; width: 6PX; height: 6PX; box-sizing: border-box; border-top: 1PX solid currentColor; border-right: 1PX solid currentColor; }
+.home-feature-list.is-selection { --control-background: #182a34; --control-text: #a5b6be; --control-border: #2c3e47; }
+.home-feature-list.is-selection .home-feature-option:not(.is-selected) .shortcut-icon { opacity: .7; }
+.home-feature-list.is-selection .home-feature-option.is-selected[disabled] { opacity: 1; }

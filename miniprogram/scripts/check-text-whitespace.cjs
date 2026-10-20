@@ -1,0 +1,12 @@
+const assert = require('node:assert/strict');
+const fs = require('node:fs');
+const path = require('node:path');
+const ts = require('typescript');
+const exportsValue = {};
+new Function('exports', ts.transpileModule(fs.readFileSync(path.resolve(__dirname, '../src/lib/text-whitespace.ts'), 'utf8'), { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2020 } }).outputText)(exportsValue);
+const { trimTextEnd } = exportsValue;
+const body = '  第一段  \n\n\t第二段\r\n第三段';
+for (const end of ['', ' ', '\t', '\r\n', '\n\n\n', '\u3000\u00a0\u2028\u2029\ufeff', ' \r\n\t\n\u3000']) assert.equal(trimTextEnd(body + end), body, `Trailing ${JSON.stringify(end)} is removed without changing internal whitespace`);
+assert.equal(trimTextEnd(' \t\r\n\u3000'), '');
+assert.equal(trimTextEnd('字段\u200b'), '字段\u200b', 'Do not remove non-whitespace characters');
+console.log('PASS trailing text whitespace: Unicode/CRLF/tabs, empty text, preserved leading indentation and internal blank lines.');

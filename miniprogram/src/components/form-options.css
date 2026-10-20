@@ -1,0 +1,41 @@
+.form-choice-field { min-width: 0; flex: none; }
+.form-choice-field.is-fill { width: 100%; flex: 1 1 auto; }
+.form-choice-trigger { display: flex; align-items: center; justify-content: space-between; gap: 6PX; box-sizing: border-box; min-width: 0; margin: 0; }
+.form-choice-trigger.form-choice-trigger-icon { justify-content: center; gap: 0; }
+.form-choice-trigger > text { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.form-choice-content { display: flex; align-items: center; gap: 8PX; min-width: 0; max-width: 100%; }
+.form-choice-trigger > .form-choice-content { flex: 1; }
+.form-choice-icon { display: flex; align-items: center; justify-content: center; flex: none; width: 20PX; height: 20PX; }
+.form-choice-icon .library-icon { width: 20PX; height: 20PX; }
+.form-choice-label { min-width: 0; white-space: normal; overflow-wrap: anywhere; text-align: left; }
+.form-popover-layer { position: fixed; inset: 0; z-index: 240; }
+.form-popover-backdrop { position: absolute; inset: 0; }
+.form-popover-panel { --popup-actions-safe-area: 0PX; position: absolute; top: 12PX; left: 12PX; width: calc(100% - 24PX); max-width: 440PX; max-height: 65vh; display: flex; flex-direction: column; box-sizing: border-box; border: 1rpx solid #46605f; border-radius: 18rpx; background: #22313d; color: #dce6df; box-shadow: 0 8PX 28PX #030b1355; overflow: hidden; }
+.form-popover-scroll { max-height: inherit; min-height: 0; }
+.form-popover-heading,.form-popover-footer { flex: none; }
+.form-popover-panel.has-chrome.is-positioned .form-popover-scroll { flex: 1; height: 0; }
+.form-popover-panel.has-chrome.is-positioned.is-content-height .form-popover-scroll { flex: 0 1 auto; height: auto; }
+.form-popover-body { padding: 8PX 12PX; }
+.form-popover-panel.body-tight .form-popover-body { padding-top: 4PX; padding-bottom: 4PX; }
+.form-popover-panel.body-none .form-popover-body { padding: 0; }
+.form-popover-heading button,.form-popover-footer button { margin-top: 0; margin-bottom: 0; }
+.popover-actions { display: flex; align-items: center; justify-content: flex-end; gap: 6PX; padding: 6PX 12PX var(--popup-actions-bottom-space,8PX); }
+.popover-actions.has-separator { border-top: 1PX solid var(--control-border); }
+.popover-actions > button { flex: none; min-width: 0; margin: 0; }
+.popover-actions.is-fill > button { flex: 1; }
+.form-option-grid { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 8PX; }
+.form-option { box-sizing: border-box; min-width: 0; margin: 0; overflow-wrap: anywhere; }
+.form-tag-row,.form-custom-row { display: flex; align-items: center; gap: 6PX; width: 100%; min-width: 0; }
+.form-custom-options-scroll { flex: 1; width: 0; min-width: 0; }
+.form-tag-common,.form-custom-options { display: flex; align-items: center; gap: 6PX; }
+.form-tag-common { flex: 1; min-width: 0; }
+.form-tag-common > button { flex: 1 1 0; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.form-option-label { min-width: 0; max-width: 100%; }
+.form-tag-common .form-option-label { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.form-custom-options > button { flex: none; white-space: nowrap; }
+.form-tag-row > .form-choice-field { flex: none; }
+.form-tag-row .form-choice-trigger { min-width: 40PX; justify-content: center; }
+.form-tag-custom { margin-top: 12PX; }
+.form-tag-custom input { box-sizing: border-box; min-height: max(80rpx,44PX); width: 100%; margin: 0; padding: 12rpx; border: 1rpx solid #405662; border-radius: 12rpx; background: #13232d; color: #e6eee4; font-size: min(25rpx,16PX); }
+.form-popover-done { width: 100%; margin: 12PX 0 0; }
+.form-custom-field:not(.is-numeric) { width: 140rpx; min-width: 64PX; max-width: 144PX; }

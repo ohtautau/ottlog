@@ -1,0 +1,9 @@
+.habit-list-section { display: flex; flex-direction: column; flex: 1; height: 0; min-height: 0; min-width: 0; }
+.habit-list-section-heading { display: flex; align-items: center; box-sizing: border-box; width: 100%; min-width: 0; min-height: 40PX; flex: none; margin-bottom: 4PX; }
+.habit-list-section-heading > .page-category-scroll { margin: 0; }
+.habit-list-section-viewport { position: relative; flex: 1; height: 0; min-height: 0; width: 100%; overflow: hidden; }
+.habit-list-section-scroll { height: 100%; min-height: 0; width: 100%; overscroll-behavior-y: contain; }
+.habit-list-section-content { min-height: 100%; }
+.habit-list-section-viewport.has-edge-fade .habit-list-section-content { padding-bottom: 8PX; }
+.habit-list-section-edge { position: absolute; z-index: 2; left: 0; right: 0; bottom: 0; height: 8PX; pointer-events: none; background: linear-gradient(to bottom,transparent,var(--habit-list-edge-color,#101923)); }
+.habit-list-section-edge.is-top { top: 0; bottom: auto; background: linear-gradient(to top,transparent,var(--habit-list-edge-color,#101923)); }

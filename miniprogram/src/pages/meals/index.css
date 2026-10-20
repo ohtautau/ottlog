@@ -1,0 +1,22 @@
+.meal-date-row{display:flex;align-items:center;justify-content:space-between;gap:20px;margin:30px 0}
+.meal-date-row>picker{flex:1}.meal-date-picker{text-align:center}.meal-date-picker>text:first-child{display:block;font-size:32px;font-weight:600;color:#f3eddf}.meal-date-picker>text:last-child{display:block;font-size:22px;color:#9ab3a6;margin-top:3px}
+.meal-date-row .meal-date-arrow{width:90px;height:90px;margin:0;padding:0;background:#192633;color:#b9dbca;box-shadow:none;border:1px solid #354a4e;border-radius:18px;font-size:48px;font-weight:300;line-height:80px}
+.meal-section-title{display:flex;align-items:center;justify-content:space-between;gap:18px;margin:36px 0 22px}.meal-section-title>text:first-child{font-size:29px;font-weight:600;color:#f3eddf}
+.meal-entry-top{display:flex;gap:20px;align-items:center;justify-content:space-between}.meal-entry-top>text:first-child{font-size:31px;font-weight:600;color:#f3eddf;flex:1;min-width:0}.meal-entry-top>.meal-price{font-size:26px;color:#b9dbca;flex:none}
+.meal-entry-nutrients{display:flex;gap:20px;margin:24px 0 8px}.meal-entry-nutrients>view{flex:1;font-size:23px}.meal-entry-nutrients text{display:block}.meal-entry-nutrients text:last-child{font-size:27px;color:#e1e6d9;margin-top:7px}
+.meal-page .meal-text-button,.meal-sheet .meal-text-button{flex:none;min-height:88px;min-width:88px;margin:0;padding:15px 12px;color:#b9dbca;border:0;box-shadow:none;border-radius:0;background:transparent;font-size:24px;font-weight:400;line-height:1.65}
+.meal-page .meal-remove-button{margin:10px 0 0 auto;padding:12px 0;min-height:88px;min-width:88px;border:0;border-radius:0;box-shadow:none;background:transparent;color:#bf9692;font-size:22px;font-weight:400}
+.meal-empty{display:flex;flex-direction:column;align-items:center;gap:8px}.meal-empty-mark{font-size:92px;color:#b9dbca;line-height:1.4}.meal-empty>text:last-child{font-size:22px;color:#8aa3a0}
+.meal-day-scroll{width:100%;white-space:nowrap}.meal-days{display:inline-flex;gap:14px;padding-bottom:12px}.meal-days button{display:block;min-width:122px;margin:0;padding:18px 20px;background:#192633;border:1px solid #30434b;box-shadow:none;border-radius:16px;color:#b9c9c5;font-weight:400;line-height:1.6}.meal-days button text{display:block}.meal-days button text:first-child{font-size:25px}.meal-days button text:last-child{font-size:20px;color:#8fa8a2;margin-top:5px}.meal-days .is-active{border-color:#b9dbca;background:#273e3d;color:#e4efe6}
+.meal-status{display:flex;gap:12px;align-items:center;margin:30px 0;color:#9cafb0;font-size:22px}.meal-status>text{flex:1;min-width:0}
+.meal-note{display:block;font-size:25px;color:#c3cfbf;margin:18px 0}.meal-library-actions{display:flex;justify-content:space-between;align-items:center;margin-top:18px}.meal-library-actions .meal-remove-button{margin:0}
+.meal-undo{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:20px;background:#293d37;border-radius:16px;color:#c3d8c8;font-size:24px}
+.meal-sheet-mask{position:fixed;z-index:40;inset:0;display:flex;align-items:flex-end;background:rgba(7,13,20,.72)}
+.meal-sheet{width:100%;max-height:90vh;--editor-heading-inset:28px;padding:0 28px;background:#192633;border:1px solid #3c5058;border-radius:28px 28px 0 0}
+.meal-sheet-actions{margin-top:var(--editor-field-gap,8PX);padding-top:0;padding-left:0;padding-right:0}.meal-sheet-scroll{height:54vh}.meal-sheet-fields{padding:var(--editor-field-gap,8PX) 3px 10px}.meal-label{display:block;font-size:24px;color:#c8d7ce;margin:0}.meal-sheet .tool-input{margin:0;background:#101923;border-color:#3a545a}
+.meal-pick-existing{min-height:88px;padding:0;color:#b9dbca;font-size:24px}.meal-nutrient-fields{display:grid;grid-template-columns:repeat(auto-fit,minmax(var(--numeric-input-width),1fr));gap:var(--editor-field-gap,8PX)}.meal-nutrient-fields>view{min-width:0}.meal-nutrient-fields .meal-label{margin-bottom:var(--editor-field-gap,8PX)}
+.meal-price-options,.meal-minute-options,.meal-kind-options,.meal-occasion-options{margin:0;min-width:0}
+.meal-switch{display:flex;justify-content:space-between;align-items:center;gap:20px;min-height:96px;color:#cfdbd5;font-size:24px}
+.meal-sheet .meal-sheet-save{margin:0;min-height:max(40PX,min(88rpx,48PX));padding:min(18rpx,12PX) min(24rpx,16PX);font-size:min(28rpx,18PX)}.meal-form-message{display:block;padding:14px 4px 20px;color:#e3b5a8;font-size:23px;line-height:1.7}
+.meal-page .meal-create { width: 100%; min-height: 40PX; font-size: 14PX; }
+.meal-page .meal-text-button { min-width: 40PX; min-height: 40PX; font-size: 14PX; }

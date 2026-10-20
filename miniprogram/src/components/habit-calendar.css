@@ -1,0 +1,122 @@
+.habit-progress { display: flex; align-items: center; justify-content: flex-start; gap: 12rpx; min-width: 0; font-size: 19rpx; line-height: 1.5; font-variant-numeric: tabular-nums; font-weight: 400; white-space: nowrap; }
+.habit-progress > view { display: flex; align-items: center; gap: 5rpx; min-width: 0; }
+.habit-progress-total { color: #d4c9a8; }
+.habit-progress-streak { color: #d4b49f; }
+.habit-progress-bolt,.habit-progress-fire { display: block; width: 20rpx; height: 20rpx; flex-shrink: 0; }
+.habit-calendar { margin-top: 24rpx; }
+.habit-calendar-stats { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); padding: 24rpx 6rpx 20rpx; border-radius: 20rpx; background: #20333e; border: 1rpx solid #344b55; }
+.habit-calendar-stats > view { display: flex; flex-direction: column; align-items: center; min-width: 0; gap: 8rpx; border-right: 1rpx solid #3a4c55; }
+.habit-calendar-stats > view:last-child { border: 0; }
+.habit-calendar-stat-number { color: #e3eee7; font-size: 36rpx; line-height: 1.2; font-weight: 600; font-variant-numeric: tabular-nums; }
+.habit-calendar-stat-number > text { font-size: 18rpx; font-weight: 400; margin-left: 3rpx; color: #a6bcb8; }
+.habit-calendar-stat-label { color: #a9bdbf; font-size: 20rpx; }
+.habit-calendar-streak-note { display: block; margin: 12rpx 2rpx 20rpx; color: #8fa8ab; text-align: right; font-size: 19rpx; }
+.habit-calendar-panel { padding: 12rpx 18rpx 18rpx; border: 1rpx solid #344b55; border-radius: 22rpx; background: #1c2e38; }
+.habit-calendar-navigation { margin-bottom: 8rpx; }
+.habit-calendar-weekdays,.habit-calendar-grid { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); }
+.habit-calendar-weekdays { padding: 6rpx 0 12rpx; color: #8fa8af; text-align: center; font-size: 21rpx; }
+.habit-calendar-day { display: flex; flex-direction: column; align-items: center; justify-content: center; min-width: 0; min-height: 72rpx; color: #cad7d8; font-size: 24rpx; }
+.habit-calendar-day-circle { position: relative; display: flex; align-items: center; justify-content: center; width: 47rpx; height: 47rpx; border: 2rpx solid transparent; border-radius: 50%; box-sizing: border-box; }
+.habit-calendar-day.is-completed .habit-calendar-day-circle { color: #234536; background: #bdddc7; font-weight: 600; }
+.habit-calendar-day.is-today .habit-calendar-day-circle { border-color: #dbc48e; box-shadow: 0 0 0 3rpx #dbc48e22; }
+.habit-calendar-day.is-outside { opacity: .3; }
+.habit-calendar-day.is-future { color: #526771; }
+.habit-calendar-check { position: absolute; bottom: -3rpx; right: -4rpx; display: flex; align-items: center; justify-content: center; width: 19rpx; height: 19rpx; border-radius: 50%; color: #d4eed9; background: #436c55; border: 2rpx solid #1c2e38; }
+.habit-calendar-check .daily-small-check { width: 8rpx; height: 4rpx; border-width: 2rpx; margin-top: -2rpx; }
+.habit-calendar-today-label { min-height: 21rpx; color: #dbc48e; font-size: 16rpx; line-height: 21rpx; }
+.habit-calendar-log { padding-top: 28rpx; }
+.habit-calendar-log-heading { display: flex; align-items: center; justify-content: space-between; gap: 12rpx; margin-bottom: 10rpx; color: #e1e9e1; font-size: 27rpx; font-weight: 600; }
+.habit-calendar-log-count { margin-left: auto; color: #8fa6ac; font-size: 20rpx; font-weight: 400; }
+.habit-calendar-log-heading > button { flex: none; margin: 0; }
+.habit-calendar-log-row { display: flex; align-items: flex-start; gap: 8PX; padding: 6PX 0; border-bottom: 1rpx solid #30444d; }
+.habit-calendar-log-more { margin: 8PX 0 0; }
+.habit-calendar-log-mark { display: flex; align-items: center; justify-content: center; width: 32rpx; height: 32rpx; flex-shrink: 0; border-radius: 50%; color: #254a35; background: #b8d7c1; }
+.habit-calendar-log-copy { min-width: 0; flex: 1; }
+.habit-calendar-log-copy > view { display: flex; align-items: baseline; gap: 14rpx; color: #cbded4; font-size: 24rpx; }
+.habit-calendar-log-copy > view > text:last-child { color: #8fa8aa; font-size: 20rpx; }
+.habit-calendar-log-text { display: block; margin-top: 3PX; color: #c0cdcc; font-size: 24rpx; line-height: 1.65; overflow-wrap: anywhere; }
+.habit-calendar-log-empty { display: block; padding: 30rpx 0; color: #8ba4a9; font-size: 24rpx; text-align: center; }
+@media (min-width: 600px) { .habit-calendar-stat-number { font-size: 31rpx; } .habit-calendar-day { min-height: 60rpx; } .habit-calendar-day-circle { width: 42rpx; height: 42rpx; } }
+
+/* Detail sheets allocate the core calendar before the comment history. */
+.daily-detail-body.habit-detail-body,.domain-sheet-body.habit-detail-body { display: flex; flex-direction: column; height: 100%; padding: 0 12PX; }
+.habit-detail-title-toggle { display: flex; align-items: center; flex: 1; width: 100%; min-width: 0; min-height: 40PX; gap: 6PX; margin: 0; padding: 0; color: inherit; background: transparent; font-size: inherit; font-weight: inherit; line-height: 1.4; text-align: left; }
+.habit-detail-title-copy { flex: 1; min-width: 0; overflow-wrap: anywhere; }
+.habit-detail-title-copy.is-summary { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden; }
+.habit-detail-note-section { flex: none; }
+.habit-calendar.is-detail { display: flex; flex-direction: column; flex: none; min-height: 368PX; margin-top: 2PX; }
+.habit-calendar.is-detail .habit-calendar-stats { flex: none; padding: 6PX 4PX; border-radius: 10PX; }
+.habit-calendar.is-detail .habit-calendar-stats > view { gap: 2PX; }
+.habit-calendar.is-detail .habit-calendar-stat-number { font-size: min(36rpx,20PX); }
+.habit-calendar.is-detail .habit-calendar-stat-number > text { font-size: min(18rpx,11PX); }
+.habit-calendar.is-detail .habit-calendar-stat-label { font-size: min(20rpx,12PX); line-height: 1.25; }
+.habit-calendar.is-detail .habit-calendar-streak-note { display: none; }
+.habit-calendar.is-detail .habit-calendar-panel { display: flex; flex-direction: column; flex: 1; min-height: 266PX; margin-top: 6PX; padding: 4PX 8PX 6PX; border-radius: 12PX; }
+.habit-calendar.is-detail .habit-calendar-navigation { flex: none; min-height: 40PX; margin-bottom: 2PX; }
+.habit-calendar.is-detail .habit-calendar-weekdays { flex: none; padding: 2PX 0; font-size: min(21rpx,12PX); line-height: 1.4; }
+.habit-calendar.is-detail .habit-calendar-grid { flex: 1; min-height: 180PX; grid-template-rows: repeat(6,minmax(0,1fr)); }
+.habit-calendar.is-detail .habit-calendar-day { min-height: 0; font-size: min(26rpx,15PX); line-height: 1.2; }
+.habit-calendar.is-detail .habit-calendar-day-circle { flex: none; width: 22PX; height: 22PX; border-width: 1PX; }
+.habit-calendar.is-detail .habit-calendar-today-label { min-height: 8PX; height: 8PX; font-size: 8PX; line-height: 8PX; }
+.habit-calendar.is-detail .habit-calendar-log-count { font-size: min(20rpx,12PX); }
+.habit-calendar.is-detail .habit-calendar-log { flex: none; padding-top: 8PX; padding-bottom: 8PX; }
+.habit-calendar-log-scroll { height: 60PX; min-height: 60PX; width: 100%; min-width: 0; overscroll-behavior: contain; }
+.habit-calendar.is-detail .habit-calendar-log-heading { margin-bottom: 4PX; }
+.habit-calendar.is-detail .habit-calendar-log-copy > view { font-size: 14PX; line-height: 1.4; }
+.habit-calendar.is-detail .habit-calendar-log-copy > view > text:last-child { font-size: 12PX; }
+.habit-calendar.is-detail .habit-calendar-log-text { font-size: 14PX; }
+.habit-calendar.is-detail .habit-calendar-log-empty { padding: 12PX 0; font-size: 14PX; }
+
+/* Interactive dates keep forty-pixel targets; compact the surrounding decoration. */
+.habit-calendar.is-interactive { min-height: 386PX; margin-top: 0; }
+.habit-calendar.is-interactive .habit-calendar-stats { padding-top: 0; padding-bottom: 0; }
+.habit-calendar.is-interactive .habit-calendar-stats > view { gap: 0; }
+.habit-calendar.is-interactive .habit-calendar-panel { min-height: 308PX; padding-top: 0; padding-bottom: 0; margin-top: 0; }
+.habit-calendar.is-interactive .habit-calendar-navigation { margin-bottom: 0; }
+.habit-calendar.is-interactive .habit-calendar-weekdays { padding-top: 0; padding-bottom: 0; }
+.habit-calendar.is-interactive .habit-calendar-grid { min-height: 240PX; }
+.habit-calendar.is-interactive .habit-calendar-day { width: 100%; min-width: 40PX; min-height: 40PX; margin: 0; padding: 0; border: 0; border-radius: 6PX; background: transparent; color: #cad7d8; font-weight: 400; box-shadow: none; text-shadow: none; }
+.habit-calendar.is-interactive .habit-calendar-day.is-future { color: #526771; }
+.habit-calendar.is-interactive .habit-calendar-day[disabled] { color: #526771; }
+.habit-calendar.is-interactive .habit-calendar-day:hover:not([disabled]),.habit-calendar.is-interactive .habit-calendar-day:active:not([disabled]),.habit-calendar.is-interactive .habit-calendar-day-pressed:not([disabled]) { background: var(--control-hover-background,rgba(185,219,202,.12)); }
+.habit-calendar-editor .sheet-actions { padding-top: 0; }
+.habit-calendar-error { flex: none; margin-top: 6PX; color: #efb7a2; font-size: 14PX; line-height: 1.4; }
+
+/* Detail dates keep their own height; the sheet's spare room belongs to spacing. */
+.daily-detail-sheet.habit-calendar-editor,.domain-sheet.domain-sheet-habit-detail.habit-calendar-editor { width: 100%; max-width: 560PX; height: min(784PX,calc(100% - var(--habit-detail-height-gap,12PX))); max-height: calc(100% - var(--habit-detail-height-gap,12PX)); margin: 0 auto; border-radius: 20PX 20PX 0 0; }
+.daily-detail-sheet.habit-calendar-editor.has-reading-summary,.domain-sheet.domain-sheet-habit-detail.habit-calendar-editor.has-reading-summary { height: min(808PX,calc(100% - var(--habit-detail-height-gap,12PX))); }
+.habit-detail-title-content { flex: 1; min-width: 0; text-align: left; }
+.habit-detail-header { flex: none; box-sizing: border-box; min-height: min(106rpx,64PX); margin-bottom: var(--editor-field-gap,8PX); }
+.habit-detail-domain-field { flex: none; min-width: 0; margin-bottom: var(--editor-field-gap,8PX); }
+.habit-detail-header-copy { flex: 1; min-width: 0; }
+.habit-detail-header-copy .entity-title-text { width: 100%; min-height: 0; padding: 0; }
+.habit-detail-header-meta { display: flex; align-items: center; flex-wrap: wrap; gap: 6PX 8PX; margin-top: 6PX; color: #91aca9; font-size: 12PX; font-weight: 400; line-height: 1.4; }
+.habit-detail-header-priority { display: flex; align-items: center; justify-content: center; flex: none; width: 48PX; min-height: 40PX; }
+.habit-detail-icon-picker { flex: none; width: 40PX; min-width: 40PX; margin: 0; padding: 0; }
+.habit-detail-save-error { flex: none; padding: 8PX 12PX 0; color: var(--control-danger-text); font-size: 14PX; line-height: 1.4; overflow-wrap: anywhere; }
+.habit-calendar-editor .habit-detail-body { height: auto; min-height: 100%; padding: var(--editor-field-gap,8PX) 16PX; }
+.habit-calendar-editor .habit-detail-note-section { margin-bottom: var(--editor-field-gap,8PX); }
+.habit-calendar-editor .habit-calendar.is-detail { flex: none; min-height: 0; margin-top: 0; }
+.habit-calendar-editor .habit-calendar.is-detail .habit-calendar-stats { padding: 10PX 4PX; background: transparent; border: 0; }
+.habit-calendar-editor .habit-calendar.is-detail .habit-calendar-stats > view { gap: 3PX; }
+.habit-calendar-editor .habit-calendar.is-detail .habit-calendar-stat-number { font-size: 20PX; }
+.habit-calendar-editor .habit-calendar.is-detail .habit-calendar-stat-label { font-size: 12PX; }
+.habit-calendar-editor .habit-calendar.is-detail .habit-calendar-panel { flex: none; min-height: 0; margin-top: var(--editor-field-gap,8PX); padding: 4PX 8PX; }
+.habit-calendar-editor .habit-calendar.is-detail .habit-calendar-grid { flex: none; min-height: 240PX; grid-template-rows: repeat(6,40PX); }
+.habit-calendar-editor .habit-calendar.is-detail .habit-calendar-log { padding-top: var(--editor-field-gap,8PX); }
+.habit-calendar-editor .sheet-actions { gap: 8PX; padding-top: var(--editor-field-gap,8PX); }
+
+@media (max-height: 760PX) {
+  .habit-calendar-editor { --habit-detail-height-gap: 8PX; }
+  .habit-calendar-editor .habit-calendar.is-detail .habit-calendar-stats { padding-top: 6PX; padding-bottom: 6PX; }
+  .habit-calendar-editor .habit-calendar.is-detail .habit-calendar-stats > view { gap: 2PX; }
+  .habit-calendar-editor .habit-calendar.is-detail .habit-calendar-panel { padding-top: 2PX; padding-bottom: 2PX; }
+  .habit-calendar-editor.has-long-title .habit-detail-title-copy.is-summary { -webkit-line-clamp: 1; }
+}
+
+@media (max-height: 680PX) {
+  .habit-calendar-editor { --habit-detail-height-gap: 4PX; }
+  .habit-calendar-editor .habit-calendar.is-detail .habit-calendar-stats { padding-top: 2PX; padding-bottom: 2PX; }
+  .habit-calendar-editor .habit-calendar.is-detail .habit-calendar-stats > view { gap: 2PX; }
+  .habit-calendar-editor .habit-calendar.is-detail .habit-calendar-panel { padding-top: 0; padding-bottom: 0; }
+}

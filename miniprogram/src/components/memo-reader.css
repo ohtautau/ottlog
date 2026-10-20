@@ -1,0 +1,11 @@
+.memo-content-reader { background: #1b2833; }
+.form-popover-layer.memo-reader-priority-layer { z-index: 250; }
+.memo-reader-icon-library { z-index: 260; }
+.memo-content-reader .memo-editor-fields { padding: var(--editor-field-gap,8PX) 16PX 10PX; }
+.memo-editor-fields.is-reading .memo-icon-preview { flex: none; }
+.memo-editor-fields.is-reading .library-icon { width: 26PX; height: 26PX; }
+.memo-reader-error { padding: 8PX 16PX 0; color: var(--control-danger-text); font-size: 14PX; line-height: 1.4; overflow-wrap: anywhere; }
+.memo-reader-pin { flex: none; width: 40PX; margin: 0; }
+.memo-reader-tags { display: flex; flex-wrap: wrap; gap: 6PX; color: #9cafb9; }
+.memo-reader-tags > text { padding: 6PX 10PX; border: 1PX solid #405662; border-radius: 10PX; background: #20313c; line-height: 1.4; }
+.memo-content-reader .domain-record-content { font-size: inherit; }

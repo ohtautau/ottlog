@@ -1,0 +1,206 @@
+const path = require('node:path');
+const createHabitFilter = require('./habit-filter-test-helpers.cjs');
+const habitDomainFixture = require('./habit-domain-test-fixture.cjs');
+
+module.exports = async function checkHabitSorting({ page, origin, out, width, expect }) {
+  const habitFilter = createHabitFilter({ page, expect });
+  await page.clock.install({ time: new Date('2026-10-06T18:00:00') });
+  await page.goto(`${origin}/?habit-sorting-${width}#/pages/posts/index`);
+  const original = await page.evaluate(domains => {
+    for (const tool of ['reminders', 'domains']) localStorage.removeItem(`ottlog-mini-tool-v1:guest:${tool}`);
+    const items = ['a', 'b', 'c', 'legacy', 'paused'].map((id, index) => ({ id, title: `排序习惯${id}`, note: '保留备注', kind: 'plant', group: index === 1 ? '工作' : '心理', minutes: 0, enabled: id !== 'paused', priority: id === 'a' ? 'high' : 'none', ...(id !== 'legacy' ? { createdAt: index + 1 } : {}) }));
+    const at = (day, hour) => new Date(2026, 9, day, hour).getTime();
+    const reminders = { version: 1, items, done: { '2026-10-04': ['a'], '2026-10-05': ['a', 'b'], '2026-10-06': ['a', 'b', 'c'] }, checkInTimes: { '2026-10-05': { a: at(5, 8), b: at(5, 12) }, '2026-10-06': { a: at(6, 12), b: at(6, 12), c: at(6, 6) } } };
+    window.__miniFixture.guestToolStates = { reminders, domains };
+    for (const [tool, data] of Object.entries(window.__miniFixture.guestToolStates)) localStorage.setItem(`ottlog-mini-tool-v1:guest:${tool}`, JSON.stringify({ data, pending: false, revision: 0 }));
+    window.__miniNotices.length = 0;
+    location.hash = '#/pages/daily/index'; return reminders;
+  }, habitDomainFixture());
+  const grid = () => page.locator('.swipe-panel-current .daily-habit-scroll');
+  const ids = async () => {
+    const enabledIds = (await read()).items.filter(item => item.enabled).map(item => item.id);
+    const displayedIds = await grid().locator('.habit-sort-tile').evaluateAll(nodes => nodes.map(node => node.id.slice(11)));
+    return displayedIds.filter(id => enabledIds.includes(id));
+  };
+  const read = () => page.evaluate(() => JSON.parse(localStorage.getItem('ottlog-mini-tool-v1:guest:reminders')).data);
+  const sort = () => page.getByRole('button', { name: '排序习惯', exact: true });
+  const filter = () => page.getByRole('button', { name: '筛选习惯', exact: true });
+  const panel = () => page.getByRole('dialog', { name: '排序习惯', exact: true });
+  const prompt = () => page.getByRole('dialog', { name: '保存修改？', exact: true });
+  const confirm = () => panel().getByRole('button', { name: '排序', exact: true }).click();
+  async function highlight(active) {
+    await page.mouse.move(0, 0);
+    await expect(sort()).toHaveAttribute('aria-pressed', String(active));
+    await expect(sort()).toHaveCSS('background-color', active ? 'rgb(48, 76, 66)' : 'rgba(0, 0, 0, 0)');
+  }
+  async function choice(label, direction = '降序') { await sort().click(); await panel().getByRole('button', { name: label, exact: true }).click(); await panel().getByRole('button', { name: direction, exact: true }).click(); await confirm(); await expect(panel()).toHaveCount(0); await highlight(label !== '优先度' || direction !== '降序'); }
+  async function drag(from, to, hold = true, cancel = false, scrollOnly = false) {
+    const tile = grid().locator(`#habit-sort-${from}`), first = await tile.boundingBox(), target = await grid().locator(`#habit-sort-${to}`).boundingBox();
+    const touch = { identifier: 1, clientX: first.x + first.width / 2, clientY: first.y + first.height / 2 };
+    await tile.dispatchEvent('touchstart', { touches: [touch] });
+    if (hold) { await page.clock.runFor(450); await expect(tile).toHaveClass(/is-dragging/); }
+    await tile.dispatchEvent('touchmove', { touches: [{ ...touch, clientX: scrollOnly ? touch.clientX : target.x + target.width / 2, clientY: scrollOnly ? touch.clientY + 12 : target.y + target.height / 2 }] });
+    if (!hold) await page.clock.runFor(450);
+    await tile.dispatchEvent(cancel ? 'touchcancel' : 'touchend', { touches: [] });
+    if (hold) {
+      await tile.locator('.daily-suggestion-open').dispatchEvent('click');
+      await tile.locator('.daily-suggestion-check').dispatchEvent('click');
+      await expect(page.locator('.daily-detail-sheet,.daily-reflection-sheet')).toHaveCount(0);
+    }
+    await page.clock.runFor(450);
+  }
+  await habitFilter.assertNoStatusRow();
+  await expect(filter()).toHaveAttribute('aria-pressed', 'false');
+  await habitFilter.select('全部');
+  await expect(filter()).toHaveAttribute('aria-pressed', 'true');
+  await expect(grid().locator('.habit-sort-tile')).toHaveCount(5);
+  await highlight(false);
+  await expect(sort()).toHaveText(''); await expect(filter()).toHaveText('');
+  await expect(sort().locator('.sort-symbol')).toHaveCount(1); await expect(filter().locator('.filter-symbol')).toHaveCount(1);
+  await expect(page.locator('.daily-page-toolbar .select-chevron')).toHaveCount(0);
+  const controls = await page.locator('.daily-page-toolbar button').evaluateAll(nodes => nodes.map(node => { const r = node.getBoundingClientRect(); return { x: r.x, y: r.y, w: r.width, h: r.height }; }));
+  controls.forEach(r => { expect(r.w).toBeGreaterThanOrEqual(40); expect(r.h).toBeGreaterThanOrEqual(40); });
+  await sort().click();
+  await expect(panel()).toBeVisible();
+  await highlight(false);
+  await expect(panel().getByRole('button', { name: '优先度', exact: true })).toHaveAttribute('aria-pressed', 'true');
+  await expect(panel().getByRole('button', { name: '降序', exact: true })).toHaveAttribute('aria-pressed', 'true');
+  await expect(panel().getByRole('button', { name: '自定义排序', exact: true })).toHaveCount(0);
+  expect(await panel().locator('.sort-options .sort-option-label').allTextContents()).toEqual(['优先度', '坚持天数', '连续打卡天数', '平均打卡时间', '创建日期']);
+  await page.screenshot({ path: path.join(out, `habit-sort-default-${width}.png`) });
+  const layout = await panel().evaluate(node => { const r = node.getBoundingClientRect(), t = document.querySelector('[aria-label="排序习惯"]').getBoundingClientRect(), v = document.querySelector('.preview-content').getBoundingClientRect(); return { gap: r.top >= t.bottom ? r.top - t.bottom : t.top - r.bottom, left: r.left - v.left, right: r.right - v.right, bottom: r.bottom - v.bottom }; });
+  expect(layout.gap).toBeCloseTo(8, 0); expect(layout.left).toBeGreaterThanOrEqual(0); expect(layout.right).toBeLessThanOrEqual(1); expect(layout.bottom).toBeLessThanOrEqual(1);
+  const content = await panel().evaluate(node => { const scroller = node.querySelector('.form-popover-scroll'), r = scroller.getBoundingClientRect(); return { overflow: scroller.scrollHeight - scroller.clientHeight, buttons: [...scroller.querySelectorAll('button')].map(button => { const b = button.getBoundingClientRect(); return { top: b.top - r.top, bottom: b.bottom - r.bottom, width: b.width, height: b.height }; }) }; });
+  for (const button of content.buttons) expect(button.height).toBeGreaterThanOrEqual(40);
+  await expect(panel().locator('.sort-panel-footer')).toBeVisible();
+  for (const label of await panel().locator('.sort-option-label').evaluateAll(nodes => nodes.map(node => { const range = document.createRange(); range.selectNodeContents(node); return { lines: range.getClientRects().length, overflow: node.scrollWidth - node.clientWidth }; }))) { expect(label.lines).toBe(1); expect(label.overflow).toBeLessThanOrEqual(1); }
+  await page.getByRole('button', { name: '关闭习惯排序', exact: true }).click();
+  await expect(panel()).toHaveCount(0); await expect(prompt()).toHaveCount(0); expect(await read()).toEqual(original);
+  await sort().click();
+  await panel().getByRole('button', { name: '创建日期', exact: true }).click();
+  await page.clock.runFor(30);
+  const expanded = await panel().evaluate(node => {
+    const scroller = node.querySelector('.form-popover-scroll'), rect = scroller.getBoundingClientRect();
+    return { overflow: scroller.scrollHeight - scroller.clientHeight, bottom: Math.max(...[...scroller.querySelectorAll('button')].map(button => button.getBoundingClientRect().bottom - rect.bottom)) };
+  });
+  await panel().getByRole('button', { name: '升序', exact: true }).scrollIntoViewIfNeeded();
+  const footerVisible = await panel().locator('.sort-panel-footer').evaluate(node => { const r = node.getBoundingClientRect(), v = document.querySelector('.preview-content').getBoundingClientRect(); return r.top >= v.top && r.bottom <= v.bottom + 1; });
+  expect(footerVisible, 'Scrolling the single-line choices preserves the fixed confirmation bar').toBe(true);
+  await page.screenshot({ path: path.join(out, `habit-sort-options-${width}.png`) });
+  await page.locator('.form-popover-backdrop').click({ position: { x: 2, y: 2 } });
+  await expect(prompt()).toBeVisible(); await prompt().getByRole('button', { name: '继续编辑', exact: true }).click();
+  await expect(panel().getByRole('button', { name: '创建日期', exact: true })).toHaveAttribute('aria-pressed', 'true');
+  await page.getByRole('button', { name: '关闭习惯排序', exact: true }).click();
+  await prompt().getByRole('button', { name: '不保存', exact: true }).click(); await expect(panel()).toHaveCount(0);
+  expect(await read()).toEqual(original);
+  await highlight(false);
+  await choice('优先度', '升序');
+  expect((await read()).sort).toEqual({ field: 'priority', direction: 'asc' });
+  await choice('优先度');
+  expect((await read()).sort).toEqual({ field: 'priority', direction: 'desc' });
+  await page.screenshot({ path: path.join(out, `habit-sort-default-inactive-${width}.png`) });
+  await page.evaluate(() => {
+    const key = 'ottlog-mini-tool-v1:guest:reminders', stored = JSON.parse(localStorage.getItem(key));
+    stored.data.sort = { field: 'custom', direction: 'asc' }; localStorage.setItem(key, JSON.stringify(stored));
+  });
+  await page.reload(); await habitFilter.select('全部');
+  expect((await read()).sort).toEqual({ field: 'custom', direction: 'asc' });
+  await expect.poll(ids, 'Previously saved custom mode retains its saved array order').toEqual(['a', 'b', 'c', 'legacy']);
+  expect((await read()).items).toEqual(original.items);
+  const legacyState = await read();
+  for (const close of ['button', 'backdrop', 'escape']) {
+    await sort().click(); await highlight(false);
+    await expect(panel().getByRole('button', { name: '自定义排序', exact: true })).toHaveCount(0);
+    await expect(panel().getByRole('button', { name: '优先度', exact: true })).toHaveAttribute('aria-pressed', 'true');
+    await expect(panel().getByRole('button', { name: '降序', exact: true })).toHaveAttribute('aria-pressed', 'true');
+    if (close === 'button') await page.getByRole('button', { name: '关闭习惯排序', exact: true }).click();
+    else if (close === 'backdrop') await page.locator('.form-popover-backdrop').click({ position: { x: 2, y: 2 } });
+    else await page.keyboard.press('Escape');
+    await expect(panel()).toHaveCount(0); await expect(prompt()).toHaveCount(0);
+    expect(await read(), 'Opening and closing the automatic sort draft cannot rewrite legacy manual order').toEqual(legacyState);
+  }
+  await sort().click();
+  await panel().getByRole('button', { name: '创建日期', exact: true }).click();
+  await page.getByRole('button', { name: '关闭习惯排序', exact: true }).click();
+  await expect(prompt()).toBeVisible(); await prompt().getByRole('button', { name: '不保存', exact: true }).click();
+  await highlight(false);
+  expect((await read()).sort.field, 'An unconfirmed automatic choice cannot replace the applied custom mode').toBe('custom');
+  await page.screenshot({ path: path.join(out, `habit-sort-custom-inactive-${width}.png`) });
+  await sort().click(); await confirm(); await expect(panel()).toHaveCount(0);
+  expect((await read()).sort, 'Explicit confirmation applies the displayed automatic default').toEqual({ field: 'priority', direction: 'desc' });
+  await highlight(false);
+  await choice('创建日期'); expect(await ids()).toEqual(['c', 'b', 'a', 'legacy']);
+  await choice('坚持天数'); expect(await ids()).toEqual(['a', 'b', 'c', 'legacy']);
+  await choice('连续打卡天数'); expect(await ids()).toEqual(['a', 'b', 'c', 'legacy']);
+  await choice('平均打卡时间', '升序'); expect(await ids()).toEqual(['c', 'a', 'b', 'legacy']);
+  await drag('c', 'b', false); expect(await ids()).toEqual(['c', 'a', 'b', 'legacy']);
+  expect((await read()).sort.field).toBe('averageTime');
+  await highlight(true);
+  await drag('c', 'b', true, true); expect((await read()).sort.field).toBe('averageTime');
+  await highlight(true);
+  await drag('c', 'b'); await expect.poll(async () => (await read()).sort.field).toBe('custom');
+  await highlight(false);
+  expect(await ids()).toEqual(['a', 'b', 'c', 'legacy']);
+  await page.reload(); await habitFilter.select('全部'); await expect.poll(ids).toEqual(['a', 'b', 'c', 'legacy']);
+  expect((await read()).sort.field).toBe('custom');
+  await highlight(false);
+  const draggedState = await read();
+  await sort().click(); await highlight(false);
+  await expect(panel().getByRole('button', { name: '自定义排序', exact: true })).toHaveCount(0);
+  await page.getByRole('button', { name: '关闭习惯排序', exact: true }).click();
+  await expect(panel()).toHaveCount(0); await expect(prompt()).toHaveCount(0); expect(await read()).toEqual(draggedState);
+  await filter().click();
+  await page.getByRole('button', { name: '习惯完成状态：进行中', exact: true }).waitFor({ state: 'visible' });
+  await page.screenshot({ path: path.join(out, `habit-filter-options-${width}.png`) });
+  await page.getByRole('button', { name: '习惯完成状态：进行中', exact: true }).click();
+  await page.getByRole('dialog', { name: '筛选习惯', exact: true }).getByRole('button', { name: /^筛选 \d+ 个习惯$/ }).click();
+  await expect(filter()).toHaveAttribute('aria-pressed', 'false'); await expect(grid().locator('.habit-sort-tile')).toHaveCount(1);
+  await filter().click();
+  const filterPanel = page.getByRole('dialog', { name: '筛选习惯', exact: true });
+  const search = filterPanel.getByRole('textbox', { name: '搜索习惯', exact: true });
+  await expect(filter()).toHaveAttribute('aria-pressed', 'false');
+  await search.fill('保留备注');
+  await expect(filter()).toHaveAttribute('aria-pressed', 'true');
+  await filterPanel.getByRole('button', { name: '重置习惯筛选', exact: true }).click();
+  await expect(search).toHaveValue('');
+  await expect(filterPanel.getByRole('button', { name: '习惯完成状态：进行中', exact: true })).toHaveAttribute('aria-pressed', 'true');
+  await expect(filter()).toHaveAttribute('aria-pressed', 'false');
+  await filterPanel.getByRole('button', { name: /^筛选 \d+ 个习惯$/ }).click();
+  await choice('创建日期', '升序'); expect((await read()).items).toEqual(original.items);
+  await filter().click(); await page.getByRole('button', { name: '习惯完成状态：全部', exact: true }).click();
+  await page.getByRole('dialog', { name: '筛选习惯', exact: true }).getByRole('button', { name: /^筛选 \d+ 个习惯$/ }).click();
+  await expect(filter()).toHaveAttribute('aria-pressed', 'true');
+  await page.evaluate(() => { window.__miniFixture.failToolWrites = ['reminders']; });
+  const beforeFailedSave = await read();
+  await sort().click(); await panel().getByRole('button', { name: '平均打卡时间', exact: true }).click();
+  await page.getByRole('button', { name: '关闭习惯排序', exact: true }).click();
+  await expect(prompt()).toBeVisible(); await prompt().getByRole('button', { name: '保存', exact: true }).click();
+  await expect(prompt()).toHaveCount(0); await expect(panel()).toBeVisible();
+  expect(await read(), 'Failed close-save preserves the applied sort and habit records').toEqual(beforeFailedSave); await expect(panel().locator('.daily-sort-error')).toContainText('重试');
+  await page.evaluate(() => { window.__miniFixture.failToolWrites = []; });
+  await page.getByRole('button', { name: '关闭习惯排序', exact: true }).click();
+  await prompt().getByRole('button', { name: '保存', exact: true }).click(); await expect(panel()).toHaveCount(0);
+  expect((await read()).sort).toEqual({ field: 'averageTime', direction: 'asc' });
+  await highlight(true);
+  await page.evaluate(() => { window.__miniFixture.failToolWrites = ['reminders']; });
+  await drag('c', 'b'); await expect(page.locator('.daily-sort-retry')).toBeVisible();
+  expect(await ids()).toEqual(['a', 'b', 'c', 'legacy']);
+  await page.evaluate(() => { window.__miniFixture.failToolWrites = []; });
+  await page.locator('.daily-sort-retry').getByRole('button', { name: '重试', exact: true }).click();
+  await expect(page.locator('.daily-sort-retry')).toHaveCount(0);
+  await highlight(false);
+  expect((await read()).items.map(row => row.id)).toEqual(['a', 'b', 'c', 'legacy', 'paused']);
+  expect((await read()).done).toEqual(original.done); expect((await read()).checkInTimes).toEqual(original.checkInTimes);
+  expect(await page.evaluate(() => window.__miniNotices)).toEqual([]);
+  expect(await page.locator('.daily-page-toolbar button').evaluateAll(nodes => nodes.map(node => { const r = node.getBoundingClientRect(); return { x: r.x, y: r.y, w: r.width, h: r.height }; }))).toEqual(controls);
+  if (width === 360) {
+    const guest = await read(); await sort().click();
+    await page.evaluate(original => { window.__miniFixture.accountToolStates = { 'habit-sort-user': { reminders: original } }; window.__miniFixture.sessionProfile = { authenticated: true, userName: 'habit-sort-user', isAdmin: false }; window.__miniPreviewControl.emit('ottlog-session'); }, original);
+    await expect(panel()).toHaveCount(0); await habitFilter.select('全部'); await expect.poll(ids).toEqual(['a', 'c', 'b', 'legacy']);
+    await highlight(false);
+    await choice('平均打卡时间', '降序');
+    expect(await read()).toEqual(guest);
+    await expect.poll(() => page.evaluate(() => window.__miniFixture.accountToolStates['habit-sort-user'].reminders.sort)).toEqual({ field: 'averageTime', direction: 'desc' });
+  }
+  await page.evaluate(() => { localStorage.removeItem('ottlog-mini-tool-v1:guest:reminders'); localStorage.removeItem('ottlog-mini-tool-v1:reader:habit-sort-user:reminders'); });
+};

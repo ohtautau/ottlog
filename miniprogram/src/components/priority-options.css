@@ -1,0 +1,6 @@
+.priority-options { display: grid; grid-template-columns: minmax(0, 1fr); gap: 6PX; min-width: 0; }
+.priority-options .priority-option { justify-content: center; gap: 12PX; width: 100%; min-width: 0; margin: 0; }
+.priority-option-label { flex: none; white-space: nowrap; }
+.priority-popover-panel { border-radius: 12PX; margin: 0; padding: 0; }
+.priority-popover-panel .form-popover-body { padding: 8PX; }
+.priority-trigger-label { display: flex; align-items: center; gap: 6PX; }

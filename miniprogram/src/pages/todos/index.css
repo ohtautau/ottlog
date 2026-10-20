@@ -1,0 +1,41 @@
+.todo-page { position: fixed; inset: 0; display: flex; flex-direction: column; padding: 0 32rpx; overflow: hidden; }
+.todo-toolbar { flex-shrink: 0; box-sizing: border-box; }
+.todo-page input, .todo-sheet input, .todo-sheet textarea { margin: 0; padding: 0; border: 0; border-radius: 0; background: transparent; min-width: 0; }
+.todo-page .mint { color: #b9dbca; }
+.todo-page .warm { color: #edb8b6; }
+.todo-quadrants { flex: 1; min-height: 0; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); grid-template-rows: repeat(2, minmax(0, 1fr)); gap: 10rpx; }
+.todo-page .tool-status.todo-sync-error { height: auto; min-height: 40PX; margin-top: 6PX; padding: 0; font-size: 14PX; line-height: 1.4; }
+.todo-page .tool-status.todo-sync-error > text { flex: 1; min-width: 0; white-space: normal; overflow: visible; overflow-wrap: anywhere; }
+.todo-quadrant { display: flex; flex-direction: column; min-width: 0; min-height: 0; overflow: hidden; border: 1rpx solid #3b454e; border-top: 5rpx solid; border-radius: 12rpx; background: #192633; color: #f3eddf; }
+.todo-quadrant-do { border-top-color: #e7a097; background: #30282d; }
+.todo-quadrant-plan { border-top-color: #e4ce85; background: #2e2c25; }
+.todo-quadrant-delegate { border-top-color: #99b8ec; background: #202d3e; }
+.todo-quadrant-later { border-top-color: #abd0b2; background: #22322e; }
+.todo-quadrant-heading { flex-shrink: 0; display: flex; align-items: center; justify-content: space-between; min-width: 0; min-height: 110rpx; padding: 14rpx 0 14rpx 16rpx; gap: 6rpx; }
+.todo-quadrant-label { flex: 1; min-width: 0; }
+.todo-quadrant-title-row { display: flex; align-items: center; gap: 8rpx; }
+.todo-quadrant-icon { flex-shrink: 0; width: 26rpx; font-size: 28rpx; line-height: 1; text-align: center; }
+.todo-quadrant-title { font-size: 28rpx; font-weight: 650; line-height: 1.4; white-space: nowrap; }
+.todo-quadrant-caption { display: block; padding-left: 34rpx; font-size: 21rpx; color: #bac5ca; line-height: 1.45; margin-top: 4rpx; white-space: nowrap; }
+.todo-quadrant-add { flex: none; width: 40PX; margin: 0; }
+.todo-quadrant-scroll { flex: 1; min-height: 0; height: 0; width: 100%; }
+.todo-quadrant-items { padding: 0 8rpx 12rpx; }
+.todo-quadrant-empty { padding: 46rpx 8rpx; font-size: 25rpx; line-height: 1.7; text-align: center; color: #b4c2c7; }
+.todo-quadrant-empty text { display: block; margin-top: 8rpx; font-size: 21rpx; color: #96adb5; }
+.todo-quadrant-empty.is-clear { padding: 22rpx 8rpx; font-size: 22rpx; color: #96adb5; }
+.todo-completed-toggle { justify-content: flex-start; gap: 10rpx; min-height: 72rpx; margin: 8rpx 0 0; padding: 12rpx 10rpx; border: 0; border-radius: 10rpx; background: rgba(243,237,223,.04); color: #c0cfce; font-size: 22rpx; line-height: 1.4; font-weight: 400; }
+.todo-page .tool-status { flex-shrink: 0; display: flex; align-items: center; justify-content: space-between; gap: 12rpx; height: 48rpx; padding: 0 6rpx; font-size: 18rpx; }
+.todo-page .tool-status > text { overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+.todo-page .tool-status button { margin: 0; padding: 0 6rpx; min-width: 100rpx; height: 48rpx; min-height: 48rpx; flex-shrink: 0; background: transparent; color: #9eafb9; border: 0; font-size: 20rpx; line-height: 1.4; }
+.todo-filter-summary { font-size: 20rpx; color: #c8ddcd; padding: 0 8rpx 12rpx; }
+.todo-task.is-drag-source { opacity: .4; }
+.todo-task.is-insert-before { border-top: 4rpx solid #cae4cc; }
+.todo-quadrant.is-drop-zone { outline: 3rpx solid #cae4cc; outline-offset: -4rpx; }
+.todo-drag-ghost { position: fixed; transform: translate(-50%, -110%); z-index: 100; width: 280rpx; pointer-events: none; padding: 20rpx; background: #c5e3d0; color: #233c32; border: 2rpx solid #f1f7e9; border-radius: 16rpx; box-shadow: 0 12rpx 40rpx #0005; }
+.todo-drag-ghost text { display: block; font-size: 24rpx; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.todo-drag-ghost text + text { margin-top: 10rpx; font-size: 20rpx; }
+.todo-page .todo-toolbar { display: block; padding: 0; }
+
+.todo-sort-error { color: #e7a097; font-size: 14PX; line-height: 1.4; }
+.todo-sort-retry { display: flex; align-items: center; gap: 8PX; margin-bottom: 6PX; }
+.todo-sort-retry .todo-sort-error { flex: 1; margin: 0; }

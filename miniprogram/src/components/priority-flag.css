@@ -1,0 +1,3 @@
+.priority-flag { position: relative; flex: none; width: 16PX; height: 20PX; border-left: 2PX solid currentColor; }
+.priority-flag::after { content: ''; position: absolute; top: 0; left: 0; width: 14PX; height: 12PX; box-sizing: border-box; border: 2PX solid currentColor; border-radius: 0 2PX 2PX 0; background: currentColor; }
+.priority-flag.is-none::after { background: transparent; }

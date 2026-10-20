@@ -1,0 +1,31 @@
+.activity-analysis { margin: 24rpx 0; padding: 26rpx; border: 1rpx solid #40535a; border-radius: 24rpx; background: #1b2b34; color: #d9e6df; }
+.analysis-heading { display: flex; justify-content: space-between; gap: 16rpx; align-items: flex-start; }
+.analysis-title { display: block; }
+.analysis-caption { display: block; font-size: 21rpx; line-height: 1.7; color: #a6b9bd; margin-top: 10rpx; }
+.analysis-period { display: flex; flex-shrink: 0; gap: 8rpx; }
+.analysis-period button { display: flex; align-items: center; justify-content: center; min-height: 64rpx; margin: 0; padding: 0 14rpx; background: #293f47; color: #c5d5d5; font-size: 22rpx; line-height: 1.4; border-radius: 12rpx; }
+.analysis-period button.is-active { background: #b9dbca; color: #243a30; }
+.analysis-kpis { display: flex; gap: 12rpx; margin: 16rpx 0 28rpx; }
+.analysis-kpis > view { flex: 1; display: flex; flex-direction: column; gap: 8rpx; }
+.analysis-kpis text:first-child { font-size: 38rpx; color: #bfdfcb; font-variant-numeric: tabular-nums; }
+.analysis-kpis text:last-child { font-size: 21rpx; color: #adbfbd; }
+.analysis-chart-title { display: block; margin: 18rpx 0 10rpx; }
+.analysis-chart-scroll { width: 100%; }
+.analysis-columns { display: flex; width: max-content; min-width: 100%; gap: 8rpx; padding: 8rpx 0 18rpx; }
+.analysis-column { flex: 1; min-width: 62rpx; margin: 0; padding: 8rpx 4rpx; display: flex; flex-direction: column; align-items: center; border: 1rpx solid transparent; background: transparent; color: #b9c9c9; font-size: 19rpx; line-height: 1.5; }
+.analysis-track { width: 30rpx; height: 160rpx; display: flex; align-items: flex-end; margin: 12rpx 0; border-bottom: 1rpx solid #718380; }
+.analysis-track > view { width: 100%; background: #a4cdb5; border-radius: 6rpx 6rpx 0 0; }
+.analysis-bar { display: block; width: 100%; margin: 0 0 8rpx; padding: 12rpx; background: transparent; border: 1rpx solid transparent; color: #c9d9d5; font-size: 23rpx; line-height: 1.5; text-align: left; }
+.analysis-bar > view:first-child { display: flex; justify-content: space-between; gap: 20rpx; }
+.analysis-bar text:first-child { flex: 1; min-width: 0; overflow-wrap: anywhere; }
+.analysis-bar text:last-child { flex-shrink: 0; }
+.analysis-bar-track { height: 12rpx; margin-top: 8rpx; background: #30464a; border-radius: 6rpx; }
+.analysis-bar-track > view { height: 100%; background: #a4cdb5; border-radius: 6rpx; }
+.analysis-column.is-selected,.analysis-bar.is-selected { background: #30453f; border-color: #a4cdb5; border-radius: 10rpx; }
+.analysis-details,.analysis-findings { margin: 18rpx 0; padding: 18rpx; border-radius: 16rpx; background: #233b3a; }
+.analysis-detail-scroll { max-height: 300rpx; height: 220rpx; }
+.analysis-detail-scroll > view { display: flex; flex-direction: column; gap: 6rpx; padding: 12rpx 0; border-bottom: 1rpx solid #48605b; font-size: 23rpx; overflow-wrap: anywhere; }
+.analysis-detail-scroll > view > text:last-child { color: #adc5ba; font-size: 21rpx; }
+.analysis-findings > text { display: block; font-size: 23rpx; line-height: 1.8; }
+.is-focus .analysis-track > view,.is-focus .analysis-bar-track > view { background: #e99076; }
+.is-focus .analysis-kpis text:first-child { color: #efac91; }

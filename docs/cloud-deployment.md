@@ -2,7 +2,17 @@
 
 用户于 2026-10-06 确认采用此方案（[C69](decisions.md#githubvercel-与-supabasec69)）。网站为 Next.js 16，GitHub 仓库为 `ohtautau/ottlog`，Vercel 项目 Root Directory 必须选择 `web`。
 
-网站、后端与部署源码已推送到 `main`，源码提交为 [12ff106](https://github.com/ohtautau/ottlog/commit/12ff1060678be44f3362cc4c5e2205bc7570a4cd)。本次上传排除了小程序目录、个人数据库／导出、会话密钥、本机配置、构建产物和依赖；小程序源码与其他未提交文件仍保留在本机。使用已有仓库原来的公开属性，没有修改可见性。
+2026-10-06，网站、后端与部署源码已推送到 `main`，源码提交为 [12ff106](https://github.com/ohtautau/ottlog/commit/12ff1060678be44f3362cc4c5e2205bc7570a4cd)。该次上传排除了小程序目录、个人数据库／导出、会话密钥、本机配置、构建产物和依赖。使用已有仓库原来的公开属性，没有修改可见性。
+
+## 重置电脑前的源码保存（2026-10-20）
+
+按用户要求，本次提交补齐小程序源码、配置、锁文件、测试与生成脚本、图标素材，以及最新功能文档、文章示例和品牌素材。网页与后端源码沿用原仓库内容，未部署或迁移数据。`.gitignore` 补充排除 `artifacts/` 测试输出与 `.swc/` 编译缓存；原数据库、图片上传、会话密钥、备份、依赖、构建产物及小程序私有配置继续排除。
+
+本次源码保存前，敏感信息检查、`typecheck`、`test:logic` 与 `build:weapp` 通过，主包 1,349,962 字节，16 页启动、94 份源码样式／19 份产物样式及包体预算通过。未重新执行浏览器、微信模拟器或真机验证。`git diff --cached --check` 仍报告原有图标等文件的尾空白／末尾空行，本次保留原内容，不将这些提示记为通过。
+
+换机后克隆仓库，在 `miniprogram/` 执行 `npm.cmd ci`，再运行 `npm.cmd run typecheck`、`npm.cmd run test:logic` 和 `npm.cmd run build:weapp`。浏览器适配测试另需在 `web/` 安装依赖与 Playwright 浏览器，见开发说明。微信开发者工具打开 `miniprogram/`，接口、登录与真机调试按原文档重新配置。
+
+GitHub 保存源码，不包含本机业务数据。重置前仍须单独保存实际数据目录（缺省 `backend/Ottlog.Api/App_Data/`，包含数据库、上传图片与会话密钥）、`backups/`、实际使用的环境配置以及 `miniprogram/project.private.config.json`。这些内容不能上传到公开仓库；仅完成源码推送不代表本机数据已备份。
 
 ## 当前架构
 

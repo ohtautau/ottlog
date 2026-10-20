@@ -1,0 +1,5 @@
+.sort-panel-content { display: flex; flex-direction: column; gap: 8PX; }
+.sort-options { display: grid; grid-template-columns: minmax(0,1fr); gap: 6PX; }
+.sort-direction { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 6PX; }
+.sort-options > button,.sort-direction > button { margin: 0; min-width: 0; }
+.sort-option-label { display: block; white-space: nowrap; font: inherit; color: inherit; }

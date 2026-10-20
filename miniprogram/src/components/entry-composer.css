@@ -1,0 +1,24 @@
+.entry-overlay { z-index: 101; }
+.entry-composer.todo-sheet { height: min(660PX,100%); max-height: 100%; }
+.entry-modes { display: flex; flex: 1; min-width: 0; align-items: stretch; gap: 4PX; padding: 4PX; border: 1rpx solid #3b505c; border-radius: 14rpx; background: #13232e; }
+.entry-composer .entry-mode { flex: 1; min-width: 0; margin: 0; }
+.entry-composer .entry-clear { flex: none; width: 40PX; margin: 0; }
+.entry-composer .todo-sheet-fields { padding: 0 16PX 10PX; }
+.entry-composer .entry-footer { align-items: center; gap: 8PX; padding-top: 8PX; }
+.entry-composer .entry-footer button { flex: 1; min-width: 0; margin: 0; }
+.entry-composer .entry-footer .entry-clear { flex: none; width: 40PX; }
+.entry-load { display: flex; align-items: center; justify-content: space-between; padding: 24PX 0; color: #a7bcc6; font-size: 16PX; }
+.entry-load button { margin: 0; }
+.entry-error { padding: 12PX 0 4PX; color: #e7a097; font-size: 14PX; line-height: 1.5; overflow-wrap: anywhere; }
+.entry-info { padding: 8PX 0; color: #b9dbca; font-size: 14PX; line-height: 1.5; }
+.entry-composer .swipe-panels { min-height: 100%; }
+.entry-preview { pointer-events: none; color: #c7d7df; }
+.entry-preview-domain { display: flex; align-items: center; min-height: 40PX; }
+.entry-preview.progress-editor-fields .entry-preview-domain { min-height: 44PX; }
+.entry-preview-title { display: block; flex: 1; min-width: 0; padding: 12PX 0; font-size: min(38rpx,24PX); line-height: 1.4; }
+.entry-preview-note { box-sizing: border-box; height: var(--note-editor-height,min(144rpx,100PX)); overflow: hidden; padding: var(--note-editor-padding,10PX 12PX); margin: 0; border: 1rpx solid #344753; border-radius: 10PX; background: #14212e; font-size: max(14PX,min(26rpx,18PX)); line-height: 1.65; white-space: pre-wrap; }
+.entry-preview-priority { display: flex; align-items: center; justify-content: center; width: 40PX; min-height: 40PX; flex: none; }
+.entry-preview .memo-icon-preview { width: 40PX; height: 40PX; flex: none; }
+.entry-preview-step { display: flex; align-items: center; min-height: 40PX; }
+.entry-preview-step:first-child { min-height: min(106rpx,64PX); }
+.entry-preview .todo-tags-row,.entry-preview .memo-tags-field { min-height: 40PX; }

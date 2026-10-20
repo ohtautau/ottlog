@@ -1,0 +1,2 @@
+.back-button.button-label { display: inline-flex; align-items: center; justify-content: center; align-self: flex-start; flex-shrink: 0; gap: 8PX; margin: 0; }
+.back-button-chevron { flex: none; width: 8PX; height: 8PX; border-left: 2PX solid currentColor; border-bottom: 2PX solid currentColor; transform: rotate(45deg); }

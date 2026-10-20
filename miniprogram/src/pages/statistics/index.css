@@ -1,0 +1,32 @@
+.statistics-page { box-sizing: border-box; width: 100%; max-width: 1000px; min-height: 100%; margin: 0 auto; padding: 28rpx 32rpx calc(48rpx + env(safe-area-inset-bottom)); color: #d9e6df; }
+.statistics-header { display: flex; align-items: center; gap: 24rpx; margin-bottom: 24rpx; }
+.statistics-header .back-button { flex-shrink: 0; margin: 0; }
+.statistics-date { margin-left: auto; color: #91a7ad; font-size: max(23rpx,13PX); white-space: nowrap; }
+.statistics-tabs-scroll { width: 100%; }
+.statistics-content { min-width: 0; }
+.statistics-state { font-size: max(25rpx,14PX); line-height: 1.8; color: #b7c8cc; }
+.statistics-state > text { display: block; }
+.statistics-source-status { display: flex; align-items: center; justify-content: space-between; gap: 16rpx; margin: 16rpx 0; }
+.statistics-source-status > text { min-width: 0; overflow-wrap: anywhere; }
+.statistics-source-status > button { flex-shrink: 0; min-height: max(72rpx,44PX); margin: 0; padding: 10rpx 18rpx; font-size: max(23rpx,14PX); }
+.statistics-source-note { display: flex; align-items: center; justify-content: space-between; gap: 16rpx; color: #91a7ad; font-size: max(22rpx,13PX); line-height: 1.7; margin: 24rpx 0; overflow-wrap: anywhere; }
+.statistics-source-note > button { flex-shrink: 0; margin: 0; font-size: max(23rpx,14PX); min-height: max(76rpx,44PX); }
+.statistics-page .activity-analysis { margin: 0; padding: 24rpx; }
+.statistics-page .habit-calendar-stat-number { font-size: max(35rpx,20PX); }
+.statistics-page .habit-calendar-stat-label { font-size: max(20rpx,12PX); }
+.statistics-page .habit-calendar-log-text { font-size: max(23rpx,14PX); }
+.statistics-page .analysis-period button { min-height: max(64rpx,40PX); font-size: max(22rpx,12PX); }
+.statistics-page .analysis-heading { flex-wrap: wrap; }
+.statistics-page .analysis-caption,.statistics-page .analysis-kpis text:last-child { font-size: max(21rpx,13PX); }
+.statistics-page .analysis-kpis text:first-child { font-size: max(38rpx,20PX); }
+.statistics-page .analysis-column { min-width: max(62rpx,42PX); font-size: max(19rpx,12PX); }
+.statistics-page .analysis-bar,.statistics-page .analysis-findings > text { font-size: max(23rpx,14PX); }
+.statistics-page .analysis-detail-scroll > view { font-size: max(23rpx,14PX); }
+.statistics-page .habit-calendar-streak-note,.statistics-page .habit-calendar-weekdays,.statistics-page .habit-calendar-log-heading > text:last-child { font-size: max(20rpx,12PX); }
+.statistics-page .habit-calendar-day { font-size: max(24rpx,14PX); }
+.statistics-page .habit-calendar-today-label { font-size: max(16rpx,10PX); }
+.statistics-page .habit-calendar-month { font-size: max(28rpx,16PX); }
+.statistics-page .habit-calendar-navigation > button { width: max(68rpx,44PX); min-height: max(68rpx,44PX); height: max(68rpx,44PX); }
+.statistics-page .habit-calendar-log-heading { font-size: max(27rpx,15PX); }
+.statistics-page .habit-calendar-log-copy > view { font-size: max(24rpx,14PX); }
+.statistics-page .habit-calendar-log-copy > view > text:last-child { font-size: max(20rpx,12PX); }

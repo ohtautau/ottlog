@@ -1,0 +1,23 @@
+.home-editor-overlay { position: fixed; inset: 0; z-index: 30; display: flex; align-items: flex-end; }
+.home-editor-backdrop { position: absolute; inset: 0; background: rgba(4,10,15,.68); }
+.home-editor-sheet { position: relative; box-sizing: border-box; width: 100%; max-width: 680PX; max-height: 92%; margin: 0 auto; background: #14212c; border: 1PX solid #334752; border-bottom: 0; border-radius: 16PX 16PX 0 0; display: flex; flex-direction: column; overflow: hidden; color: #f3eddf; }
+.home-editor-sheet button { margin: 0; }
+.home-editor-sheet.is-single { height: auto; max-height: calc(100% - 12PX); }
+.home-editor-sheet.is-single .home-editor-scroll { height: auto; flex: 0 1 auto; min-height: 0; max-height: calc(100vh - 140PX - env(safe-area-inset-bottom)); }
+.home-editor-sheet.is-selector .home-editor-scroll { flex: none; height: 526PX; max-height: calc(92vh - 132PX - env(safe-area-inset-bottom)); }
+.home-editor-header { border-bottom: 1PX solid #2e414e; }
+.home-editor-sheet.is-single .home-editor-header { border-bottom: 0; }
+.home-editor-scroll { flex: 1; min-height: 0; height: 65vh; }
+.home-editor-body { padding: var(--editor-field-gap,8PX) 16PX; }
+.home-editor-preview { height: 88PX; min-width: 0; }
+.home-editor-icon-trigger { flex: none; width: 40PX; }
+.home-editor-icon-trigger .shortcut-icon { width: 28PX; height: 28PX; }
+.home-editor-color-section { min-width: 0; }
+.home-editor-removed { display: flex; flex-direction: column; align-items: center; gap: 12PX; padding: 24PX 0; color: #9cafb9; font-size: 14PX; }
+.home-editor-footer { background: #14212c; }
+.home-editor-footer > button { flex: 1; min-width: 0; }
+.home-editor-save-error { color: #e8a699; font-size: 13PX; line-height: 1.5; }
+@media (max-height: 700px) {
+  .home-editor-sheet.is-single .home-editor-preview { height: 64PX; }
+  .home-editor-sheet.is-single .home-editor-body { padding: 8PX 16PX; }
+}

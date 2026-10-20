@@ -1,0 +1,58 @@
+const assert = require('node:assert/strict');
+const fs = require('node:fs');
+const path = require('node:path');
+const ts = require('typescript');
+function load(relative) {
+  const source = ts.transpileModule(fs.readFileSync(path.join(__dirname, relative), 'utf8'), { compilerOptions: { target: ts.ScriptTarget.ES2020, module: ts.ModuleKind.CommonJS } }).outputText;
+  const exports = {};
+  new Function('exports', 'require', source)(exports, name => load(path.join(path.dirname(relative), name + '.ts')));
+  return exports;
+}
+const data = load('../src/lib/domain-data.ts');
+const edits = load('../src/lib/domain-record-edit.ts');
+const clone = value => JSON.parse(JSON.stringify(value));
+const image = { id: 'photo', dataUrl: 'data:image/png;base64,AAAA' };
+const original = { id: 'record-original', content: '原记录', createdAt: '2026-10-02T01:00:00.000Z', images: [image] };
+const state = clone(data.initialDomainState);
+state.domains.find(row => row.id === 'work').positiveRecords = [original];
+const draft = { version: 1, domainId: 'work', kind: 'positive', original, record: { ...original, content: '  **已编辑**  ' } };
+const records = state => state.domains.find(row => row.id === 'work').positiveRecords;
+const updated = edits.editDomainRecord(state, draft);
+assert.deepEqual(records(updated), [{ ...original, content: '**已编辑**' }]);
+assert.equal(records(state)[0], original);
+assert.deepEqual(updated.domains.filter(row => row.id !== 'work'), state.domains.filter(row => row.id !== 'work'));
+assert.deepEqual(updated.completedGoals, state.completedGoals);
+assert.throws(() => edits.editDomainRecord(state, { ...draft, record: { ...original, id: 'replacement' } }), /标识/);
+assert.throws(() => edits.editDomainRecord(state, { ...draft, record: { ...original, createdAt: '2026-10-03T01:00:00.000Z' } }), /标识/);
+assert.throws(() => edits.editDomainRecord(state, { ...draft, record: { ...original, content: 'a'.repeat(6001) } }), /最多/);
+assert.throws(() => edits.editDomainRecord(state, { ...draft, record: { ...original, content: '', images: [] } }), /文字或图片/);
+assert.equal(records(edits.editDomainRecord(state, { ...draft, record: { ...original, content: '', images: [image] } }))[0].content, '');
+assert.throws(() => edits.editDomainRecord(state, { ...draft, record: { ...original, images: [image, image] } }), /文字或图片/);
+const concurrent = clone(state); records(concurrent)[0].content = '另一设备修改';
+assert.throws(() => edits.editDomainRecord(concurrent, draft), /记录已变化/);
+assert.throws(() => edits.editDomainRecord(concurrent, draft, 'delete'), /记录已变化/);
+assert.throws(() => edits.editDomainRecord(edits.editDomainRecord(state, draft, 'delete'), draft), /记录已变化/);
+const pending = { ...draft, record: records(updated)[0], pending: 'save' };
+assert.deepEqual(edits.editDomainRecord(updated, pending), updated);
+assert.throws(() => edits.editDomainRecord(updated, pending, 'delete'), /原操作/);
+const deleted = edits.editDomainRecord(state, draft, 'delete');
+assert.deepEqual(records(deleted), []);
+assert.equal(edits.editDomainRecord(deleted, { ...draft, pending: 'delete' }, 'delete'), deleted);
+const packed = edits.packRecordEdit(draft);
+assert.equal(packed.images.length, 1, 'Original and draft image bytes are stored once');
+assert.deepEqual(edits.unpackRecordEdit(packed, 'work', 'positive', original).record, draft.record);
+for (const content of ['', '   ']) {
+  const empty = { ...draft, record: { ...original, content, images: [] } };
+  assert.equal(edits.unpackRecordEdit(edits.packRecordEdit(empty), 'work', 'positive', original).record.content, content);
+}
+assert.throws(() => edits.unpackRecordEdit(packed, 'life', 'positive', original), /不兼容/);
+assert.throws(() => edits.unpackRecordEdit(packed, 'work', 'negative', original), /不兼容/);
+assert.throws(() => edits.unpackRecordEdit({ ...packed, record: { ...packed.record, images: [100] } }, 'work', 'positive', original), /不兼容/);
+assert.notEqual(edits.recordEditKey('guest', original.id), edits.recordEditKey('reader:account', original.id));
+const large = { id: 'large-image', dataUrl: `data:image/png;base64,${'A'.repeat(240000)}` };
+const full = clone(state);
+full.domains.find(row => row.id === 'life').positiveRecords = Array.from({ length: 4 }, (_, index) => ({ id: `filler-${index}`, content: '占用空间', createdAt: original.createdAt, images: [{ ...large, id: `photo-${index}` }] }));
+assert.equal(data.isDomainState(full), true);
+assert.throws(() => edits.editDomainRecord(full, { ...draft, record: { ...original, images: [large] } }), /空间不足/);
+assert.deepEqual(records(full), [original]);
+console.log('PASS record edits: original identity/date, immutable scoped updates, image-only/empty/length validation, UTF-8 capacity, concurrent edit/delete protection, stable retries, isolated draft format and image deduplication.');

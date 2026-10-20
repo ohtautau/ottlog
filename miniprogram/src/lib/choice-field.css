@@ -1,0 +1,52 @@
+.choice-field{position:relative;width:100%;height:100vh;min-height:0;background:#254d62;overflow:hidden;color:#f3eddf}
+.choice-board{position:absolute;inset:0}
+.choice-field .choice-region{position:absolute;inset:0;width:100%;height:100%;margin:0;padding:0;border:0;border-radius:0;box-shadow:none;color:#f3eddf;line-height:1.4;font-weight:400;transition:filter .16s ease}
+.choice-field .choice-region[disabled]{opacity:1}
+.choice-field .choice-region:active{transform:none;box-shadow:none}
+.choice-field .choice-region-pressed,.choice-region.is-leaving{filter:brightness(1.28)}
+.choice-region.is-selected .choice-option-label{text-decoration:underline;text-decoration-color:#b9dbca;text-underline-offset:10px}
+.choice-region-copy{position:absolute;transform:translate(-50%,-50%);width:42%;padding:0 8px;text-align:center;pointer-events:none}
+.choice-count-2 .choice-region-copy{width:76%}
+.choice-option-number{display:block;font-size:19px;letter-spacing:3px;opacity:.6;margin-bottom:18px}
+.choice-option-label{display:block;font-size:42px;font-weight:700;letter-spacing:2px;line-height:1.4}
+.choice-option-caption{display:block;font-size:23px;line-height:1.65;opacity:.8;margin-top:12px;white-space:pre-line}
+.choice-option-detail{display:block;font-size:21px;line-height:1.7;opacity:.66;margin-top:9px;white-space:pre-line}
+.choice-mark{position:relative;width:64px;height:64px;margin:0 auto 16px;opacity:.85}
+.choice-mark view{position:absolute;border:3px solid currentColor;left:8px;right:8px;top:8px;bottom:8px}
+.choice-mark-0 view{border-radius:50%}.choice-mark-0 view:nth-child(2){inset:19px}.choice-mark-0 view:nth-child(3){inset:0;border:0;border-top:3px solid;top:31px;transform:rotate(-35deg)}
+.choice-mark-1 view{transform:rotate(45deg);inset:12px}.choice-mark-1 view:nth-child(2){inset:22px}.choice-mark-1 view:nth-child(3){inset:3px}
+.choice-mark-2 view{border-radius:50%;left:0;right:0;top:20px;bottom:20px;transform:rotate(-30deg)}.choice-mark-2 view:nth-child(2){inset:10px;transform:none}.choice-mark-2 view:nth-child(3){width:10px;height:10px;left:52px;top:10px;background:currentColor}
+.choice-mark-3 view{border:0;border-bottom:3px solid;transform:rotate(-30deg);inset:12px}.choice-mark-3 view:nth-child(2){top:0;bottom:24px}.choice-mark-3 view:nth-child(3){top:24px;bottom:0}
+.choice-count-7 .choice-region-copy,.choice-count-8 .choice-region-copy,.choice-count-9 .choice-region-copy{width:29%;padding:0 5px}
+.choice-count-7 .choice-option-label,.choice-count-8 .choice-option-label,.choice-count-9 .choice-option-label{font-size:34px;letter-spacing:0}
+.choice-count-7 .choice-option-caption,.choice-count-8 .choice-option-caption,.choice-count-9 .choice-option-caption{font-size:21px}
+.choice-count-5 .choice-mark,.choice-count-6 .choice-mark,.choice-count-7 .choice-mark,.choice-count-8 .choice-mark,.choice-count-9 .choice-mark{width:48px;height:48px;margin-bottom:10px;transform:scale(.8)}
+.choice-count-5 .choice-option-number,.choice-count-6 .choice-option-number,.choice-count-7 .choice-option-number,.choice-count-8 .choice-option-number,.choice-count-9 .choice-option-number{margin-bottom:7px}
+.choice-plate{position:absolute;z-index:5;left:26px;right:26px;top:24px;padding:22px 26px 4px;background:rgba(16,25,35,.86);border:1px solid rgba(243,237,223,.16);border-radius:18px;box-shadow:0 8px 40px rgba(0,0,0,.08)}
+.choice-meta{display:flex;justify-content:space-between;gap:16px;color:#c1cbbf;font-size:20px;letter-spacing:2px}
+.choice-prompt{display:block;font-size:40px;line-height:1.45;font-weight:700;margin-top:10px;letter-spacing:1px}
+.choice-progress{display:flex;width:100%;gap:9px}
+.choice-progress .choice-progress-hit{flex:1;min-width:0;height:88px;margin:0;border:0;padding:36px 0;background:transparent;box-shadow:none;line-height:1}
+.choice-progress .choice-progress-hit[disabled]{opacity:1}
+.choice-progress .choice-progress-hit:active{transform:none}
+.choice-progress-line{width:100%;height:5px;background:rgba(243,237,223,.23);border-radius:6px}
+.is-done .choice-progress-line{background:#b9dbca}.is-current .choice-progress-line{background:#f3eddf;box-shadow:0 0 0 3px rgba(243,237,223,.14)}
+.choice-field .choice-edge{position:absolute;z-index:6;top:50%;width:88px;height:116px;margin:-58px 0 0;padding:0;border:0;background:transparent;border-radius:24px;color:#f3eddf;box-shadow:none;display:flex;align-items:center;justify-content:center}
+.choice-edge-back{left:5px}.choice-edge-next{right:5px}
+.choice-chevron{width:16px;height:48px;border-left:3px solid;border-bottom:3px solid;transform:skewY(-32deg) rotate(15deg);opacity:.65}
+.choice-edge-next .choice-chevron{transform:skewY(-32deg) rotate(195deg)}
+.choice-bottom{position:absolute;z-index:7;bottom:0;left:0;right:0;display:flex;flex-direction:column;gap:16px;padding:12px 26px calc(12px + env(safe-area-inset-bottom));background:linear-gradient(transparent,rgba(16,25,35,.36))}
+.choice-footer{display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:14px;font-size:22px;color:#eee8dc;text-align:center}
+.choice-footer>button{flex-shrink:0}
+.choice-footer button{margin:0;padding:16px 20px;min-height:88px;line-height:1.65;border:1px solid rgba(243,237,223,.24);border-radius:16px;background:rgba(16,25,35,.43);color:#f3eddf;font-size:23px;box-shadow:none;font-weight:400}
+.choice-direct{display:flex;gap:16px}
+.choice-direct .choice-direct-button{flex:1;min-width:0;min-height:88px;padding:16px 12px;margin:0;border-radius:14px;border:1px solid rgba(243,237,223,.45);color:#f3eddf;background:rgba(16,25,35,.64);box-shadow:none;font-size:22px;line-height:1.5}
+.choice-extra{min-width:0}
+.choice-with-extra .choice-region-copy{margin-top:-36px}
+.choice-with-extra.choice-count-3 .choice-region:nth-child(3) .choice-region-copy{margin-top:-100px}
+.choice-with-extra .choice-mark{display:none}
+.choice-with-direct .choice-mark{display:none}
+.choice-with-direct .choice-region:nth-child(2) .choice-region-copy{margin-top:-80px}
+.choice-bloom{position:absolute;z-index:4;width:80px;height:80px;border-radius:50%;pointer-events:none;opacity:.35;animation:choice-bloom .16s ease-out both}
+@keyframes choice-bloom{from{transform:translate(-50%,-50%) scale(.4);opacity:.55}to{transform:translate(-50%,-50%) scale(8);opacity:0}}
+@media(prefers-reduced-motion:reduce){.choice-field .choice-region{transition:none}.choice-bloom{animation:none;display:none}}

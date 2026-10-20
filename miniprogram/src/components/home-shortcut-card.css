@@ -1,0 +1,11 @@
+.home-shortcut-card { --control-text: #263c3e; --control-hover-background: rgba(255, 255, 255, .16); position: relative; display: flex; align-items: stretch; width: 100%; height: 100%; min-width: 0; min-height: 0; box-sizing: border-box; border-radius: 12PX; background: var(--shortcut-color); color: #263c3e; overflow: hidden; }
+.home-shortcut-card.is-create { --shortcut-color: #192633; border: 1PX solid #2b3d49; }
+.home-shortcut-card .home-shortcut-open { position: relative; z-index: 1; display: flex; align-items: flex-start; justify-content: flex-start; width: 100%; height: 100%; min-width: 0; min-height: 40PX; box-sizing: border-box; margin: 0; padding: 12PX 14PX; border: 0; border-radius: inherit; background: transparent; color: inherit; text-align: left; line-height: 1.4; box-shadow: none; }
+.home-shortcut-card .home-shortcut-open::after { border: 0; }
+.home-shortcut-card .home-shortcut-open[disabled] { color: inherit; opacity: 1; background: transparent; }
+.home-shortcut-card .today-entry-name { display: block; min-width: 0; max-width: 100%; margin: 0; font-size: 18PX; font-weight: 650; line-height: 1.4; letter-spacing: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.home-shortcut-card .home-shortcut-open-pressed { background: rgba(255, 255, 255, .12); }
+.home-shortcut-card .home-shortcut-open:focus-visible { outline: 2PX solid rgba(38, 60, 62, .6); outline-offset: -3PX; }
+.home-shortcut-rank { position: absolute; z-index: 2; right: 10PX; bottom: 8PX; font-size: 12PX; line-height: 1.4; color: rgba(38, 60, 62, .7); font-variant-numeric: tabular-nums; pointer-events: none; }
+.home-shortcut-card.is-managing .home-shortcut-rank,.home-shortcut-card.is-sorting .home-shortcut-rank { right: 92PX; bottom: 16PX; }
+@media (min-width: 600px) { .home-shortcut-card .today-entry-name { font-size: 20PX; } }

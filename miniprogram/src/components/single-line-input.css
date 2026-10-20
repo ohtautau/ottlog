@@ -1,0 +1,5 @@
+page,:root { --numeric-input-width: 96PX; --numeric-input-height: 40PX; }
+.single-line-field { display: flex; align-items: center; flex: none; box-sizing: border-box; height: 44PX; min-height: 44PX; padding: 0 12PX; margin: 0; border: 1PX solid #405662; border-radius: 10PX; background: #13232d; color: #e6eee4; }
+.single-line-field.is-compact { height: 40PX; min-height: 40PX; }
+.numeric-input-row { display: flex; align-items: center; justify-content: center; gap: 8PX; min-width: 0; }
+.numeric-input-row > text { flex: none; }

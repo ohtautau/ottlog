@@ -1,0 +1,44 @@
+.domain-progress-summary { display: flex; align-items: center; gap: 8PX; box-sizing: border-box; width: 100%; min-width: 0; color: #dbe7e2; }
+.domain-progress-summary .domain-progress-icon { flex: none; width: 24PX; height: 24PX; }
+.domain-progress-summary.without-goals { gap: 12PX; }
+.domain-progress-summary.without-goals .domain-progress-icon { width: 40PX; height: 40PX; }
+.domain-progress-body { display: grid; grid-template-columns: minmax(0,1fr) minmax(0,1.1fr); align-items: center; gap: 10PX; flex: 1; min-width: 0; }
+.domain-progress-amounts,.domain-progress-goals { min-width: 0; }
+.domain-progress-heading { display: flex; align-items: baseline; gap: 6PX; min-width: 0; margin-bottom: 6PX; }
+.domain-progress-name { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 14PX; font-weight: 600; line-height: 18PX; }
+.domain-progress-counts { display: flex; flex: none; align-items: baseline; gap: 5PX; font-size: 11PX; line-height: 14PX; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.domain-progress-long-count { color: #a4c7ed; }
+.domain-progress-short-count { color: #eaa6aa; }
+.domain-progress-habit-count { color: #afdcbc; }
+.domain-progress-track { display: flex; align-items: stretch; width: 100%; height: 4PX; min-width: 0; overflow: hidden; border-radius: 3PX; background: #2c414e; }
+.domain-progress-segment { flex: none; height: 100%; min-width: 0; transition: width .25s ease-out; }
+.domain-progress-long-line { background: #83b5ea; }
+.domain-progress-short-line { background: #e8959a; }
+.domain-progress-habit-line { background: #9dd3ad; }
+.domain-progress-goals { display: flex; flex-direction: column; gap: 2PX; }
+.domain-progress-goal { display: flex; align-items: center; gap: 4PX; min-width: 0; font-size: 12PX; line-height: 14PX; }
+.domain-progress-goal-bullet { flex: none; width: 6PX; height: 6PX; border-radius: 50%; background: currentColor; }
+.domain-progress-goal-label { flex: none; color: #94adb5; }
+.domain-progress-long-goal .domain-progress-goal-label { color: #a4c7ed; }
+.domain-progress-short-goal .domain-progress-goal-label { color: #eaa6aa; }
+.domain-progress-goal-content { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: #c5d2d5; }
+.domain-progress-goal-status { flex: none; color: #96bba5; font-size: 10PX; }
+.domain-progress-card-goal { position: absolute; left: 12PX; right: 12PX; bottom: 6PX; border-top: 1PX solid var(--domain-line, #2b3d49); padding-top: 7PX; padding-bottom: 2PX; }
+.domain-progress-summary.without-goals .domain-progress-body { grid-template-columns: minmax(0,1fr); }
+.domain-progress-summary.without-goals .domain-progress-heading { flex-direction: column; align-items: flex-start; gap: 6PX; }
+.domain-progress-summary.without-goals .domain-progress-name { flex: none; max-width: 100%; }
+.domain-progress-summary.without-progress .domain-progress-heading { margin-bottom: 0; }
+.domain-progress-summary.without-goals.without-progress .domain-progress-amounts { min-height: 48PX; }
+.domain-progress-summary.without-progress .domain-progress-card-goal { visibility: hidden; }
+@media(min-width:700px) {
+  .domain-progress-summary { gap: 10PX; }
+  .domain-progress-summary .domain-progress-icon { width: 28PX; height: 28PX; }
+  .domain-progress-body { gap: 16PX; }
+  .domain-progress-name { font-size: 16PX; line-height: 20PX; }
+  .domain-progress-counts { gap: 8PX; font-size: 12PX; }
+  .domain-progress-heading { margin-bottom: 7PX; }
+  .domain-progress-summary.without-goals.without-progress .domain-progress-amounts { min-height: 51PX; }
+  .domain-progress-goal { font-size: 13PX; line-height: 17PX; }
+  .domain-progress-goal-status { font-size: 11PX; }
+}
+@media(prefers-reduced-motion:reduce) { .domain-progress-segment { transition: none; } }

@@ -1,0 +1,22 @@
+.focus-history-card { margin-top: 12PX; }
+.focus-history-day-scroll { margin-top: 8PX; }
+.focus-history-days { width: max-content; }
+.focus-history-heading { display: flex; justify-content: space-between; align-items: center; gap: 8PX; margin: 4PX 0 8PX; }
+.focus-date-select { min-height: 40PX; display: flex; align-items: center; font-size: 14PX; color: #d9e6df; }
+.focus-history-heading button { margin: 0; }
+.focus-record-filters { display: flex; align-items: center; gap: 6PX; margin-bottom: 8PX; }
+.focus-record-filters button { margin: 0; flex-shrink: 0; }
+.focus-record-filters > text { margin-left: auto; color: #90a5aa; font-size: 12PX; white-space: nowrap; }
+.focus-record-list { display: flex; flex-direction: column; gap: 6PX; }
+.focus-record { display: flex; align-items: center; gap: 8PX; border-radius: 10PX; padding: 8PX; background: #192633; border: 1PX solid #2c3d44; }
+.focus-record-mark { display: flex; align-items: center; justify-content: center; flex-shrink: 0; width: 26PX; height: 26PX; border-radius: 50%; background: #28473e; color: #b9dbca; font-size: 16PX; }
+.focus-record-mark.is-break { background: #2d405e; color: #a8c1e9; }
+.focus-record-body { flex: 1; min-width: 0; }
+.focus-record-top { display: flex; flex-direction: column; gap: 3PX; }
+.focus-record-title { font-size: 14PX; color: #ece8dd; line-height: 1.45; overflow-wrap: anywhere; }
+.focus-record-duration { color: #b9dbca; font-size: 13PX; }
+.focus-record-meta { display: block; color: #90a2aa; font-size: 12PX; margin-top: 4PX; line-height: 1.5; }
+.focus-record-link { margin: 4PX 0 0; }
+.focus-record-delete { flex-shrink: 0; margin: 0; }
+.focus-load-more { margin-top: 8PX; }
+.focus-background-hint { display: block; margin: 12PX 0; color: #8fa4a8; font-size: 12PX; line-height: 1.8; }

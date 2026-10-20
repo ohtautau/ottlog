@@ -1,0 +1,158 @@
+const path = require('node:path');
+const schedule = require('./todo-schedule-test-helpers.cjs');
+
+module.exports = async function checkTodoWorkflow({ page, origin, out, width, expect }) {
+  const create = () => page.locator('.entry-composer').getByRole('button', { name: '创建任务', exact: true });
+  await page.goto(`${origin}/?todo-workflow#/pages/posts/index`);
+  await page.evaluate(() => { window.__miniFixture.guestToolStates = { todos: { version: 1, tasks: [], categories: [] } }; location.hash = '#/pages/todos/index'; });
+  await expect(page.locator('.todo-quadrant')).toHaveCount(4);
+  const boxes = await page.locator('.todo-quadrant').evaluateAll(nodes => nodes.map(node => {
+    const box = node.getBoundingClientRect(); return { x: box.x, y: box.y, width: box.width, height: box.height, bottom: box.bottom };
+  }));
+  expect(boxes[0].x).toBeLessThan(boxes[1].x);
+  expect(Math.abs(boxes[0].y - boxes[1].y)).toBeLessThan(2);
+  expect(boxes[2].y).toBeGreaterThan(boxes[0].y);
+  expect(Math.abs(boxes[2].x - boxes[0].x)).toBeLessThan(2);
+  const viewport = await page.locator('.preview-content').boundingBox();
+  for (const box of boxes) {
+    expect(box.y).toBeGreaterThanOrEqual(viewport.y);
+    expect(box.bottom).toBeLessThanOrEqual(viewport.y + viewport.height);
+    expect(Math.abs(box.width - boxes[0].width)).toBeLessThan(2);
+    expect(Math.abs(box.height - boxes[0].height)).toBeLessThan(2);
+  }
+  // The readable 40px controls use one row; the quadrants
+  // fill the remaining space rather than an obsolete percentage of the page.
+  const toolbar = await page.locator('.todo-toolbar').boundingBox();
+  await expect(page.locator('.screen-scroll-hint,#page-more')).toHaveCount(0);
+  expect(Math.abs(toolbar.y - viewport.y - 12), 'The toolbar retains a fixed 12px gap below navigation').toBeLessThanOrEqual(1);
+  expect(Math.abs(boxes[0].y - (toolbar.y + toolbar.height))).toBeLessThan(2);
+  expect(Math.abs(boxes[3].bottom - (viewport.y + viewport.height - 8)), 'Quadrants use the recovered footer space').toBeLessThan(2);
+  for (const height of await page.locator('.todo-toolbar button').evaluateAll(nodes => nodes.map(node => node.getBoundingClientRect().height))) expect(height).toBeGreaterThanOrEqual(40);
+  expect(await page.locator('.todo-page').evaluate(node => node.scrollHeight - node.clientHeight)).toBeLessThan(2);
+  for (const [key, priority] of [['plan', '中优先级'], ['delegate', '低优先级'], ['later', '无优先级']]) {
+    await page.getByRole('button', { name: `创建${priority}任务`, exact: true }).click();
+    await expect(page.locator('.todo-priority-toggle')).toHaveAttribute('aria-label', priority);
+    await expect(page.locator('.todo-priority-toggle')).toHaveText('');
+    await page.getByPlaceholder('准备做什么？').fill(`${priority}的任务`);
+    await create().click();
+    await expect(page.locator(`.todo-quadrant-${key} .todo-task-title`)).toHaveText(`${priority}的任务`);
+  }
+  await page.getByRole('button', { name: '创建高优先级任务', exact: true }).click();
+  await page.getByPlaceholder('准备做什么？').fill('月底整理');
+  await schedule.openSchedule(page, expect);
+  await schedule.selectDate(page, '2099-01-31');
+  await schedule.setTime(page, 18, 30);
+  await schedule.openSection(page, '设置重复');
+  await schedule.button(page, '每月').click();
+  await schedule.confirmSchedule(page, expect);
+  await expect(page.locator('.todo-description')).toBeVisible();
+  await page.locator('.todo-description').fill('整理记录并安排下一步');
+  await page.getByRole('button', { name: '选择现有标签', exact: true }).click();
+  await page.getByPlaceholder('输入标签，用符号分隔').fill('工作，复盘');
+  await page.locator('.todo-tags-row .form-popover-panel').getByRole('button', { name: '完成', exact: true }).click();
+  await page.getByRole('textbox', { name: '下一步任务 1', exact: true }).fill('整理之后写总结');
+  await page.getByRole('button', { name: '添加下一步任务', exact: true }).click();
+  await page.getByRole('textbox', { name: '下一步任务 2', exact: true }).fill('总结之后归档');
+  await page.getByRole('button', { name: '提前第 2 步', exact: true }).click();
+  await expect(page.getByRole('textbox', { name: '下一步任务 1', exact: true })).toHaveValue('总结之后归档');
+  await page.getByRole('button', { name: '后移第 1 步', exact: true }).click();
+  await create().click();
+  const high = page.locator('.todo-quadrant-do');
+  await expect(high.locator('.todo-task-meta')).toContainText('1月31日 18:30');
+  await expect(high.locator('.todo-task-tags')).toHaveCount(0);
+  await expect(high.locator('.todo-check')).toHaveText('2');
+  await page.getByRole('button', { name: '完成：月底整理', exact: true }).click();
+  await expect(high.locator('.todo-task:not(.is-done)')).toHaveCount(2);
+  await expect(high.locator('.todo-task.is-done')).toHaveCount(1);
+  await expect(high.locator('.todo-task-title')).toContainText(['月底整理', '整理之后写总结']);
+  await expect(high.locator('.todo-task-meta').first()).toContainText('2月28日 18:30');
+  await high.getByRole('button', { name: /^已完成/ }).click();
+  await expect(high.locator('.todo-task.is-done')).toHaveCount(0);
+  await high.getByRole('button', { name: /^已完成/ }).click();
+  await expect(high.locator('.todo-task.is-done')).toHaveCount(1);
+  expect(await high.locator('.todo-task').evaluateAll(nodes => nodes.map(node => node.classList.contains('is-done')))).toEqual([false, false, true]);
+  await high.getByRole('button', { name: /^已完成/ }).click();
+  await page.getByRole('button', { name: '完成：中优先级的任务', exact: true }).click();
+  await expect(page.locator('.todo-quadrant-plan .todo-task.is-done')).toHaveCount(1);
+  await expect(high.locator('.todo-task.is-done')).toHaveCount(0);
+  await page.getByRole('button', { name: '完成：整理之后写总结', exact: true }).click();
+  await expect(high.getByText('总结之后归档', { exact: true })).toBeVisible();
+  await expect(high.locator('.todo-task:not(.is-done)')).toHaveCount(2);
+  await page.screenshot({ path: path.join(out, `todos-quadrants-workflow-${width}.png`), fullPage: true });
+  await page.getByRole('button', { name: '筛选', exact: true }).click();
+  await page.getByRole('button', { name: '筛选状态：已完成', exact: true }).click();
+  await page.locator('.todo-filter-actions .tool-primary').click();
+  await page.locator('.todo-quadrant-later .todo-quadrant-add').click();
+  await page.getByPlaceholder('准备做什么？').fill('新建任务应当可见');
+  await create().click();
+  await expect(page.locator('.todo-quadrant-later').getByText('新建任务应当可见', { exact: true })).toBeVisible();
+  await page.getByRole('button', { name: '编辑任务：无优先级的任务', exact: true }).click();
+  await schedule.openSchedule(page, expect);
+  await schedule.selectDate(page, '2099-02-01');
+  await schedule.setCustomReminder(page, '2099-02-01');
+  await expect(schedule.button(page, '开启微信提醒')).toBeDisabled();
+  await schedule.confirmSchedule(page, expect);
+  await page.locator('.todo-sheet:not(.entry-composer)').getByRole('button', { name: '保存', exact: true }).click();
+  await schedule.openSchedule(page, expect);
+  await schedule.openSection(page, '设置提醒');
+  await expect(schedule.button(page, '开启微信提醒')).toBeDisabled();
+  expect(await page.evaluate(() => window.__miniRequests.some(request => request.path === '/wechat/reminders' && request.method === 'POST'))).toBe(false);
+  await page.screenshot({ path: path.join(out, `todos-reminder-unconfigured-${width}.png`), fullPage: true });
+  await schedule.closeSchedule(page, expect);
+
+  // Completing a reopened source starts a fresh pair of branches, even after an
+  // earlier next-step branch has already progressed. Existing work stays intact.
+  await page.getByRole('button', { name: '关闭编辑', exact: true }).click();
+  await require('./confirm-unsaved-close.cjs')(page);
+  const beforeReopen = await page.evaluate(() => window.__miniFixture.todoLocalState.tasks);
+  const source = beforeReopen.find(task => task.title === '月底整理' && !task.generatedFrom);
+  const previousChildren = beforeReopen.filter(task => task.generatedFrom === source.id);
+  expect(previousChildren).toHaveLength(2);
+  await page.getByRole('button', { name: '筛选', exact: true }).click();
+  await page.getByRole('button', { name: '筛选状态：全部', exact: true }).click();
+  await page.locator('.todo-filter-actions .tool-primary').click();
+  if (await high.locator('.todo-completed-toggle').getAttribute('aria-expanded') === 'false') await high.locator('.todo-completed-toggle').click();
+  await high.getByRole('button', { name: '重新打开：月底整理', exact: true }).click();
+  const reopenedSource = high.locator('.todo-task').filter({ has: page.locator('.todo-task-title', { hasText: /^月底整理$/ }) }).filter({ has: page.locator('.todo-task-meta', { hasText: '1月31日 18:30' }) });
+  await expect(reopenedSource).not.toHaveClass(/is-done/);
+  await reopenedSource.getByRole('button', { name: '完成：月底整理', exact: true }).click();
+  await expect(reopenedSource).toHaveClass(/is-done/);
+  const recompleted = await page.evaluate(() => window.__miniFixture.todoLocalState.tasks);
+  expect(recompleted).toHaveLength(beforeReopen.length + 2);
+  for (const previous of beforeReopen.filter(task => task.id !== source.id)) {
+    expect(recompleted.find(task => task.id === previous.id)).toEqual(previous);
+  }
+  const newChildren = recompleted.filter(task => task.generatedFrom === source.id && !previousChildren.some(previous => previous.id === task.id));
+  expect(newChildren).toHaveLength(2);
+  const newCycle = newChildren.find(task => task.recurrence);
+  expect(newCycle.dueDate).toBe('2099-02-28');
+  expect(newCycle.dueTime).toBe('18:30');
+  expect(newCycle.nextTasks.map(task => task.title)).toEqual(['整理之后写总结', '总结之后归档']);
+  const newNext = newChildren.find(task => !task.recurrence);
+  expect(newNext.title).toBe('整理之后写总结');
+  expect(newNext).toMatchObject({ dueDate: source.dueDate, dueTime: source.dueTime, tags: source.tags, important: source.important, urgent: source.urgent });
+  expect(newNext.reminderAt).toBeUndefined();
+  expect(newNext.recurrence).toBeUndefined();
+  expect(newNext.nextTasks.map(task => task.title)).toEqual(['总结之后归档']);
+  await high.getByRole('button', { name: '完成：整理之后写总结', exact: true }).click();
+  await expect(high.getByRole('button', { name: '完成：总结之后归档', exact: true })).toHaveCount(2);
+  const continued = await page.evaluate(() => window.__miniFixture.todoLocalState.tasks);
+  expect(continued).toHaveLength(recompleted.length + 1);
+  expect(continued.find(task => task.generatedFrom === newNext.id).title).toBe('总结之后归档');
+  const beforeDismiss = await page.evaluate(() => window.__miniFixture.todoLocalState);
+  const openRetained = () => page.getByRole('button', { name: '编辑任务：新建任务应当可见', exact: true }).click();
+  await openRetained();
+  await page.getByPlaceholder('准备做什么？').fill('收起后保留的任务输入');
+  await page.locator('.todo-sheet-title').click();
+  await expect(page.locator('.todo-sheet')).toBeVisible();
+  await page.evaluate(() => { window.__miniFixture.modalFailure = true; });
+  await page.locator('.todo-backdrop').click({ position: { x: 8, y: 6 } });
+  await require('./confirm-unsaved-close.cjs')(page);
+  await expect(page.locator('.todo-sheet')).toHaveCount(0);
+  expect(await page.evaluate(() => window.__miniFixture.todoLocalState), 'Choosing not to save retains task input without saving').toEqual(beforeDismiss);
+  await openRetained();
+  await expect(page.getByPlaceholder('准备做什么？')).toHaveValue('收起后保留的任务输入');
+  await page.evaluate(() => { window.__miniFixture.modalFailure = false; });
+  await page.getByRole('button', { name: '关闭编辑', exact: true }).click();
+  await require('./confirm-unsaved-close.cjs')(page);
+};

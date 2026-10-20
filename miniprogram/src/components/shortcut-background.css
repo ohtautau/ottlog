@@ -1,0 +1,9 @@
+.shortcut-color-peach { --shortcut-color: #eab69f; }
+.shortcut-color-mint { --shortcut-color: #b9dbca; }
+.shortcut-color-blue { --shortcut-color: #a9c4e8; }
+.shortcut-color-yellow { --shortcut-color: #e2d6a4; }
+.shortcut-color-lilac { --shortcut-color: #c5badd; }
+.shortcut-color-rose { --shortcut-color: #dcb6bb; }
+
+.shortcut-background { position: absolute; inset: 0; overflow: hidden; border-radius: inherit; background: var(--shortcut-color, transparent); pointer-events: none; }
+.shortcut-background .shortcut-background-icon { position: absolute; width: 142PX; height: 142PX; right: -18PX; bottom: -28PX; opacity: .19; transform: rotate(-12deg); }

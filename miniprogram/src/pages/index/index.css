@@ -1,0 +1,23 @@
+.today-page { padding: 24px 32px calc(28px + env(safe-area-inset-bottom)); max-width: 1000px; margin: 0 auto; }
+.today-brand { display: flex; align-items: center; justify-content: space-between; }
+.today-wordmark { display: flex; align-items: center; gap: 12px; color: #f3eddf; font-size: 35px; font-weight: 750; letter-spacing: -1px; }
+.today-wordmark image { width: 44px; height: 44px; border-radius: 12px; }
+.today-date { font-size: 22px; color: #a2afbb; font-variant-numeric: tabular-nums; }
+.today-capture { display: flex; align-items: center; flex: none; gap: 8PX; margin: 0; padding: 4PX 4PX 4PX 12PX; min-height: 44PX; box-sizing: border-box; border: 1rpx solid #3b505b; border-radius: 14rpx; background: #182b35; }
+.today-capture input { flex: 1; width: 0; min-width: 0; height: 40PX; min-height: 40PX; margin: 0; padding: 0; border: 0; border-radius: 0; background: transparent; color: #e3eceb; font-size: 16PX; }
+.today-capture-area { flex: none; margin-top: auto; padding-top: 12PX; }
+.today-capture .create-button { flex: none; }
+.today-shortcut-toolbar { flex: none; margin-bottom: 12PX; }
+.today-shortcut-heading-group { display: flex; align-items: center; gap: 8PX; min-width: 0; }
+.today-shortcut-heading { flex: none; }
+.today-shortcut-overflow-hint { min-width: 0; font-size: 12PX; line-height: 1.4; color: #9cafb9; }
+.today-grid { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 16px; }
+.today-shortcut-scroll { flex: 1; min-height: 0; height: 0; width: 100%; }
+.today-page .core-screen .today-grid { grid-auto-rows: minmax(0,1fr); height: 100%; min-height: 100%; }
+.today-entry { min-width: 0; }
+.today-page .today-many-shortcuts .today-grid { height: auto; grid-auto-rows: minmax(120PX,auto); padding-bottom: 1PX; }
+.today-page .more-section-title { font-size: 20PX; line-height: 1.4; margin-bottom: 12PX; }
+.today-page .more-section > .screen-return-hint { margin-bottom: 8PX; }
+.today-page .today-recent { display: flex; justify-content: space-between; align-items: center; gap: 12PX; font-size: 23px; margin: 0 0 16PX; padding: 12px 22px; border: 1px solid #30413f; border-radius: 14px; background: #182925; color: #b9dbca; box-shadow: none; }
+.today-recent > view { min-width: 0; overflow-wrap: break-word; }
+.today-recent > text { flex: none; font: inherit; color: inherit; }

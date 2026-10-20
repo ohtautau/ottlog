@@ -1,0 +1,14 @@
+const assert = require('node:assert/strict');
+const fs = require('node:fs');
+const path = require('node:path');
+const ts = require('typescript');
+const source = fs.readFileSync(path.join(__dirname, '../src/lib/tool-status-display.ts'), 'utf8');
+const output = ts.transpileModule(source, { compilerOptions: { module: ts.ModuleKind.CommonJS } }).outputText;
+const model = {}; new Function('exports', output)(model);
+assert.equal(model.toolPageStatus('保存在本机 · 登录后可使用账号同步'), '');
+for (const status of ['', '正在读取…', '已连接账号 · 修改自动保存', '本机存储不可用 · 请保持小程序打开', '账号离线 · 修改暂存在本机，联网后重试同步', '已在本机暂存 · 同步失败，可重试']) assert.equal(model.toolPageStatus(status), status);
+assert.match(model.personalDataNotice(false), /保存在本机/);
+assert.doesNotMatch(model.personalDataNotice(true), /保存在本机/);
+assert.match(model.personalDataNotice(false), /不会自动合并/);
+assert.match(model.personalDataNotice(true), /当前账号/);
+console.log('PASS tool status presentation: routine guest notice centralized, owner-specific guidance, real save/sync failures preserved.');

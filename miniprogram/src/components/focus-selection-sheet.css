@@ -1,0 +1,33 @@
+.focus-selection-overlay { position: fixed; inset: 0; z-index: 100; }
+.focus-selection-backdrop { position: absolute; inset: 0; background: rgba(5,13,20,.68); }
+.focus-selection-sheet { position: absolute; left: 0; right: 0; bottom: 0; height: 1100rpx; max-height: 90vh; display: flex; flex-direction: column; border-radius: 32rpx 32rpx 0 0; background: #192633; color: #f3eddf; overflow: hidden; box-shadow: 0 -16rpx 80rpx rgba(0,0,0,.18); }
+.focus-selection-tools { flex-shrink: 0; padding: 4rpx 32rpx 18rpx; border-bottom: 1rpx solid #30424e; }
+.focus-selection-search { display: flex; align-items: center; gap: 16rpx; padding: 0 20rpx; border: 1rpx solid #4d6570; border-radius: 16rpx; background: #12212c; }
+.focus-selection-search-mark { position: relative; flex-shrink: 0; width: 22rpx; height: 22rpx; border: 2rpx solid #a1b6bf; border-radius: 50%; margin-right: 4rpx; }
+.focus-selection-search-mark::after { content: ''; position: absolute; right: -7rpx; bottom: -5rpx; width: 11rpx; height: 2rpx; background: #a1b6bf; transform: rotate(45deg); border-radius: 2rpx; }
+.focus-selection-search input { flex: 1; min-width: 0; width: 0; height: 88rpx; min-height: 88rpx; margin: 0; padding: 0; border: 0; background: transparent; color: #eef2e8; font-size: 25rpx; }
+.focus-selection-clear { flex: none; width: 64rpx; height: 76rpx; min-height: 76rpx; margin: 0 -16rpx 0 0; padding: 0; background: transparent; color: #a1b6bf; font-size: 32rpx; }
+.focus-selection-scroll { flex: 1; height: 0; min-height: 0; }
+.focus-selection-content { padding: 20rpx 32rpx 28rpx; }
+.focus-selection-recent { margin-bottom: 26rpx; }
+.focus-selection-section-heading { display: flex; justify-content: space-between; align-items: baseline; gap: 12rpx; color: #8fa7b4; font-size: 21rpx; }
+.focus-selection-section-title { display: block; margin-bottom: 14rpx; }
+.focus-selection-grid { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 12rpx; }
+.focus-selection-option { display: flex; align-items: center; gap: 16rpx; min-width: 0; min-height: 140rpx; padding: 18rpx 16rpx 18rpx 28rpx; margin: 0; border: 1rpx solid #3c5563; border-radius: 16rpx; background: #223747; color: #ecf1ec; text-align: left; line-height: 1.45; }
+.focus-selection-option .habit-icon { flex: none; display: block; width: 60rpx; height: 60rpx; }
+.focus-habit-option { position: relative; overflow: hidden; }
+.focus-selection-copy { flex: 1; min-width: 0; }
+.focus-selection-name { display: block; font-size: 25rpx; font-weight: 600; overflow-wrap: anywhere; }
+.focus-selection-group { display: block; margin-top: 6rpx; color: #a6bcc7; font-size: 20rpx; font-weight: 400; }
+.focus-selection-option.is-selected { background: #4a3930; border-color: #efa087; color: #ffe0cf; }
+.focus-selection-option.is-selected .focus-selection-group { color: #d4b5a6; }
+.focus-selection-option:active { background: #344d55; }
+.focus-selection-empty { padding: 48rpx 16rpx; text-align: center; color: #a9bdc8; font-size: 25rpx; }
+.focus-selection-empty button { margin: 20rpx auto 0; padding: 12rpx 24rpx; width: fit-content; background: #29483f; color: #c6e1d3; font-size: 24rpx; }
+.focus-selection-footer button { width: 100%; min-height: 88rpx; margin: 0; padding: 16rpx 24rpx; border: 1rpx solid #547065; background: #29483f; color: #d5e9dc; font-size: 26rpx; line-height: 1.4; }
+
+.focus-selection-filter-scroll { margin-top: 8PX; margin-bottom: 0; }
+.focus-selection-tasks { border: 1PX solid #3c5563; border-radius: 8PX; padding: 0 4PX; background: #223747; }
+.focus-selection-tasks .todo-task-title { max-width: 100%; }
+.focus-selection-tasks .todo-complete { display: flex; justify-content: center; box-sizing: border-box; }
+.focus-selection-tasks .todo-task.is-selected { background: #304c42; border-radius: 6PX; }

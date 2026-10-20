@@ -1,0 +1,14 @@
+.today-quote { display: flex; align-items: center; flex-shrink: 0; gap: 12PX; margin: 10PX 0; padding: 12PX 16PX; border: 1PX solid #344b50; border-radius: 12PX; background: #192b32; color: #f3eddf; }
+.today-quote-body { flex: 1; min-width: 0; }
+.today-quote-content { display: flex; align-items: center; height: 46PX; min-width: 0; }
+.today-quote-text { flex: 1; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden; max-height: 46PX; font-size: 15PX; font-weight: 500; line-height: 23PX; overflow-wrap: anywhere; }
+.today-quote-text.is-empty { color: #9db8b3; }
+.today-quote-side { display: flex; flex-direction: column; align-items: center; flex: none; min-width: 40PX; gap: 4PX; }
+.today-quote-manage { --control-text: #aac5bb; flex: none; width: 40PX; margin: 0; }
+.today-quote-count { display: block; margin: 0; color: #88a0a5; font-size: 11PX; line-height: 1.4; white-space: nowrap; text-align: center; font-variant-numeric: tabular-nums; }
+.today-quote-current { color: #c7d9d3; font-weight: 600; }
+.today-quote-count-divider { margin: 0 3PX; color: #536f79; }
+@media (min-width: 600px) {
+  .today-quote-content { height: 48PX; }
+  .today-quote-text { max-height: 48PX; font-size: 16PX; line-height: 24PX; }
+}

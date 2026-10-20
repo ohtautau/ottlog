@@ -1,0 +1,9 @@
+.editor-fields-layout { display: flex; flex-direction: column; min-width: 0; gap: var(--editor-field-gap,8PX); }
+.editor-fields-layout.has-top-space { padding-top: var(--editor-field-gap,8PX); }
+/* WXSS rejects universal selectors; cover the supported field root nodes explicitly. */
+.editor-fields-layout > view,
+.editor-fields-layout > text,
+.editor-fields-layout > button,
+.editor-fields-layout > input,
+.editor-fields-layout > textarea,
+.editor-fields-layout > scroll-view { flex-shrink: 0; min-width: 0; }

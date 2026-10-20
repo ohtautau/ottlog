@@ -1,0 +1,2 @@
+.card-corner-actions { position: absolute; z-index: 2; right: 4PX; bottom: 4PX; display: flex; align-items: center; gap: 2PX; box-sizing: border-box; height: 40PX; padding: 0; }
+.card-corner-actions > button { flex: none; box-sizing: border-box; width: 40PX; min-width: 40PX; height: 40PX; min-height: 40PX; margin: 0; }

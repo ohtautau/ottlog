@@ -1,0 +1,50 @@
+/* Compact controls share a fixed type scale; object cards own their content layout. */
+page {
+  --control-font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", sans-serif;
+  --control-font-size: 14PX;
+  --control-font-weight: 500;
+  --control-primary-font-size: 16PX;
+  --control-primary-font-weight: 600;
+  --control-line-height: 1.4;
+  --control-radius: 10PX;
+  --control-height: 40PX;
+  --control-regular-height: 44PX;
+  --control-primary-height: 48PX;
+  --control-text: #c7d7df;
+  --control-background: #20333e;
+  --control-border: #3b505a;
+  --control-hover-background: rgba(199, 215, 223, .1);
+  --control-overlay-text: #f3eddf;
+  --control-overlay-background: rgba(16, 25, 35, .85);
+  --control-overlay-hover-background: rgba(16, 25, 35, .96);
+  --control-primary-text: #18332c;
+  --control-primary-background: #b9dbca;
+  --control-selected-text: #d3efdf;
+  --control-selected-background: #304c42;
+  --control-selected-border: #a4cfbc;
+  --control-danger-text: #edb8b6;
+  --control-danger-background: #422d34;
+  --control-danger-border: #63404a;
+  --category-text: #97adae;
+  --category-selected-text: #284a3a;
+  --category-selected-background: #d7e8dd;
+  --category-radius: 6PX;
+  --category-font-size: 13PX;
+  --category-font-weight: 700;
+}
+.ui-button,.ui-choice { display: flex; align-items: center; justify-content: center; min-width: 0; }
+.ui-button::after,.ui-choice::after { border: 0; }
+.ui-button[disabled],.ui-choice[disabled] { opacity: .45; }
+.ui-control-borderless { --control-feedback-background: transparent; }
+.ui-control-borderless:not([disabled]):active,
+.ui-control-borderless.ui-control-pressed:not([disabled]) { --control-feedback-background: var(--control-hover-background); }
+@media (hover: hover) {
+  .ui-control-borderless:not([disabled]):hover { --control-feedback-background: var(--control-hover-background); }
+}
+.ui-control-overlay { --control-feedback-background: var(--control-overlay-background); }
+.ui-control-overlay[disabled] { --control-overlay-text: #c7d0d6; --control-overlay-background: rgba(16, 25, 35, .8); opacity: 1; }
+.ui-control-overlay:not([disabled]):active,
+.ui-control-overlay.ui-control-pressed:not([disabled]) { --control-feedback-background: var(--control-overlay-hover-background); }
+@media (hover: hover) {
+  .ui-control-overlay:not([disabled]):hover { --control-feedback-background: var(--control-overlay-hover-background); }
+}

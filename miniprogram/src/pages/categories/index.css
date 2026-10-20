@@ -1,0 +1,21 @@
+﻿.categories-title { font-size: 58px; line-height: 1.18; font-weight: 750; letter-spacing: -1px; margin: 24px 0 30px; color: #f0f5ff; }
+.categories-title text { color: #6499f0; }
+.categories-summary { display: flex; flex-wrap: wrap; gap: 16px 24px; color: #9ab1cd; font-size: 23px; margin-bottom: 44px; }
+.categories-summary text + text { border-left: 2px solid #48607d; padding-left: 24px; }
+.categories-loading { color: #a8c3e7; font-size: 25px; padding: 20px 0; }
+.categories-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 26px 22px; }
+.categories-page .categories-tile { display: block; margin: 0; padding: 24px 22px 22px; min-width: 0; width: 100%; text-align: left; background: #192633; color: #e8f1ff; border: 0; border-top: 4px solid #6ca1f0; border-radius: 18px; box-shadow: none; line-height: 1.5; }
+.categories-tile-top { display: flex; justify-content: space-between; align-items: center; font-size: 17px; letter-spacing: 1px; color: #607fa2; gap: 8px; }
+.categories-tile-top text:first-child { font-size: 30px; font-weight: 800; }
+.categories-tile-name { font-size: 35px; font-weight: 800; line-height: 1.35; min-height: 94px; margin: 22px 0 24px; word-break: break-all; }
+.categories-tile-bottom { display: flex; align-items: center; justify-content: space-between; font-size: 22px; color: #a0b7d3; }
+.categories-tile-mark { width: 18px; height: 18px; box-shadow: -7px -7px 0 #29435f; }
+.categories-tags-section { padding-top: 60px; }
+.categories-tags-heading { display: flex; align-items: baseline; flex-wrap: wrap; gap: 14px; margin-bottom: 24px; color: #e1edfc; font-size: 36px; font-weight: 800; }
+.categories-tags-heading text { font-weight: 400; font-size: 21px; color: #7f9abb; letter-spacing: 2px; }
+.categories-tags { display: flex; flex-wrap: wrap; gap: 14px 12px; }
+.categories-page .categories-tags button { margin: 0; padding: 9px 14px; color: #b9cfe8; background: transparent; border: 2px solid #3b526d; border-radius: 18px; line-height: 1.6; font-size: 23px; word-break: break-all; text-align: left; }
+.categories-hash { color: #84bfae; }
+.categories-tag-count { color: #708caa; margin-left: 14px; font-size: 20px; }
+.categories-page .categories-all { margin: 44px 0 0; background: #244f8c; color: #deebfe; border: 2px solid #4c77af; border-radius: 18px; font-size: 26px; }
+

@@ -1,0 +1,16 @@
+.focus-page .focus-tomato-scene { position: relative; flex-shrink: 0; margin: 0 auto; }
+.focus-tomato-art,.focus-tomato-ticks { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; }
+.focus-tomato-tick { position: absolute; width: 2rpx; height: 2.33%; background: #465d71; }
+.focus-tomato-tick.is-major { width: 4rpx; }
+.focus-tomato-tick.is-lit { background: #ebac98; }
+.is-resting .focus-tomato-tick.is-lit { background: #a8ceae; }
+.focus-tomato-face { position: absolute; left: 14%; right: 14%; top: 29%; bottom: 31%; display: flex; flex-direction: column; justify-content: center; align-items: center; }
+.focus-page .focus-tomato-scene button.focus-time { display: flex; align-items: center; justify-content: center; width: 100%; min-height: 40PX; padding: 4PX 0; border: 0; border-radius: 10PX; background: transparent; opacity: 1; }
+.focus-time::after { border: 0; }
+.focus-page .focus-tomato-scene .focus-time:not([disabled]):hover,.focus-page .focus-tomato-scene .focus-time-pressed { background: rgba(255,255,255,.12); }
+.focus-page .focus-tomato-scene .focus-time { line-height: 1; font-weight: 750; letter-spacing: -.055em; margin: 10rpx 0 0; color: #172737; text-shadow: 0 2rpx #f1c5ab44; }
+.focus-page .focus-tomato-scene .focus-dial-kind { color: #263b3e; font-weight: 600; line-height: 1.3; letter-spacing: 1rpx; white-space: nowrap; }
+.focus-tomato-progress { position: absolute; left: 13.96%; top: 82.8%; width: 70.42%; height: 3rpx; background: #465d71; }
+.focus-tomato-progress > view { height: 100%; background: #ebac98; transition: width .8s linear; }
+.is-resting .focus-tomato-progress > view { background: #a8ceae; }
+@media (prefers-reduced-motion: reduce) { .focus-tomato-progress > view { transition: none; } }

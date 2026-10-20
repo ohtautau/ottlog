@@ -1,0 +1,10 @@
+.calendar-month-navigation { display: flex; align-items: center; justify-content: space-between; min-width: 0; min-height: 40PX; }
+.calendar-month-navigation > .form-choice-field { min-width: 0; }
+.calendar-month-navigation .calendar-month-trigger { margin: 0; justify-content: flex-start; }
+.calendar-month-label { white-space: nowrap; }
+.calendar-month-buttons { display: flex; align-items: center; flex: none; }
+.calendar-month-buttons button { margin: 0; }
+.calendar-month-popover { border-radius: 12PX; }
+.calendar-month-inputs { font-size: 14PX; color: #afc3ca; }
+.calendar-month-actions button { min-width: 96PX; }
+.calendar-month-error { margin-top: 10PX; font-size: 12PX; color: #9fb4bb; line-height: 1.6; }

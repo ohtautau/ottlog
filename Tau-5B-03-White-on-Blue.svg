@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape" xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd" width="1024" height="1024" viewBox="0 0 512 512" fill="none">
+<title>5B Coil Tau — White on Blue</title>
+<desc>Vector reconstruction from the supplied 5B reference. Top bar, body, tail, eyes and background are separate objects. Flat colors replace raster texture. The brand lettering is reconstructed with a similar geometric font and outlined into editable paths.</desc>
+<sodipodi:namedview id="namedview" inkscape:current-layer="logo" pagecolor="#ffffff"/>
+<g id="background" inkscape:groupmode="layer" inkscape:label="圆角背景 · 可隐藏或解锁" sodipodi:insensitive="true">
+<rect id="rounded-background" inkscape:label="圆角背景" x="2" y="2" width="508" height="508" rx="76" fill="#1958EF"/>
+</g>
+<g id="logo" inkscape:groupmode="layer" inkscape:label="Logo · 独立元素">
+<path id="body" inkscape:label="02 · 身体" fill="#FFFFFF" d="M508 310 L732 310 L732 317 C723 349 718 397 720 436 C721 478 733 507 760 516 C777 522 794 518 802 506 L750.46875 629.328125 C732.9375 633.0625 714.0 635.0 694 635 C612 636 553 608 524 560 C503 525 498 481 500 427 C501 393 507 346 508 316.6 Z" transform="matrix(0.680713128 0 0 0.720833333 -171.147487844 -31.729166667)"/>
+<path id="tail" inkscape:label="03 · 卷尾" fill="#FFFFFF" d="M760 516 C777 522 794 518 802 506 C809 495 806 483 798 477 C790 471 791 463 799 458 C817 448 842 460 856 474 C875 495 874 524 861 551 C837 604 774 635 694 635 L760 516 Z" transform="matrix(0.680713128 0 0 0.720833333 -171.147487844 -31.729166667)"/>
+<path id="top" inkscape:label="01 · 顶部横条" fill="#FFFFFF" d="M508 316.6 C479 316 450 322 410 330 C357 341 324 313 320 277 C312 232 341 198 382 182 C434 160 523 155 622 155 C725 154 810 160 866 179 C909 194 930 220 935 253 C943 301 913 330 872 330 C832 332 780 315 732 317 Q620 322 508 316.6 Z" transform="matrix(0.680713128 0 0 0.720833333 -171.147487844 -31.729166667)"/>
+<ellipse id="eye-left" inkscape:label="04 · 左眼" cx="599.8" cy="343.5" rx="18.5" ry="34" fill="#1958EF" transform="matrix(0.680713128 0 0 0.720833333 -171.147487844 -31.729166667)"/>
+<ellipse id="eye-right" inkscape:label="05 · 右眼" cx="656" cy="343.5" rx="18.5" ry="34" fill="#1958EF" transform="matrix(0.680713128 0 0 0.720833333 -171.147487844 -31.729166667)"/>
+</g>
+</svg>

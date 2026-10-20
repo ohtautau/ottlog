@@ -1,0 +1,9 @@
+page,:root {
+  --section-title-font-size: 14PX;
+  --section-title-compact-font-size: 12PX;
+  --section-title-line-height: 1.4;
+  --section-title-color: #9cafb9;
+  --section-title-content-gap: 6PX;
+}
+.section-title { display: block; min-width: 0; max-width: 100%; }
+.section-title-disclosure { display: flex; align-items: center; justify-content: space-between; gap: 8PX; margin: 0; text-align: left; }

@@ -1,0 +1,2 @@
+.priority-select { flex: none; }
+.priority-select .priority-select-trigger { display: flex; align-items: center; justify-content: center; width: 48PX; margin: 0; }

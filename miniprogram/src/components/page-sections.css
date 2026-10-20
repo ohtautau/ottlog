@@ -1,0 +1,144 @@
+.page.core-page,.tool-page.core-page,.today-page.core-page { padding-top: 0; padding-bottom: calc(32rpx + env(safe-area-inset-bottom)); }
+.core-screen { height: 100vh; min-height: 100vh; display: flex; flex-direction: column; padding-top: 24rpx; padding-bottom: 8PX; box-sizing: border-box; }
+.core-content { flex: 1; min-height: 0; display: flex; flex-direction: column; }
+/* WXSS requires explicit component selectors instead of the universal selector. */
+.core-content > view,.core-content > text,.core-content > button,.core-content > image,.core-content > scroll-view,.core-content > picker,.core-content > input,.core-content > textarea { flex-shrink: 0; }
+.core-screen > .screen-return-hint { margin: 0 0 8rpx; }
+.more-section { min-height: 100vh; box-sizing: border-box; padding: 16rpx 0 32rpx; border-top: 1rpx solid #334650; }
+.more-section .screen-return-hint { margin: 0 0 16rpx; }
+.more-section-title { font-size: 32rpx; font-weight: 600; line-height: 1.5; margin-bottom: 24rpx; color: #e0e9e5; }
+.more-section-heading { display: flex; align-items: center; justify-content: space-between; gap: 8PX; margin-bottom: 12PX; }
+.more-section-heading > .more-section-title { min-width: 0; margin-bottom: 0; }
+.more-section-heading > button { flex: none; margin: 0; }
+.core-screen .tool-header { padding: 8rpx 0 16rpx; }
+.core-screen .tool-kicker,.core-screen .eyebrow { display: none; }
+.core-screen .tool-title { margin: 8rpx 0; font-size: 44rpx; line-height: 1.35; }
+.core-screen .tool-subtitle { font-size: 24rpx; }
+.core-screen .tool-empty { margin: 20rpx 0; padding: 30rpx 20rpx; }
+.today-page .core-screen .today-heading { padding: 18rpx 0 12rpx; }
+.today-page .core-screen .today-title { margin: 4rpx 0; font-size: 48rpx; line-height: 1.35; }
+.today-page .core-screen .today-caption { font-size: 22rpx; }
+.today-page .core-screen .today-shortcut-heading { margin: 0; }
+.today-page .core-screen .today-grid { flex: 1; min-height: 0; gap: 14rpx; }
+.today-all-heading { font-size: 30rpx; font-weight: 600; margin: 32rpx 0 16rpx; }
+.today-all-tools { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12rpx; }
+.today-all-tool { display: flex; align-items: center; gap: 12rpx; margin: 0; padding: 18rpx; min-height: 84rpx; border: 1rpx solid #344650; background: #1a2b35; color: #cadcd5; font-size: 24rpx; text-align: left; }
+.today-all-tool > text { color: #a4c7b9; }
+.daily-more-actions { display: flex; gap: 16rpx; margin-bottom: 24rpx; }
+.daily-more-actions button { flex: 1; margin: 0; min-width: 0; font-size: 25rpx; }
+.core-screen .posts-title { margin: 10rpx 0; font-size: 46rpx; }
+.core-screen .posts-entry-links { margin: 4rpx 0; }
+.core-screen .posts-entry-links button { min-height: 64rpx; padding: 8rpx 14rpx; }
+.core-screen .posts-search { margin: 14rpx 0 6rpx; }
+.core-screen .posts-filter-toggle { min-height: 64rpx; }
+.core-screen .posts-results-count { margin: 6rpx 0 16rpx; }
+.posts-featured { flex: 1; display: flex; min-height: 0; }
+.posts-featured .article-card { flex: 1; margin: 0; padding: 18rpx; display: flex; flex-direction: column; }
+.posts-featured .article-cover { height: 16vh; max-height: 240rpx; flex: 1; min-height: 100rpx; }
+.posts-featured .article-body { padding-top: 4rpx; }
+.posts-featured .article-title { font-size: 30rpx; margin: 4rpx 0 10rpx; }
+.posts-featured .article-description { font-size: 24rpx; line-height: 1.5; }
+.posts-featured .article-tags { display: none; }
+.posts-featured .article-category,.posts-featured .article-read { min-height: 60rpx; padding-top: 8rpx; padding-bottom: 8rpx; }
+.core-screen .categories-title { font-size: 44rpx; margin: 12rpx 0 20rpx; }
+.core-screen .categories-summary { margin-bottom: 20rpx; }
+.core-screen .categories-grid { flex: 1; grid-auto-rows: minmax(180rpx, 1fr); gap: 16rpx; }
+.categories-page .core-screen .categories-tile { display: flex; flex-direction: column; justify-content: space-between; padding: 24rpx; }
+.core-screen .categories-tile-name { margin: 20rpx 0; }
+.core-screen .home-brand { padding-bottom: 16rpx; }
+.core-screen .home-hero { flex: 1; display: flex; flex-direction: column; justify-content: center; padding: 16rpx 0; }
+.core-screen .home-status { margin-bottom: 16rpx; }
+.core-screen .home-leading { font-size: 36rpx; }
+.core-screen .home-rest,.core-screen .home-growth { font-size: 68rpx; }
+.core-screen .home-rest { margin: 22rpx 0; }
+.core-screen .home-mark { width: 180rpx; height: 180rpx; }
+.core-screen .home-mark image { width: 118rpx; height: 118rpx; }
+.core-screen .home-greeting { margin: 24rpx 0 12rpx; }
+.detail-page .core-screen { padding-bottom: 110rpx; }
+.page.detail-page.core-page { padding-bottom: calc(170rpx + env(safe-area-inset-bottom)); }
+.core-screen .detail-heading { padding-top: 0; }
+.core-screen .detail-title { font-size: 44rpx; }
+.core-screen .detail-tags { margin: 12rpx 0; }
+.core-screen .detail-tag { min-height: 64rpx; padding: 12rpx; }
+.core-screen .detail-cover { height: 26vh; max-height: 360rpx; margin: 12rpx 0; object-fit: cover; }
+.core-screen .account-heading { margin: 6rpx 0 20rpx; }
+.core-screen .account-title { font-size: 46rpx; margin: 8rpx 0; }
+.core-screen .account-auth { padding: 20rpx; }
+.core-screen .account-tabs { margin-bottom: 12rpx; }
+.core-screen .account-tabs button { min-height: 68rpx; padding: 12rpx; }
+.core-screen .account-field { margin-top: 14rpx; }
+.core-screen .account-field input { margin: 6rpx 0; }
+.core-screen .account-auth-note { margin-top: 12rpx; font-size: 22rpx; }
+.core-screen .account-submit { margin: 18rpx 0 0; }
+.account-core-tools { flex: 1; display: flex; flex-direction: column; justify-content: center; }
+.account-core-tools > text { font-size: 24rpx; color: #a2b7bf; text-align: center; margin-top: 16rpx; }
+.core-screen .daily-progress-card { margin: 10rpx 0 16rpx; padding: 16rpx 22rpx 22rpx; }
+.core-screen .daily-progress-caption { display: none; }
+.core-screen .daily-progress-number { font-size: 48rpx; }
+.core-screen .daily-moment { flex: 1; padding: 22rpx; display: flex; flex-direction: column; justify-content: center; }
+.core-screen .daily-art { height: 18vh; max-height: 240rpx; margin: 4rpx 0; flex: 1; min-height: 100rpx; }
+.core-screen .daily-art-caption { display: none; }
+.core-screen .daily-moment-title { font-size: 36rpx; margin: 10rpx 0; }
+.core-screen .daily-moment-note { font-size: 24rpx; line-height: 1.5; }
+.core-screen .daily-moment-actions { margin-top: 16rpx; }
+.core-screen .daily-moment-actions button { min-height: 76rpx; padding: 14rpx; font-size: 25rpx; }
+.core-screen .focus-tabs { margin: 8rpx 0 12rpx; }
+.core-screen .focus-tabs button { min-height: 64rpx; font-size: 24rpx; }
+.core-screen .focus-clock-card { flex: 1; display: flex; flex-direction: column; justify-content: center; padding: 18rpx 24rpx; }
+.core-screen .focus-clock-top > text { display: none; }
+.core-screen .focus-clock-top { justify-content: flex-end; }
+.core-screen .focus-dial { width: 25vh; height: 25vh; max-width: 330rpx; max-height: 330rpx; margin: 16rpx auto 48rpx; }
+.core-screen .focus-leaf-mark { display: none; }
+.core-screen .focus-time { font-size: 76rpx; margin: 8rpx 0; }
+.core-screen .focus-dial-kind,.core-screen .focus-dial-caption { font-size: 20rpx; }
+.core-screen .focus-rounds { margin: 10rpx 0; }
+.core-screen .focus-purpose { margin-top: 8rpx; margin-bottom: 4rpx; padding-top: 10rpx; }
+.core-screen .focus-purpose-input { height: 64rpx; min-height: 64rpx; font-size: 26rpx; }
+.core-screen .focus-start { min-height: 76rpx; margin: 12rpx 0 0; padding: 14rpx; font-size: 27rpx; }
+.core-screen .focus-secondary-actions { margin-top: 10rpx; }
+.core-screen .focus-secondary-actions button { min-height: 88rpx; padding: 14rpx 12rpx; font-size: 23rpx; }
+@media (max-height: 700px) {
+  .core-screen .focus-dial { width: 20vh; height: 20vh; }
+}
+@media (min-width: 600px) {
+  .focus-page .core-screen .focus-dial { width: 14vh; height: 14vh; }
+  .focus-page .core-screen .focus-time { font-size: 36rpx; margin: 4rpx 0; }
+  .focus-page .core-screen .focus-dial-kind,.focus-page .core-screen .focus-dial-caption { font-size: 14rpx; }
+  .core-screen .focus-purpose-input { height: 40rpx; min-height: 40rpx; }
+  .focus-page .core-screen .focus-clock-card { padding-top: 8rpx; padding-bottom: 8rpx; }
+}
+.core-screen .meal-date-row { margin: 16rpx 0; }
+.core-screen .meal-totals { flex: 1; align-items: center; margin: 24rpx 0; }
+.choice-core-result { margin: 20rpx 0; padding: 28rpx; background: #243c3c; border-radius: 24rpx; }
+.choice-core-result > view { font-size: 36rpx; font-weight: 600; margin-bottom: 16rpx; }
+.choice-core-result > text { font-size: 26rpx; line-height: 1.7; color: #b7ccc8; }
+.core-screen .choice-orbit { width: 32vh; height: 32vh; max-width: 400rpx; max-height: 400rpx; margin: auto; }
+.todo-stages > .more-section { padding: 28rpx 32rpx; }
+.todo-core { height: 100vh; padding-top: 12PX; }
+.todo-core .todo-page { position: relative; inset: auto; flex: 1; min-height: 0; }
+.todo-stages .todo-filter-panel { position: static; display: block; padding: 0; border: 0; background: transparent; }
+.todo-stages .todo-filter-panel .todo-overview { margin-top: 0; }
+.todo-stages .todo-category-filter { max-width: none; }
+.choice-more { padding: 0 32rpx; }
+.choice-list-option { text-align: left; padding: 28rpx; background: #22343e; color: #dbe6df; }
+.choice-list-option > view { font-size: 32rpx; margin-bottom: 12rpx; }
+.choice-list-option > text { display: block; font-size: 24rpx; font-weight: 400; line-height: 1.65; color: #a8bec4; white-space: pre-line; }
+@media (min-aspect-ratio: 3/5) {
+  .core-screen .tool-header .tool-subtitle,.core-screen .today-caption { display: none; }
+  .core-screen .tool-title { font-size: 36rpx; }
+  .core-screen .daily-art { min-height: 60rpx; height: 12vh; }
+  .core-screen .daily-art-symbol { width: 100rpx; height: 100rpx; font-size: 64rpx; }
+  .core-screen .daily-art-orbit { width: 130rpx; height: 130rpx; }
+  .core-screen .daily-progress-card { margin: 0 0 10rpx; padding: 12rpx 18rpx; }
+  .core-screen .daily-progress-card > view:first-child { display: flex; align-items: center; gap: 16rpx; }
+  .core-screen .daily-progress-title { margin: 0; }
+  .core-screen .daily-history-card { padding: 18rpx; margin: 10rpx 0; }
+  .core-screen .focus-dial { width: 20vh; height: 20vh; }
+  .core-screen .focus-clock-card { padding-top: 12rpx; padding-bottom: 12rpx; }
+  .core-screen .focus-time { font-size: 60rpx; }
+  .core-screen .account-help { font-size: 22rpx; line-height: 1.5; }
+  .core-screen .account-heading .muted { display: none; }
+  .posts-featured .article-card { display: grid; grid-template-columns: minmax(0, .8fr) minmax(0, 1.2fr); gap: 20rpx; align-items: center; }
+  .posts-featured .article-cover { height: 100%; max-height: 30vh; min-height: 0; }
+  .posts-featured .article-description { -webkit-line-clamp: 2; }
+}

@@ -1,0 +1,25 @@
+.daily-editor-overlay { position: fixed; inset: 0; z-index: 100; display: flex; align-items: flex-end; background: rgba(4,12,17,.72); }
+.daily-editor-sheet,.daily-detail-sheet,.daily-reflection-sheet { position: relative; }
+.daily-editor-sheet,.daily-detail-sheet { display: flex; flex-direction: column; width: 100%; max-height: min(90vh,calc(100% - 12PX)); height: 1080rpx; border-radius: 32rpx 32rpx 0 0; background: #192633; overflow: hidden; }
+.daily-editor-scroll,.daily-detail-scroll { flex: 1; height: 0; min-height: 0; }
+.daily-editor { padding: var(--editor-field-gap,8PX) 32rpx 24rpx; }
+.daily-editor-message { color: #edd1a2; font-size: 24rpx; line-height: 1.7; margin: 0; }
+.daily-field-label { display: block; font-size: 24rpx; color: #b9c5c9; margin: 24rpx 0 12rpx; }
+.daily-form-grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 18rpx; }
+.daily-form-grid > view { min-width: 0; }
+.daily-form-grid .tool-input { width: 100%; height: 92rpx; min-height: 92rpx; box-sizing: border-box; margin: 0; padding: 0 24rpx; line-height: normal; }
+.daily-select { display: flex; align-items: center; justify-content: space-between; min-height: 92rpx; border: 1rpx solid #43525b; padding: 0 20rpx; color: #f3eddf; border-radius: 16rpx; font-size: 26rpx; background: #15212c; }
+.daily-select > .habit-icon { width: 40rpx; height: 40rpx; flex-shrink: 0; margin-right: 12rpx; }
+.daily-icon-select > text:first-of-type { flex: 1; }
+.daily-editor-footer { flex-shrink: 0; }
+.daily-editor-footer button { flex: 1; min-width: 0; margin: 0; }
+.daily-title-icon { flex: none; width: 40PX; margin: 0; padding: 0; border: 1rpx solid #405662; border-radius: 16rpx; background: #20333e; }
+.daily-editor .daily-icon-select { display: flex; width: 100%; margin: 0; min-height: 88rpx; font-weight: 400; text-align: left; }
+.daily-icon-library-label { margin-left: auto; flex-shrink: 0; color: #b9dbca; font-size: 22rpx; }
+.daily-priority-field { flex: none; margin-left: auto; }
+.daily-domain-field { min-width: 0; }
+.daily-editor-settings { display: flex; align-items: center; gap: 8PX; margin: 0; padding-top: var(--editor-section-inset,12PX); border-top: 1PX solid #30434a; }
+.daily-time-period-field { display: grid; grid-template-columns: repeat(5,minmax(0,1fr)); gap: 6PX; width: 100%; min-width: 0; }
+.daily-editor-lifecycle { display: flex; gap: 8PX; margin: 0; padding-top: var(--editor-section-inset,12PX); border-top: 1PX solid #30434a; }
+.daily-editor-lifecycle button { flex: 1; margin: 0; }
+.daily-title-row .daily-title-icon > .habit-icon { width: 28PX; height: 28PX; }

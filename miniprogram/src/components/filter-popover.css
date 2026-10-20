@@ -1,0 +1,9 @@
+.filter-fields { display: flex; flex-direction: column; gap: 8PX; padding: 0 12PX 8PX; }
+.filter-popover .filter-field-label-row { padding-left: max(0PX,calc(var(--editor-heading-horizontal-space,32rpx) - 12PX)); }
+.filter-field-label-row { display: flex; align-items: center; justify-content: space-between; min-height: 20PX; gap: 8PX; margin-bottom: 6PX; }
+.filter-field-label-row.is-inline { flex-shrink: 0; margin-bottom: 0; }
+.filter-field-label { flex: 1; }
+.filter-field-caption { color: #8fa5b2; font-size: 12PX; line-height: 1.4; }
+.filter-option-grid { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 6PX; }
+.filter-option-grid > button { width: 100%; min-width: 0; gap: 6PX; margin: 0; white-space: normal; overflow-wrap: anywhere; }
+.filter-search .filter-search-clear { flex: none; width: 40PX; margin: 0; }

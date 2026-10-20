@@ -1,0 +1,46 @@
+.statistics-food-growth { min-width: 0; color: #e4e9e4; }
+.statistics-fg-heading { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12rpx; margin: 20rpx 0; }
+.statistics-fg-heading > text:first-child { font-size: clamp(16PX,30rpx,20PX); font-weight: 600; }
+.statistics-fg-heading > text:last-child, .statistics-fg-note { color: #93aab4; font-size: clamp(14PX,24rpx,16PX); line-height: 1.65; }
+.statistics-fg-note { display: block; margin: 18rpx 0; }
+.statistics-diet-date { display: flex; align-items: center; gap: 16rpx; margin: 24rpx 0; }
+.statistics-diet-date > picker { flex: 1; min-width: 0; }
+.statistics-date-value { padding: 10rpx 4rpx; text-align: center; }
+.statistics-date-value > text { display: block; }
+.statistics-date-value > text:first-child { font-size: clamp(16PX,30rpx,20PX); font-weight: 600; }
+.statistics-date-value > text:last-child { color: #93aab4; font-size: clamp(14PX,23rpx,16PX); }
+.statistics-food-growth .statistics-date-arrow, .statistics-food-growth .statistics-today-button { flex: none; min-width: 88rpx; min-height: max(88rpx,44PX); margin: 0; padding: 8rpx 20rpx; border: 1rpx solid #38505b; border-radius: 16rpx; background: #192c37; color: #b9dbca; font-size: clamp(14PX,26rpx,18PX); font-weight: 400; }
+.statistics-food-growth .statistics-date-arrow { width: max(88rpx,44PX); padding: 0; font-size: clamp(20PX,44rpx,28PX); line-height: 1; }
+.statistics-diet-totals, .statistics-growth-overview { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 12rpx; }
+.statistics-fg-metric { min-width: 0; padding: 20rpx 14rpx; border: 1rpx solid #304550; border-radius: 18rpx; background: #192633; }
+.statistics-fg-metric > text { display: block; }
+.statistics-fg-metric > text:first-child { color: #a8c5b5; font-size: clamp(14PX,23rpx,16PX); line-height: 1.5; }
+.statistics-fg-metric > text:nth-child(2) { margin-top: 8rpx; color: #f3eddf; font-size: clamp(20PX,36rpx,24PX); font-weight: 600; line-height: 1.4; font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
+.statistics-fg-metric > text:nth-child(2) > text { color: #93aab4; font-size: clamp(12PX,21rpx,15PX); font-weight: 400; }
+.statistics-nutrient-line { height: 5rpx; margin-top: 14rpx; border-radius: 4rpx; }
+.statistics-growth .growth-overview > view { padding: 20rpx 14rpx; border: 1rpx solid #304550; }
+.statistics-growth .growth-overview > view > text:first-child { margin: 0; color: #f3eddf; font-size: clamp(20PX,36rpx,24PX); line-height: 1.4; font-weight: 600; }
+.statistics-growth .growth-overview > view > text:last-child { margin-top: 8rpx; color: #a8c5b5; font-size: clamp(14PX,23rpx,16PX); line-height: 1.5; font-weight: 400; white-space: normal; }
+.statistics-growth .growth-overview > view:nth-child(2) > text:first-child { color: #b9dbca; }
+.statistics-growth .growth-overview > view:nth-child(3) > text:first-child { color: #e1c699; }
+.statistics-growth .growth-legend { display: flex; flex-wrap: wrap; gap: 16rpx 24rpx; margin: 24rpx 0; color: #a7bac0; font-size: clamp(14PX,23rpx,16PX); }
+.statistics-growth .growth-legend > view { display: flex; align-items: center; gap: 8rpx; }
+.statistics-growth .growth-legend > view > view { width: 20rpx; height: 6rpx; border-radius: 3rpx; }
+.statistics-growth .growth-legend > text { margin-left: 0; color: #93aab4; }
+.statistics-growth .statistics-growth-domains { display: grid; gap: 16rpx; }
+.statistics-growth .growth-domain-card { min-width: 0; padding: 20rpx; border: 1rpx solid #304550; border-radius: 18rpx; background: #192a36; }
+.statistics-growth .statistics-growth-domain-heading { display: flex; align-items: center; gap: 14rpx; min-width: 0; }
+.statistics-growth .statistics-growth-icon { width: min(48rpx,32PX); height: min(48rpx,32PX); }
+.statistics-growth .growth-domain-name { flex: 1; min-width: 0; font-size: clamp(16PX,28rpx,19PX); font-weight: 600; white-space: normal; overflow-wrap: anywhere; }
+.statistics-growth .statistics-growth-archived { flex: none; color: #93aab4; font-size: clamp(12PX,22rpx,15PX); }
+.statistics-growth .growth-domain-values { display: flex; gap: 22rpx; margin: 14rpx 0 10rpx; font-size: clamp(14PX,25rpx,17PX); font-variant-numeric: tabular-nums; }
+.statistics-growth .growth-total-value { color: #a4c7ed; }
+.statistics-growth .growth-month-value { color: #eaa6aa; }
+.statistics-growth .growth-week-value { color: #afdcbc; }
+.statistics-growth .growth-legend .is-recent, .statistics-growth .growth-progress-recent { background: #83b5ea; }
+.statistics-growth .growth-legend .is-month, .statistics-growth .growth-progress-month { background: #e8959a; }
+.statistics-growth .growth-legend .is-week, .statistics-growth .growth-progress-week { background: #9dd3ad; }
+.statistics-growth .growth-track { position: relative; height: 12rpx; border-radius: 6rpx; overflow: hidden; background: #2c414e; }
+.statistics-growth .growth-track > view { position: absolute; top: 0; left: 0; height: 100%; border-radius: inherit; }
+.statistics-growth .growth-month-marker { width: 3rpx; border-radius: 1rpx; background: #efb2b6; transform: translateX(-100%); }
+.statistics-growth .statistics-growth-total { display: block; margin-top: 14rpx; color: #93aab4; font-size: clamp(14PX,23rpx,16PX); line-height: 1.65; overflow-wrap: anywhere; }

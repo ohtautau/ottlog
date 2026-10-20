@@ -1,0 +1,100 @@
+/* Reproducible offline facts from Hong Kong Observatory, not Intl/device locale. */
+const fs = require('node:fs');
+const path = require('node:path');
+const assert = require('node:assert/strict');
+const cache = path.join(__dirname, '../test-results/calendar-source-cache');
+const output = path.join(__dirname, '../src/lib/calendar-lunar-data.ts');
+const rows = new Map();
+const dayMs = 86400000;
+async function fetchYear(year) {
+  const file = path.join(cache, `${year}.txt`);
+  let text = fs.existsSync(file) ? fs.readFileSync(file, 'utf8') : '';
+  if (!text) {
+    const response = await fetch(`https://www.hko.gov.hk/en/gts/time/calendar/text/files/T${year}e.txt`);
+    assert(response.ok, `${year}: HTTP ${response.status}`);
+    text = await response.text();
+  }
+  const parsed = [...text.matchAll(/^(\d{4})\/(\d{1,2})\/(\d{1,2})[ \t]+(.+?)[ \t]+(?:Monday|Tuesday|Wednesday|Thursday|Friday|Saturday|Sunday)[ \t]*([^\r\n]*)/gm)].map(match => ({
+    iso: `${match[1]}-${match[2].padStart(2, '0')}-${match[3].padStart(2, '0')}`,
+    value: match[4].trim(), term: match[5].trim(),
+  }));
+  // HKO's English 2069 file omits December 30; its Chinese counterpart
+  // explicitly records 十七. Keep the correction tied to that official row.
+  if (year === 2069 && !parsed.some(row => row.iso === '2069-12-30')) {
+    const chineseFile = path.join(cache, '2069c.txt');
+    const chinese = fs.existsSync(chineseFile) ? fs.readFileSync(chineseFile, 'utf8') : await (await fetch('https://www.hko.gov.hk/tc/gts/time/calendar/text/files/T2069c.txt')).text();
+    assert(/2069年12月30日[ \t]+十七[ \t]+星期一/.test(chinese));
+    fs.writeFileSync(chineseFile, chinese);
+    parsed.push({ iso: '2069-12-30', value: '17', term: '' });
+    parsed.sort((a, b) => a.iso.localeCompare(b.iso));
+  }
+  assert.equal(parsed.length, (Date.UTC(year + 1, 0, 1) - Date.UTC(year, 0, 1)) / dayMs, `${year}: incomplete table`);
+  parsed.forEach((row, index) => assert.equal(Date.parse(`${row.iso}T00:00:00Z`), Date.UTC(year, 0, 1) + index * dayMs));
+  rows.set(year, parsed);
+  if (!fs.existsSync(file)) fs.writeFileSync(file, text);
+}
+async function main() {
+  fs.mkdirSync(cache, { recursive: true });
+  let next = 1901;
+  await Promise.all(Array.from({ length: 5 }, async () => {
+    while (next <= 2100) {
+      const year = next++;
+      await fetchYear(year);
+      if (year % 25 === 0) console.log(`Downloaded official table through ${year}`);
+    }
+  }));
+  // The first official date is lunar 11th month, day 11. Repeated month
+  // numbers identify leap months (the English files do not spell out "leap").
+  let month = 11, lunarDay = 10, leap = false;
+  const all = [...rows.keys()].sort().flatMap(year => rows.get(year));
+  all.forEach(row => {
+    const start = row.value.match(/^(\d+)(?:st|nd|rd|th) Lunar month$/i);
+    if (start) {
+      const number = Number(start[1]);
+      assert(lunarDay === 29 || lunarDay === 30, `${row.iso}: unexpected month length`);
+      assert(number === month || number === month % 12 + 1, `${row.iso}: month sequence`);
+      leap = number === month;
+      month = number; lunarDay = 1;
+    } else {
+      lunarDay++;
+      assert.equal(Number(row.value), lunarDay, `${row.iso}: lunar day sequence`);
+      assert(lunarDay <= 30);
+    }
+    Object.assign(row, { month, day: lunarDay, leap });
+  });
+  let packed = '', qingming = '';
+  for (let year = 1901; year <= 2100; year++) {
+    const list = rows.get(year), segments = [0, ...list.map((row, i) => row.day === 1 && i ? i : -1).filter(i => i >= 0)];
+    assert(segments.length <= 14);
+    let lengths = 0, leapIndex = 0;
+    segments.forEach((begin, index) => {
+      const end = segments[index + 1];
+      let length;
+      if (end !== undefined) length = end - begin + list[begin].day - 1;
+      else {
+        const following = rows.get(year + 1)?.findIndex(row => row.day === 1);
+        length = following >= 0 ? list.length - begin + following + list[begin].day - 1 : 30;
+      }
+      assert(length === 29 || length === 30, `${year}: segment length ${length}`);
+      if (length === 30) lengths |= 1 << index;
+      if (list[begin].leap) { assert(!leapIndex, `${year}: duplicate leap segment`); leapIndex = index + 1; }
+    });
+    const code = list[0].month | list[0].day << 4 | leapIndex << 9 | lengths << 13;
+    packed += code.toString(36).padStart(6, '0');
+    const q = list.find(row => /Bright\s*&\s*Clear/i.test(row.term));
+    assert(q, `${year}: Qingming missing`);
+    qingming += q.iso.slice(9);
+    list.forEach((row, offset) => {
+      let m = code & 15, day = (code >>> 4 & 31) - 1 + offset, i = 0;
+      while (day >= 29 + (code >>> (13 + i) & 1)) {
+        day -= 29 + (code >>> (13 + i) & 1); i++;
+        if (i + 1 !== (code >>> 9 & 15)) m = m % 12 + 1;
+      }
+      assert.deepEqual([m, day + 1, i + 1 === (code >>> 9 & 15)], [row.month, row.day, row.leap], row.iso);
+    });
+  }
+  const source = `// Generated by scripts/generate-calendar-lunar.cjs from HKO 1901–2100.\n// Six base-36 chars/year: initial month/day, leap segment, 29/30-day lengths.\nexport const lunarYearData = '${packed}';\nexport const qingmingDayData = '${qingming}';\n`;
+  fs.writeFileSync(output, source);
+  console.log(`Verified ${all.length} official dates; wrote ${Buffer.byteLength(source)} bytes.`);
+}
+main().catch(error => { console.error(error); process.exitCode = 1; });

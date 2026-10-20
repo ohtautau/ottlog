@@ -1,0 +1,36 @@
+.detail-page { max-width: 1060px; margin: 0 auto; }
+.detail-heading { padding-top: 16px; }
+.detail-meta { display: flex; align-items: center; flex-wrap: wrap; gap: 20px; color: #99acc3; font-size: 23px; }
+.detail-category { color: #fff; background: #2467ec; padding: 6px 15px; font-weight: 700; }
+.detail-title { font-size: 58px; line-height: 1.4; font-weight: 900; color: #f3eee4; margin: 30px 0; word-break: break-word; }
+.detail-byline { display: flex; align-items: center; gap: 15px; font-size: 25px; font-weight: 650; }
+.detail-avatar { width: 40px; height: 40px; line-height: 40px; text-align: center; background: #2467ec; color: #fff; font-size: 30px; font-weight: 800; }
+.detail-date { color: #92a6bf; margin-left: auto; font-size: 24px; font-variant-numeric: tabular-nums; }
+.detail-description { border-left: 5px solid #87bcad; padding-left: 23px; margin: 35px 0 26px; color: #bccddd; font-size: 29px; line-height: 1.9; }
+.detail-tags { display: flex; flex-wrap: wrap; gap: 12px; margin: 25px 0; }
+.detail-tag { color: #a8c6dd; border: 2px solid #35536c; font-size: 22px; padding: 2px 12px; }
+.detail-cover { display: block; width: 100%; margin: 35px 0 0; background: #1a2b3d; }
+.detail-prose { margin-top: 50px; min-width: 0; overflow-wrap: break-word; }
+.detail-end { display: flex; justify-content: space-between; margin: 48px 0 32px; padding-top: 22px; border-top: 3px solid #2c435b; font-size: 21px; color: #879eb8; }
+.detail-actions { display: flex; gap: 18px; }
+.detail-actions button { flex: 1; margin: 0; padding: 0 10px; font-size: 25px; }
+.detail-actions .detail-saved { color: #11212c; background: #95cbbb; border-color: #95cbbb; }
+.detail-copy { margin: 23px 0 0; background: transparent; color: #afc7e0; border-color: #38516a; box-shadow: none; font-size: 24px; }
+.detail-comments { margin-top: 75px; }
+.detail-section-title { display: flex; justify-content: space-between; align-items: baseline; gap: 20px; font-size: 40px; font-weight: 800; padding-bottom: 22px; border-bottom: 4px solid #47617f; }
+.detail-comment { margin: 26px 0; padding: 26px; background: #172638; border-left: 4px solid #42688d; }
+.detail-comment-head { display: flex; justify-content: space-between; gap: 16px; margin-bottom: 16px; }
+.detail-comment-author { color: #e6eaf0; font-size: 27px; font-weight: 700; }
+.detail-comment-date { font-size: 21px; color: #90a5bf; }
+.detail-comment-content { white-space: pre-wrap; word-break: break-word; font-size: 27px; color: #c4d0df; }
+.detail-empty { padding: 30px 0; color: #9aafc7; font-size: 26px; }
+.detail-comment-form { margin-top: 35px; }
+.detail-label { font-size: 29px; font-weight: 750; }
+.detail-form-note { display: flex; justify-content: space-between; font-size: 22px; color: #90a4be; }
+.detail-feedback { font-size: 25px; color: #a8d6c8; padding: 12px 0; }
+.detail-error { color: #e7b6a8; font-size: 25px; padding: 20px 0; }
+.detail-text-button { display: block; color: #a8cdff; text-decoration: underline; padding: 12px 0; }
+.detail-loading { padding: 40px 0; }
+.detail-skeleton { height: 58px; background: #233750; margin: 40px 0 20px; }
+.detail-skeleton.short { width: 66%; margin: 0 0 30px; }
+.detail-page{padding-bottom:calc(170px + env(safe-area-inset-bottom))}.detail-title{font-size:52px;font-weight:750}.detail-category{background:#23443b;color:#b9dbca;border-radius:10px;padding:18px;min-height:88px;display:inline-flex;align-items:center}.detail-avatar{border-radius:12px;background:#b9dbca;color:#19352d}.detail-tag{min-height:88px;padding:20px 16px;border-radius:14px;display:inline-flex;align-items:center;background:#192633;border:1px solid #2e4553}.detail-cover{border-radius:20px}.detail-actions{position:fixed;z-index:20;left:0;right:0;bottom:0;padding:18px 28px calc(18px + env(safe-area-inset-bottom));background:#101923;border-top:1px solid #30434d;gap:14px}.detail-actions button{min-height:88px;background:#223642;color:#c5d7dd;font-size:24px;border-radius:16px}.detail-actions button:first-child{flex:1.5;background:#b9dbca;color:#19352d}.detail-comment{border-radius:18px;border-left:0;background:#192633}.detail-section-title{border-bottom-width:1px;font-weight:700}.detail-copy{border-radius:16px}

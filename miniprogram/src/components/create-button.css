@@ -1,0 +1,9 @@
+.create-button.button-label { display: flex; align-items: center; justify-content: center; gap: 6PX; min-width: 0; margin: 0; white-space: nowrap; }
+.create-button-label { min-width: 0; }
+.create-button-icon-only.button-label { min-width: var(--control-height); }
+.create-button-icon-only.create-button-regular { min-width: var(--control-regular-height); }
+.create-button-icon-only.create-button-large { min-width: var(--control-primary-height); }
+.button-add-symbol { position: relative; display: block; flex: none; width: 14PX; height: 14PX; color: inherit; pointer-events: none; }
+.button-add-symbol > view { position: absolute; border-radius: 1PX; background: currentColor; }
+.button-add-symbol > view:first-child { width: 14PX; height: 2PX; top: 6PX; left: 0; }
+.button-add-symbol > view:last-child { width: 2PX; height: 14PX; top: 0; left: 6PX; }

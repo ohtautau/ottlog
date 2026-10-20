@@ -1,0 +1,5 @@
+.habit-note-field { width: 100%; box-sizing: border-box; min-height: 144rpx; font-size: 26rpx; margin: 0; }
+textarea.tool-input.habit-note-field { width: 100%; box-sizing: border-box; height: 144rpx; min-height: 144rpx; font-size: 26rpx; margin: 0; }
+/* Read-only frames own their height even inside pages with compact form inputs. */
+.tool-input.habit-note-field.is-readonly { flex: none; height: auto; min-height: 44PX; margin: 0; padding: 6PX 12PX; font-size: 14PX; line-height: 1.5; white-space: pre-wrap; overflow-wrap: anywhere; }
+.habit-note-field.is-readonly > text { display: block; }

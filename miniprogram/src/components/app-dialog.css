@@ -1,0 +1,9 @@
+.app-dialog-layer { position: fixed; inset: 0; z-index: 400; display: flex; align-items: center; justify-content: center; padding: 12PX; box-sizing: border-box; background: rgba(4,10,16,.7); }
+.app-dialog-layer,.app-message { --prompt-surface: #22313d; --prompt-border: #46605f; --prompt-text: #dce6df; --prompt-error: #efb7a2; --prompt-shadow: 0 8PX 28PX #030b1355; }
+.app-dialog-panel { --popup-actions-safe-area: 0PX; position: relative; display: flex; flex-direction: column; box-sizing: border-box; width: 100%; max-width: 360PX; max-height: calc(100vh - 24PX); border: 1PX solid var(--prompt-border); border-radius: 12PX; background: var(--prompt-surface); color: var(--prompt-text); overflow: hidden; box-shadow: var(--prompt-shadow); }
+.app-dialog-scroll { flex: 0 1 auto; min-height: 0; max-height: calc(100vh - 140PX); }
+.app-dialog-body { box-sizing: border-box; padding: 8PX 16PX; white-space: pre-wrap; overflow-wrap: anywhere; font-size: 14PX; line-height: 1.65; }
+.app-dialog-error { display: block; margin-top: 8PX; color: var(--prompt-error); }
+.app-dialog-panel .sheet-actions { flex: none; gap: 8PX; }
+.app-dialog-panel .sheet-actions > button { flex: 1; min-width: 0; }
+.app-message { position: fixed; z-index: 440; left: 24PX; right: 24PX; bottom: max(80PX,env(safe-area-inset-bottom)); width: fit-content; max-width: calc(100% - 48PX); margin: 0 auto; padding: 12PX 16PX; border: 1PX solid var(--prompt-border); border-radius: 12PX; background: var(--prompt-surface); color: var(--prompt-text); text-align: center; font-size: 14PX; line-height: 1.65; overflow-wrap: anywhere; box-shadow: var(--prompt-shadow); pointer-events: none; }

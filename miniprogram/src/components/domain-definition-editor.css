@@ -1,0 +1,9 @@
+.domain-definition-root { --domain-surface: #192633; --domain-text: #f3eddf; --domain-muted: #9eafb9; --domain-line: #30424e; color: var(--domain-text); }
+.domain-definition-overlay { position: fixed; inset: 0; z-index: 110; display: flex; align-items: flex-end; justify-content: center; }
+.domain-definition-root .domain-definition-panel { position: relative; box-sizing: border-box; display: flex; flex-direction: column; width: 100%; max-width: 680PX; height: auto; min-height: 0; max-height: calc(100% - 12PX); background: var(--domain-surface); border-radius: 16PX 16PX 0 0; overflow: hidden; }
+.domain-definition-root .domain-definition-content { align-items: stretch; gap: var(--editor-field-gap,8PX); padding: var(--editor-field-gap,8PX) 16PX 16PX; }
+.domain-definition-root .domain-definition-icon { flex: none; width: 40PX; min-width: 40PX; margin: 0; }
+.domain-definition-root .domain-definition-icon .library-icon { flex: none; width: 26PX; height: 26PX; }
+.domain-definition-root .domain-definition-error { display: block; margin: 0; padding: 0 16PX 12PX; color: #dcc4b4; font-size: 14PX; line-height: 1.6; overflow-wrap: anywhere; }
+.domain-definition-actions .ui-button { flex: 1; min-width: 0; margin: 0; }
+@media(min-width:700px) { .domain-definition-root .domain-definition-content { padding-left: 24PX; padding-right: 24PX; }.domain-definition-root .domain-definition-panel > .domain-definition-error { padding-left: 24PX; padding-right: 24PX; }.domain-definition-root .domain-definition-actions { padding-left: 24PX; padding-right: 24PX; } }

@@ -1,0 +1,5 @@
+.sort-icon { display: flex; align-items: center; justify-content: center; gap: 12rpx; width: 32rpx; height: 32rpx; color: inherit; }
+.sort-icon-up,.sort-icon-down { position: relative; width: 2rpx; height: 26rpx; border-radius: 2rpx; background: currentColor; }
+.sort-icon-up::before,.sort-icon-down::before { content: ''; position: absolute; left: -5rpx; width: 10rpx; height: 10rpx; border-top: 2rpx solid currentColor; border-left: 2rpx solid currentColor; box-sizing: border-box; }
+.sort-icon-up::before { top: 1rpx; transform: rotate(45deg); }
+.sort-icon-down::before { bottom: 1rpx; transform: rotate(225deg); }

@@ -1,0 +1,26 @@
+.domain-records { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); min-width: 0; border-top: 1rpx solid var(--domain-line); padding-top: 10rpx; }
+.domain-records.is-compact { border-top: 0; padding-top: 0; }
+.domain-records.is-scrollable { box-sizing: border-box; height: 100%; min-height: 0; grid-template-rows: minmax(0,1fr); overflow: hidden; }
+.domain-record-column.has-scroll { display: flex; flex-direction: column; min-height: 0; overflow: hidden; }
+.domain-record-column.has-scroll .domain-record-add { flex: none; }
+.domain-record-scroll { flex: 1; height: 0; min-height: 0; min-width: 0; overscroll-behavior-y: contain; }
+.domain-record-scroll-content { padding-bottom: 4PX; }
+.domain-record-column,.domain-record { font-size: var(--domain-record-font-size,min(22rpx,13PX)); color: var(--domain-negative); }
+.domain-record-column { min-width: 0; cursor: pointer; padding: 0 var(--domain-record-column-padding,18rpx) 4rpx 0; }
+.domain-record-column + .domain-record-column { padding: 0 0 4rpx var(--domain-record-column-padding,18rpx); border-left: 1rpx solid var(--domain-line); }
+.domain-record-column.is-positive,.domain-record.is-positive { color: var(--domain-positive); }
+.domain-record-column.is-static { cursor: auto; }
+.domain-record-add { display: flex; align-items: center; gap: 6rpx; width: 100%; min-height: max(80rpx,40PX); margin: 0; padding: 12rpx 0; background: transparent; color: inherit; font-size: inherit; font-weight: 500; text-align: left; }
+.domain-record-empty { display: block; font-size: min(21rpx,12PX); color: #8296a2; line-height: 1.8; padding: 2rpx 0 12rpx; max-width: 220rpx; }
+.domain-record { display: flex; align-items: flex-start; gap: var(--domain-record-gap,8rpx); width: 100%; min-width: 0; min-height: 0; margin: 0; padding: var(--domain-record-padding,2PX) 0; border: 0; border-radius: 0; background: transparent; font-weight: inherit; line-height: 1.65; text-align: left; }
+.domain-record::after { border: 0; }
+.domain-record-sign { flex: none; }
+.domain-record-body { flex: 1; min-width: 0; }
+.domain-record[disabled] { opacity: .5; }
+.domain-record:not([disabled]):active,.domain-record-pressed:not([disabled]) { background: var(--control-hover-background); }
+@media(hover:hover) { .domain-record-add:hover { background-color: #263946; } .domain-record:not([disabled]):hover { background: var(--control-hover-background); } }
+@media(min-width:700px) {
+  .domain-records { --domain-record-column-padding: 14PX; --domain-record-gap: 6PX; padding-top: 6PX; }
+  .domain-record-add { min-height: 40PX; gap: 6PX; padding: 8PX 0; }
+  .domain-record-empty { padding: 2PX 0 8PX; max-width: none; }
+}

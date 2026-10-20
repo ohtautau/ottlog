@@ -1,0 +1,3 @@
+.swipe-panels { position: relative; overflow: hidden; min-width: 0; }
+.swipe-panel-current { min-width: 0; }
+.swipe-panel-adjacent { position: absolute; inset: 0; min-width: 0; pointer-events: none; }

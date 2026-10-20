@@ -1,0 +1,28 @@
+.manage-symbol { display: flex; flex-direction: column; justify-content: space-between; flex: none; width: 20PX; height: 16PX; color: inherit; }
+.manage-symbol > view { position: relative; width: 20PX; height: 2PX; border-radius: 1PX; background: currentColor; }
+.manage-symbol > view::after { content: ''; position: absolute; top: -2PX; left: 4PX; width: 6PX; height: 6PX; border-radius: 50%; background: currentColor; }
+.manage-symbol > view:nth-child(2)::after { left: 12PX; }
+.edit-symbol,.delete-symbol { position: relative; display: block; flex: none; width: 20PX; height: 20PX; color: inherit; }
+.edit-symbol > view { position: absolute; top: 2PX; left: 8PX; width: 5PX; height: 14PX; border: 1.5PX solid currentColor; border-radius: 1PX; transform: rotate(45deg); }
+.edit-symbol > view::after { content: ''; position: absolute; bottom: -5PX; left: -.5PX; width: 0; height: 0; border-left: 2PX solid transparent; border-right: 2PX solid transparent; border-top: 4PX solid currentColor; }
+.delete-symbol > view:first-child { position: absolute; left: 3PX; top: 6PX; width: 14PX; height: 12PX; box-sizing: border-box; border: 1.5PX solid currentColor; border-radius: 0 0 2PX 2PX; }
+.delete-symbol > view:last-child { position: absolute; top: 4PX; left: 1PX; width: 18PX; height: 1.5PX; background: currentColor; }
+.delete-symbol > view:last-child::before { content: ''; position: absolute; left: 6PX; top: -3PX; width: 6PX; height: 3PX; box-sizing: border-box; border: 1.5PX solid currentColor; border-bottom: 0; border-radius: 2PX 2PX 0 0; }
+.more-symbol { display: flex; align-items: center; justify-content: center; gap: 3PX; flex: none; width: 20PX; height: 20PX; }
+.more-symbol > view { width: 3PX; height: 3PX; border-radius: 50%; background: currentColor; }
+.replace-symbol { position: relative; display: block; flex: none; width: 20PX; height: 20PX; color: inherit; }
+.replace-symbol > view { position: absolute; left: 2PX; width: 16PX; height: 2PX; border-radius: 1PX; background: currentColor; }
+.replace-symbol > view:first-child { top: 5PX; }
+.replace-symbol > view:last-child { bottom: 5PX; }
+.replace-symbol > view::after { content: ''; position: absolute; top: -3PX; width: 6PX; height: 6PX; border-top: 2PX solid currentColor; box-sizing: border-box; }
+.replace-symbol > view:first-child::after { right: 0; border-right: 2PX solid currentColor; transform: rotate(45deg); }
+.replace-symbol > view:last-child::after { left: 0; border-left: 2PX solid currentColor; transform: rotate(-45deg); }
+.reset-symbol { position: relative; display: block; flex: none; width: 20PX; height: 20PX; color: inherit; }
+.reset-symbol > view:first-child { position: absolute; left: 2PX; top: 2PX; box-sizing: border-box; width: 16PX; height: 16PX; border: 1.5PX solid currentColor; border-left-color: transparent; border-radius: 50%; }
+.reset-symbol > view:last-child { position: absolute; left: 1PX; top: 2PX; box-sizing: border-box; width: 7PX; height: 7PX; border-left: 1.5PX solid currentColor; border-bottom: 1.5PX solid currentColor; }
+.pin-symbol { position: relative; display: block; flex: none; width: 20PX; height: 20PX; color: inherit; }
+.pin-symbol > view { position: absolute; inset: 0; transform: rotate(35deg); }
+.pin-symbol > view > view { position: absolute; box-sizing: border-box; }
+.pin-symbol > view > view:first-child { left: 5PX; top: 2PX; width: 10PX; height: 8PX; border: 1.5PX solid currentColor; border-radius: 2PX; }
+.pin-symbol > view > view:nth-child(2) { left: 3PX; top: 9PX; width: 14PX; height: 1.5PX; background: currentColor; }
+.pin-symbol > view > view:last-child { left: 9.25PX; top: 10PX; width: 1.5PX; height: 8PX; background: currentColor; }

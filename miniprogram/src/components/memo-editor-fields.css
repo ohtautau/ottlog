@@ -1,0 +1,19 @@
+.memo-editor-fields input,.memo-editor-fields textarea{margin:0;padding:0;border:0;border-radius:0;background:transparent;min-width:0}
+.memo-palette{flex:1;width:0;min-width:0}
+.memo-tags-field{margin:0;font-size:25rpx}
+.memo-editor-settings{display:flex;align-items:center;justify-content:space-between;gap:8PX;margin:0}
+.memo-pin-row{display:flex;justify-content:flex-end;margin:0;border-top:1PX solid #3b4b56;padding-top:var(--editor-section-inset,12PX)}
+.memo-icon-picker{display:flex;flex-direction:column;flex:none;gap:8rpx;width:88rpx;min-width:88rpx;min-height:104rpx;margin:0;padding:0;border:0;border-radius:16rpx;background:transparent;color:#a9c5bb;font-size:19rpx;font-weight:400;line-height:1.4}
+.memo-icon-picker::after{border:0}
+.memo-icon-picker:active .memo-icon-preview{background:#304b4b;border-color:#a9c5bb}
+.memo-pin-setting{display:flex;align-items:center;justify-content:center;flex:none;width:80rpx;min-width:80rpx;height:80rpx;min-height:80rpx;margin:0;padding:0;border:1rpx solid #405662;border-radius:14rpx;color:#8da3af;background:#20313c;line-height:1}
+.memo-pin-setting::after{border:0}
+.memo-pin-setting.is-active{color:var(--memo-paper-accent,#f0d39e);border-color:var(--memo-paper-accent,#ba9b67);background:var(--memo-paper-background,#514432)}
+
+/* Keep the initial memo form complete on wide screens and short viewports. */
+.memo-editor-fields .memo-icon-picker { width: 40PX; min-width: 40PX; min-height: 40PX; }
+.memo-editor-fields .memo-tags-field { font-size: min(25rpx,16PX); }
+.memo-editor-fields .memo-editor-settings,.memo-editor-fields .memo-tags-field { border-top: 1PX solid #3b4b56; padding-top: var(--editor-section-inset,12PX); }
+.memo-editor-fields .memo-pin-setting { width: 40PX; min-width: 40PX; height: 40PX; min-height: 40PX; }
+.memo-editor-fields .markdown-note-editor .memo-body-input,.memo-editor-fields .markdown-note-editor .memo-body-preview,.memo-editor-fields .entry-preview-note { background: var(--memo-paper-background,#14212e); border-color: var(--memo-paper-border,#344753); }
+.memo-note-pin,.memo-reader-pin,.memo-pin-setting { --control-selected-text: var(--memo-paper-accent); --control-selected-border: var(--memo-paper-accent); --control-selected-background: var(--memo-paper-background); }

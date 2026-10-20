@@ -1,0 +1,32 @@
+page { --habit-card-min-height: max(calc(96rpx + 8PX),64PX); }
+.habit-tone-mint { --habit-tint: #d4e9d8; --habit-ink: #294636; --habit-muted: #53705d; --habit-accent: #a9c9b3; --habit-deep: #325744; --habit-dark: #1d302c; --habit-border: #476052; }
+.habit-tone-lilac { --habit-tint: #e2daf0; --habit-ink: #443953; --habit-muted: #6d607e; --habit-accent: #c5b3dc; --habit-deep: #5d4b74; --habit-dark: #2d293a; --habit-border: #61546f; }
+.habit-tone-sky { --habit-tint: #d4e4f4; --habit-ink: #304759; --habit-muted: #576f84; --habit-accent: #a8c4df; --habit-deep: #3f607c; --habit-dark: #22303c; --habit-border: #4e677e; }
+.habit-tone-peach { --habit-tint: #f0d8c8; --habit-ink: #583e32; --habit-muted: #805f4e; --habit-accent: #d6b49d; --habit-deep: #805b47; --habit-dark: #372c2b; --habit-border: #79604f; }
+.habit-tone-gold { --habit-tint: #eee2b9; --habit-ink: #544928; --habit-muted: #7c6d40; --habit-accent: #cebf8b; --habit-deep: #756334; --habit-dark: #332f24; --habit-border: #756c49; }
+.daily-suggestion { --core-fill: #20333e; --core-border: #3b505a; position: relative; display: flex; align-items: stretch; min-height: var(--habit-card-min-height); box-sizing: border-box; min-width: 0; overflow: hidden; border: 1rpx solid var(--core-border); border-radius: 16rpx; background: var(--core-fill); color: #ecf0e9; box-shadow: none; }
+.daily-suggestion-check { position: absolute; z-index: 2; top: 0; bottom: 0; left: 16rpx; display: flex; justify-content: center; align-items: center; min-height: 40PX; min-width: 40PX; width: 80rpx; padding: 0; margin: 0; background: transparent; color: inherit; border: 0; border-radius: 0; }
+.daily-suggestion-check:active .daily-suggestion-icon { transform: scale(.88); }
+.daily-suggestion-icon { position: relative; flex-shrink: 0; box-sizing: border-box; width: 80rpx; height: 80rpx; border: 5rpx solid var(--habit-accent, #a9c9b3); border-radius: 50%; display: flex; align-items: center; justify-content: center; background: transparent; transition: transform .15s ease; }
+.daily-suggestion-icon .habit-icon { display: block; width: 52rpx; height: 52rpx; }
+.daily-small-check { width: 12rpx; height: 6rpx; border-left: 2rpx solid currentColor; border-bottom: 2rpx solid currentColor; transform: rotate(-45deg); margin-top: -3rpx; }
+.daily-suggestion-open { display: flex; flex: 1; flex-direction: column; justify-content: center; align-items: stretch; min-width: 0; min-height: 40PX; width: 100%; padding: var(--habit-card-padding-block,calc(4rpx + 4PX)) 16rpx var(--habit-card-padding-block,calc(4rpx + 4PX)) 116rpx; margin: 0; text-align: left; line-height: 1.4; color: inherit; background: transparent; border: 0; border-radius: 0; }
+.daily-suggestion-title { box-sizing: border-box; width: 100%; padding-right: 22rpx; flex-shrink: 1; min-height: 0; font-size: 24rpx; font-weight: 600; line-height: 1.35; margin-bottom: 6rpx; max-height: 65rpx; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow-wrap: anywhere; }
+.daily-suggestion .daily-suggestion-days { justify-content: flex-start; gap: 18rpx; font-size: 18rpx; flex-shrink: 0; }
+.daily-suggestion-days > view { gap: 4rpx; }
+.daily-done-badge { position: absolute; bottom: 0; right: 0; display: flex; align-items: center; justify-content: center; width: 24rpx; height: 24rpx; border-radius: 50%; background: #c0e3cb; color: #284b37; border: 3rpx solid var(--core-fill); }
+.daily-suggestion.is-done,.daily-habit.is-done { --habit-completed-fill: #b9dbca; --habit-completed-ink: #18382b; --habit-completed-muted: #3e604f; background: var(--habit-completed-fill); border-color: #8eb69c; color: var(--habit-completed-ink); }
+.daily-suggestion.is-done .daily-suggestion-title,.daily-habit.is-done .daily-habit-title { color: var(--habit-completed-ink); }
+.daily-habit.is-done .daily-habit-group { color: var(--habit-completed-muted); }
+.daily-suggestion.is-done .habit-progress-total,.daily-habit.is-done .habit-progress-total { color: #3d5b49; }
+.daily-suggestion.is-done .habit-progress-streak,.daily-habit.is-done .habit-progress-streak { color: #695039; }
+.daily-suggestion.is-done .daily-suggestion-icon,.daily-habit.is-done .daily-habit-icon { background: #d9ecdf; border-color: #4d8265; }
+.daily-suggestion.is-done .daily-done-badge { background: #2e6246; color: #f0faee; border-color: var(--habit-completed-fill); }
+.daily-habit.is-done .daily-check { background: #2e6246; border-color: #2e6246; color: #f0faee; }
+.daily-habit.is-done .daily-habit-actions { border-color: #8eb69c; }
+.daily-habit.is-done .daily-habit-actions button { color: var(--habit-completed-ink); }
+.daily-habit.is-done .daily-habit-actions button.tool-danger { color: #813a40; }
+@media (min-width: 600px) {
+  .daily-suggestion-title { font-size: 22rpx; line-height: 1.3; max-height: 58rpx; }
+  .daily-suggestion .daily-suggestion-days { font-size: 17rpx; }
+}

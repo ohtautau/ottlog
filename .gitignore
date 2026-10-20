@@ -10,6 +10,7 @@
 node_modules/
 .next/
 dist/
+.swc/
 
 # Local configuration and data
 .env
@@ -25,6 +26,7 @@ playwright-report/
 **/App_Data/
 **/TestResults/
 backups/
+artifacts/
 deploy/.env
 miniprogram/project.private.config.json
 deploy/admin-password.txt

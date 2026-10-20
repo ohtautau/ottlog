@@ -1,0 +1,6 @@
+.sheet-actions { box-sizing: border-box; display: flex; flex: none; gap: 16rpx; margin: 0; padding: 8PX 16PX max(var(--popup-actions-bottom-space,8PX),var(--popup-actions-safe-area,env(safe-area-inset-bottom))); border-top: 0; }
+.sheet-actions.has-native-tab-bar { --popup-actions-safe-area: 0PX; }
+.sheet-actions > button { margin-top: 0; margin-bottom: 0; }
+.sheet-actions.has-leading-action { align-items: center; gap: 8PX; }
+.sheet-actions.has-leading-action > .ui-button { flex: 1; min-width: 0; margin: 0; }
+.sheet-actions.has-leading-action > .ui-button-icon { flex: none; width: 40PX; height: 40PX; min-width: 40PX; }

@@ -1,0 +1,88 @@
+﻿const path = require('node:path');
+const { defaultKeys, assertDefaultCards, fixtureKeys: legacyKeys, fixtureLayout: legacyLayout, seedCustomLegacyLayout, writeLayout } = require('./home-shortcut-test-helpers.cjs');
+module.exports = async ({ page, out, width, expect }) => {
+  const key = 'ottlog.home-shortcuts.v1', sheet = page.locator('.home-editor-sheet');
+  const setting = () => page.getByRole('button', { name: '设置快捷方式', exact: true });
+  const sort = () => page.getByRole('button', { name: '排序快捷方式', exact: true });
+  const read = () => page.evaluate(key => localStorage.getItem(key), key);
+  const order = () => page.locator('.today-grid > .today-entry').evaluateAll(nodes => nodes.map(node => node.id.replace('home-sort-', '')));
+  const edit = async () => { if (await setting().getAttribute('aria-pressed') !== 'true') await setting().click(); await page.locator('.today-shortcut-toolbar').getByRole('button', { name: '添加快捷方式', exact: true }).click(); };
+  const save = () => page.getByRole('button', { name: '保存快捷方式', exact: true }).click();
+  const ranks = async expected => { await expect(sheet.locator('.home-editor-option.is-selected .home-editor-option-check')).toHaveText(expected); await expect(sheet.locator('.home-editor-option-check')).not.toContainText(['✓']); };
+  const move = async (shortcut, direction) => page.locator('#home-sort-' + shortcut).getByRole('button', { name: new RegExp('^' + direction + '.*快捷方式$') }).click();
+  const bounds = () => page.locator('.today-entry,.today-capture,.today-shortcut-toolbar .page-toolbar-sort button,.today-shortcut-toolbar .page-toolbar-manage button').evaluateAll(nodes => nodes.map(node => { const r = node.getBoundingClientRect(); return { x: r.x, y: r.y, width: r.width, height: r.height }; }));
+  const sameBounds = async original => { const next = await bounds(); expect(next.length).toBe(original.length); for (let index = 0; index < next.length; index++) for (const property of ['x', 'y', 'width', 'height']) expect(Math.abs(next[index][property] - original[index][property]), 'Mode changes preserve card/capture/control geometry').toBeLessThanOrEqual(1); };
+  async function checkCardActions() {
+    for (const card of await page.locator('.today-entry').all()) {
+      const layout = await card.evaluate(node => { const box = element => { const r = element.getBoundingClientRect(); return { left:r.left,right:r.right,top:r.top,bottom:r.bottom,width:r.width,height:r.height }; }; return { card:box(node),name:box(node.querySelector('.today-entry-name')),buttons:[...node.querySelectorAll('button')].map(box) }; });
+      expect(layout.buttons.length).toBe(2);
+      for (const button of layout.buttons) { expect(button.width).toBeGreaterThanOrEqual(40); expect(button.height).toBeGreaterThanOrEqual(40); expect(button.top-layout.name.bottom, 'Card controls do not overlap names').toBeGreaterThanOrEqual(0); }
+      expect(layout.buttons[0].top).toBeCloseTo(layout.buttons[1].top, 1);
+      expect(layout.buttons[1].left-layout.buttons[0].right).toBeCloseTo(2, 0);
+      for (const edge of ['right','bottom']) { expect(layout.card[edge]-layout.buttons[1][edge]).toBeGreaterThanOrEqual(0); expect(layout.card[edge]-layout.buttons[1][edge]).toBeLessThanOrEqual(5); }
+    }
+  }
+  await seedCustomLegacyLayout(page);
+  const originalStorage = await read(), originalBounds = await bounds();
+  await expect(page.locator('.today-page .home-sort-tile,.today-page .home-shortcut-rank,.today-page .home-shortcut-edit,.today-page .home-shortcut-replace')).toHaveCount(0);
+  const source = page.locator('#home-sort-create');
+  await source.dispatchEvent('touchstart', { touches: [{ identifier: 1, clientX: 30, clientY: 200 }] }); await source.dispatchEvent('touchmove', { touches: [{ identifier: 1, clientX: 100, clientY: 250 }] }); await source.dispatchEvent('touchend', { touches: [] });
+  expect(await order(), 'Ordinary gestures do not reorder').toEqual(legacyKeys); expect(await read()).toBe(originalStorage);
+  await setting().click(); await sameBounds(originalBounds);
+  await expect(page.locator('.today-grid .home-shortcut-edit')).toHaveCount(6); await expect(page.locator('.today-grid .home-shortcut-replace')).toHaveCount(6); await expect(page.locator('.today-grid button.home-shortcut-open')).toHaveCount(0);
+  await expect(page.locator('.today-capture input')).toBeDisabled(); await expect(page.locator('.today-capture .create-button')).toBeDisabled(); await expect(page.locator('.today-all-tool').first()).toBeDisabled();
+  await checkCardActions();
+  await sort().click(); await sameBounds(originalBounds); await checkCardActions();
+  await expect(page.locator('.today-grid .home-shortcut-edit,.today-grid .home-shortcut-replace,.today-grid .home-shortcut-rank')).toHaveCount(0);
+  await expect(page.locator('#home-sort-create').getByRole('button',{name:/^上移.*快捷方式$/})).toBeDisabled(); await expect(page.locator('#home-sort-meals').getByRole('button',{name:/^下移.*快捷方式$/})).toBeDisabled();
+  await move('create','下移'); await move('create','下移'); expect((await order()).slice(0,3)).toEqual(['pomodoro','daily','create']);
+  const gestureStorage = await read(); await source.dispatchEvent('touchstart',{touches:[{identifier:1,clientX:30,clientY:200}]}); await source.dispatchEvent('touchmove',{touches:[{identifier:1,clientX:100,clientY:400}]}); await source.dispatchEvent('touchcancel',{touches:[]});
+  expect(await read(), 'Sorting uses buttons and touch gestures do not change it').toBe(gestureStorage); await expect(page.locator('.today-grid .is-dragging,.today-grid .is-drop-target')).toHaveCount(0);
+  await move('create','上移'); await move('create','上移'); expect(await order()).toEqual(legacyKeys);
+  await move('daily','上移'); await move('daily','上移');
+  const reordered = ['daily','create','pomodoro','memos','growth','meals']; expect(await order()).toEqual(reordered); expect(JSON.parse(await read()).items.map(item=>item.key), 'Each button move is saved immediately').toEqual(reordered);
+  expect(JSON.parse(await read()).items.every(item=>typeof item.icon==='string'),'Moving an old implicit-icon layout writes its effective backgrounds explicitly').toBe(true);
+  await page.screenshot({path:path.join(out,'home-order-buttons-'+width+'.png')});
+  await setting().click(); expect(await order(),'Switching settings retains committed sorting').toEqual(reordered); await setting().click();
+  await page.reload(); expect(await order()).toEqual(reordered); await sort().click();
+  const beforeFailure = await read(); await page.evaluate(()=>{window.__miniFixture.failHomeShortcutWrites=true;}); await move('daily','下移');
+  expect(await order(), 'A failed sync write keeps the committed card order').toEqual(reordered); expect(await read()).toBe(beforeFailure);
+  const retry = page.getByRole('button',{name:'重试快捷方式排序',exact:true}); await expect(retry).toBeVisible(); await expect(retry).toHaveAttribute('aria-pressed','true'); await expect(setting()).toBeDisabled();
+  for (const button of await page.locator('.today-grid button').all()) await expect(button).toBeDisabled();
+  await sameBounds(originalBounds);
+  await page.evaluate(()=>{window.__miniFixture.failHomeShortcutWrites=false;}); await retry.click(); await expect(retry).toHaveCount(0);
+  const retried = ['create','daily','pomodoro','memos','growth','meals']; expect(await order(), 'Retry writes the original absolute target without moving twice').toEqual(retried); expect(JSON.parse(await read()).items.map(item=>item.key)).toEqual(retried);
+  await page.reload(); expect(await order()).toEqual(retried);
+  await writeLayout(page,{version:1,items:[]}); await edit();
+  for(const key of legacyKeys) await page.locator(`.home-editor-option[data-feature-key="${key}"]`).click();
+  await ranks(['1','2','3','4','5','6']); await save(); await page.reload();
+  expect(await order(),'Explicitly selecting the old six functions preserves the requested layout').toEqual(legacyKeys);
+  const manualSix=JSON.parse(await read()).items;
+  expect(manualSix.map(item=>item.rank)).toEqual([1,2,3,4,5,6]); expect(manualSix.map(item=>item.color)).toEqual(['blue','mint','yellow','lilac','rose','peach']); expect(manualSix.every(item=>typeof item.icon==='string')).toBe(true);
+  await expect(page.locator('.today-entry-name')).toHaveText(['创建任务','开始番茄钟','习惯','创建便签','领域','饮食记录']);
+  await edit(); await save(); await page.reload(); expect(await order(),'Saving the selected former defaults again does not migrate them').toEqual(legacyKeys);
+  const oldCustomOrder=legacyLayout(); oldCustomOrder.items[0].rank=2; oldCustomOrder.items[1].rank=1;
+  await writeLayout(page,oldCustomOrder); expect((await order()).slice(0,2)).toEqual(['pomodoro','create']); await sort().click(); await move('create','上移'); await page.reload();
+  expect(await order(),'Restoring a genuinely old custom order to former-default slots does not trigger migration').toEqual(legacyKeys); expect(JSON.parse(await read()).items.every(item=>typeof item.icon==='string')).toBe(true);
+  await seedCustomLegacyLayout(page); await setting().click(); await page.locator('#home-sort-create .home-shortcut-edit').click();
+  await page.getByRole('textbox',{name:'快捷方式名称：创建任务',exact:true}).fill('创建任务'); await page.getByRole('button',{name:'使用晴蓝色',exact:true}).click(); await save(); await page.reload();
+  expect(await order()).toEqual(legacyKeys); expect(JSON.parse(await read()).items.every(item=>typeof item.icon==='string'),'Single-card editing also fixes effective backgrounds before normalization').toBe(true);
+  await writeLayout(page,null); await assertDefaultCards(page,expect);
+  await seedCustomLegacyLayout(page); await edit(); await ranks(['1','2','3','4','5','6']);
+  await expect(sheet.locator('.home-editor-fields,.home-editor-preview,.home-editor-appearance-row')).toHaveCount(0); await expect(sheet.getByRole('button',{name:'恢复默认布局',exact:true})).toHaveCount(0);
+  await page.getByRole('button',{name:'移除快捷方式：习惯',exact:true}).click(); await ranks(['1','2','4','5','6']); await page.getByRole('button',{name:'添加快捷方式：习惯',exact:true}).click(); await ranks(['1','2','3','4','5','6']);
+  await page.getByRole('button',{name:'移除快捷方式：创建任务',exact:true}).click(); await page.getByRole('button',{name:'移除快捷方式：习惯',exact:true}).click(); await ranks(['2','4','5','6']); await save(); await page.reload();
+  expect(JSON.parse(await read()).items.map(item=>item.rank)).toEqual([2,4,5,6]); await edit(); await ranks(['2','4','5','6']); await page.screenshot({path:path.join(out,'home-rank-gaps-'+width+'.png')});
+  await page.getByRole('button',{name:'添加快捷方式：选境',exact:true}).click(); await ranks(['1','2','4','5','6']); await page.getByRole('button',{name:'添加快捷方式：习惯',exact:true}).click(); await ranks(['1','2','3','4','5','6']);
+  await page.getByRole('button',{name:'添加快捷方式：创建任务',exact:true}).click(); await ranks(['1','2','3','4','5','6','7']); await save(); await page.reload();
+  const assigned=JSON.parse(await read()).items; expect(assigned.find(item=>item.key==='choose').rank).toBe(1); expect(assigned.find(item=>item.key==='daily').rank).toBe(3); expect(assigned.find(item=>item.key==='create').rank).toBe(7);
+  await expect(page.locator('.today-entry-name')).toHaveText(['选境','开始番茄钟','习惯','创建便签','领域','饮食记录','创建任务']);
+  await writeLayout(page,null); await edit();
+  for(const key of ['create','memos','create-habit','create-domain','todos','pomodoro-page','meals','choose','categories','favorites']) await page.locator(`.home-editor-option[data-feature-key="${key}"]`).click();
+  await ranks(Array.from({length:16},(_,index)=>String(index+1))); await expect(sheet.locator('.home-editor-option.is-selected')).toHaveCount(16); await save(); await setting().click();
+  await sort().click(); const scroll=page.locator('.today-shortcut-scroll'); const range=await scroll.evaluate(node=>({scroll:node.scrollTop,max:node.scrollHeight-node.clientHeight})); expect(range.max-range.scroll,'Seventeen cards have a reachable scroll range').toBeGreaterThan(30);
+  const captureBefore=await page.locator('.today-capture').boundingBox(); await scroll.evaluate(node=>{node.scrollTop=node.scrollHeight;}); await expect(page.locator('#home-sort-favorites')).toBeInViewport({ratio:1});
+  await expect(page.locator('#home-sort-domains').getByRole('button',{name:/^下移.*快捷方式$/})).toBeDisabled(); await move('domains','上移'); expect((await order()).slice(-2)).toEqual(['domains','favorites']);
+  expect(await page.locator('.today-capture').boundingBox(),'Sorting a lower card preserves the bottom input').toEqual(captureBefore); expect(JSON.parse(await read()).items.map(item=>item.rank)).toEqual(Array.from({length:16},(_,index)=>index+1));
+  await writeLayout(page,null); expect(await order()).toEqual(defaultKeys); await assertDefaultCards(page,expect);
+};

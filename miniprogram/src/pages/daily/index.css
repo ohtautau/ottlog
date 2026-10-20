@@ -1,0 +1,47 @@
+.daily-tabs { margin-bottom: 12PX; }
+.daily-section-heading { display: flex; align-items: center; justify-content: space-between; gap: 16rpx; margin: 24rpx 0 20rpx; }
+.daily-filter-toggle { min-height: 80rpx; flex-shrink: 0; padding: 0 18rpx; margin: 0; border: 1rpx solid #3e5753; border-radius: 16rpx; background: #20332f; color: #aec5bb; font-size: 23rpx; display: flex; align-items: center; justify-content: center; }
+.daily-filter-toggle.is-active { color: #1f3830; background: #b9dbca; }
+.daily-habit-list { display: flex; flex-direction: column; gap: 14rpx; }
+.daily-habit { position: relative; overflow: hidden; padding: 14rpx 16rpx; border-radius: 16rpx; background: #20333e; border: 1rpx solid #3b505a; box-shadow: none; text-shadow: none; }
+.daily-habit.is-disabled { opacity: .64; }
+.daily-habit-main { display: flex; align-items: center; gap: 12rpx; min-height: 98rpx; }
+.daily-habit-open { display: flex; align-items: center; flex: 1; min-width: 0; min-height: 98rpx; padding: 0 12rpx; gap: 32rpx; margin: 0; text-align: left; background: transparent; line-height: 1.45; }
+.daily-habit-open:active { filter: none; opacity: .8; }
+.daily-habit-icon { position: relative; box-sizing: border-box; width: 84rpx; min-width: 84rpx; height: 84rpx; border: 5rpx solid var(--habit-accent, #a9c9b3); border-radius: 50%; display: flex; justify-content: center; align-items: center; background: transparent; }
+.daily-habit-icon .habit-icon { width: 56rpx; height: 56rpx; display: block; }
+.daily-habit-info { flex: 1; min-width: 0; }
+.daily-habit-title { color: #ede9df; font-size: 28rpx; line-height: 1.45; overflow-wrap: anywhere; }
+.daily-habit-meta { display: flex; flex-wrap: wrap; align-items: center; gap: 8rpx 12rpx; margin-top: 6rpx; }
+.daily-habit-group { display: flex; align-items: center; color: #aab9bf; font-size: 21rpx; line-height: 1.5; }
+.daily-list-progress { margin-top: 7rpx; }
+.daily-habit-status { padding: 2rpx 12rpx; color: #285e3d; background: #f2fff4; border-radius: 8rpx; font-size: 21rpx; font-weight: 600; line-height: 1.5; }
+.daily-check { display: flex; justify-content: center; align-items: center; min-width: max(88rpx,40PX); width: 88rpx; height: 88rpx; min-height: 40PX; padding: 0; margin: 0; border-radius: 14rpx; border: 1rpx solid #4b6470; color: #a7b9b6; background: transparent; font-size: 35rpx; line-height: 1; box-shadow: none; }
+.daily-habit-open::after,.daily-check::after { display: none; }
+.daily-check.is-checked { color: #254933; background: #c6e8cf; border: 1rpx solid #d5eddb; }
+.daily-check .daily-small-check { width: 30rpx; height: 16rpx; border-width: 4rpx; }
+.daily-habit-actions { display: flex; margin-top: 12rpx; border-top: 1rpx solid #3a484d; }
+.daily-habit-actions button { flex: 1; min-height: 88rpx; display: flex; align-items: center; justify-content: center; margin: 0; padding: 0 12rpx; background: transparent; color: #b9c8cb; font-size: 24rpx; }
+.daily-habit-actions button.tool-danger { color: #e9aaa0; }
+.daily-history-card { margin-bottom: 26rpx; padding: 24rpx; }
+.daily-history-card .daily-section-heading { margin: 0 0 20rpx; }
+.daily-day-count { flex-shrink: 0; font-size: 24rpx; color: #b9dbca; }
+.daily-week-scroll { white-space: nowrap; width: 100%; }
+.daily-week { display: inline-flex; gap: 4rpx; min-width: 100%; }
+.daily-day { display: flex; flex-direction: column; align-items: center; flex: 1 0 88rpx; min-width: 88rpx; padding: 14rpx 0; margin: 0; background: transparent; color: #a8b5b9; border-radius: 18rpx; line-height: 1.3; }
+.daily-day.is-selected { background: #2b403d; color: #d6eee0; }
+.daily-day-week,.daily-day-label { font-size: 19rpx; }
+.daily-day-circle { display: flex; justify-content: center; align-items: center; width: 58rpx; height: 58rpx; margin: 12rpx 0; border-radius: 50%; border: 1rpx solid #4b5e63; font-size: 25rpx; }
+.daily-day-circle.has-done { background: #b9dbca; color: #244036; border-color: #b9dbca; }
+.daily-week-actions { display: flex; justify-content: space-between; gap: 20rpx; margin: 12rpx 0; }
+.daily-week-actions button { margin: 0; min-height: 88rpx; display: flex; align-items: center; padding: 0 12rpx; font-size: 23rpx; color: #b9dbca; background: transparent; }
+.daily-detail-sheet { height: min(620PX,calc(100% - 12PX)); max-height: calc(100% - 12PX); }
+.daily-detail-body { padding: 20rpx 28rpx 30rpx; }
+.daily-detail-note { display: block; color: #9db6b4; font-size: 23rpx; line-height: 1.65; white-space: pre-wrap; overflow-wrap: anywhere; }
+.daily-detail-actions { display: flex; flex-shrink: 0; gap: 14rpx; }
+.daily-detail-actions button { min-height: 88rpx; margin: 0; font-size: 26rpx; }
+.daily-check-primary { flex: 1; padding: 16rpx; color: #223b2e; background: #c4dab5; border-radius: 18rpx; }
+.daily-detail-actions .tool-secondary { flex: 0 0 28%; padding: 16rpx; }
+.daily-message { margin-top: 24rpx; padding: 24rpx; border-radius: 18rpx; color: #cce6d7; background: #243e34; font-size: 25rpx; line-height: 1.6; }
+.daily-load-more { width: 100%; margin-top: 22rpx; }
+

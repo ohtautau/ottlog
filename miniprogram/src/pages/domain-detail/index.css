@@ -1,0 +1,20 @@
+.domains-page.domain-detail-page { box-sizing: border-box; display: flex; flex-direction: column; height: 100vh; min-height: 0; padding-top: 12PX; padding-bottom: calc(12PX + env(safe-area-inset-bottom)); overflow: hidden; }
+.domain-detail-page .domain-detail-toolbar { flex: none; }
+.domain-detail-page .domain-detail-grid { display: flex; flex-direction: column; flex: 1; min-height: 0; }
+.domain-detail-page .domain-card { box-sizing: border-box; display: flex; flex-direction: column; flex: 1; min-height: 0; overflow: hidden; }
+.domain-detail-page .domain-heading,.domain-detail-page .domain-goals,.domain-detail-page .domain-habits-heading,.domain-detail-page .domain-habit-scroll,.domain-detail-page .domain-habit-notice { flex: none; }
+.domain-detail-page .domain-records { flex: 1; height: 0; }
+.domain-detail-page .domains-status,.domain-detail-page > .domain-error { flex: none; margin-top: 8PX; }
+.domain-detail-page .domain-heading-name { flex: 1; }
+.domain-detail-page .domain-name { overflow-wrap: anywhere; }
+.domain-detail-page .domain-goal-edit { margin-right: 4PX; }
+@media(max-height:700px) {
+  .domains-page.domain-detail-page { padding-top: 8PX; padding-bottom: calc(8PX + env(safe-area-inset-bottom)); }
+  .domain-detail-page .domain-card { padding: 12PX; }
+  .domain-detail-page .domain-heading { margin-bottom: 8PX; }
+  .domain-detail-page .domain-goals { gap: 6PX; }
+  .domain-detail-page .domain-goal-toggle { min-height: 40PX; padding: 8PX; }
+  .domain-detail-page .domain-habits-heading { margin-top: 8PX; }
+  .domain-detail-page .domain-habit-scroll { margin-bottom: 8PX; }
+}
+.domain-sheet-body.editor-fields-layout > .domain-error { margin: 0; }

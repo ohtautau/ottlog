@@ -1,0 +1,42 @@
+.focus-page .focus-core .focus-clock-card { flex: 1; min-height: 0; padding: 12PX; justify-content: flex-start; border: 1PX solid #354c55; border-radius: 14PX; background: #1a2d37; overflow: visible; }
+.focus-page .focus-core .focus-clock-card.is-break { background: #1c3331; border-color: #3b574e; }
+.focus-page .focus-core .focus-clock-top { justify-content: space-between; align-items: center; flex-shrink: 0; min-height: 22PX; gap: 8PX; }
+.focus-page .focus-core .focus-live { flex-shrink: 0; margin: 0; font-size: 12PX; color: #b0c3c4; }
+.focus-page .focus-core .focus-rounds { flex-wrap: wrap; justify-content: flex-end; gap: 4PX; min-width: 0; margin: 0; font-size: 11PX; color: #8fa8a9; }
+.focus-page .focus-core .focus-rounds > text { margin-left: 3PX; white-space: nowrap; }
+.focus-page .focus-core .focus-round { flex-shrink: 0; width: 6PX; height: 6PX; }
+.focus-page .focus-core .focus-round::before { width: 3PX; left: 1.5PX; }
+.focus-domain-row { flex: none; width: 100%; margin-top: 8PX; }
+.focus-timer-stage { display: flex; flex: 1; min-height: 0; width: 100%; align-items: flex-end; justify-content: center; overflow: hidden; margin: 4PX 0 12PX; }
+.focus-action-area { flex: none; width: 100%; margin-top: 12PX; }
+.focus-purpose-slot { flex: none; height: 52PX; margin-top: 12PX; }
+.focus-page .focus-core .focus-purpose { box-sizing: border-box; display: flex; align-items: center; gap: 6PX; height: 52PX; margin: 0; padding: 4PX 4PX 4PX 10PX; border: 1PX solid #3f5962; border-radius: 10PX; background: #13242d; }
+.focus-page .focus-core .focus-purpose-input { flex: 1; width: 0; min-width: 0; min-height: 40PX; height: 40PX; padding: 0; font-size: 16PX; }
+.focus-page .focus-core .focus-source-toggle { width: 40PX; margin: 0; }
+.focus-source-options { --control-background: transparent; --control-border: transparent; display: grid; grid-template-columns: minmax(0,1fr); gap: 4PX; }
+.focus-source-options button { width: 100%; margin: 0; min-width: 0; }
+.focus-source-options .form-choice-content { width: auto; justify-content: center; }
+.focus-primary-actions { margin-top: 8PX; }
+.focus-page .focus-core .focus-start { margin: 0; }
+.focus-end-slot { margin-top: 8PX; height: var(--control-primary-height); }
+.focus-end-slot > view,.focus-end-slot > button { width: 100%; margin: 0; min-width: 0; min-height: var(--control-primary-height); }
+.focus-page.tool-page.core-page { padding-bottom: 0; }
+.focus-feedback-slot { flex: none; height: 40PX; overflow-y: auto; font-size: 12PX; line-height: 1.5; color: #a6b5bb; }
+.focus-feedback-message,.focus-feedback-slot .focus-reminder-note { display: block; margin: 0; padding: 0; border: 0; font-size: inherit; }
+.focus-feedback-slot .tool-status { margin: 0; padding: 0; }
+.focus-feedback-slot .tool-status { display: flex; align-items: center; gap: 8PX; }
+.focus-feedback-slot .tool-status > text { flex: 1; min-width: 0; }
+.focus-feedback-slot .tool-status > button { flex: none; margin: 0; }
+.focus-settings-number { display: flex; align-items: center; gap: 6PX; }
+.focus-settings-number > text { flex: none; font-size: 12PX; color: #99adb3; }
+.focus-transition-picker { margin: 0; padding: 0; border: 0; background: transparent; }
+.focus-transition-picker .form-option-grid { grid-template-columns: 1fr; }
+.focus-settings .focus-settings-actions button { width: 100%; margin: 0; }
+.focus-quick-overlay { position: fixed; inset: 0; z-index: 200; display: flex; align-items: center; justify-content: center; background: rgba(5,13,20,.68); }
+.focus-quick-window { --popup-actions-safe-area: 0PX; position: relative; display: flex; flex-direction: column; width: calc(100% - 24PX); max-width: 260PX; max-height: calc(100% - 24PX); border: 1PX solid #46605f; border-radius: 14PX; background: #192633; color: #f3eddf; overflow: hidden; }
+.focus-quick-body { min-height: 0; overflow-y: auto; padding: 12PX 16PX; }
+
+.focus-quick-window .sheet-actions button { flex: 1; margin: 0; }
+@media (max-width: 599px) and (max-height: 700px) {
+  .focus-page .focus-core .focus-clock-card { padding: 10PX 10PX 12PX; }
+}

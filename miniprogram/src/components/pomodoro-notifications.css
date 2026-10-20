@@ -1,0 +1,11 @@
+.focus-reminders { margin-top: 12PX; }
+.focus-reminder-heading { display: flex; align-items: center; justify-content: space-between; gap: 8PX; }
+.focus-reminder-badge { border: 1PX solid #40515a; border-radius: 12PX; padding: 4PX 8PX; font-size: 12PX; color: #a6b5bb; line-height: 1.4; }
+.focus-reminder-badge.is-enabled { background: #29473d; border-color: #47685a; color: #c1dfcd; }
+.focus-reminder-description,.focus-reminder-note { display: block; margin-top: 8PX; color: #a6b5bb; font-size: 13PX; line-height: 1.7; overflow-wrap: anywhere; }
+.focus-reminder-note { color: #c0cdc5; }
+.focus-reminder-enable { margin-top: 8PX; }
+.focus-reminder-statuses { display: flex; flex-direction: column; gap: 6PX; margin-top: 8PX; }
+.focus-reminder-statuses > view { display: flex; align-items: center; justify-content: space-between; gap: 8PX; font-size: 13PX; line-height: 1.5; color: #a9b9b1; }
+.focus-reminder-statuses > view > text:last-child { color: #bddcc9; text-align: right; }
+.focus-reminder-feedback { padding-top: 8PX; border-top: 1PX solid #3a4e47; }

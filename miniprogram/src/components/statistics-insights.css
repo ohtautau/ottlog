@@ -1,0 +1,38 @@
+.statistics-insights.statistics-card { margin: 0 0 16PX; padding: 12PX; min-width: 0; }
+.statistics-insight-heading { display: flex; align-items: center; justify-content: space-between; gap: 8PX; flex-wrap: wrap; }
+.statistics-insight-period { display: flex; flex: none; gap: 4PX; }
+.statistics-insight-period-choice { margin: 0; }
+.statistics-insight-metrics { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 12PX 8PX; margin-top: 16PX; }
+.statistics-insight-metric { min-width: 0; }
+.statistics-insight-metric > view { display: flex; align-items: baseline; gap: 3PX; flex-wrap: wrap; }
+.statistics-insight-metric-value { color: #c4e2ce; font-size: 22PX; line-height: 1.3; font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
+.statistics-insight-metric-unit { color: #b4c7c9; font-size: 12PX; }
+.statistics-insight-metric-label { display: block; margin-top: 4PX; font-size: 12PX; line-height: 1.4; color: #c5d2d6; }
+.statistics-insight-metric-caption { display: block; margin-top: 2PX; font-size: 11PX; line-height: 1.4; color: #9cafb9; }
+.statistics-insight-chart { min-width: 0; margin-top: 20PX; }
+.statistics-insight-chart-heading { display: flex; align-items: center; gap: 8PX; justify-content: space-between; }
+.statistics-insight-unit { flex: none; color: #9cafb9; font-size: 12PX; }
+.statistics-insight-legend { display: flex; align-items: center; flex-wrap: wrap; gap: 6PX 12PX; margin-top: 8PX; }
+.statistics-insight-legend > view { display: flex; align-items: center; gap: 5PX; font-size: 12PX; color: #c3d0d3; }
+.statistics-insight-swatch { width: 8PX; height: 8PX; border-radius: 2PX; }
+.statistics-insight-scale { display: block; margin-top: 8PX; font-size: 11PX; color: #9cafb9; }
+.statistics-insight-day-scroll { width: 100%; min-width: 0; }
+.statistics-insight-columns { display: flex; width: max-content; min-width: 100%; gap: 4PX; padding: 4PX 0; }
+.statistics-insight-column { display: flex; flex-direction: column; align-items: center; justify-content: flex-end; flex: 1; min-width: 40PX; margin: 0; }
+.statistics-insight-day-track { display: flex; align-items: flex-end; justify-content: center; gap: 2PX; width: 20PX; height: 108PX; border-bottom: 1PX solid #667f89; }
+.statistics-insight-day-bar { width: 4PX; flex: 1; max-width: 12PX; border-radius: 2PX 2PX 0 0; }
+.statistics-insight-missing { align-self: flex-end; color: #9cafb9; font-size: 14PX; line-height: 20PX; }
+.statistics-insight-day-label { display: block; margin-top: 6PX; color: inherit; font-size: 10PX; line-height: 14PX; white-space: nowrap; }
+.statistics-insight-distribution { display: flex; flex-direction: column; gap: 4PX; margin-top: 8PX; }
+.statistics-insight-bar-choice { display: block; min-width: 0; margin: 0; text-align: left; }
+.statistics-insight-bar-heading { display: flex; align-items: baseline; justify-content: space-between; gap: 8PX; font-size: 13PX; line-height: 1.5; }
+.statistics-insight-bar-heading > text:first-child { min-width: 0; flex: 1; overflow-wrap: anywhere; }
+.statistics-insight-bar-heading > text:last-child { flex: none; font-variant-numeric: tabular-nums; }
+.statistics-insight-bar-track { display: flex; height: 8PX; margin-top: 6PX; background: #304650; border-radius: 4PX; overflow: hidden; }
+.statistics-insight-bar-track > view { height: 100%; }
+.statistics-insight-point { display: flex; align-items: baseline; flex-wrap: wrap; gap: 4PX 12PX; min-width: 0; margin-top: 8PX; padding: 8PX; background: #14232d; border-radius: 8PX; color: #c8d7d9; font-size: 12PX; line-height: 1.5; }
+.statistics-insight-point-title { width: 100%; color: #deebe3; font-weight: 600; overflow-wrap: anywhere; }
+.statistics-insight-point-note { width: 100%; color: #9cafb9; overflow-wrap: anywhere; }
+.statistics-insight-findings { margin-top: 16PX; }
+.statistics-insight-findings > text:not(.section-title) { display: block; margin-top: 6PX; font-size: 13PX; line-height: 1.6; color: #c4d2d5; overflow-wrap: anywhere; }
+.statistics-insight-note,.statistics-insight-empty { display: block; margin-top: 8PX; color: #9cafb9; font-size: 12PX; line-height: 1.6; overflow-wrap: anywhere; }

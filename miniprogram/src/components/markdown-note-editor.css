@@ -1,0 +1,20 @@
+.markdown-note-editor { min-width: 0; }
+.markdown-note-editor.is-compact { --note-editor-height: min(120rpx,80PX); --note-editor-padding: 8PX 10PX; }
+.memo-editor-toolbar{display:flex;align-items:center;gap:8PX;flex-wrap:wrap;margin:0;color:#9caab7}
+.memo-editor-modes{display:flex;align-items:center;gap:4PX;flex:none;padding:2PX;border:1rpx solid #405662;border-radius:10PX;background:#14212e}
+.memo-editor-modes button{margin:0;padding:0 8PX;min-height:40PX;min-width:40PX;line-height:1.4;border-radius:8PX;background:transparent;color:#9caab7;font-size:min(24rpx,16PX);font-weight:400}
+.memo-editor-modes button::after{border:0}
+.memo-editor-modes button.is-active{color:#d3efdf;background:#304c42}
+.markdown-note-editor textarea.memo-body-input,.markdown-note-editor .memo-body-preview{box-sizing:border-box;width:100%;height:var(--note-editor-height,min(144rpx,100PX));min-height:var(--note-editor-height,min(144rpx,100PX));padding:var(--note-editor-padding,10PX 12PX);margin:0;border:1rpx solid #344753;border-radius:10PX;background:#14212e;color:#f3eddf;font-size:max(14PX,min(26rpx,18PX));line-height:1.65}
+.markdown-note-editor .memo-body-preview{height:auto;overflow-wrap:anywhere}
+.memo-insert-image{flex:none;gap:8PX;min-height:40PX;margin:0;padding:6PX 10PX;border:1rpx solid #405662;border-radius:10PX;background:#20313c;color:#c2e6d3;font-size:min(24rpx,16PX);line-height:1.4;font-weight:400}
+.memo-image-mark{position:relative;width:28rpx;height:24rpx;border:2rpx solid currentColor;border-radius:4rpx;overflow:hidden}
+.memo-image-mark::before{content:'';position:absolute;right:4rpx;top:4rpx;width:4rpx;height:4rpx;border-radius:50%;background:currentColor}
+.memo-image-mark::after{content:'';position:absolute;left:3rpx;bottom:-7rpx;width:17rpx;height:17rpx;border:2rpx solid currentColor;transform:rotate(45deg)}
+.memo-body-count{flex:1;min-width:0;color:#8fa6b2;font-size:min(21rpx,14PX);line-height:1.5;text-align:right;overflow-wrap:anywhere}
+.memo-images{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12rpx;margin:0}
+.memo-image{position:relative;min-width:0}
+.memo-image image{display:block;width:100%;height:180rpx;border-radius:14rpx;background:#12212c}
+.memo-image-remove{position:absolute;right:4rpx;top:4rpx;width:40PX;margin:0}
+.memo-images.is-preview{display:flex;flex-direction:column}
+.memo-images.is-preview image{height:auto;min-height:100rpx}

@@ -1,0 +1,3 @@
+.domain-goal-count { display: flex; align-items: center; gap: 8rpx; font-variant-numeric: tabular-nums; }
+.domain-goal-count-art { display: flex; align-items: center; flex-shrink: 0; }
+.domain-goal-count .library-icon.domain-goal-count-icon { width: min(30rpx,18PX); height: min(30rpx,18PX); }
