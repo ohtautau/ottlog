@@ -25,7 +25,9 @@ $ottlogOldMiniApi = $env:TARO_APP_API_BASE_URL
 Push-Location $ottlogRoot
 try {
     $env:API_BASE_URL = 'http://127.0.0.1:3300'
-    $env:TARO_APP_API_BASE_URL = $env:API_BASE_URL
+    # The private website may use the SSH preview; mini-program builds must not
+    # silently return to a computer-only tunnel after the API goes public.
+    $env:TARO_APP_API_BASE_URL = & $ottlogNode -e "process.stdout.write(require('./miniprogram/config/api-endpoint.cjs').defaultApiOrigin)"
     if (-not $SkipMiniBuild) {
         & $ottlogNode 'miniprogram/scripts/local-build.cjs'
         if ($LASTEXITCODE -ne 0) { throw 'Mini-program shared API build failed.' }
@@ -41,7 +43,8 @@ try {
     $ottlogWeb = Start-Process -FilePath $ottlogNode -ArgumentList @(('"'+$ottlogNext+'"'),'dev','--hostname','127.0.0.1','--port','3000') -WorkingDirectory (Join-Path $ottlogRoot 'web') -WindowStyle Hidden -PassThru -RedirectStandardOutput (Join-Path $ottlogRuntime 'web.log') -RedirectStandardError (Join-Path $ottlogRuntime 'web-error.log')
     $ottlogWeb.Id | Set-Content -LiteralPath (Join-Path $ottlogRuntime 'web.pid')
     Write-Host 'Website: http://127.0.0.1:3000/today'
-    Write-Host 'Both clients use the server API through http://127.0.0.1:3300'
+    Write-Host ('Mini-program connects directly to '+$env:TARO_APP_API_BASE_URL)
+    Write-Host 'Local website uses the private server API through http://127.0.0.1:3300'
     Write-Host 'Compile the original Ottlog checkout in WeChat developer tools. Sign in to the same account in both clients.'
     Write-Host 'Guest records stay on their own device. This computer-only setup does not configure phone connectivity or public DNS.'
 } finally {

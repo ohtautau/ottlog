@@ -1,2 +1,5 @@
-import MealExperience from '../meal-experience';
-export default function LegacyMealPage() { return <MealExperience />; }
+import { redirect } from "next/navigation";
+
+export default function LegacyMealPage() {
+  redirect("/today");
+}

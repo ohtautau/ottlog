@@ -29,9 +29,11 @@ module.exports = async function checkMemoReading({ page, origin, out, width, exp
   await expect(page.locator('.memo-note-actions button')).toHaveCount(notes.length);
   await expect(page.locator('.memo-note-actions .edit-symbol,.memo-note-actions .delete-symbol')).toHaveCount(0);
   const original = await stored();
+  await expect(page.locator('.memo-note').filter({ has: page.getByRole('button', { name: `查看便签：${title}`, exact: true }) }).locator('.memo-note-symbol')).toHaveAttribute('src', '/assets/habits/notes.png');
   for (const sample of colorNotes) {
     await page.getByRole('button', { name: `查看便签：${sample.title}`, exact: true }).click();
     await expect(reader()).toBeVisible();
+    await expect(reader().locator('.memo-icon-preview .library-icon')).toHaveAttribute('src', '/assets/habits/notes.png');
     await expect(reader().locator('.memo-color-trigger,.memo-editor-settings')).toHaveCount(0);
     await expectReadableText(reader().locator('.memo-reader-title,.memo-reader-tags text,.domain-record-content p,.domain-record-content strong'), `${width}: ${sample.color} reading text`, expect);
     if (sample.color === 'mint') await page.screenshot({ path: path.join(out, `memo-reader-mint-${width}.png`) });

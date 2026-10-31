@@ -1,34 +1,44 @@
+using System.Security.Claims;
+using System.Text.Json.Nodes;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 using Ottlog.Api.Data;
-using System.Text.Json;
+using Ottlog.Api.Services;
 
 namespace Ottlog.Api.Controllers;
 
-[ApiController, Route("api/mottos")]
-public sealed class MottosController(BlogDb db) : ControllerBase
+// Compatibility entrance for the original website. It shares the exact same
+// owner/key as personal-tools/mottos; old global Settings remain archival only.
+[ApiController, Route("api/mottos"), Authorize(Roles = "admin,reader"), AutoValidateAntiforgeryToken]
+public sealed class MottosController(BlogDb db, IPersonalToolStore? toolStore = null) : ControllerBase
 {
-    private static readonly string[] Defaults = ["别评判自己，别审判自己。", "用自己的语言来表达心情。", "他人的感受不应该凌驾在你的感受之上。", "记得分享观察和感受。", "不休息怎么工作！", "怎么说每天也要动动吧。", "感受到的动力是不可靠的，习惯才是可靠的。", "每天有做三件事，就算成功！", "让心嘭嘭，让事等等。", "请允许大难临头，请允许睡个大觉。", "归因有个屁用。", "因人有无穷无尽的潜力，所以努力；因人有各种各样的局限性，所以选择。", "想要坚持的话，提醒很重要，让它在你的脑子里反复出现吧。", "看到这条麻烦您屈尊夸一下自己。", "目标，计划，可执行的下一步，这是不同的东西。", "做不到也是一种行动的结果。", "新的成就会让一切旧的苦难成为铺垫。", "他人对你的期望，既有动力，也有压力。", "他人的攻击意味着他人的需求没有得到满足，和你的好坏无关。", "有攻击，就有防御。", "羞耻。"];
-
-    [HttpGet]
-    public async Task<IActionResult> Get()
+    private readonly IPersonalToolStore tools = toolStore ?? new SqlitePersonalToolStore(db);
+    private string Owner => (User.IsInRole("admin") ? "admin:" : "reader:") + User.FindFirstValue(ClaimTypes.NameIdentifier);
+    private async Task<JsonObject> Read(CancellationToken cancellationToken)
     {
-        Response.Headers.CacheControl = "no-store";
-        var value = await db.Settings.Where(s => s.Key == "homepage-mottos").Select(s => s.Value).SingleOrDefaultAsync();
-        var mottos = value is null ? Defaults : JsonSerializer.Deserialize<string[]>(value) ?? Defaults;
-        return Ok(new { mottos = mottos.Length == 0 ? Defaults : mottos });
+        var json = await tools.ReadAsync(Owner, "mottos", cancellationToken);
+        return json is null ? new JsonObject { ["version"] = 1, ["mottos"] = new JsonArray() }
+            : JsonNode.Parse(json) as JsonObject ?? throw new InvalidOperationException("账号格言格式暂不兼容");
     }
 
-    [HttpPut, Authorize(Roles = "admin"), AutoValidateAntiforgeryToken]
-    public async Task<IActionResult> Update(MottosInput input)
+    [HttpGet]
+    public async Task<IActionResult> Get(CancellationToken cancellationToken)
     {
-        if (input.Mottos is null || input.Mottos.Length > 50 || input.Mottos.Any(m => m is null || string.IsNullOrWhiteSpace(m) || m.Trim().Length > 120))
+        Response.Headers.CacheControl = "no-store";
+        var state = await Read(cancellationToken);
+        return Ok(new { mottos = state["mottos"] is JsonArray values ? values.Select(value => value!.GetValue<string>()).ToArray() : [] });
+    }
+
+    [HttpPut]
+    public async Task<IActionResult> Update(MottosInput input, CancellationToken cancellationToken)
+    {
+        if (input.Mottos is null || input.Mottos.Length > 50 || input.Mottos.Any(text => text is null || string.IsNullOrWhiteSpace(text) || text.Trim().Length > 120))
             return BadRequest(new { title = "最多设置 50 条格言，每条 1–120 个字符" });
-        var mottos = input.Mottos.Select(m => m.Trim()).Distinct().ToArray();
-        if (mottos.Length == 0) mottos = Defaults;
-        var json = JsonSerializer.Serialize(mottos);
-        await db.Database.ExecuteSqlInterpolatedAsync($"INSERT INTO Settings (Key, Value) VALUES ('homepage-mottos', {json}) ON CONFLICT(Key) DO UPDATE SET Value = excluded.Value");
+        var mottos = input.Mottos.Select(text => text.Trim()).Distinct().ToArray();
+        var state = await Read(cancellationToken);
+        state["mottos"] = new JsonArray(mottos.Select(text => JsonValue.Create(text)).ToArray());
+        var json = state.ToJsonString();
+        await tools.WriteAsync(Owner, "mottos", json, cancellationToken);
         return Ok(new { mottos });
     }
 }

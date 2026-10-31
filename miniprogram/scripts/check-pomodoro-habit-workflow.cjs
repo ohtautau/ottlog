@@ -266,11 +266,12 @@ module.exports = async function checkPomodoroHabitWorkflow({ page, origin, out, 
   expect((await state()).active.selection).toMatchObject({ taskId: null, habitId: null, title: '' });
 
   // An account change must not expose the guest's saved habits or active link.
-  await moveTo('favorites');
+  await moveTo('index');
+  await page.getByRole('button', { name: /^打开账号窗口/ }).click();
   await page.getByPlaceholder('输入博客账号').fill('preview-reader');
   await page.getByPlaceholder('输入密码', { exact: true }).fill('fixture-only-password');
   await page.getByRole('button', { name: '登录并同步', exact: true }).click();
-  await expect(page.locator('.account-user-name')).toHaveText('preview-reader');
+  await expect(page.locator('.account-window-name')).toHaveText('preview-reader');
   await moveTo('pomodoro');
   await source.open();
   await expect(habitPicker()).toBeEnabled();

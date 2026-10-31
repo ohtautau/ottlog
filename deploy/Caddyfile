@@ -5,7 +5,9 @@ ohtautau.com {
         X-Frame-Options DENY
         Referrer-Policy strict-origin-when-cross-origin
     }
-    @api path /api/* /images/* /health /health/ready
+    # Next serves its public images first and rewrites missing upload paths to
+    # the internal API. Sending all /images directly to API hides site artwork.
+    @api path /api/* /health /health/ready
     handle @api {
         reverse_proxy api:8080
     }

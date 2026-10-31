@@ -9,9 +9,8 @@ type Drag = { id: string; target: string; scrollId: string; context: string; sta
 type ScrollEvent = { detail: { scrollTop: number } };
 const defaultScrollId = 'daily-habit-scroll';
 
-export default function useHabitGridSort(ids: string[], enabled: boolean, onChange: (ids: string[]) => void, context: string, onSwipe: (direction: number) => void, canSwipe: (direction: number) => boolean = () => true, groupForId?: (id: string) => string, scrollIdForItem?: (id: string) => string) {
+export default function useHabitGridSort(ids: string[], enabled: boolean, onChange: (ids: string[]) => void, context: string, groupForId?: (id: string) => string, scrollIdForItem?: (id: string) => string) {
   const [drag, setDrag] = useState<Drag | null>(null);
-  const [swipeOffset, setSwipeOffset] = useState(0);
   const [scrollTop, setScrollTop] = useState<number>();
   const dragging = useRef<Drag | null>(null);
   const scroll = useRef(0);
@@ -19,15 +18,14 @@ export default function useHabitGridSort(ids: string[], enabled: boolean, onChan
   const timer = useRef<ReturnType<typeof setInterval> | null>(null);
   const hold = useRef<ReturnType<typeof setTimeout> | null>(null);
   const pending = useRef<{ point: TouchPoint; id: string; context: string } | null>(null);
-  const latest = useRef({ ids, enabled, onChange, context, onSwipe, canSwipe, groupForId, scrollIdForItem }); latest.current = { ids, enabled, onChange, context, onSwipe, canSwipe, groupForId, scrollIdForItem };
-  const swipe = useRef<{ point: TouchPoint; context: string } | null>(null);
+  const latest = useRef({ ids, enabled, onChange, context, groupForId, scrollIdForItem }); latest.current = { ids, enabled, onChange, context, groupForId, scrollIdForItem };
   const blockedClickUntil = useRef(0);
   const locks = useRef<{ node: Taro.ScrollViewContext; enabled: boolean }[]>([]);
   function clearHold() { if (hold.current) clearTimeout(hold.current); hold.current = null; pending.current = null; }
   function releaseScroll() { for (const lock of locks.current) lock.node.scrollEnabled = lock.enabled; locks.current = []; }
   function stop() { if (timer.current) clearInterval(timer.current); timer.current = null; }
   useEffect(() => () => { clearHold(); stop(); releaseScroll(); dragging.current = null; }, []);
-  useEffect(() => { swipe.current = null; setSwipeOffset(0); clearHold(); stop(); releaseScroll(); dragging.current = null; setDrag(null); setScrollTop(undefined); }, [enabled, context, ids.join('\n')]);
+  useEffect(() => { clearHold(); stop(); releaseScroll(); dragging.current = null; setDrag(null); setScrollTop(undefined); }, [enabled, context, ids.join('\n')]);
   function currentDrag(current: Drag) { return dragging.current === current && latest.current.enabled && latest.current.context === current.context && latest.current.ids.includes(current.id); }
   function withinViewport(current: Drag) {
     const viewport = current.viewport;
@@ -47,7 +45,7 @@ export default function useHabitGridSort(ids: string[], enabled: boolean, onChan
   }
   function start(point: TouchPoint, id: string) {
     if (!latest.current.enabled || !latest.current.ids.includes(id)) return;
-    swipe.current = null; setSwipeOffset(0); clearHold(); stop();
+    clearHold(); stop();
     const scrollId = latest.current.scrollIdForItem?.(id) || defaultScrollId;
     const selector = `#${scrollId}`;
     scroll.current = scrollPositions.current[scrollId] ?? 0;
@@ -118,41 +116,9 @@ export default function useHabitGridSort(ids: string[], enabled: boolean, onChan
     if (current) refresh(current);
   }
   return {
-    active: !!drag, scrollTop, swipeOffset,
+    active: !!drag, scrollTop,
     scrollTopFor: (scrollId: string) => drag?.scrollId === scrollId ? scrollTop : undefined,
     onScrollFor,
-    swipeHandlers: {
-      onTouchStart: (event: TouchEvent) => {
-        event.stopPropagation(); swipe.current = null; setSwipeOffset(0);
-        const point = singleTouch(event.touches);
-        if (latest.current.enabled && point) swipe.current = { point, context: latest.current.context };
-      },
-      onTouchMove: (event: TouchEvent) => {
-        event.stopPropagation();
-        const movement = swipe.current, point = singleTouch(event.touches);
-        if (!movement) return;
-        if (!latest.current.enabled || !point || point.identifier !== movement.point.identifier || movement.context !== latest.current.context) { swipe.current = null; setSwipeOffset(0); return; }
-        const dx = point.clientX - movement.point.clientX, dy = point.clientY - movement.point.clientY;
-        if (Math.abs(dy) >= 8 && Math.abs(dy) >= Math.abs(dx)) { swipe.current = null; setSwipeOffset(0); return; }
-        if (Math.abs(dx) >= 8 && Math.abs(dx) >= Math.abs(dy) * 1.5) {
-          clearHold(); event.preventDefault?.();
-          blockedClickUntil.current = Date.now() + 400;
-          const direction = dx < 0 ? 1 : -1;
-          setSwipeOffset(latest.current.canSwipe(direction) ? Math.sign(dx) * Math.min(Math.abs(dx), Taro.getWindowInfo().windowWidth) : 0);
-        } else setSwipeOffset(0);
-      },
-      onTouchEnd: (event: TouchEvent) => {
-        event.stopPropagation();
-        const movement = swipe.current, point = singleTouch(event.changedTouches); swipe.current = null; setSwipeOffset(0);
-        if (!movement || !latest.current.enabled || dragging.current || movement.context !== latest.current.context || event.touches && event.touches.length || !point || point.identifier !== movement.point.identifier) return;
-        const dx = point.clientX - movement.point.clientX, dy = point.clientY - movement.point.clientY;
-        if (!Number.isFinite(dx) || !Number.isFinite(dy) || Math.abs(dx) < 48 || Math.abs(dx) < Math.abs(dy) * 1.5) return;
-        blockedClickUntil.current = Date.now() + 400;
-        const direction = dx < 0 ? 1 : -1;
-        if (latest.current.canSwipe(direction)) latest.current.onSwipe(direction);
-      },
-      onTouchCancel: (event: TouchEvent) => { event.stopPropagation(); swipe.current = null; setSwipeOffset(0); },
-    },
     suppressClick: () => !!dragging.current || Date.now() < blockedClickUntil.current,
     bind: (id: string) => !enabled ? { id: `habit-sort-${id}` } : {
       id: `habit-sort-${id}`, style: drag?.id === id ? { transform: `translate(${drag.x}px, ${drag.y}px)` } as CSSProperties : undefined,

@@ -1,0 +1,55 @@
+# The private website is reachable only through the host's loopback mapping.
+# Public port 80 belongs to Caddy's ACME/HTTPS redirect server, never this site.
+http://:8080 {
+    encode zstd gzip
+    header {
+        X-Content-Type-Options nosniff
+        X-Frame-Options DENY
+        Referrer-Policy strict-origin-when-cross-origin
+        X-Robots-Tag "noindex, nofollow"
+    }
+    @api path /api/* /health /health/ready
+    handle @api {
+        reverse_proxy api:8080 {
+            header_up X-Forwarded-Proto https
+        }
+    }
+    handle /feed.xml {
+        rewrite * /api/feed
+        reverse_proxy api:8080 {
+            header_up X-Forwarded-Proto https
+        }
+    }
+    handle {
+        reverse_proxy web:3000 {
+            header_up X-Forwarded-Proto https
+        }
+    }
+    log
+}
+
+# Only the API hostname receives a public certificate/listener. There is no
+# public fallback to the website or its administration UI.
+{$OTTLOG_API_HOST} {
+    encode zstd gzip
+    header {
+        X-Content-Type-Options nosniff
+        X-Frame-Options DENY
+        Referrer-Policy no-referrer
+        X-Robots-Tag "noindex, nofollow"
+    }
+    @miniApi path /health /health/ready /api/account/session /api/account/profile /api/account/login /api/account/logout /api/account/register /api/personal-tools/* /api/favorites /api/favorites/* /api/mottos /api/posts /api/posts/* /api/categories /api/wechat/* /images/*
+    handle @miniApi {
+        reverse_proxy api:8080
+    }
+    handle {
+        respond "Not found" 404
+    }
+    log
+}
+
+# A caller with a different HTTP Host must not reach any application route.
+# Certificate automation still covers only the explicit API hostname above.
+https://:443 {
+    respond "Not found" 404
+}

@@ -2,6 +2,19 @@
 const sheet = page => page.locator('.todo-schedule-sheet');
 const button = (page, name) => sheet(page).getByRole('button', { name, exact: true });
 
+async function chooseReminderTime(page, name) {
+  // Legacy workflow fixtures specify offsets; select the corresponding absolute wheel values.
+  const target = await sheet(page).evaluate((node, name) => {
+    const date = node.querySelector('.todo-schedule-calendar [aria-pressed="true"]').getAttribute('aria-label').slice(-10);
+    const time = node.querySelector('[aria-label="设置时间"]').textContent.match(/\d\d:\d\d/)?.[0] || '09:00';
+    const offset = { '准时': 0, '提前10分钟': 10, '提前30分钟': 30, '提前1小时': 60, '提前2小时': 120 }[name];
+    if (offset === undefined) throw new Error(`Unsupported legacy fixture offset ${name}`);
+    const value = new Date(`${date}T${time}:00`); value.setMinutes(value.getMinutes() - offset);
+    return { date: `${value.getFullYear()}-${String(value.getMonth() + 1).padStart(2, '0')}-${String(value.getDate()).padStart(2, '0')}`, hour: value.getHours(), minute: value.getMinutes() };
+  }, name);
+  await setCustomReminder(page, target.date, target.hour, target.minute);
+}
+
 async function closeOptionWindows(page) {
   for (let level = 0; level < 5 && await sheet(page).locator('.form-popover-panel').count(); level++) {
     const before = await sheet(page).locator('.form-popover-panel').count();
@@ -52,32 +65,24 @@ async function selectDate(page, date) {
 
 async function setTime(page, hour, minute) {
   await openSection(page, '设置时间');
-  await sheet(page).getByLabel('任务小时', { exact: true }).fill(String(hour));
-  await sheet(page).getByLabel('任务分钟', { exact: true }).fill(String(minute));
+  await sheet(page).getByLabel('任务小时', { exact: true }).selectOption(String(hour).padStart(2, '0'));
+  await sheet(page).getByLabel('任务分钟', { exact: true }).selectOption(String(minute).padStart(2, '0'));
   await button(page, '完成时间设置').click();
 }
 
 async function setCustomReminder(page, date, hour = 9, minute = 0) {
   await openSection(page, '设置提醒');
-  const label = await sheet(page).evaluate((node, target) => {
-    const selected = node.querySelector('.todo-schedule-calendar [aria-pressed="true"]');
-    const base = selected?.getAttribute('aria-label').slice(-10) || new Date().toLocaleDateString('en-CA');
-    for (const [days, name] of [[0, '当天'], [1, '前一天'], [2, '前两天'], [3, '前三天'], [7, '前一周'], [-1, '前一月']]) {
-      const value = new Date(`${base}T12:00:00`);
-      if (days === -1) { const day = value.getDate(); value.setDate(1); value.setMonth(value.getMonth() - 1); const end = new Date(value); end.setMonth(end.getMonth() + 1); end.setDate(0); value.setDate(Math.min(day, end.getDate())); }
-      else value.setDate(value.getDate() - days);
-      const key = `${value.getFullYear()}-${String(value.getMonth() + 1).padStart(2, '0')}-${String(value.getDate()).padStart(2, '0')}`;
-      if (key === target) return name;
-    }
-    throw new Error(`Fixture reminder ${target} is outside the six day choices for ${base}`);
-  }, date);
-  await sheet(page).locator('.todo-schedule-reminder-days-inline').getByRole('button', { name: label, exact: true }).click();
-  await button(page, '设置提醒时刻').click();
-  await sheet(page).getByLabel('提醒小时', { exact: true }).fill(String(hour));
-  await sheet(page).getByLabel('提醒分钟', { exact: true }).fill(String(minute));
-  await button(page, '完成提醒时间设置').click();
+  const targetYear = Number(date.slice(0, 4));
+  let year = Number((await sheet(page).locator('.wheel-year-context').textContent()).match(/\d{4}/)[0]);
+  while (year !== targetYear) {
+    await button(page, targetYear > year ? '提醒下一年' : '提醒上一年').click();
+    year += Math.sign(targetYear - year);
+  }
+  await sheet(page).getByLabel('提醒月份', { exact: true }).selectOption(date.slice(5, 7));
+  await sheet(page).getByLabel('提醒日期', { exact: true }).selectOption(date.slice(8));
+  await sheet(page).getByLabel('提醒小时', { exact: true }).selectOption(String(hour).padStart(2, '0'));
+  await sheet(page).getByLabel('提醒分钟', { exact: true }).selectOption(String(minute).padStart(2, '0'));
 }
-
 async function confirmSchedule(page, expect) {
   await closeOptionWindows(page);
   await button(page, '确认日期设置').click();
@@ -253,15 +258,12 @@ async function checkCalendarBounds(page, expect) {
   await expect(button(page, '选择年月')).toContainText('1000');
 }
 
-async function checkReminderValues(page, expect, date, hour, minute, preset) {
+async function checkReminderValues(page, expect, date, hour, minute) {
   await openSection(page, '设置提醒');
-  if (preset) await expect(button(page, preset)).toHaveAttribute('aria-pressed', 'true');
-  else await expect(sheet(page).locator('.is-reminders [aria-pressed="true"]')).toHaveAttribute('aria-label', '设置提醒时刻');
-  await expect(button(page, '设置提醒')).toContainText(`${Number(date.slice(5, 7))}月${Number(date.slice(8))}日 ${String(hour).padStart(2, '0')}:${String(minute).padStart(2, '0')}`);
-  await button(page, '设置提醒时刻').click();
+  await expect(sheet(page).getByLabel('提醒月份', { exact: true })).toHaveValue(date.slice(5, 7));
+  await expect(sheet(page).getByLabel('提醒日期', { exact: true })).toHaveValue(date.slice(8));
   expect(Number(await sheet(page).getByLabel('提醒小时', { exact: true }).inputValue())).toBe(hour);
   expect(Number(await sheet(page).getByLabel('提醒分钟', { exact: true }).inputValue())).toBe(minute);
   await page.keyboard.press('Escape');
 }
-
-module.exports = { sheet, button, closeOptionWindows, openSchedule, openSection, viewMonth, selectDate, setTime, setCustomReminder, confirmSchedule, closeSchedule, checkScheduleInputAlignment, checkScheduleLayout, checkBorderlessFeedback, checkCalendarBounds, checkReminderValues };
+module.exports = { sheet, button, chooseReminderTime, closeOptionWindows, openSchedule, openSection, viewMonth, selectDate, setTime, setCustomReminder, confirmSchedule, closeSchedule, checkScheduleInputAlignment, checkScheduleLayout, checkBorderlessFeedback, checkCalendarBounds, checkReminderValues };

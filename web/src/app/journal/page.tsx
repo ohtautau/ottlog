@@ -1,1 +1,2 @@
-export { default } from '@/components/legacy-home';
+import { redirect } from 'next/navigation';
+export default function JournalPage() { redirect('/articles'); }

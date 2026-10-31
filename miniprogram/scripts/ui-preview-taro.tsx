@@ -27,7 +27,7 @@ const persistEntryStorage = (key: string) => key.startsWith('ottlog-mini-preview
 let loggedIn = false;
 const saved = new Set<string>();
 const navigate = ({ url }: { url: string }) => { location.hash = url; return Promise.resolve({ errMsg: 'ok' }); };
-const tabPages = new Set(['/pages/index/index', '/pages/todos/index', '/pages/domains/index', '/pages/daily/index', '/pages/favorites/index']);
+const tabPages = new Set(['/pages/index/index', '/pages/todos/index', '/pages/domains/index', '/pages/daily/index', '/pages/pomodoro/index']);
 const personalStates = new Map<string, any>();
 const scheduledReminders = new Map<string, any>();
 const pomodoroReminders = new Map<string, any>();
@@ -174,6 +174,8 @@ const Taro = {
   vibrateShort: async () => ({}), setKeepScreenOn: async () => ({}),
   getSystemInfoSync: () => ({ windowWidth: innerWidth, windowHeight: innerHeight, safeArea: { bottom: innerHeight }, statusBarHeight: 0 }),
   getWindowInfo: () => ({ windowWidth: innerWidth, windowHeight: innerHeight, safeArea: { bottom: innerHeight }, statusBarHeight: 0 }),
+  onWindowResize: (callback: () => void) => window.addEventListener('resize', callback),
+  offWindowResize: (callback: () => void) => window.removeEventListener('resize', callback),
   createSelectorQuery: () => {
     const selectors: { value: string; all: boolean; scroll?: boolean; node?: boolean; callback?: (value: any) => void }[] = [];
     const query = {
@@ -213,6 +215,8 @@ const Taro = {
   },
   request: async ({ url, method = 'GET', data }: { url: string; method?: string; data?: any }) => {
     const parsed = new URL(url); const path = parsed.pathname.replace(/^\/api/, '');
+    const requestDelay = fixture().toolRequestDelays?.[path];
+    if (method === 'GET' && requestDelay) await new Promise(resolve => setTimeout(resolve, requestDelay));
     const sessionProfile = fixture().sessionProfile;
     const requestAuthenticated = sessionProfile?.authenticated ?? loggedIn;
     window.__miniRequests.push({ path, method, query: parsed.search, data: data === undefined ? undefined : structuredClone(data) });
@@ -367,6 +371,30 @@ export function Picker({ range = [], rangeKey, value = 0, onChange, children, mo
   return <div {...props} style={{ position: 'relative' }}>{children}<select aria-label='筛选选择' disabled={disabled} value={value} onChange={event => onChange?.({ detail: { value: Number(event.currentTarget.value) } })} style={{ position: 'absolute', inset: 0, width: '100%', opacity: 0 }}>
     {range.map((item: any, i: number) => <option key={i} value={i}>{rangeKey ? item[rangeKey] : item}</option>)}
   </select></div>;
+}
+// Browser model of native PickerView values; native touch physics need WeChat QA.
+export function PickerViewColumn({ children }: any) { return <>{children}</>; }
+export function PickerView({ children, value = [], onChange, onPickStart, onPickEnd, indicatorStyle, indicatorClass, maskStyle, maskClass, immediateChange, ariaLabel, ...props }: any) {
+  const rowHeight = Number(indicatorStyle?.match(/height:\s*(\d+)px/)?.[1] || 40);
+  const update = (index: number, selected: number) => {
+    onPickStart?.({}); const next = [...value]; next[index] = selected; onChange?.({ detail: { value: next } }); onPickEnd?.({});
+  };
+  return <div {...props} aria-label={ariaLabel} style={{ ...props.style, display: 'flex' }}>
+    {React.Children.map(children, (column: any, index) => {
+      const items = React.Children.toArray(column.props.children) as any[], selected = value[index] ?? 0;
+      return <div className='preview-wheel-column' style={{ position: 'relative', flex: 1, width: 0, height: '100%', overflow: 'hidden' }}
+        onWheel={event => update(index, Math.max(0, Math.min(items.length - 1, selected + Math.sign(event.deltaY))))}>
+        <div aria-hidden style={{ color: '#e6eee4', fontSize: 16, textAlign: 'center' }}>
+          {[-2, -1, 0, 1, 2].map(offset => <div key={offset} style={{ height: rowHeight, lineHeight: `${rowHeight}px`, boxSizing: 'border-box', ...(offset === 0 ? { borderTop: '1px solid #46605f', borderBottom: '1px solid #46605f' } : {}) }}>{items[selected + offset]?.props.children ?? ''}</div>)}
+        </div>
+        <select size={5} aria-label={column.props.ariaLabel || column.props['aria-label']} value={String(items[selected]?.props.children ?? '')}
+          style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', opacity: 0, pointerEvents: 'none', border: 0, padding: 0, margin: 0 }}
+          onChange={event => update(index, items.findIndex(item => String(item.props.children) === event.currentTarget.value))}>
+          {items.map((item, row) => <option key={row} value={String(item.props.children)}>{item.props.children}</option>)}
+        </select>
+      </div>;
+    })}
+  </div>;
 }
 export function RichText({ nodes, ...props }: any) { return <div {...props} dangerouslySetInnerHTML={{ __html: typeof nodes === 'string' ? nodes : '' }} />; }
 export const Swiper = basic('div');

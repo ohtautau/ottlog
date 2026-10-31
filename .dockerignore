@@ -6,7 +6,14 @@
 **/.vs
 **/test-results
 **/dist
+web/public/tool-app
 **/.env*
 **/admin-password.txt
 backups
+artifacts
+local-state
+.tools
+*.log
+project.private.config.json
+**/project.private.config.json
 .git

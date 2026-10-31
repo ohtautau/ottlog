@@ -1,21 +1,21 @@
+import DocumentEditorSheet from '../../components/document-editor-sheet';
+import CardGroupContent from '../../components/card-group-content';
+import { MemoCard } from '../../components/data-card-views';
+import EmptyState from '../../components/empty-state';
 import { trimTextEnd } from '../../lib/text-whitespace';
 import FilterPopover, { FilterFields, FilterField, FilterOptionGrid, FilterSearch } from '../../components/filter-popover';
 import SectionTitle from '../../components/section-title';
-import EditorHeading from '../../components/editor-heading';
 import { CoreScreen } from '../../components/page-sections';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import Taro, { useRouter } from '@tarojs/taro';
-import { Button, Image, ScrollView, Text, View } from '@tarojs/components';
+import { ScrollView, Text, View } from '@tarojs/components';
 import ActionButton, { ChoiceButton } from '../../components/ui-button';
 import PageScroll from '../../components/page-scroll';
 import { hasVolatilePersonalTool, usePersonalToolState } from '../../lib/use-personal-tool-state';
-import { demoMemos, initialMemoState, isMemoState, memoColors, memoPriority, memoPriorityColor, type Memo, type MemoColor, type MemoState } from '../../lib/tool-records';
+import { initialMemoState, isMemoState, memoColors, memoPriority, type Memo, type MemoColor, type MemoState } from '../../lib/tool-records';
 import AppDialog from '../../components/app-dialog';
-import LibraryIcon from '../../components/library-icon';
 import { getLibraryIcon } from '../../lib/icon-library';
-import HabitPriorityCorner from '../../components/habit-priority-corner';
 import MemoEditorFields from '../../components/memo-editor-fields';
-import { memoColorStyle } from '../../components/memo-fields-layout';
 import MemoReader from '../../components/memo-reader';
 import { DeleteSymbol, PinSymbol, ResetSymbol } from '../../components/manage-symbol';
 import EntryComposer from '../../components/entry-composer';
@@ -244,29 +244,19 @@ export default function Memos() {
           {filterFields}
         </FilterPopover>} manage={<ChoiceButton id='memo-settings' iconOnly size='compact' ariaLabel='管理便签删除' selected={managing} disabled={!writable || busy || imageBusy || !!currentDeletion || creating} onClick={() => { setShowSort(false); setShowFilters(false); setManaging(previous => !previous); }}><DeleteSymbol /></ChoiceButton>} create={<CreateButton className='memo-create' label='创建便签' disabled={!writable || busy} onClick={create} />} />
       <CategoryRow ariaLabel='便签分类' className='memo-category-row' fixedLeading={<CategoryButton id='memo-category-all' ariaLabel='便签分类：全部' selected={tagFilters.length === 0} onClick={() => setTagFilters([])}>全部</CategoryButton>} scrollIntoView={categoryTarget} selectionOffset={1.5} contentKey={JSON.stringify([owner, filterTags])} scrollWithAnimation>{filterTags.map((tag, index) => <CategoryButton id={`memo-category-${index}`} key={tag} ariaLabel={`便签分类：${tag}`} selected={tagFilters.includes(tag)} onClick={() => setTagFilters(tagFilters.length === 1 && tagFilters.includes(tag) ? [] : [tag])}>{tagLabel(tag)}</CategoryButton>)}</CategoryRow>
-      <View className='memo-list-heading'><View><SectionTitle inRow className='memo-list-label'>{filterCount ? '筛选结果' : '全部便签'}</SectionTitle><Text className='memo-list-count'>{filtered.length}</Text></View><Text>{sortLabels[sort]}{filtered.some(note => note.pinned) ? ' · 置顶优先' : ''}</Text></View>
+      <View className='memo-list-heading card-group-heading'><View><SectionTitle inRow className='memo-list-label'>{filterCount ? '筛选结果' : '全部便签'}</SectionTitle><Text className='memo-list-count'>{filtered.length}</Text></View><Text>{sortLabels[sort]}{filtered.some(note => note.pinned) ? ' · 置顶优先' : ''}</Text></View>
       {!!filterCount && <View className='memo-active-filters'><Text>{[search.trim() && `“${search.trim()}”`, ...tagFilters.map(tagLabel), ...colorFilters.map(color => memoColors[color].label)].filter(Boolean).join(' · ')}</Text><ActionButton appearance='icon' size='compact' ariaLabel='重置便签筛选' onClick={clearFilters}><ResetSymbol /></ActionButton></View>}
       <ScrollView id='memo-list' key={JSON.stringify([owner, search, colorFilters, sort, tagFilters])} className='memo-list-scroll' scrollY enhanced bounces={false} showScrollbar={false}>
-        {!ready ? <View className='memo-list-empty'><View className='memo-empty-paper' aria-hidden /><Text className='memo-empty-title'>正在读取便签…</Text></View> : !valid ? <View className='memo-list-empty'><Text className='memo-empty-title'>暂时无法显示便签</Text><Text>当前数据格式暂不兼容，原始数据已保留。</Text><ActionButton className='button-label tool-secondary' onClick={retry}>重新读取</ActionButton></View> : filtered.length ? <View className='memo-list'>{filtered.map(note => {
+        <CardGroupContent>{!ready ? <View className='memo-list-empty'><View className='memo-empty-paper' aria-hidden /><Text className='memo-empty-title'>正在读取便签…</Text></View> : !valid ? <View className='memo-list-empty'><Text className='memo-empty-title'>暂时无法显示便签</Text><Text>当前数据格式暂不兼容，原始数据已保留。</Text><ActionButton className='button-label tool-secondary' onClick={retry}>重新读取</ActionButton></View> : filtered.length ? <View className='memo-list'>{filtered.map(note => {
           const photos = note.images?.filter(isMemoImage) ?? [];
           const title = noteTitle(note);
-          return <View className='memo-note' style={memoColorStyle(note.color)} key={note.id}>
-            <HabitPriorityCorner priority={memoPriority(note)} color={memoPriorityColor(memoPriority(note))} />
-            <Button className='memo-note-open' hoverClass='none' ariaLabel={`查看便签：${title}`} onClick={() => { if (writable && !busy && !imageBusy && !deletionRef.current) setViewed({ owner, id: note.id }); }}>
-              {getLibraryIcon(note.iconId) ? <LibraryIcon className='memo-note-symbol' name={note.iconId} /> : <View className='memo-note-paper' style={{ color: memoColors[note.color].value, backgroundColor: memoColors[note.color].surface }} aria-hidden><View /><View /><View /></View>}
-              <View className='memo-note-copy'>
-                <View className='memo-note-title-row'><Text className='memo-note-title'>{title}</Text></View>
-                <Text className='memo-note-body'>{note.body ? excerpt(note.body) : photos.length ? `${photos.length} 张图片` : '暂无正文'}</Text>
-                <View className='memo-note-meta'>{note.pinned && <Text className='memo-note-pinned'>置顶</Text>}{note.tags.slice(0, 2).map(tag => <Text className='memo-note-tag' key={tag}>{tagLabel(tag)}</Text>)}{note.tags.length > 2 && <Text>＋{note.tags.length - 2}</Text>}{!!photos.length && !!note.body && <Text className='memo-note-photo-count'>{photos.length} 图</Text>}<Text className='memo-note-date'>{noteDate(sort === 1 ? note.createdAt : note.updatedAt)}</Text></View>
-              </View>
-              {!!photos.length && <View className='memo-note-images'><Image src={photos[0].dataUrl} mode='aspectFill' /></View>}
-            </Button>
-            <View className='memo-note-actions'>
+          return <MemoCard key={note.id} title={title} body={note.body ? excerpt(note.body) : photos.length ? `${photos.length} 张图片` : '暂无正文'} color={note.color} iconId={note.iconId} priority={memoPriority(note)} images={photos}
+              onOpen={() => { if (writable && !busy && !imageBusy && !deletionRef.current) setViewed({ owner, id: note.id }); }}
+              metadata={<>{note.pinned && <Text className='memo-note-pinned'>置顶</Text>}{note.tags.slice(0, 2).map(tag => <Text className='memo-note-tag' key={tag}>{tagLabel(tag)}</Text>)}{note.tags.length > 2 && <Text>＋{note.tags.length - 2}</Text>}{!!photos.length && !!note.body && <Text className='memo-note-photo-count'>{photos.length} 图</Text>}<Text className='memo-note-date'>{noteDate(sort === 1 ? note.createdAt : note.updatedAt)}</Text></>} actions={<>
               <ChoiceButton iconOnly size='compact' className='button-label memo-note-pin' ariaLabel={`${note.pinned ? '取消置顶' : '置顶'}便签：${title}`} aria-pressed={note.pinned} disabled={!writable || busy} onClick={() => { void pin(note); }}><PinSymbol /></ChoiceButton>
               {managing && <ActionButton appearance='icon' intent='danger' size='compact' ariaLabel={`删除便签：${title}`} disabled={busy || imageBusy || !writable} onClick={() => requestDelete(note)}><DeleteSymbol /></ActionButton>}
-            </View>
-          </View>;
-        })}</View> : <View className='memo-list-empty'><View className='memo-empty-paper' aria-hidden /><Text className='memo-empty-title'>{state.notes.length ? '没有符合条件的便签' : '还没有便签'}</Text>{!state.notes.length && <ActionButton className='button-label tool-secondary' disabled={!writable || busy} onClick={() => { void change(previous => previous.notes.length ? previous : { ...previous, notes: demoMemos() }).catch(notify); }}>生成示例便签</ActionButton>}{!!filterCount && <ActionButton className='button-label tool-secondary' onClick={clearFilters}>清除筛选</ActionButton>}</View>}
+            </>} />;
+        })}</View> : !state.notes.length && !filterCount ? <EmptyState kind='memos' /> : <View className='memo-list-empty'><View className='memo-empty-paper' aria-hidden /><Text className='memo-empty-title'>没有符合条件的便签</Text>{!!filterCount && <ActionButton className='button-label tool-secondary' onClick={clearFilters}>清除筛选</ActionButton>}</View>}</CardGroupContent>
       </ScrollView>
       {!!status && <View className='tool-status'><Text>{status}</Text><ActionButton className='button-label' onClick={retry}>重试同步</ActionButton></View>}
     </CoreScreen></View></PageScroll>
@@ -277,12 +267,9 @@ export default function Memos() {
       onRetry={() => { const target = readerChangeRef.current; if (target) void saveReaderChange(target); }}
       editDisabled={busy || imageBusy || !!currentDeletion || creating || !!draft || !!readerChange} onEdit={() => { if (!readerChangeRef.current && viewed?.owner === currentOwner.current) edit(readNote); }}
       pinDisabled={busy || imageBusy || !!currentDeletion || creating || !!draft || !!readerChange} onPin={() => { if (!readerChangeRef.current && viewed?.owner === currentOwner.current) void pin(readNote); }} />}
-    {draft && <View className='memo-overlay'><View className='memo-backdrop' onClick={closeGuard.requestClose} /><View className='memo-sheet'>
-      <EditorHeading className='memo-sheet-heading' titleClassName='memo-sheet-title' title='编辑便签' actions={<ActionButton appearance='icon' className='button-label' aria-label='关闭便签编辑' disabled={busy || imageBusy} onClick={closeGuard.requestClose}>×</ActionButton>} />
-      <ScrollView scrollY className='memo-sheet-scroll' enhanced bounces={false} showScrollbar={false}><View className='memo-sheet-fields'>
-        <MemoEditorFields draft={draft} onChange={setDraft} tagsText={tags} onTagsChange={setTags} tagOptions={existingTags} disabled={busy || !writable} owner={owner} onBusyChange={setImageBusy} />
-      </View></ScrollView><SheetActions className='memo-sheet-footer' leading={<SheetDeleteButton ariaLabel='删除便签' disabled={busy || imageBusy || !writable} onClick={() => requestDelete(draft)} />}><ActionButton appearance='primary' className="button-label tool-primary" loading={busy} disabled={busy || imageBusy || !writable || !draft.title.trim() && !draft.body.trim() && !images.length} onClick={() => { void save(); }}>保存</ActionButton></SheetActions>
-    </View></View>}
+    {draft && <DocumentEditorSheet title='编辑便签' closeLabel='关闭便签编辑' onClose={closeGuard.requestClose} busy={busy || imageBusy} footer={<SheetActions className='memo-sheet-footer' leading={<SheetDeleteButton ariaLabel='删除便签' disabled={busy || imageBusy || !writable} onClick={() => requestDelete(draft)} />}><ActionButton appearance='primary' className='button-label tool-primary' loading={busy} disabled={busy || imageBusy || !writable || !draft.title.trim() && !draft.body.trim() && !images.length} onClick={() => { void save(); }}>保存</ActionButton></SheetActions>}>
+      <MemoEditorFields draft={draft} onChange={setDraft} tagsText={tags} onTagsChange={setTags} tagOptions={existingTags} disabled={busy || !writable} owner={owner} onBusyChange={setImageBusy} />
+    </DocumentEditorSheet>}
     <AppDialog open={!!currentDeletion} title='删除便签' ariaLabel='删除便签确认' closeLabel='关闭便签删除确认' onClose={closeDelete} busy={busy || !!currentDeletion?.pending} error={deleteError} actions={<ActionButton appearance='danger' size='large' width='fill' disabled={busy} loading={busy} onClick={() => { void remove(); }}>{currentDeletion?.pending ? '重试删除' : '删除'}</ActionButton>}>
       <Text>删除「{currentDeletion && noteTitle(currentDeletion.note)}」？</Text>
     </AppDialog>

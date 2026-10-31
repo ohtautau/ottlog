@@ -93,6 +93,8 @@ module.exports = async function checkTodoWorkflow({ page, origin, out, width, ex
   await expect(schedule.button(page, '开启微信提醒')).toBeDisabled();
   await schedule.confirmSchedule(page, expect);
   await page.locator('.todo-sheet:not(.entry-composer)').getByRole('button', { name: '保存', exact: true }).click();
+  await expect(page.locator('.todo-sheet')).toHaveCount(0);
+  await page.getByRole('button', { name: '编辑任务：无优先级的任务', exact: true }).click();
   await schedule.openSchedule(page, expect);
   await schedule.openSection(page, '设置提醒');
   await expect(schedule.button(page, '开启微信提醒')).toBeDisabled();

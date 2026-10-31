@@ -1,1 +1,1 @@
-export default definePageConfig({ disableScroll: true, navigationBarTitleText: '所有文章', enablePullDownRefresh: false, onReachBottomDistance: 160 });
+export default definePageConfig({ disableScroll: true, navigationBarTitleText: '文章', enablePullDownRefresh: false, onReachBottomDistance: 160 });

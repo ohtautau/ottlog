@@ -16,7 +16,7 @@ module.exports = async function checkHabitSorting({ page, origin, out, width, ex
     window.__miniNotices.length = 0;
     location.hash = '#/pages/daily/index'; return reminders;
   }, habitDomainFixture());
-  const grid = () => page.locator('.swipe-panel-current .daily-habit-scroll');
+  const grid = () => page.locator('.daily-habit-pages > .daily-habit-scroll');
   const ids = async () => {
     const enabledIds = (await read()).items.filter(item => item.enabled).map(item => item.id);
     const displayedIds = await grid().locator('.habit-sort-tile').evaluateAll(nodes => nodes.map(node => node.id.slice(11)));

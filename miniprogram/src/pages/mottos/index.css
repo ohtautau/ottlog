@@ -4,9 +4,6 @@
 .mottos-add { flex: none; width: auto; margin: 0; border: 1rpx solid #a5c8b5; border-radius: 16rpx; color: #203b30; background: #b9dbca; }
 .mottos-list-scroll { flex: 1; height: 0; min-height: 0; }
 .mottos-list { display: flex; flex-direction: column; gap: 14rpx; padding-bottom: 24rpx; }
-.mottos-row { display: flex; align-items: center; gap: 24rpx; width: 100%; min-width: 0; min-height: 140rpx; padding: 26rpx 26rpx 26rpx 30rpx; margin: 0; border: 1rpx solid #30454f; border-radius: 20rpx; background: #192b32; text-align: left; font-weight: 400; color: #e5eee5; }
-.mottos-number { flex: none; align-self: flex-start; padding-top: 4rpx; color: #6f8c91; font-size: 23rpx; line-height: 1.6; font-variant-numeric: tabular-nums; }
-.mottos-text { flex: 1; min-width: 0; font-size: 27rpx; line-height: 1.75; overflow-wrap: anywhere; }
 
 .mottos-empty { display: flex; flex: 1; align-items: center; justify-content: center; flex-direction: column; gap: 20rpx; min-height: 360rpx; padding: 50rpx 20rpx; color: #a7b8be; font-size: 27rpx; text-align: center; }
 .mottos-empty-mark { color: #b9dbca; font: 90rpx/1 Georgia, serif; }
@@ -29,8 +26,6 @@
 .mottos-page button[disabled] { opacity: .45; }
 @media (min-width: 600px) {
   .mottos-page { padding-top: 24rpx; }
-  .mottos-row { min-height: 110rpx; padding-top: 18rpx; padding-bottom: 18rpx; }
-  .mottos-text { font-size: 24rpx; }
   .mottos-editor-sheet { padding-top: 18rpx; }
   .mottos-input { height: 180rpx; font-size: 26rpx; }
 }

@@ -13,7 +13,7 @@ const source = ts.transpileModule(fs.readFileSync(filename, 'utf8'), {
 const clone = value => value === undefined ? undefined : JSON.parse(JSON.stringify(value));
 const ok = (data, cookies = []) => ({ statusCode: 200, data, cookies });
 
-function fixture(responses = [], cookies = {}) {
+function fixture(responses = [], cookies = {}, base = 'http://127.0.0.1:19999/') {
   const queue = [...responses];
   const requests = [];
   const storage = new Map([['ottlog.cookies', clone(cookies)]]);
@@ -33,7 +33,7 @@ function fixture(responses = [], cookies = {}) {
     assert.equal(name, '@tarojs/taro', 'The unit test must not load external runtime dependencies');
     return taro;
   };
-  tested._compile(`const API_BASE_URL = 'http://127.0.0.1:19999/';\n${source}`, filename);
+  tested._compile(`const API_BASE_URL = ${JSON.stringify(base)};\n${source}`, filename);
   return {
     ...tested.exports,
     requests,
@@ -104,7 +104,7 @@ async function main() {
   serviceError.done();
 
   const guestFavorites = fixture([{ statusCode: 401, data: {} }]);
-  await assert.rejects(() => guestFavorites.favorites(), { message: '请到「我的」登录账号' });
+  await assert.rejects(() => guestFavorites.favorites(), { message: '请从今日右上角的账号按钮登录' });
   assert.equal(guestFavorites.requests[0].url, `${guestFavorites.origin}/api/favorites?channel=mini`);
   guestFavorites.done();
   for (const [status, message] of [[404, '内容不存在或尚未公开'], [429, '操作过于频繁，请稍后重试'], [500, '请求失败，请稍后重试']]) {
@@ -116,6 +116,12 @@ async function main() {
   const blockedDomain = fixture([{ reject: { errMsg: 'request:fail url not in domain list' } }]);
   await assert.rejects(() => blockedDomain.api('/posts'), error => /域名校验/.test(error.message) && /开发者工具/.test(error.message));
   blockedDomain.done();
+  const publicDomain = fixture([{ reject: { errMsg: 'request:fail url not in domain list' } }], {}, 'https://api.ohtautau.com');
+  await assert.rejects(() => publicDomain.api('/posts'), error => /小程序后台/.test(error.message) && /request 合法域名 https:\/\/api\.ohtautau\.com/.test(error.message) && !/关闭/.test(error.message));
+  publicDomain.done();
+  const publicNetwork = fixture([{ reject: { errMsg: 'request:fail connect ETIMEDOUT' } }], {}, 'https://api.ohtautau.com');
+  await assert.rejects(() => publicNetwork.api('/posts'), error => /检查网络/.test(error.message) && !/VS|局域网|隧道/.test(error.message));
+  publicNetwork.done();
   const disconnected = fixture([{ reject: { errMsg: 'request:fail connect ECONNREFUSED' } }]);
   await assert.rejects(() => disconnected.api('/posts'), error => /VS 后端/.test(error.message) && /局域网/.test(error.message));
   disconnected.done();

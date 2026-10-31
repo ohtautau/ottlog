@@ -76,6 +76,8 @@ export type LibraryIconId = typeof iconLibrary[number]['id'];
 export type LibraryIconEntry = { id: LibraryIconId; label: string; category: IconCategory; keywords: string; src: string; fallback: Scene };
 const byId = new Map<string, LibraryIconEntry>(iconLibrary.map(icon => [icon.id, icon]));
 export function getLibraryIcon(id: unknown): LibraryIconEntry | undefined { return typeof id === 'string' ? byId.get(id) : undefined; }
+/** Display fallback only; an unselected memo icon stays absent in saved data. */
+export function memoIconId(id?: string): LibraryIconId { return getLibraryIcon(id)?.id ?? 'notes'; }
 export function habitIconId(item: Pick<Reminder, 'kind' | 'backgroundKind' | 'iconId'>): LibraryIconId {
   return getLibraryIcon(item.iconId)?.id ?? getLibraryIcon(item.backgroundKind)?.id ?? getLibraryIcon(item.kind)?.id ?? 'plant';
 }

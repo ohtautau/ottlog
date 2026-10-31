@@ -5,12 +5,14 @@ import { nativeTabBarItems } from '../lib/native-tab-bar';
 import ActionButton from './ui-button';
 import { DeleteSymbol } from './manage-symbol';
 import './sheet-actions.css';
+import useKeyboardDock from '../lib/use-keyboard-dock';
 
 /** One bottom gap; tabBar and floating panels already own their safe-area boundary. */
 export default function SheetActions({ children, leading, className = '' }: { children: ReactNode; leading?: ReactNode; className?: string }) {
   const route = useRouter().path.replace(/^\//, '').split('?')[0];
   const hasNativeTabBar = nativeTabBarItems.some(item => item.pagePath === route);
-  return <View className={`sheet-actions${hasNativeTabBar ? ' has-native-tab-bar' : ''}${leading != null ? ' has-leading-action' : ''} ${className}`}>{leading}{children}</View>;
+  const keyboardInset = useKeyboardDock();
+  return <View style={keyboardInset ? { marginBottom: `${keyboardInset}px`, paddingBottom: 'var(--popup-actions-bottom-space,8px)' } : undefined} className={`sheet-actions${hasNativeTabBar ? ' has-native-tab-bar' : ''}${leading != null ? ' has-leading-action' : ''} ${className}`}>{leading}{children}</View>;
 }
 
 /** An editor's existing delete operation, composed into SheetActions.leading. */

@@ -4,11 +4,12 @@ const schedule = require('./todo-schedule-test-helpers.cjs');
 
 module.exports = async function checkTodoNotificationWorkflow({ page, origin, out, width, expect }) {
   // A query change makes a new document, resetting module storage and login state.
-  await page.goto(`${origin}/?reminder-workflow#/pages/favorites/index`);
+  await page.goto(`${origin}/?reminder-workflow#/pages/index/index`);
+    await page.getByRole('button', { name: /^打开账号窗口/ }).click();
   await page.getByPlaceholder('输入博客账号').fill('preview-reader');
   await page.getByPlaceholder('输入密码', { exact: true }).fill('fixture-only-password');
   await page.getByRole('button', { name: '登录并同步', exact: true }).click();
-  await expect(page.locator('.account-user-name')).toHaveText('preview-reader');
+  await expect(page.locator('.account-window-name')).toHaveText('preview-reader');
   const tomorrow = await page.evaluate(() => {
     const date = new Date(); date.setDate(date.getDate() + 1);
     window.__miniFixture.reminderConfig = { enabled: true, templateId: 'preview-template', requiresSubscription: true };
@@ -77,7 +78,7 @@ module.exports = async function checkTodoNotificationWorkflow({ page, origin, ou
   await schedule.openSchedule(page, expect);
   await schedule.openSection(page, '设置提醒');
   await expect(authorize()).toHaveText('已开启');
-  await schedule.button(page, '提前1小时').click();
+  await schedule.chooseReminderTime(page, '提前1小时');
   await expect(authorize()).toBeDisabled();
   expect(await scheduledPosts()).toHaveLength(1);
   expect(await cancellations()).toHaveLength(0);

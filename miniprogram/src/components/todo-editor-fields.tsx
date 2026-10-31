@@ -19,6 +19,7 @@ import './todo-editor-fields.css';
 import TagTextInput from './tag-text-input';
 import EntityTitleRow, { EntityTitleInput } from './entity-title-field';
 import EditorFieldsLayout from './editor-fields-layout';
+import { isWebTool } from '../lib/tool-platform';
 
 export default function TodoEditorFields({ draft, onChange, tagsText, onTagsChange, tagOptions, disabled, owner, onBusyChange, today, scheduleOpen, onSchedule, autoFocus, defaultPreview = false }: {
   draft: Todo; onChange: (draft: Todo) => void; tagsText: string; onTagsChange: (text: string) => void;
@@ -80,6 +81,6 @@ export default function TodoEditorFields({ draft, onChange, tagsText, onTagsChan
         </> : <ActionButton appearance='icon' size='compact' className='button-label todo-add-next' ariaLabel='添加下一步任务' disabled={locked || index >= 50} onClick={() => addNext(child.id)}><AddSymbol /></ActionButton>}
       </View>
     </View>)}</View>
-    <TagChoiceRow options={options} value={selected} onChange={tags => onTagsChange(tags.join('，'))} ariaLabel='选择现有标签' frequentValues={tagOptions.slice(0, 4)} disabled={locked} className='todo-tags-row' contentKey={tagsText} customInput={<TagTextInput ariaLabel='任务标签' value={tagsText} disabled={locked} maxlength={Math.max(300, tagsText.length)} cursorSpacing={96} adjustPosition placeholder='输入标签，用符号分隔' onInput={event => onTagsChange(event.detail.value)} />} />
+    <TagChoiceRow customInputPlacement={isWebTool ? 'inline' : 'popover'} options={options} value={selected} onChange={tags => onTagsChange(tags.join('，'))} ariaLabel='选择现有标签' frequentValues={tagOptions.slice(0, 4)} disabled={locked} className='todo-tags-row' contentKey={tagsText} customInput={<TagTextInput ariaLabel='任务标签' value={tagsText} disabled={locked} maxlength={Math.max(300, tagsText.length)} cursorSpacing={96} adjustPosition placeholder='输入标签，用符号分隔' onInput={event => onTagsChange(event.detail.value)} />} />
   </EditorFieldsLayout>;
 }

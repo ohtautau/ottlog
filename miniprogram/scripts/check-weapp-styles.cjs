@@ -14,12 +14,28 @@ function checkStyles(source, filename) {
   }
   check(root); root.walk(check);
   let unsupportedSelector;
+  let bareStructuralPseudo;
   root.walkRules(rule => {
-    selectorParser(selectors => selectors.walkUniversals(() => {
-      unsupportedSelector ||= rule.source?.start || { line: 1, column: 1 };
-    })).processSync(rule.selector);
+    selectorParser(selectors => {
+      selectors.walkUniversals(() => {
+        unsupportedSelector ||= rule.source?.start || { line: 1, column: 1 };
+      });
+      selectors.walkPseudos(pseudo => {
+        // Nested arguments such as view:not(:first-child) are scoped by the outer selector.
+        if (pseudo.parent.parent?.type === 'pseudo') return;
+        if (!/^:(?:(?:first|last|only)-(?:child|of-type)|nth-(?:last-)?(?:child|of-type)|empty)$/.test(pseudo.value)) return;
+        const siblings = pseudo.parent.nodes, index = siblings.indexOf(pseudo);
+        let start = index, end = index;
+        while (start > 0 && siblings[start - 1].type !== 'combinator') start--;
+        while (end + 1 < siblings.length && siblings[end + 1].type !== 'combinator') end++;
+        if (!siblings.slice(start, end + 1).some(node => ['class', 'tag', 'id'].includes(node.type))) {
+          bareStructuralPseudo ||= rule.source?.start || { line: 1, column: 1 };
+        }
+      });
+    }).processSync(rule.selector);
   });
   if (unsupportedSelector) throw new Error(`${filename}:${unsupportedSelector.line}:${unsupportedSelector.column}: unsupported WXSS universal selector (unexpected token *)`);
+  if (bareStructuralPseudo) throw new Error(`${filename}:${bareStructuralPseudo.line}:${bareStructuralPseudo.column}: WXSS structural pseudo-class requires an explicit class or tag selector`);
 }
 
 function checkStyleDirectory(directory, extension) {

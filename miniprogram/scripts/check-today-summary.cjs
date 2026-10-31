@@ -5,7 +5,7 @@ const { checkDefaultEntrances } = require('./home-shortcut-test-helpers.cjs');
 // Legacy home-overview/summary commands now verify the requested two-screen home.
 module.exports = async function checkHomeNavigation({ page, origin, out, width, expect }) {
   const groups = [
-    { title: '快捷操作', type: 'action', items: [['create', '创建任务'], ['memos', '创建便签'], ['create-habit', '创建习惯'], ['create-domain', '创建领域'], ['pomodoro', '开始番茄钟']] },
+    { title: '快捷操作', type: 'action', items: [['create', '创建任务'], ['memos', '创建便签'], ['create-habit', '创建习惯'], ['create-domain', '创建领域'], ['pomodoro', '专注']] },
     { title: '功能界面', type: 'page', items: [['todos', '任务'], ['memo-list', '便签'], ['statistics', '统计'], ['daily', '习惯'], ['growth', '领域'], ['pomodoro-page', '番茄钟'], ['meals', '饮食记录'], ['choose', '选境']] },
     { title: '阅读与空间', type: 'page', items: [['categories', '文章分类'], ['favorites', '收藏'], ['journal', '个人空间']] },
   ];

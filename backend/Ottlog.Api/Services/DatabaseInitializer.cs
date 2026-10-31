@@ -15,7 +15,7 @@ public static class DatabaseInitializer
         var config = scope.ServiceProvider.GetRequiredService<IConfiguration>();
         if (!await db.Settings.AnyAsync(s => s.Key == "seed-complete"))
         {
-            if (config.GetValue("SeedExamples", true))
+            if (config.GetValue("SeedExamples", false))
             {
                 var posts = await scope.ServiceProvider.GetRequiredService<MarkdownPostRepository>().GetAllAsync(default);
                 foreach (var post in posts)

@@ -1,5 +1,10 @@
 export type Session = { authenticated: boolean; userName?: string; isAdmin: boolean; csrfToken: string };
 export type Favorite = { slug: string; title: string };
+export async function logoutAccount(): Promise<Session> {
+  await accountRequest("/api/account/logout", "POST");
+  window.dispatchEvent(new Event("ottlog-session"));
+  return { authenticated: false, isAdmin: false, csrfToken: "" };
+}
 export async function accountRequest<T>(path: string, method = "GET", body?: unknown): Promise<T> {
   const headers: Record<string, string> = { "Content-Type": "application/json" };
   if (method !== "GET") headers["X-CSRF-TOKEN"] = (await accountRequest<Session>("/api/account/session")).csrfToken;

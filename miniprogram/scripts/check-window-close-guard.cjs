@@ -199,7 +199,7 @@ module.exports = async function checkWindowCloseGuard({ page, origin, out, width
   const scheduleSheet = () => page.locator('.todo-schedule-sheet');
   await scheduleSheet().getByRole('button', { name: '选择今天', exact: true }).click();
   await scheduleSheet().getByRole('button', { name: '设置时间', exact: true }).click();
-  await scheduleSheet().getByLabel('任务小时', { exact: true }).fill('13');
+  await scheduleSheet().getByLabel('任务小时', { exact: true }).selectOption('13');
   await page.keyboard.press('Escape');
   await expect(prompt()).toHaveCount(1); await expect(composer()).toBeVisible(); await expect(scheduleSheet()).toBeVisible();
   await expect(scheduleSheet().locator('.todo-schedule-time-popover')).toBeVisible();

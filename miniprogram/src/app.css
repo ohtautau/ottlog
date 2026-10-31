@@ -10,8 +10,8 @@ view,text,button,input,textarea{box-sizing:border-box}.page{padding:32px 32px ca
 .button-label{display:flex;align-items:center;justify-content:center}
 /* Signed records and their choices share the same text colors in every host. */
 page{--domain-positive:#aecabb;--domain-negative:#c4b1ad}
-/* All popup action rows reserve the same space before their lower edge. */
-page{--popup-actions-bottom-space:8PX}
+/* Bottom sheets keep their safe area; floating windows share a larger inner gap. */
+page{--popup-actions-bottom-space:8PX;--floating-window-bottom-space:16PX}
 /* Creation and analogous editors share row gaps and separator insets. */
 page{--editor-field-gap:8PX;--editor-section-inset:12PX}
 

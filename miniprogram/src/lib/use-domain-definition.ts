@@ -1,3 +1,4 @@
+import { findFallbackDomain } from './domain-fallback';
 import { useEffect, useRef, useState } from 'react';
 import Taro, { useDidHide, useDidShow } from '@tarojs/taro';
 import { deleteDomain, domainIcon, isDomainState, MAX_DOMAIN_COUNT, saveDomain, type DomainState } from './domain-data';
@@ -65,7 +66,7 @@ export default function useDomainDefinition(domainTool: ToolSource<DomainState>,
     if (!available()) return;
     const { owner, value } = context.current.domainTool;
     const domain = value.domains.find(item => item.id === id);
-    if (!domain || domain.name === '未分类') return;
+    if (!domain || findFallbackDomain(context.current.domainTool.value.domains)?.id === domain.id) return;
     setDeleteDraft(null); setIconOpen(false); setFeedback(null);
     setEditor({ owner, id, name: domain.name, iconId: domainIcon(domain) });
   }
@@ -73,7 +74,7 @@ export default function useDomainDefinition(domainTool: ToolSource<DomainState>,
     if (!available()) return;
     const { owner, value } = context.current.domainTool;
     const domain = value.domains.find(item => item.id === id);
-    if (!domain || domain.name === '未分类') return;
+    if (!domain || findFallbackDomain(context.current.domainTool.value.domains)?.id === domain.id) return;
     setEditor(null); setIconOpen(false); setFeedback(null);
     setDeleteDraft({ owner, id, name: domain.name });
   }
@@ -113,7 +114,7 @@ export default function useDomainDefinition(domainTool: ToolSource<DomainState>,
     try {
       const input = { ...draft, id: savedId };
       const original = captured.domainTool.value.domains.find(domain => domain.id === draft.id);
-      if (original?.name === '未分类') throw new Error('未分类领域不可改名');
+      if (!!original && findFallbackDomain(captured.domainTool.value.domains)?.id === original.id) throw new Error('其它领域不可改名');
       saveDomain(captured.domainTool.value, input);
       if (draft.id && original?.name !== draft.name.trim()) {
         const habits = context.current.habitTool;
@@ -130,7 +131,7 @@ export default function useDomainDefinition(domainTool: ToolSource<DomainState>,
       }
       await captured.domainTool.setValue(previous => {
         if (!isCurrent() || !context.current.domainTool.ready || !isDomainState(context.current.domainTool.value) || !isDomainState(previous)) throw new Error('账号或领域已变化，请重新打开');
-        if (draft.id && previous.domains.some(domain => domain.id === draft.id && domain.name === '未分类')) throw new Error('未分类领域不可改名');
+        if (draft.id && findFallbackDomain(previous.domains)?.id === draft.id) throw new Error('其它领域不可改名');
         const next = saveDomain(previous, input);
         savedId = next.domains.find(domain => domain.name === input.name.trim())?.id;
         return next;
@@ -155,7 +156,7 @@ export default function useDomainDefinition(domainTool: ToolSource<DomainState>,
     try {
       await captured.domainTool.setValue(previous => {
         if (!isCurrent() || !context.current.domainTool.ready || !isDomainState(context.current.domainTool.value) || !isDomainState(previous)) throw new Error('账号或领域已变化，请重新打开');
-        if (previous.domains.some(domain => domain.id === draft.id && domain.name === '未分类')) throw new Error('未分类领域不可删除');
+        if (findFallbackDomain(previous.domains)?.id === draft.id) throw new Error('其它领域不可删除');
         return deleteDomain(previous, draft.id);
       });
       if (!isCurrent()) return;

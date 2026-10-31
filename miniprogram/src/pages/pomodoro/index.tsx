@@ -1,5 +1,5 @@
 import { ChoicePopover, SingleChoiceField } from '../../components/form-options';
-import SingleLineInput, { NumericInputRow } from '../../components/single-line-input';
+import WheelPicker, { NumberWheelPicker, wheelNumbers } from '../../components/wheel-picker';
 import SheetActions from '../../components/sheet-actions';
 import EditorHeading from '../../components/editor-heading';
 import EditorFieldsLayout from '../../components/editor-fields-layout';
@@ -17,7 +17,7 @@ import ManageSymbol from '../../components/manage-symbol';
 import pomodoroToolbarSummary from '../../lib/pomodoro-toolbar-summary';
 import { hasVolatilePersonalTool, syncPersonalTool, usePersonalToolState } from '../../lib/use-personal-tool-state';
 import { initialTodoState, isTodoState, toolId, type Todo } from '../../lib/tool-records';
-import { cleanState as cleanHabits, initialReminders, isReminderState, type Reminder } from '../../lib/reminder-data';
+import { cleanState as cleanHabits, emptyReminderState, isReminderState, type Reminder } from '../../lib/reminder-data';
 import { advanceTimer, decodeTimerRouteValue, finishTimer, initialPomodoroState, isPomodoroState, normalizePomodoroState, pauseTimer, remainingSeconds, resumeTimer, startTimer, timerModes, type PomodoroState, type TimerMode, type TimerSelection, type TimerSettings } from '../../lib/pomodoro-data';
 import { cancelPomodoroReminders, consumePomodoroLaunch, eligiblePomodoroReminderTemplates, getPomodoroReminderConfig, pomodoroReminderMessage, requestPomodoroReminders, type PomodoroReminderResult } from '../../lib/pomodoro-reminders';
 import TomatoClock from '../../components/tomato-clock';
@@ -47,7 +47,7 @@ export default function Pomodoro() {
   const { value, setValue, ready, status, retry, owner } = usePersonalToolState('pomodoro', initialPomodoroState);
   const valid = isPomodoroState(value);
   const { value: todoValue, ready: todosReady, owner: todoOwner } = usePersonalToolState('todos', initialTodoState);
-  const { value: habitValue, ready: habitsReady, owner: habitOwner } = usePersonalToolState('reminders', initialReminders);
+  const { value: habitValue, ready: habitsReady, owner: habitOwner } = usePersonalToolState('reminders', emptyReminderState);
   const { value: domainValue, ready: domainsReady, owner: domainOwner } = usePersonalToolState('domains', initialDomainState);
   const domains = domainsReady && domainOwner === owner && isDomainState(domainValue) ? domainValue.domains : null;
   const state = useMemo(() => normalizePomodoroState(value), [value]);
@@ -62,9 +62,10 @@ export default function Pomodoro() {
   const [settingsDraft, setSettingsDraft] = useState<Record<DurationSetting, string> | null>(null);
   const [settingsOwner, setSettingsOwner] = useState<string | null>(null);
   const [settingsError, setSettingsError] = useState('');
-  const [durationDraft, setDurationDraft] = useState<{ owner: string; mode: TimerMode; value: string; selectAll: boolean } | null>(null);
+  const [durationDraft, setDurationDraft] = useState<{ owner: string; mode: TimerMode; value: string } | null>(null);
   const [durationOverride, setDurationOverride] = useState<{ owner: string; mode: TimerMode; minutes: number } | null>(null);
   const [durationError, setDurationError] = useState('');
+  const [wheelMoving, setWheelMoving] = useState(false);
   const [todoPickerOwner, setTodoPickerOwner] = useState<string | null>(null);
   const [habitPickerOwner, setHabitPickerOwner] = useState<string | null>(null);
   const [sourceMenuOwner, setSourceMenuOwner] = useState<string | null>(null);
@@ -126,7 +127,7 @@ export default function Pomodoro() {
   }, [visible, ready, valid, owner, domains, chosenDomainId]);
   useEffect(() => { mounted.current = true; return () => { mounted.current = false; }; }, []);
   useEffect(() => { if (!visible) return; const timer = setInterval(() => setNow(Date.now()), 1000); return () => clearInterval(timer); }, [visible]);
-  useEffect(() => { setDraft(null); setSettingsDraft(null); setSettingsError(''); setDurationDraft(null); setDurationOverride(null); setDurationError(''); setHabitPickerOwner(null); setTodoPickerOwner(null); setSourceMenuOwner(null); setMessage(''); setReminderMessage(''); announced.current = ''; }, [owner]);
+  useEffect(() => { setWheelMoving(false); setDraft(null); setSettingsDraft(null); setSettingsError(''); setDurationDraft(null); setDurationOverride(null); setDurationError(''); setHabitPickerOwner(null); setTodoPickerOwner(null); setSourceMenuOwner(null); setMessage(''); setReminderMessage(''); announced.current = ''; }, [owner]);
   useEffect(() => { setDurationDraft(null); setDurationError(''); setDurationOverride(null); }, [currentMode, !!active]);
   useEffect(() => { if (!visible || currentMode !== 'focus') { setHabitPickerOwner(null); setTodoPickerOwner(null); setSourceMenuOwner(null); } }, [visible, currentMode]);
   useEffect(() => { void getPomodoroReminderConfig().then(config => { if (mounted.current) setReminderConfig(config); }).catch(() => { /* Configuration feedback belongs to the statistics reminder card. */ }); }, []);
@@ -296,19 +297,19 @@ export default function Pomodoro() {
   const settingsClose = useEditorCloseGuard({
     scope: settingsDraft && settingsOwner === owner && ready && valid ? `${owner}:settings` : '',
     hasChanges: !!settingsDraft && JSON.stringify({ fields: settingsDraft, transition: transitionDraft }) !== settingsInitial.current,
-    blocked: busy || notificationBusy,
+    blocked: busy || notificationBusy || wheelMoving,
     onSave: saveSettings,
     onClose: () => { if (!operation.current && !notificationOperation.current) { setSettingsDraft(null); setSettingsError(''); } },
   });
   const durationClose = useEditorCloseGuard({
     scope: durationDraft?.owner === owner && !active && ready && valid ? `${owner}:duration:${currentMode}` : '',
     hasChanges: !!durationDraft && durationDraft.value !== durationInitial.current,
-    blocked: busy || notificationBusy || !!active,
+    blocked: busy || notificationBusy || wheelMoving || !!active,
     onSave: saveDuration,
     onClose: () => { setDurationDraft(null); setDurationError(''); },
   });
   async function saveSettings() {
-    if (!settingsDraft || settingsOwner !== ownerRef.current || notificationOperation.current || operation.current) return;
+    if (!settingsDraft || settingsOwner !== ownerRef.current || notificationOperation.current || operation.current || wheelMoving) return;
     for (const field of settingsFields) if (!/^[1-9]\d{0,2}$/.test(settingsDraft[field.key]) || Number(settingsDraft[field.key]) > field.max) { setSettingsError(`${field.label}请填写 1 至 ${field.max} 的整数。`); return; }
     setSettingsError('');
     const settings = { ...Object.fromEntries(settingsFields.map(field => [field.key, Number(settingsDraft[field.key])])), transitionMode: transitionDraft } as TimerSettings;
@@ -321,10 +322,10 @@ export default function Pomodoro() {
     if (!ready || !valid || !owner || active || busy || notificationBusy) return;
     setSettingsDraft(null); setTodoPickerOwner(null); setHabitPickerOwner(null); setSourceMenuOwner(null);
     durationInitial.current = String(overrideMinutes ?? state.settings[currentMode]);
-    setDurationDraft({ owner, mode: currentMode, value: durationInitial.current, selectAll: true }); setDurationError('');
+    setDurationDraft({ owner, mode: currentMode, value: durationInitial.current }); setDurationError('');
   }
   function saveDuration() {
-    if (!durationDraft || durationDraft.owner !== ownerRef.current || active || busy || notificationBusy || durationDraft.mode !== currentMode) return;
+    if (!durationDraft || durationDraft.owner !== ownerRef.current || active || busy || notificationBusy || wheelMoving || durationDraft.mode !== currentMode) return;
     const max = currentMode === 'shortBreak' ? 60 : 120;
     if (!/^[1-9]\d{0,2}$/.test(durationDraft.value) || Number(durationDraft.value) > max) { setDurationError(`请填写 1 至 ${max} 的整数。`); return; }
     setDurationOverride({ owner: durationDraft.owner, mode: currentMode, minutes: Number(durationDraft.value) }); setDurationDraft(null); setDurationError('');
@@ -368,16 +369,19 @@ export default function Pomodoro() {
     {settingsDraft && settingsOwner === owner && ready && valid && <View className='focus-settings-overlay'><View className='focus-settings-backdrop' catchMove onClick={event => { event.stopPropagation(); settingsClose.requestClose(); }} /><View className='focus-settings'>
       <EditorHeading className='focus-settings-heading' titleClassName='focus-settings-title' title='调整节奏' actions={<ActionButton appearance='icon' className='button-label' ariaLabel='关闭节奏设置' disabled={busy} onClick={settingsClose.requestClose}>×</ActionButton>} />
       <ScrollView scrollY className='focus-settings-scroll' enhanced bounces={false} showScrollbar={false}><EditorFieldsLayout className='focus-settings-fields'>
-        <View className='focus-settings-grid'>{settingsFields.map(field => <View key={field.key}><FilterFieldHeading label={field.label} /><View className='focus-settings-number'><SingleLineInput frameClassName='focus-settings-input' ariaLabel={field.key === 'longEvery' ? '长休息间隔' : `${field.label}时长`} disabled={busy} type='number' maxlength={3} value={settingsDraft[field.key]} cursorSpacing={96} adjustPosition onInput={event => { setSettingsDraft({ ...settingsDraft, [field.key]: event.detail.value }); setSettingsError(''); }} /><Text>{field.suffix}</Text></View></View>)}</View>
+        <View className='focus-settings-grid'>{settingsFields.map(field => <FilterFieldHeading key={field.key} label={field.label} />)}</View>
+        <WheelPicker label='专注节奏' disabled={busy} onMovingChange={setWheelMoving}
+          columns={settingsFields.map(field => ({ label: field.suffix, ariaLabel: field.key === 'longEvery' ? '长休息间隔' : `${field.label}时长`, values: wheelNumbers(1, field.max), value: settingsDraft[field.key] }))}
+          onChange={values => { setSettingsDraft(Object.fromEntries(settingsFields.map((field, index) => [field.key, values[index]])) as Record<DurationSetting, string>); setSettingsError(''); }} />
         <View className='focus-transition-picker'><FilterFieldHeading label='时间结束后' /><SingleChoiceField ariaLabel='时间结束后' options={transitionOptions} value={transitionDraft} onChange={setTransitionDraft} disabled={busy} width='fill' /></View>
         {!!settingsError && <Text className='focus-settings-error'>{settingsError}</Text>}
       </EditorFieldsLayout></ScrollView>
-      <SheetActions className='focus-settings-actions'><ActionButton appearance='primary' disabled={busy || notificationBusy} loading={busy} className='button-label tool-primary' onClick={() => { void saveSettings(); }}>保存节奏</ActionButton></SheetActions>
+      <SheetActions className='focus-settings-actions'><ActionButton appearance='primary' disabled={busy || notificationBusy || wheelMoving} loading={busy} className='button-label tool-primary' onClick={() => { void saveSettings(); }}>保存节奏</ActionButton></SheetActions>
     </View></View>}
-    {durationDraft?.owner === owner && !active && ready && valid && <View className='focus-quick-overlay'><SheetBackdrop onClose={durationClose.requestClose} /><View className='focus-quick-window' role='dialog' ariaLabel='本次计时时长'>
+    {durationDraft?.owner === owner && !active && ready && valid && <View className='focus-quick-overlay'><SheetBackdrop onClose={durationClose.requestClose} /><View className='focus-quick-window floating-window' role='dialog' ariaLabel='本次计时时长'>
       <EditorHeading className='focus-settings-heading' titleClassName='focus-settings-title' title='本次时长' actions={<ActionButton appearance='icon' ariaLabel='关闭时长设置' disabled={busy || notificationBusy} onClick={durationClose.requestClose}>×</ActionButton>} />
-      <View className='focus-quick-body'><NumericInputRow className='focus-quick-number'><SingleLineInput ariaLabel='本次计时分钟' type='number' maxlength={3} value={durationDraft.value} focus selectionStart={durationDraft.selectAll ? 0 : -1} selectionEnd={durationDraft.selectAll ? durationDraft.value.length : -1} confirmType='done' onConfirm={saveDuration} cursorSpacing={96} adjustPosition onInput={event => { setDurationDraft({ ...durationDraft, value: event.detail.value, selectAll: false }); setDurationError(''); }} /><Text>分钟</Text></NumericInputRow>{!!durationError && <Text className='focus-settings-error'>{durationError}</Text>}</View>
-      <SheetActions><ActionButton appearance='primary' onClick={saveDuration}>确认</ActionButton></SheetActions>
+      <View className='focus-quick-body'><NumberWheelPicker label='本次计时分钟' unit='分钟' value={durationDraft.value} max={currentMode === 'shortBreak' ? 60 : 120} disabled={busy || notificationBusy} onMovingChange={setWheelMoving} onChange={value => { setDurationDraft({ ...durationDraft, value }); setDurationError(''); }} />{!!durationError && <Text className='focus-settings-error'>{durationError}</Text>}</View>
+      <SheetActions><ActionButton appearance='primary' disabled={wheelMoving || busy || notificationBusy} onClick={saveDuration}>确认</ActionButton></SheetActions>
     </View></View>}
     {settingsClose.dialog}{durationClose.dialog}
   </>;

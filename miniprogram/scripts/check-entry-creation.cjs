@@ -444,7 +444,7 @@ module.exports = async function checkEntryCreation({ page, origin, out, width, e
   await page.screenshot({ path: path.join(out, `entry-memo-colors-${width}.png`) });
   await checkButtonAppearance(composer().getByRole('button', { name: '置顶便签', exact: true }), { kind: 'icon' }, expect);
   await composer().getByRole('button', { name: '置顶便签', exact: true }).click();
-  await checkButtonAppearance(composer().getByRole('button', { name: '取消置顶便签', exact: true }), { kind: 'icon', selected: true, expectedColors: ['rgb(148, 182, 226)', 'rgb(32, 45, 59)', 'rgb(148, 182, 226)'] }, expect);
+  await checkButtonAppearance(composer().getByRole('button', { name: '取消置顶便签', exact: true }), { kind: 'icon', selected: true, expectedColors: ['rgb(148, 182, 226)', 'rgb(53, 75, 101)', 'rgb(148, 182, 226)'] }, expect);
   await swipe('备忘', { endOnly: true, during: async () => {
     await page.evaluate(() => { window.__miniFixture.deferChooseMedia = true; });
     await composer().getByRole('button', { name: '插入图片', exact: true }).click();

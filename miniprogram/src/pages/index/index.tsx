@@ -1,3 +1,6 @@
+import CardGroupContent from '../../components/card-group-content';
+import AccountWindow from '../../components/account-window';
+import { takeAccountRequest } from '../../lib/account-navigation';
 import { showAppMessage } from '../../lib/app-dialog';
 import SectionTitle from '../../components/section-title';
 import { CoreScreen, MoreSection } from '../../components/page-sections';
@@ -11,7 +14,6 @@ import ManageSymbol from '../../components/manage-symbol';
 import SortSymbol from '../../components/sort-symbol';
 import HomeShortcutCard, { HomeShortcutCreateCard } from '../../components/home-shortcut-card';
 import MottoBanner from '../../components/motto-banner';
-import { defaultMottos } from '../../lib/motto-defaults';
 import { openPomodoro } from '../../lib/pomodoro-navigation';
 import { openHomeCreation } from '../../lib/home-creation-navigation';
 import useHomeFeatureOrder from '../../lib/use-home-feature-order';
@@ -32,6 +34,8 @@ function ShortcutLabel({ shortcutKey, label, className = '' }: { shortcutKey: Ho
 }
 
 export default function Today() {
+  const [accountOpen, setAccountOpen] = useState(false);
+  const [accountSession, setAccountSession] = useState<Session | null>();
   const [shortcuts, setShortcuts] = useState(() => {
     try { return normalizeHomeShortcuts(Taro.getStorageSync(homeShortcutsStorageKey)); }
     catch { return defaultHomeShortcuts(); }
@@ -46,8 +50,7 @@ export default function Today() {
   const shortcutContext = useRef({ mode: shortcutMode, customizing });
   shortcutContext.current = { mode: shortcutMode, customizing };
   const editingShortcuts = useRef(false);
-  editingShortcuts.current = !!customizing || shortcutMode !== 'browse' || !!sortRetry || directorySorting || featureOrder.pending;
-  const [mottos, setMottos] = useState(defaultMottos);
+  editingShortcuts.current = accountOpen || !!customizing || shortcutMode !== 'browse' || !!sortRetry || directorySorting || featureOrder.pending;
   const [shown, setShown] = useState(true);
   const [date, setDate] = useState(new Date());
   const [recent, setRecent] = useState('');
@@ -57,21 +60,37 @@ export default function Today() {
   const [reminderSetup, setReminderSetup] = useState<{ owner: string; config: PomodoroReminderConfig | null }>({ owner: '', config: null });
   const opening = useRef(false);
   const setupGeneration = useRef(0);
-  useDidShow(() => {
-    setShown(true);
-    opening.current = false;
+  function refreshAccountSetup() {
     const generation = ++setupGeneration.current;
     setReminderSetup({ owner: '', config: null });
-    void Promise.all([api<Session>('/account/profile'), getPomodoroReminderConfig()]).then(([session, config]) => {
-      if (setupGeneration.current === generation) setReminderSetup({ owner: session.authenticated ? `${session.isAdmin ? 'admin' : 'reader'}:${session.userName}` : 'guest', config });
-    }).catch(() => {});
+    setAccountSession(undefined);
+    const sessionRequest = api<Session>('/account/profile').then(session => {
+      if (setupGeneration.current === generation) setAccountSession(session);
+      return session;
+    }).catch(() => {
+      if (setupGeneration.current === generation) setAccountSession(null);
+      return null;
+    });
+    void Promise.all([sessionRequest, getPomodoroReminderConfig().catch(() => null)]).then(([session, config]) => {
+      if (session && setupGeneration.current === generation) setReminderSetup({ owner: session.authenticated ? `${session.isAdmin ? 'admin' : 'reader'}:${session.userName}` : 'guest', config });
+    });
+  }
+  useDidShow(() => {
+    setShown(true);
+    if (takeAccountRequest()) setAccountOpen(true);
+    opening.current = false;
+    refreshAccountSetup();
     setDate(new Date()); setRecent(Taro.getStorageSync('ottlog.recent-tool') || '');
-    void api<{ mottos: string[] }>('/mottos').then(result => {
-      const valid = Array.isArray(result.mottos) ? result.mottos.filter(text => typeof text === 'string' && text.trim()) : [];
-      if (valid.length) setMottos(valid);
-    }).catch(() => {});
+
   });
-  useDidHide(() => { setShown(false); setCaptureFocused(false); setShortcutMode('browse'); setDirectorySorting(false); });
+  useDidHide(() => { setShown(false); setAccountOpen(false); setCaptureFocused(false); setShortcutMode('browse'); setDirectorySorting(false); });
+  useEffect(() => {
+    const open = () => { if (takeAccountRequest()) setAccountOpen(true); };
+    const refresh = () => { refreshAccountSetup(); };
+    Taro.eventCenter.on('ottlog-open-account', open);
+    Taro.eventCenter.on('ottlog-session', refresh);
+    return () => { ++setupGeneration.current; Taro.eventCenter.off('ottlog-open-account', open); Taro.eventCenter.off('ottlog-session', refresh); };
+  }, []);
   useEffect(() => {
     if (!shown) return;
     const timer = setInterval(() => setDate(new Date()), 60_000);
@@ -155,6 +174,7 @@ export default function Today() {
     }
     if (key === 'pomodoro-page') { void openPomodoro(); return; }
     if (key === 'memo-list') { void Taro.navigateTo({ url: '/pages/memos/index' }); return; }
+    if (key === 'journal') { void Taro.navigateTo({ url: '/pages/articles/index' }); return; }
     if (key === 'growth') { void Taro.switchTab({ url: '/pages/domains/index' }); return; }
     if (key === 'create') {
       setComposer({ mode: 'task', text: capture });
@@ -172,19 +192,19 @@ export default function Today() {
   const last = entries.find(entry => entry.key === recent) || homeFeatureGroups.flatMap(group => group.items).find(entry => entry.key === recent);
   const week = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'][date.getDay()];
   return <><PageScroll snapSuspended={!shown || captureFocused || !!composer}><View className='today-page core-page'><CoreScreen className={shortcutsScrollable ? 'today-many-shortcuts' : ''} nextLabel='查看全部入口'>
-    <View className='today-brand'><View className='today-wordmark'><Image src='/assets/ottlog-logo.png' mode='aspectFit' /><Text>ottlog</Text></View><Text className='today-date'>{String(date.getMonth() + 1).padStart(2, '0')} / {String(date.getDate()).padStart(2, '0')} · {week}</Text></View>
+    <View className='today-brand'><View className='today-wordmark'><Image src='/assets/ottlog-logo.png' mode='aspectFit' /><Text>ottlog</Text></View><View className='today-header-actions'><Text className='today-date'>{String(date.getMonth() + 1).padStart(2, '0')} / {String(date.getDate()).padStart(2, '0')} · {week}</Text><ActionButton appearance='icon' size='compact' className='today-account-button' ariaLabel={`打开账号窗口，${accountSession?.authenticated ? `已登录：${accountSession.userName}` : accountSession === undefined ? '正在确认账号' : accountSession === null ? '账号状态未确认' : '未登录'}`} disabled={!!customizing || !!composer} onClick={() => { void Taro.hideKeyboard(); setAccountOpen(true); }}><View className={`account-symbol${accountSession?.authenticated ? ' is-authenticated' : accountSession == null ? ' is-unconfirmed' : ''}`} aria-hidden /></ActionButton></View></View>
 
-    <MottoBanner mottos={mottos} active={shown && !editingShortcuts.current} visible={shown} />
-    <PageToolbar className='today-shortcut-toolbar' leading={<View className='today-shortcut-heading-group'><SectionTitle inRow className='today-shortcut-heading'>我的快捷方式</SectionTitle>{sortRetry && <Text className='today-shortcut-overflow-hint'>未保存</Text>}</View>}
+    <MottoBanner active={shown && !editingShortcuts.current} visible={shown} />
+    <PageToolbar className='today-shortcut-toolbar card-group-heading' leading={<View className='today-shortcut-heading-group'><SectionTitle inRow className='today-shortcut-heading'>我的快捷方式</SectionTitle>{sortRetry && <Text className='today-shortcut-overflow-hint'>未保存</Text>}</View>}
       reset={<ToolbarResetButton ariaLabel='恢复快捷方式默认方式' disabled={!!sortRetry || !!customizing || directorySorting || featureOrder.pending} onReset={restoreShortcutMode} />}
       sort={<ChoiceButton iconOnly size='compact' selected={shortcutMode === 'sort' || !!sortRetry} ariaLabel={sortRetry ? '重试快捷方式排序' : '排序快捷方式'} disabled={cards.length < 2 || !!customizing || directorySorting || featureOrder.pending} onClick={toggleSort}><SortSymbol /></ChoiceButton>}
       manage={<ChoiceButton iconOnly size='compact' selected={shortcutMode === 'manage'} ariaLabel='设置快捷方式' disabled={!!sortRetry || !!customizing || directorySorting || featureOrder.pending} onClick={toggleManage}><ManageSymbol /></ChoiceButton>} />
-    <ScrollView className='today-shortcut-scroll' scrollY={shortcutsScrollable} enhanced bounces={false} showScrollbar={false} ariaLabel='我的快捷方式'><View className='today-grid'>{cards.map((entry, index) => <HomeShortcutCard key={entry.key} item={entry} rootProps={{ id: `home-sort-${entry.key}` }} className='today-entry' disabled={!!sortRetry || !!customizing} onMoveUp={shortcutMode === 'sort' ? () => moveShortcut(entry.key, -1) : undefined} onMoveDown={shortcutMode === 'sort' ? () => moveShortcut(entry.key, 1) : undefined} upDisabled={index === 0} downDisabled={index === cards.length - 1} onOpen={shortcutMode === 'browse' ? () => open(entry.key) : undefined} onEdit={shortcutMode === 'manage' ? () => customize(entry.key) : undefined} onReplace={shortcutMode === 'manage' ? () => customize(entry.key, 'replace') : undefined} />)}<HomeShortcutCreateCard disabled={shortcutMode === 'sort' || !!sortRetry || !!customizing || directorySorting || featureOrder.pending} onCreate={() => customize()} /></View></ScrollView>
+    <ScrollView className='today-shortcut-scroll' scrollY={shortcutsScrollable} enhanced bounces={false} showScrollbar={false} ariaLabel='我的快捷方式'><CardGroupContent className='today-grid'>{cards.map((entry, index) => <HomeShortcutCard key={entry.key} item={entry} rootProps={{ id: `home-sort-${entry.key}` }} className='today-entry' disabled={!!sortRetry || !!customizing} onMoveUp={shortcutMode === 'sort' ? () => moveShortcut(entry.key, -1) : undefined} onMoveDown={shortcutMode === 'sort' ? () => moveShortcut(entry.key, 1) : undefined} upDisabled={index === 0} downDisabled={index === cards.length - 1} onOpen={shortcutMode === 'browse' ? () => open(entry.key) : undefined} onEdit={shortcutMode === 'manage' ? () => customize(entry.key) : undefined} onReplace={shortcutMode === 'manage' ? () => customize(entry.key, 'replace') : undefined} />)}<HomeShortcutCreateCard disabled={shortcutMode === 'sort' || !!sortRetry || !!customizing || directorySorting || featureOrder.pending} onCreate={() => customize()} /></CardGroupContent></ScrollView>
     <View className='today-capture-area'><View className='today-capture'><Input ariaLabel='创建内容' value={capture} type='text' placeholder='准备记录什么？' maxlength={100} disabled={editingShortcuts.current} cursorSpacing={96} adjustPosition confirmType='done' onFocus={() => setCaptureFocused(true)} onBlur={() => setCaptureFocused(false)} onInput={event => setCapture(event.detail.value)} onConfirm={openCapture} /><CreateButton iconOnly label='创建' disabled={editingShortcuts.current} onClick={openCapture} /></View></View>
     </CoreScreen>
     <MoreSection title='全部功能' showReturn={false} actions={<View className='page-toolbar-actions'><ToolbarResetButton ariaLabel='恢复全部功能默认方式' disabled={!!customizing || shortcutMode !== 'browse' || !!sortRetry || featureOrder.pending} onReset={() => { if (!customizing && shortcutMode === 'browse' && !sortRetryRef.current && !featureOrder.pending) setDirectorySorting(false); }} /><ChoiceButton iconOnly size='compact' selected={directorySorting || featureOrder.pending} ariaLabel={featureOrder.pending ? '重试全部功能排序' : '排序全部功能'} disabled={!!customizing || shortcutMode !== 'browse' || !!sortRetry} onClick={() => { if (featureOrder.pending) featureOrder.retry(); else setDirectorySorting(!directorySorting); }}><SortSymbol /></ChoiceButton></View>}>
     {last && <ActionButton className='today-recent' disabled={editingShortcuts.current} onClick={() => open(last.key)}><ShortcutLabel shortcutKey={last.key} label={`最近打开 · ${last.name}`} /><Text>继续 →</Text></ActionButton>}
     {featureOrder.pending && <View className='tool-status' role='alert'><Text>排序尚未保存，请重试</Text></View>}
     <HomeFeatureList className='today-feature-directory' groups={featureOrder.groups} sorting={directorySorting || featureOrder.pending} onMove={featureOrder.move} disabled={!!customizing || shortcutMode !== 'browse' || !!sortRetry || featureOrder.pending} onChoose={entry => open(entry.key)} />
-  </MoreSection></View></PageScroll>{customizing && <HomeShortcutEditor groups={featureOrder.groups} key={`${customizing.kind}:${customizing.key || 'select'}`} initialKey={customizing.kind === 'edit' ? customizing.key : undefined} replacementKey={customizing.kind === 'replace' ? customizing.key : undefined} value={shortcuts} onSave={saveShortcuts} onCancel={closeCustomize} />}{composer && <EntryComposer initialMode={composer.mode} preferLastCreatedMode={composer.preferLastCreatedMode} autoFocusOnOpen={composer.autoFocusOnOpen} initialText={composer.text} onCleared={() => { setCapture(''); setComposer(previous => previous ? { ...previous, text: '' } : previous); }} onClose={reason => { setComposer(null); if (reason === 'account') setCapture(''); }} onCreated={(_, captureConsumed) => { if (captureConsumed) setCapture(''); }} />}</>;
+  </MoreSection></View></PageScroll>{accountOpen && <AccountWindow onClose={() => setAccountOpen(false)} />}{customizing && <HomeShortcutEditor groups={featureOrder.groups} key={`${customizing.kind}:${customizing.key || 'select'}`} initialKey={customizing.kind === 'edit' ? customizing.key : undefined} replacementKey={customizing.kind === 'replace' ? customizing.key : undefined} value={shortcuts} onSave={saveShortcuts} onCancel={closeCustomize} />}{composer && <EntryComposer initialMode={composer.mode} preferLastCreatedMode={composer.preferLastCreatedMode} autoFocusOnOpen={composer.autoFocusOnOpen} initialText={composer.text} onCleared={() => { setCapture(''); setComposer(previous => previous ? { ...previous, text: '' } : previous); }} onClose={reason => { setComposer(null); if (reason === 'account') setCapture(''); }} onCreated={(_, captureConsumed) => { if (captureConsumed) setCapture(''); }} />}</>;
 }

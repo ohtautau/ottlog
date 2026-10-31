@@ -1,0 +1,10 @@
+# Use with compose.yml; access only through an SSH local port forward.
+services:
+  proxy:
+    ports: !override
+      - '127.0.0.1:8088:80'
+    volumes:
+      - './Caddyfile.preview:/etc/caddy/Caddyfile:ro'
+secrets:
+  admin_password:
+    file: '${OTTLOG_SHARED_DIRECTORY:?Set the private shared directory}/admin-password.txt'

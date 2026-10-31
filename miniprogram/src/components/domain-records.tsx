@@ -8,7 +8,7 @@ type ColumnProps = {
   kind: RecordKind; children: ReactNode; className?: string; style?: ComponentProps<typeof View>['style']; showHeading?: boolean; scrollable?: boolean;
 } & ({ variant?: 'static' } | { variant: 'create'; disabled?: boolean; createLabel: string; onCreate: () => void });
 type CardProps = Omit<ComponentProps<typeof Button>, 'children'> & {
-  kind: RecordKind; record: RecordItem; metadata?: ReactNode;
+  kind: RecordKind; record: Pick<RecordItem, 'content' | 'images'>; metadata?: ReactNode; readOnly?: boolean;
 };
 const label = (kind: RecordKind) => kind === 'positive' ? '正记录' : '负记录';
 
@@ -29,11 +29,12 @@ export function DomainRecordColumn(props: ColumnProps) {
 }
 
 /** Metadata is a scene-owned slot; rendering, signed appearance and event isolation stay shared. */
-export function DomainRecordCard({ kind, record, metadata, className = '', hoverClass = 'domain-record-pressed', disabled, onClick, ariaLabel, ...props }: CardProps) {
+export function DomainRecordCard({ kind, record, metadata, readOnly = false, className = '', hoverClass = 'domain-record-pressed', disabled, onClick, ariaLabel, ...props }: CardProps) {
   const content = <DomainRecordContent record={record} compact format='plain' />;
+  const body = <><Text className='domain-record-sign'>{kind === 'positive' ? '+' : '−'}</Text>{metadata != null ? <View className='domain-record-body'>{metadata}{content}</View> : content}</>;
+  if (readOnly) return <View className={`domain-record is-${kind} ${className}`}>{body}</View>;
   return <Button {...props} className={`domain-record is-${kind} ${className}`} hoverClass={disabled ? 'none' : hoverClass} disabled={disabled}
     ariaLabel={ariaLabel ?? `编辑${label(kind)}：${record.content}`} onClick={event => { event.stopPropagation(); if (!disabled) onClick?.(event); }}>
-    <Text className='domain-record-sign'>{kind === 'positive' ? '+' : '−'}</Text>
-    {metadata != null ? <View className='domain-record-body'>{metadata}{content}</View> : content}
+    {body}
   </Button>;
 }

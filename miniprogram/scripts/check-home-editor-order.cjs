@@ -1,4 +1,4 @@
-﻿const path = require('node:path');
+const path = require('node:path');
 const { defaultKeys, assertDefaultCards, fixtureKeys: legacyKeys, fixtureLayout: legacyLayout, seedCustomLegacyLayout, writeLayout } = require('./home-shortcut-test-helpers.cjs');
 module.exports = async ({ page, out, width, expect }) => {
   const key = 'ottlog.home-shortcuts.v1', sheet = page.locator('.home-editor-sheet');
@@ -59,7 +59,7 @@ module.exports = async ({ page, out, width, expect }) => {
   expect(await order(),'Explicitly selecting the old six functions preserves the requested layout').toEqual(legacyKeys);
   const manualSix=JSON.parse(await read()).items;
   expect(manualSix.map(item=>item.rank)).toEqual([1,2,3,4,5,6]); expect(manualSix.map(item=>item.color)).toEqual(['blue','mint','yellow','lilac','rose','peach']); expect(manualSix.every(item=>typeof item.icon==='string')).toBe(true);
-  await expect(page.locator('.today-entry-name')).toHaveText(['创建任务','开始番茄钟','习惯','创建便签','领域','饮食记录']);
+  await expect(page.locator('.today-entry-name')).toHaveText(['创建任务','专注','习惯','创建便签','领域','饮食记录']);
   await edit(); await save(); await page.reload(); expect(await order(),'Saving the selected former defaults again does not migrate them').toEqual(legacyKeys);
   const oldCustomOrder=legacyLayout(); oldCustomOrder.items[0].rank=2; oldCustomOrder.items[1].rank=1;
   await writeLayout(page,oldCustomOrder); expect((await order()).slice(0,2)).toEqual(['pomodoro','create']); await sort().click(); await move('create','上移'); await page.reload();
@@ -76,7 +76,7 @@ module.exports = async ({ page, out, width, expect }) => {
   await page.getByRole('button',{name:'添加快捷方式：选境',exact:true}).click(); await ranks(['1','2','4','5','6']); await page.getByRole('button',{name:'添加快捷方式：习惯',exact:true}).click(); await ranks(['1','2','3','4','5','6']);
   await page.getByRole('button',{name:'添加快捷方式：创建任务',exact:true}).click(); await ranks(['1','2','3','4','5','6','7']); await save(); await page.reload();
   const assigned=JSON.parse(await read()).items; expect(assigned.find(item=>item.key==='choose').rank).toBe(1); expect(assigned.find(item=>item.key==='daily').rank).toBe(3); expect(assigned.find(item=>item.key==='create').rank).toBe(7);
-  await expect(page.locator('.today-entry-name')).toHaveText(['选境','开始番茄钟','习惯','创建便签','领域','饮食记录','创建任务']);
+  await expect(page.locator('.today-entry-name')).toHaveText(['选境','专注','习惯','创建便签','领域','饮食记录','创建任务']);
   await writeLayout(page,null); await edit();
   for(const key of ['create','memos','create-habit','create-domain','todos','pomodoro-page','meals','choose','categories','favorites']) await page.locator(`.home-editor-option[data-feature-key="${key}"]`).click();
   await ranks(Array.from({length:16},(_,index)=>String(index+1))); await expect(sheet.locator('.home-editor-option.is-selected')).toHaveCount(16); await save(); await setting().click();

@@ -18,6 +18,6 @@ export default function TodoTaskCard({ task, now, checked = !!task.completedAt, 
   const dateLabel = task.dueDate ? `${year === today.slice(0, 4) ? '' : `${year}年`}${Number(month)}月${Number(day)}日` : '';
   const count = task.nextTasks?.length;
   const check = <View className={`todo-check${checked ? ' checked' : ''}${count ? ' has-count' : ''}`}>{count || (checked ? '✓' : '')}</View>;
-  const classes = `todo-task${task.completedAt ? ' is-done' : ''}${overdue ? ' is-overdue' : ''} ${className}`;
+  const classes = `todo-task${!task.dueDate ? ' has-no-date' : ''}${task.completedAt ? ' is-done' : ''}${overdue ? ' is-overdue' : ''} ${className}`;
   return <View {...rootProps} className={classes}>{leading && leading(check)}<Button className={`todo-task-content ${contentClassName}`} ariaLabel={ariaLabel} aria-pressed={pressed} disabled={disabled} onClick={onOpen}><View className='todo-task-title'>{trimTextEnd(task.title)}</View>{task.dueDate && <View className='todo-task-meta'><Text className={`todo-task-date${overdue ? ' is-overdue' : !task.completedAt && task.dueDate === today ? ' is-today' : ''}`}>{dateLabel}{task.dueTime ? ` ${task.dueTime}` : ''}</Text></View>}</Button></View>;
 }

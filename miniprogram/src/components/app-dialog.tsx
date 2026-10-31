@@ -53,7 +53,7 @@ export default function AppDialog({ open = true, title, ariaLabel, closeLabel = 
   if (!open) return null;
   return <View id={`app-dialog-${id}`} className='app-dialog-layer' catchMove>
     <SheetBackdrop disabled={busy} onClose={onClose} />
-    <View className={`app-dialog-panel ${panelClassName}`} role='dialog' aria-modal='true' ariaLabel={ariaLabel || title} onClick={event => event.stopPropagation()}>
+    <View className={`app-dialog-panel floating-window ${panelClassName}`} role='dialog' aria-modal='true' ariaLabel={ariaLabel || title} onClick={event => event.stopPropagation()}>
       <EditorHeading variant='prompt' title={title} actions={<ActionButton appearance='icon' size='compact' ariaLabel={closeLabel} disabled={busy} onClick={onClose}>×</ActionButton>} />
       {(children != null || error) && <ScrollView scrollY enhanced bounces={false} showScrollbar={false} className='app-dialog-scroll' style={bodyHeight == null ? undefined : { height: `${bodyHeight}px` }}><View className='app-dialog-body'>{children}{!!error && <View className='app-dialog-error' role='alert'>{trimTextEnd(error)}</View>}</View></ScrollView>}
       <SheetActions>{actions}</SheetActions>

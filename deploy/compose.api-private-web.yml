@@ -1,0 +1,12 @@
+# Append after the running private deployment's existing Compose files.
+# Recreate only proxy; retain the API image, website image, network and volumes.
+services:
+  proxy:
+    environment:
+      OTTLOG_API_HOST: '${OTTLOG_API_HOST:?Set the verified API hostname}'
+    ports: !override
+      - '127.0.0.1:8088:8080'
+      - '80:80'
+      - '443:443'
+    volumes:
+      - '${OTTLOG_API_EDGE_DIRECTORY:?Set the API edge directory}/Caddyfile.api-private-web:/etc/caddy/Caddyfile:ro'

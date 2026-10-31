@@ -12,7 +12,7 @@ function load(name) {
 }
 const data = load('domain-data'), progress = load('progress-draft'), entry = load('entry-draft');
 const clone = value => JSON.parse(JSON.stringify(value));
-const initial = () => clone(data.initialDomainState);
+const initial = () => require('./fixtures/starter-data.cjs').domainState(data);
 const image = { id: 'progress-picture', dataUrl: 'data:image/png;base64,iVBORw0KGgo=' };
 const oldDual = (domainId = 'work') => {
   const draft = progress.newProgressDraft(domainId); delete draft.pair; delete draft.kinds; return draft;
@@ -46,7 +46,7 @@ assert.throws(() => progress.saveProgressDraft(saved, moved, true), /发生变�
 assert.throws(() => progress.saveProgressDraft(saved, { ...draft, domainId: 'missing' }), /不存在/);
 const positive = progress.newProgressDraft(); positive.positive.images = [image]; positive.negative.content = ' \n ';
 const fallback = progress.saveProgressDraft(initial(), positive).domains.at(-1);
-assert.equal(fallback.name, '未分类'); assert.equal(fallback.positiveRecords[0].content, ''); assert.equal(fallback.negativeRecords.length, 0);
+assert.equal(fallback.name, '其它'); assert.equal(fallback.positiveRecords[0].content, ''); assert.equal(fallback.negativeRecords.length, 0);
 const negative = progress.newProgressDraft('work'); negative.positive.content = '仅负记录'; negative.kinds[0] = 'negative';
 assert.equal(progress.saveProgressDraft(initial(), negative).domains.find(domain => domain.id === 'work').positiveRecords.length, 0);
 for (const images of [null, {}, [image, image], Array(7).fill(image), [{ id: 'bad', dataUrl: '/temporary.png' }]]) {

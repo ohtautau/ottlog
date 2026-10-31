@@ -8,7 +8,7 @@ type Point = { clientX: number; clientY: number };
 type Touch = { touches?: Point[]; changedTouches?: Point[]; stopPropagation: () => void; preventDefault?: () => void };
 type Rect = { id: string; left: number; right: number; top: number; bottom: number };
 type Drag = { task: Todo; x: number; y: number; startX: number; startY: number; target: string; before: string | null; moved: boolean; ending?: boolean };
-export function useTodoDrag(tasks: Todo[], enabled: boolean, owner: string, commit: (id: string, quadrant: string, before: string | null) => void) {
+export function useTodoDrag(tasks: Todo[], enabled: boolean, owner: string, commit: (id: string, quadrant: string, before: string | null) => void, _browserOptions?: { onDelete: (task: Todo) => void }) {
   const current = useRef<Drag | null>(null);
   const [drag, setDrag] = useState<Drag | null>(null);
   const [scrollTop, setScrollTop] = useState<Record<string, number>>({});
@@ -128,5 +128,6 @@ export function useTodoDrag(tasks: Todo[], enabled: boolean, owner: string, comm
   }
   return { bind, drag, scrollTop, onScroll: (id: string, top: number) => { offsets.current[id] = top; },
     suppressClick: () => !!current.current || Date.now() < blockedClickUntil.current,
+    deleteZone: null,
     ghost: drag?.moved ? <View className='todo-drag-ghost' style={{ left: `${drag.x}px`, top: `${drag.y}px` }}><Text>{trimTextEnd(drag.task.title)}</Text><Text>{drag.target ? '松手放置' : '移入一个象限'}</Text></View> : null };
 }

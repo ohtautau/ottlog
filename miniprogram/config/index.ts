@@ -1,19 +1,28 @@
 import { defineConfig } from '@tarojs/cli';
+import path from 'node:path';
+const { apiOrigin } = require('./api-endpoint.cjs');
 const deviceDebug = process.env.TARO_DEVICE_DEBUG === '1';
 export default defineConfig({
   projectName: 'ottlog', date: '2026-09-07', designWidth: 750,
   deviceRatio: { 640: 1.17, 750: 1, 828: 0.905 }, sourceRoot: 'src', outputRoot: 'dist',
   // Shortcut icons reuse the existing coloured library and its outline atlas.
   // Only active native tabs enter the package.
-  // Timer artwork belongs to its sole consuming subpackage, without a main copy.
+  // Timer artwork stays alongside the focus tab, without a duplicate assets copy.
   copy: { patterns: [
-    { from: 'src/assets', to: 'dist/assets', ignore: ['**/pomodoro/**', '**/summary-radar/demo.png', '**/tab-favorites*.png', '**/tab-pomodoro*.png', '**/tab-posts*.png'] },
+    { from: 'src/assets', to: 'dist/assets', ignore: ['**/pomodoro/**'] },
     { from: 'src/assets/pomodoro', to: 'dist/pages/pomodoro/assets' },
   ], options: {} },
-  framework: 'react', compiler: 'webpack5', plugins: ['@tarojs/plugin-platform-weapp'],
+  framework: 'react', compiler: 'webpack5', plugins: [
+    '@tarojs/plugin-platform-weapp',
+    path.resolve(__dirname, 'webview-scroll-view.cjs'),
+    path.resolve(__dirname, 'local-debug.cjs'),
+  ],
   ...(deviceDebug ? { terser: { config: { keep_fnames: true, keep_classnames: true } } } : {}),
-  defineConstants: { API_BASE_URL: JSON.stringify(process.env.TARO_APP_API_BASE_URL || 'https://ohtautau.com'), MINIPROGRAM_PREVIEW: JSON.stringify(process.env.OTTLOG_MINIPROGRAM_PREVIEW === '1') },
+  defineConstants: { API_BASE_URL: JSON.stringify(apiOrigin()), MINIPROGRAM_PREVIEW: JSON.stringify(process.env.OTTLOG_MINIPROGRAM_PREVIEW === '1') },
   mini: {
+    // markdown-it ships modern ESM; DevTools' preview uploader still parses
+    // dependencies without optional chaining. Compile it through our Babel rule.
+    compile: { include: [path.resolve(__dirname, '../node_modules/markdown-it')] },
     // Taro's sub-common relocation assumes JSONP registration and breaks the
     // CommonJS runtime below. Page code/styles still live in their subpackages.
     optimizeMainPackage: { enable: false },

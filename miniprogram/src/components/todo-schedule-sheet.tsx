@@ -6,15 +6,17 @@ import useEditorCloseGuard from '../lib/use-editor-close-guard';
 import { ScrollView, Text, View } from '@tarojs/components';
 import ActionButton, { ChoiceButton } from './ui-button';
 import { type TodoRecurrence } from '../lib/tool-records';
-import { clockTime, copyTodoSchedule, localReminderParts, makeLocalReminder, recurrenceLabel, reminderDays, reminderTimes, reminderDay, reminderDayLabel, reminderSelection, relativeReminder, type TodoSchedule } from '../lib/todo-schedule';
+import { clockTime, copyTodoSchedule, localReminderParts, makeLocalReminder, recurrenceLabel, type TodoSchedule } from '../lib/todo-schedule';
 import './todo-schedule-sheet.css';
 import SheetActions from './sheet-actions';
 import { ResetSymbol } from './manage-symbol';
-import { ChoicePopover, PopoverHeading, PopoverActions, SingleChoiceField } from './form-options';
-import ScheduleNumberInput from './schedule-number-input';
-import { NumericInputRow } from './single-line-input';
+import { ChoicePopover, PopoverHeading, PopoverActions } from './form-options';
 import ScheduleCalendar, { safeCalendarMonth, selectableCalendarDate } from './todo-schedule-calendar';
 import { SelectChevron } from './select-trigger';
+import TimeWheelPicker from './time-wheel-picker';
+import DateTimeWheelPicker from './date-time-wheel-picker';
+import WheelPicker, { wheelNumbers } from './wheel-picker';
+import { reminderCalendarLabel, reminderLeadLabel } from '../lib/wheel-time-data';
 
 let nextScheduleId = 0;
 const repeatChoices = [
@@ -22,7 +24,6 @@ const repeatChoices = [
   { unit: 'year', label: '每年' }, { unit: 'weekday', label: '工作日' },
 ] as const;
 const repeatUnits = [{ unit: 'day', label: '天' }, { unit: 'week', label: '周' }, { unit: 'month', label: '月' }, { unit: 'year', label: '年' }, { unit: 'weekday', label: '工作日' }] as const;
-const digits = (value: string, length = 2) => value.replace(/\D/g, '').slice(0, length);
 export function ScheduleSymbol({ kind = 'date' }: { kind?: 'date' | 'time' | 'reminder' | 'repeat' }) {
   return <View className={`todo-schedule-symbol is-${kind}`} aria-hidden><View /></View>;
 }
@@ -36,7 +37,6 @@ export default function TodoScheduleSheet({ value, today, busy, reminderLabel, c
   const originalReminder = localReminderParts(initial.reminderAt);
   const [date, setDate] = useState(initial.dueDate);
   const [month, setMonth] = useState(() => safeCalendarMonth(initial.dueDate, today));
-  const [reminderPart, setReminderPart] = useState<'time' | null>(null);
   const [expanded, setExpanded] = useState<'time' | 'reminder' | 'repeat' | null>(null);
   const [hasTime, setHasTime] = useState(!!initial.dueTime);
   const [hour, setHour] = useState(initial.dueTime?.slice(0, 2) || '09');
@@ -44,25 +44,17 @@ export default function TodoScheduleSheet({ value, today, busy, reminderLabel, c
   const [timeHour, setTimeHour] = useState(initial.dueTime?.slice(0, 2) || '09');
   const [timeMinute, setTimeMinute] = useState(initial.dueTime?.slice(3) || '00');
   const [timeError, setTimeError] = useState('');
+  const [timeWheelMoving, setTimeWheelMoving] = useState(false);
   const [hasReminder, setHasReminder] = useState(!!initial.reminderAt);
   const [reminderExact, setReminderExact] = useState(initial.reminderAt);
-  const [reminderDate, setReminderDate] = useState(originalReminder.date || initial.dueDate || today);
+  const [reminderDate, setReminderDate] = useState(originalReminder.date || (selectableCalendarDate(initial.dueDate) ? initial.dueDate : today));
   const [reminderHour, setReminderHour] = useState(originalReminder.time.slice(0, 2) || initial.dueTime?.slice(0, 2) || '09');
   const [reminderMinute, setReminderMinute] = useState(originalReminder.time.slice(3) || initial.dueTime?.slice(3) || '00');
-  const [reminderView] = useState(() => reminderSelection(initial.reminderAt, initial.dueDate || today, initial.dueTime || '09:00'));
-  const [reminderAnchor, setReminderAnchor] = useState(reminderView.anchor);
-  const [reminderPreset, setReminderPreset] = useState(reminderView.preset);
-  const [reminderQuick, setReminderQuick] = useState<{ anchor: string; id: string; minutes: number } | null>(null);
-  const reminderNeedsTime = hasReminder && !!reminderQuick && !hasTime;
-  const [reminderTimeHour, setReminderTimeHour] = useState(reminderHour);
-  const [reminderTimeMinute, setReminderTimeMinute] = useState(reminderMinute);
-  const [reminderTimeError, setReminderTimeError] = useState('');
   const [repeat, setRepeat] = useState<TodoRecurrence | undefined>(initial.recurrence);
   const [customRepeat, setCustomRepeat] = useState(!!initial.recurrence && initial.recurrence.interval !== 1);
   const [interval, setInterval] = useState(String(initial.recurrence?.interval || 1));
   const [error, setError] = useState('');
   const timeInitial = useRef('');
-  const reminderTimeInitial = useRef('');
   useEffect(() => {
     if (typeof document === 'undefined') return;
     const cancel = (event: KeyboardEvent) => {
@@ -73,11 +65,10 @@ export default function TodoScheduleSheet({ value, today, busy, reminderLabel, c
     document.addEventListener('keydown', cancel);
     return () => document.removeEventListener('keydown', cancel);
   }, [busy, onClose, date, hasTime, hour, minute, hasReminder, reminderDate, reminderHour, reminderMinute, repeat, interval, customRepeat]);
-  function customizeReminder() { if (!reminderNeedsTime && reminderPreset !== 'none') { setReminderPreset('custom'); setReminderAnchor(reminderDate); } }
-  function changeDueDate(value: string) { if (value !== date) customizeReminder(); setDate(value); if (!hasReminder) { setReminderDate(value || today); setReminderAnchor(value || today); } }
-  function changeHasTime(value: boolean) { if (value !== hasTime) customizeReminder(); setHasTime(value); }
-  function changeHour(value: string) { if (value !== hour) customizeReminder(); setHour(value); if (!hasReminder) { setReminderHour(value); setReminderTimeHour(value); } }
-  function changeMinute(value: string) { if (value !== minute) customizeReminder(); setMinute(value); if (!hasReminder) { setReminderMinute(value); setReminderTimeMinute(value); } }
+  function changeDueDate(value: string) { setDate(value); if (!hasReminder) setReminderDate(value || today); }
+  function changeHasTime(value: boolean) { setHasTime(value); }
+  function changeHour(value: string) { setHour(value); if (!hasReminder) setReminderHour(value); }
+  function changeMinute(value: string) { setMinute(value); if (!hasReminder) setReminderMinute(value); }
   function selectDate(day: string) {
     if (busy || !selectableCalendarDate(day)) return;
     changeDueDate(day);
@@ -85,50 +76,29 @@ export default function TodoScheduleSheet({ value, today, busy, reminderLabel, c
   }
   function setSection(section: 'time' | 'reminder' | 'repeat', open: boolean) {
     if (open && section === 'time') timeInitial.current = JSON.stringify([hour, minute]);
-    setExpanded(open ? section : null); setReminderPart(null); setError('');
+    setExpanded(open ? section : null); setTimeWheelMoving(false); setError('');
   }
   function changeSection(section: 'time' | 'reminder' | 'repeat', open: boolean) {
+    if (busy || timeWheelMoving) return;
     if (!open && section === 'time') timeClose.requestClose();
     else setSection(section, open);
   }
-  function openReminderPart(part: 'time' | null) {
-    if (part === 'time') reminderTimeInitial.current = JSON.stringify([reminderHour, reminderMinute]);
-    setReminderPart(part);
-  }
-  function applyReminder(parts: { date: string; time: string; at?: string }, anchor: string, preset: string) {
+  function applyReminder(parts: { date: string; time: string; at?: string }) {
     setReminderExact(parts.at);
     setReminderDate(parts.date); setReminderHour(parts.time.slice(0, 2)); setReminderMinute(parts.time.slice(3));
-    setReminderTimeHour(parts.time.slice(0, 2)); setReminderTimeMinute(parts.time.slice(3)); setReminderTimeError('');
-    setReminderAnchor(anchor); setReminderPreset(preset); setError('');
+    setError('');
   }
   function unsetReminder() {
-    setReminderQuick(null); setHasReminder(false); applyReminder({ date: date || today, time: hasTime ? `${hour}:${minute}` : '09:00' }, date || today, 'none'); setReminderPart(null);
-  }
-  function reminderClockLabel(minutes: number) {
-    if (!hasTime) return '';
-    try { return relativeReminder(date || today, `${hour}:${minute}`, minutes).time; } catch { return ''; }
-  }
-  function setReminderChoice(choice: string, days?: number) {
-    if (busy) return;
-    try {
-      const anchor = days === undefined ? reminderAnchor : reminderDay(date || today, days);
-      const preset = reminderTimes.find(item => item.id === choice);
-      if (preset) {
-        const parts = hasTime ? relativeReminder(anchor, clockTime(hour, minute), preset.minutes) : { date: anchor, time: clockTime(reminderHour, reminderMinute) };
-        applyReminder(parts, anchor, choice); setReminderQuick({ anchor, id: choice, minutes: preset.minutes }); setHasReminder(true);
-      } else { makeLocalReminder(anchor, clockTime(reminderHour, reminderMinute)); setReminderExact(undefined); setReminderDate(anchor); setReminderAnchor(anchor); setError(''); }
-      setReminderPart(null);
-    } catch (reason) { setError(reason instanceof Error ? reason.message : '请检查提醒设置。'); }
+    setHasReminder(false); applyReminder({ date: date || today, time: hasTime ? `${hour}:${minute}` : '09:00' });
   }
   function repeatWithAnchor(rule: TodoRecurrence): TodoRecurrence { return repeat?.unit === rule.unit ? { ...repeat, ...rule } : { ...rule }; }
   function chooseRepeat(rule?: TodoRecurrence) { setRepeat(rule ? repeatWithAnchor(rule) : undefined); setCustomRepeat(false); setInterval(String(rule?.interval || 1)); setError(''); }
   function clear() {
     setTimeHour('09'); setTimeMinute('00'); setTimeError('');
-    setReminderQuick(null); setHasReminder(false); applyReminder({ date: today, time: '09:00' }, today, 'none'); setReminderPart(null);
+    setHasReminder(false); applyReminder({ date: today, time: '09:00' });
     setDate(''); setHasTime(false); setRepeat(undefined); setCustomRepeat(false); setInterval('1'); setExpanded(null); setError('');
   }
   function schedule(): TodoSchedule {
-    if (reminderNeedsTime) throw new Error('还未设置具体时间');
     const dueTime = hasTime ? clockTime(hour, minute) : undefined;
     const recurrence = repeat ? { ...repeat, interval: customRepeat ? Number(interval) : repeat.interval } : undefined;
     if (recurrence && (!/^\d{1,3}$/.test(customRepeat ? interval : String(recurrence.interval)) || recurrence.interval < 1 || recurrence.interval > 365)) throw new Error('重复间隔请填写 1–365。');
@@ -140,7 +110,7 @@ export default function TodoScheduleSheet({ value, today, busy, reminderLabel, c
   let localChanged = true;
   try { localChanged = JSON.stringify(schedule()) !== JSON.stringify({ ...initial, dueTime: initial.dueTime || undefined, reminderAt: initial.reminderAt || undefined }); } catch { /* Invalid local inputs remain editable. */ }
   function confirm() {
-    if (busy) return;
+    if (busy || timeWheelMoving) return;
     try {
       const next = schedule();
       if (next.reminderAt && next.reminderAt !== initial.reminderAt && new Date(next.reminderAt).getTime() <= Date.now()) throw new Error('请选择未来的提醒时间。');
@@ -154,37 +124,30 @@ export default function TodoScheduleSheet({ value, today, busy, reminderLabel, c
   function optionFooter(title: string, section: 'time' | 'reminder' | 'repeat') {
     return <PopoverActions className='todo-schedule-popover-actions'>
       {section === 'reminder' && <View className='todo-schedule-time-error' role={error ? 'alert' : undefined} aria-live='polite'><Text>{error}</Text></View>}
-      <ActionButton appearance='primary' size='compact' ariaLabel={`完成${title}设置`} disabled={busy} onClick={() => { if (section === 'reminder' && reminderNeedsTime) { setError('还未设置具体时间'); return; } setSection(section, false); }}>完成</ActionButton>
+      <ActionButton appearance='primary' size='compact' ariaLabel={`完成${title}设置`} disabled={busy || timeWheelMoving} onClick={() => {
+        if (section === 'reminder' && !hasReminder && !changeReminderWheel(reminderDate, reminderHour, reminderMinute)) return;
+        setSection(section, false);
+      }}>完成</ActionButton>
     </PopoverActions>;
   }
-  function completeTime(reminder = false) {
-    if (busy) return;
+  function completeTime() {
+    if (busy || timeWheelMoving) return;
     try {
-      const time = clockTime(reminder ? reminderTimeHour : timeHour, reminder ? reminderTimeMinute : timeMinute);
-      if (reminder) {
-        makeLocalReminder(reminderDate, time); applyReminder({ date: reminderDate, time }, reminderDate, 'custom'); setReminderQuick(null); setHasReminder(true); setReminderPart(null);
-      } else {
-        const pending = reminderNeedsTime && reminderQuick ? { ...reminderQuick, parts: relativeReminder(reminderQuick.anchor, time, reminderQuick.minutes) } : null;
-        changeHour(time.slice(0, 2)); changeMinute(time.slice(3)); changeHasTime(true);
-        if (!date) changeDueDate(today);
-        if (pending) applyReminder(pending.parts, pending.anchor, pending.id);
-        setTimeHour(time.slice(0, 2)); setTimeMinute(time.slice(3)); setTimeError(''); setSection('time', false);
-      }
-    } catch (reason) { (reminder ? setReminderTimeError : setTimeError)(reason instanceof Error ? reason.message : '请填写有效时间。'); }
+      const time = clockTime(timeHour, timeMinute);
+      changeHour(time.slice(0, 2)); changeMinute(time.slice(3)); changeHasTime(true);
+      if (!date) changeDueDate(today);
+      setTimeHour(time.slice(0, 2)); setTimeMinute(time.slice(3)); setTimeError(''); setSection('time', false);
+    } catch (reason) { setTimeError(reason instanceof Error ? reason.message : '请选择有效时间。'); }
   }
-  function clockFields(reminder = false) {
-    const changeHour = reminder ? setReminderTimeHour : setTimeHour, changeMinute = reminder ? setReminderTimeMinute : setTimeMinute, clearError = reminder ? setReminderTimeError : setTimeError;
-    const prefix = reminder ? '提醒' : '任务';
-    return <View className='todo-schedule-time-fields'><NumericInputRow className='todo-schedule-clock-input'>
-      <ScheduleNumberInput ariaLabel={`${prefix}小时`} type='number' disabled={busy} maxlength={3} value={reminder ? reminderTimeHour : timeHour} cursorSpacing={96} adjustPosition onInput={event => { changeHour(event.detail.value); clearError(''); }} /><Text>时</Text>
-      <ScheduleNumberInput ariaLabel={`${prefix}分钟`} type='number' disabled={busy} maxlength={3} value={reminder ? reminderTimeMinute : timeMinute} cursorSpacing={96} adjustPosition onInput={event => { changeMinute(event.detail.value); clearError(''); }} /><Text>分</Text>
-    </NumericInputRow></View>;
+  function clockFields() {
+    return <TimeWheelPicker label='任务' hour={timeHour} minute={timeMinute} disabled={busy}
+      onMovingChange={setTimeWheelMoving} onChange={(hour, minute) => { setTimeHour(hour); setTimeMinute(minute); setTimeError(''); }} />;
   }
-  function timeFooter(reminder = false) {
-    const message = reminder ? reminderTimeError : timeError;
+  function timeFooter() {
+    const message = timeError;
     return <PopoverActions className='todo-schedule-popover-actions'>
       <View className='todo-schedule-time-error' role={message ? 'alert' : undefined} aria-live='polite'><Text>{message}</Text></View>
-      <ActionButton appearance='primary' size='compact' ariaLabel={reminder ? '完成提醒时间设置' : '完成时间设置'} disabled={busy} onClick={() => completeTime(reminder)}>完成</ActionButton>
+      <ActionButton appearance='primary' size='compact' ariaLabel='完成时间设置' disabled={busy || timeWheelMoving} onClick={completeTime}>完成</ActionButton>
     </PopoverActions>;
   }
   function settingRow(kind: 'time' | 'reminder' | 'repeat', label: string, selected: boolean, summary: string, onClear: () => void) {
@@ -198,17 +161,22 @@ export default function TodoScheduleSheet({ value, today, busy, reminderLabel, c
       </ActionButton>
     </View>;
   }
-  const scheduleClose = useEditorCloseGuard({ scope: id, hasChanges: localChanged, blocked: busy, onSave: confirm, onClose });
+  const scheduleClose = useEditorCloseGuard({ scope: id, hasChanges: localChanged, blocked: busy || timeWheelMoving, onSave: confirm, onClose });
   const timeClose = useEditorCloseGuard({
     scope: expanded === 'time' ? `${id}:time` : '',
-    hasChanges: JSON.stringify([timeHour, timeMinute]) !== timeInitial.current, blocked: busy,
+    hasChanges: JSON.stringify([timeHour, timeMinute]) !== timeInitial.current, blocked: busy || timeWheelMoving,
     onSave: () => completeTime(), onClose: () => setSection('time', false),
   });
-  const reminderTimeClose = useEditorCloseGuard({
-    scope: expanded === 'reminder' && reminderPart === 'time' ? `${id}:reminder-time` : '',
-    hasChanges: JSON.stringify([reminderTimeHour, reminderTimeMinute]) !== reminderTimeInitial.current, blocked: busy,
-    onSave: () => completeTime(true), onClose: () => setReminderPart(null),
-  });
+  function changeReminderWheel(nextDate: string, nextHour: string, nextMinute: string): boolean {
+    try {
+      const time = clockTime(nextHour, nextMinute);
+      const at = nextDate === originalReminder.date && time === originalReminder.time && initial.reminderAt ? initial.reminderAt : makeLocalReminder(nextDate, time);
+      applyReminder({ date: nextDate, time, at }); setHasReminder(true);
+      return true;
+    } catch (reason) { setError(reason instanceof Error ? reason.message : '请选择有效的提醒时间'); return false; }
+  }
+  let reminderPreviewAt: string | undefined;
+  try { reminderPreviewAt = reminderExact || makeLocalReminder(reminderDate, clockTime(reminderHour, reminderMinute)); } catch { /* Keep invalid old data readable. */ }
   return <View className='todo-schedule-overlay'>
     <View className='todo-schedule-backdrop' catchMove onClick={scheduleClose.requestClose} />
     <View className={`todo-schedule-sheet${!error || expanded === 'reminder' ? ' is-overview' : ''}`} role='dialog' ariaLabel='日期、提醒和重复'>
@@ -218,7 +186,7 @@ export default function TodoScheduleSheet({ value, today, busy, reminderLabel, c
           onClear={() => { changeDueDate(''); changeHasTime(false); setError(''); }} />
         <View className='todo-schedule-options'>
           {settingRow('time', '时间', hasTime, hasTime ? `${hour}:${minute}` : '未设置', () => { changeHasTime(false); setTimeHour(hour); setTimeMinute(minute); setTimeError(''); })}
-          {settingRow('reminder', '提醒', hasReminder, reminderNeedsTime ? '还未设置具体时间' : hasReminder ? `${Number(reminderDate.slice(5, 7))}月${Number(reminderDate.slice(8))}日 ${reminderHour}:${reminderMinute}` : '未设置', unsetReminder)}
+          {settingRow('reminder', '提醒', hasReminder, hasReminder ? `${Number(reminderDate.slice(5, 7))}月${Number(reminderDate.slice(8))}日 ${reminderHour}:${reminderMinute}` : '未设置', unsetReminder)}
           {settingRow('repeat', '重复', !!repeat, customRepeat && repeat ? `每 ${interval} ${repeatUnits.find(unit => unit.unit === repeat.unit)?.label}` : repeat ? recurrenceLabel(repeat) : '未设置', () => chooseRepeat())}
         </View>
       </View></ScrollView>
@@ -231,37 +199,26 @@ export default function TodoScheduleSheet({ value, today, busy, reminderLabel, c
             heading={optionHeading('时间', 'time')} footer={timeFooter()}>
             {clockFields()}
           </ChoicePopover>
-          <ChoicePopover anchorId={`${id}-reminder`} ariaLabel='设置提醒' open={expanded === 'reminder'} onOpenChange={open => setSection('reminder', open)} disabled={busy}
-            panelClassName='todo-schedule-popover todo-schedule-reminder-popover' panelWidth={360} placement='center' maxHeightRatio={1} contentKey={`${hasReminder}-${localChanged}-${hasTime}-${reminderNeedsTime}-${reminderPreset}-${error}`}
+          <ChoicePopover anchorId={`${id}-reminder`} ariaLabel='设置提醒' open={expanded === 'reminder'} onOpenChange={open => changeSection('reminder', open)} disabled={busy}
+            panelClassName='todo-schedule-popover todo-schedule-reminder-popover' panelWidth={360} placement='center' maxHeightRatio={1} contentKey={`${hasReminder}-${localChanged}-${hasTime}-${error}`}
             heading={optionHeading('提醒', 'reminder')} footer={<>
               {hasReminder && <View className='todo-schedule-reminder-status'><Text>{localChanged ? '确认并保存任务后开启微信提醒' : '微信提醒'}</Text><ActionButton compact className='todo-reminder-authorize' ariaLabel={reminderLabel === '已开启' ? '微信提醒已开启' : '开启微信提醒'} disabled={busy || !canAuthorize || reminderLocked || localChanged} loading={busy} onClick={onAuthorize}>{localChanged ? '保存后开启' : reminderLabel}</ActionButton></View>}
               {optionFooter('提醒', 'reminder')}</>}>
             <EditorFieldsLayout topSpace={false}>
-              <View>
-                <FilterFieldHeading label='提醒时间' caption='快捷项按任务当天时间计算' />
-                <View className='todo-schedule-choices is-reminders'>
-                  {reminderTimes.map(choice => { const clock = reminderClockLabel(choice.minutes); return <ChoiceButton key={choice.id} className='todo-reminder-time-choice' ariaLabel={choice.label} selected={reminderPart !== 'time' && hasReminder && reminderPreset === choice.id} disabled={busy} onClick={() => setReminderChoice(choice.id, 0)}><Text>{choice.label}</Text>{!!clock && <Text className='todo-reminder-time-caption'>{clock}</Text>}</ChoiceButton>; })}
-                  <ChoiceButton id={`${id}-reminder-time`} className='todo-reminder-time-choice' size='compact' selected={reminderPart === 'time' || hasReminder && reminderPreset === 'custom'} ariaLabel='设置提醒时刻' aria-expanded={reminderPart === 'time'} disabled={busy} onClick={() => { if (reminderPart === 'time') reminderTimeClose.requestClose(); else openReminderPart('time'); }}><Text>自定义时间</Text>{hasReminder && reminderPreset === 'custom' && <Text className='todo-reminder-time-caption'>{reminderHour}:{reminderMinute}</Text>}</ChoiceButton>
-                </View>
-              </View>
-              <View>
-                <FilterFieldHeading label='提醒日期' />
-                <View className='todo-schedule-choices todo-schedule-reminder-days-inline'>
-                  {reminderDays.map(day => <ChoiceButton key={day.days} size='compact' ariaLabel={day.label} selected={reminderDayLabel(date || today, reminderAnchor) === day.label} disabled={busy} onClick={() => setReminderChoice(reminderPreset, day.days)}>{day.label}</ChoiceButton>)}
-                </View>
-              </View>
+              <DateTimeWheelPicker date={reminderDate} hour={reminderHour} minute={reminderMinute} label='提醒' disabled={busy}
+                onMovingChange={setTimeWheelMoving} onChange={changeReminderWheel} />
               <View className='todo-schedule-reminder-preview' aria-live='polite'>
                 <FilterFieldHeading label='实际提醒' />
-                <Text className='todo-schedule-reminder-preview-value'>{reminderNeedsTime ? '还未设置具体时间' : hasReminder ? `${Number(reminderDate.slice(0, 4))}年${Number(reminderDate.slice(5, 7))}月${Number(reminderDate.slice(8))}日 ${reminderHour}:${reminderMinute}` : '未设置'}</Text>
-                {reminderNeedsTime && <ActionButton appearance='secondary' size='compact' width='fill' className='todo-reminder-set-time' ariaLabel='设置任务时间' disabled={busy} onClick={() => setSection('time', true)}>设置任务时间</ActionButton>}
+                <Text className='todo-schedule-reminder-preview-value'>{`${Number(reminderDate.slice(0, 4))}年${Number(reminderDate.slice(5, 7))}月${Number(reminderDate.slice(8))}日 ${reminderHour}:${reminderMinute}`}</Text>
+                <View className='todo-schedule-reminder-description'>
+                  {!!date && <Text className='todo-schedule-reminder-relative'>{reminderCalendarLabel(date, reminderPreviewAt)}</Text>}
+                  <Text className='todo-schedule-reminder-lead'>{reminderLeadLabel(date, hasTime ? `${hour}:${minute}` : undefined, reminderPreviewAt)}</Text>
+                </View>
+                {(!date || !hasTime) && <ActionButton appearance='secondary' size='compact' width='fill' className='todo-reminder-set-time' ariaLabel='设置任务时间' disabled={busy} onClick={() => setSection('time', true)}>设置任务时间</ActionButton>}
               </View>
             </EditorFieldsLayout>
           </ChoicePopover>
-          <ChoicePopover anchorId={`${id}-reminder-time`} ariaLabel='设置提醒时刻' open={expanded === 'reminder' && reminderPart === 'time'} disabled={busy} onOpenChange={open => { if (open) openReminderPart('time'); else reminderTimeClose.requestClose(); }} panelClassName='todo-schedule-popover todo-schedule-time-popover todo-schedule-reminder-time' panelWidth={300}
-            heading={<PopoverHeading title='提醒时间' actions={<ActionButton appearance='icon' ariaLabel='关闭提醒时刻设置' disabled={busy} onClick={reminderTimeClose.requestClose}>×</ActionButton>} />} footer={timeFooter(true)}>
-            {clockFields(true)}
-          </ChoicePopover>
-          <ChoicePopover anchorId={`${id}-repeat`} ariaLabel='设置重复' open={expanded === 'repeat'} onOpenChange={open => setSection('repeat', open)} disabled={busy}
+          <ChoicePopover anchorId={`${id}-repeat`} ariaLabel='设置重复' open={expanded === 'repeat'} onOpenChange={open => changeSection('repeat', open)} disabled={busy}
             panelClassName='todo-schedule-popover todo-schedule-repeat-popover' panelWidth={360} placement={customRepeat ? 'center' : 'anchor'} maxHeightRatio={1} contentKey={`${customRepeat}-${repeat?.unit}`}
             heading={optionHeading('重复', 'repeat')} footer={optionFooter('重复', 'repeat')}>
             <View className='todo-schedule-section'>
@@ -269,13 +226,18 @@ export default function TodoScheduleSheet({ value, today, busy, reminderLabel, c
                 {repeatChoices.map(choice => <ChoiceButton key={choice.unit} aria-pressed={!customRepeat && repeat?.unit === choice.unit && repeat.interval === 1} disabled={busy} onClick={() => chooseRepeat({ unit: choice.unit, interval: 1 })}>{choice.label}</ChoiceButton>)}
                 <ChoiceButton aria-pressed={customRepeat} disabled={busy} onClick={() => { setCustomRepeat(true); setRepeat(repeat || { unit: 'day', interval: 1 }); }}>自定义重复</ChoiceButton>
               </View>
-              {customRepeat && repeat && <>
-                <NumericInputRow className='todo-schedule-repeat-input'><Text>每</Text><ScheduleNumberInput ariaLabel='重复间隔' type='number' disabled={busy} maxlength={3} value={interval} cursorSpacing={96} adjustPosition onInput={event => setInterval(digits(event.detail.value, 3))} /><SingleChoiceField ariaLabel='选择重复单位' size='compact' width='content' disabled={busy} options={repeatUnits.map(unit => ({ value: unit.unit, label: unit.label }))} value={repeat.unit} onChange={unit => setRepeat(repeatWithAnchor({ unit, interval: Number(interval) }))} /></NumericInputRow>
-              </>}
+              {customRepeat && repeat && <WheelPicker label='自定义重复' prefix='每隔' disabled={busy} onMovingChange={setTimeWheelMoving}
+                columns={[
+                  { label: '数字', ariaLabel: '重复间隔', values: wheelNumbers(1, 365), value: interval },
+                  { label: '单位', ariaLabel: '重复单位', values: repeatUnits.map(item => item.label), value: repeatUnits.find(item => item.unit === repeat.unit)!.label },
+                ]} onChange={values => {
+                  const unit = repeatUnits.find(item => item.label === values[1])!.unit;
+                  setInterval(values[0]); setRepeat(repeatWithAnchor({ unit, interval: Number(values[0]) }));
+                }} />}
               {repeat?.unit === 'weekday' && <Text className='todo-schedule-hint'>工作日：周一至周五，不考虑节假日</Text>}
             </View>
           </ChoicePopover>
     </View>
-    {scheduleClose.dialog}{timeClose.dialog}{reminderTimeClose.dialog}
+    {scheduleClose.dialog}{timeClose.dialog}
   </View>;
 }

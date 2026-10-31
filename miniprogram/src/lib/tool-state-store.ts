@@ -1,11 +1,13 @@
-import { isReminderState, splitDefaultExerciseHabit } from './reminder-data';
+import { emptyReminderState, isReminderState, splitDefaultExerciseHabit } from './reminder-data';
+import { initialArticleState } from './article-data';
 
 // dining remains a legacy archive key; the retired food chooser never reads or writes it.
-export type PersonalToolKey = 'meals' | 'reminders' | 'todos' | 'pomodoro' | 'memos' | 'dining' | 'mottos' | 'growth' | 'domains';
+export type PersonalToolKey = 'meals' | 'reminders' | 'todos' | 'pomodoro' | 'memos' | 'dining' | 'mottos' | 'growth' | 'domains' | 'articles';
 export type ToolSession = { authenticated: boolean; userName?: string; isAdmin?: boolean };
 export type ToolCache<T> = { data: T; pending: boolean; revision: number };
 type Identity = { owner: string; fingerprint: string };
 export type ToolLoad<T> = Identity & { value: T; cloud: boolean; status: string };
+export type PersonalToolEdit<T = unknown> = { key: PersonalToolKey; owner: string; before: T; after: T; durable: boolean };
 type Adapter = {
   read: (key: string) => unknown;
   write: (key: string, value: unknown) => void;
@@ -24,7 +26,9 @@ export function createPersonalToolStore(adapter: Adapter) {
   const volatile = new Map<string, ToolCache<unknown>>();
   const writes = new Map<string, Promise<void>>();
   const listeners = new Set<(cacheKey: string, status: string) => void>();
+  const editListeners = new Set<(edit: PersonalToolEdit) => void>();
   let knownIdentity: Identity | null = null;
+  let identification: { fingerprint: string; promise: Promise<Identity> } | null = null;
   const emit = (cacheKey: string, status: string) => listeners.forEach(listener => listener(cacheKey, status));
   function cache<T>(cacheKey: string): ToolCache<T> | null {
     if (volatile.has(cacheKey)) return volatile.get(cacheKey) as ToolCache<T>;
@@ -38,7 +42,16 @@ export function createPersonalToolStore(adapter: Adapter) {
     try { adapter.write(cacheKey, value); volatile.delete(cacheKey); return true; }
     catch { volatile.set(cacheKey, value); return false; }
   }
-  async function identify(): Promise<Identity> {
+  function identify(): Promise<Identity> {
+    const fingerprint = adapter.fingerprint();
+    if (identification?.fingerprint === fingerprint) return identification.promise;
+    const promise = identifySession();
+    const pending = { fingerprint, promise }; identification = pending;
+    const clear = () => { if (identification === pending) identification = null; };
+    void promise.then(clear, clear);
+    return promise;
+  }
+  async function identifySession(): Promise<Identity> {
     const session = await adapter.session();
     const owner = toolOwner(session);
     if (!owner) throw new Error('暂时无法确认账号，请重新登录');
@@ -81,7 +94,7 @@ export function createPersonalToolStore(adapter: Adapter) {
     void task.finally(() => { if (writes.get(cacheKey) === task) writes.delete(cacheKey); });
     return task;
   }
-  async function load<T>(key: PersonalToolKey, initial: T): Promise<ToolLoad<T>> {
+  async function load<T>(key: PersonalToolKey, initial: T, onCached?: (cached: ToolLoad<T>) => void): Promise<ToolLoad<T>> {
     let identity: Identity, online = true;
     try { identity = await identify(); }
     catch {
@@ -89,7 +102,15 @@ export function createPersonalToolStore(adapter: Adapter) {
       if (!offline) throw new Error('暂时无法确认登录状态 · 请联网后重试');
       identity = offline; online = false;
     }
+    // Guest archives are retained, but habits/history are account-only. All
+    // consumers (daily, domains, focus, statistics and activity) see no real rows.
+    if (key === 'reminders' && identity.owner === 'guest')
+      return { ...identity, value: emptyReminderState as T, cloud: false, status: '登录后创建和同步习惯' };
+    if (key === 'articles' && identity.owner === 'guest')
+      return { ...identity, value: initialArticleState as T, cloud: false, status: '登录后创建和同步文章' };
     const cacheKey = toolCacheKey(identity.owner, key);
+    const confirmedCache = cache<T>(cacheKey);
+    if (confirmedCache) onCached?.({ ...identity, value: confirmedCache.data, cloud: online && identity.owner !== 'guest', status: online && identity.owner !== 'guest' ? '正在刷新账号数据…' : offlineStatus(identity.owner) });
     await writes.get(cacheKey);
     let current = cache<T>(cacheKey);
     if (current && volatile.has(cacheKey)) {
@@ -98,7 +119,7 @@ export function createPersonalToolStore(adapter: Adapter) {
       save(cacheKey, current.data, current.pending);
       current = cache<T>(cacheKey);
     }
-    let value = current?.data ?? initial;
+    let value = current?.data ?? (key === 'reminders' ? emptyReminderState as T : initial);
     let cloud = false, status = offlineStatus(identity.owner);
     if (online && identity.owner !== 'guest') {
       const before = JSON.stringify(current);
@@ -130,6 +151,8 @@ export function createPersonalToolStore(adapter: Adapter) {
     return { ...identity, value, cloud, status };
   }
   function edit<T>(key: PersonalToolKey, context: ToolLoad<T>, next: T | ((previous: T) => T)): T {
+    if (key === 'reminders' && context.owner === 'guest') throw new Error('请先登录，再创建或修改习惯');
+    if (key === 'articles' && context.owner === 'guest') throw new Error('请先登录，再创建或修改文章');
     if (adapter.fingerprint() !== context.fingerprint || knownIdentity && knownIdentity.owner !== context.owner) throw new Error('账号状态已变化 · 请重新读取');
     const cacheKey = toolCacheKey(context.owner, key);
     const previousCache = cache<T>(cacheKey);
@@ -141,8 +164,10 @@ export function createPersonalToolStore(adapter: Adapter) {
     const durable = save(cacheKey, value, unchanged ? previousCache?.pending ?? context.owner !== 'guest' : context.owner !== 'guest');
     emit(cacheKey, durable ? context.cloud ? '正在同步到账号…' : offlineStatus(context.owner) : '本机存储不可用 · 请保持小程序打开');
     if (context.cloud) void flush(key, context.owner);
+    editListeners.forEach(listener => listener({ key, owner: context.owner, before: previous, after: value, durable }));
     return value;
   }
   return { load, edit, flush, cache, isVolatile: (cacheKey: string) => volatile.has(cacheKey),
+    subscribeEdits: (listener: (edit: PersonalToolEdit) => void) => { editListeners.add(listener); return () => { editListeners.delete(listener); }; },
     subscribe: (listener: (cacheKey: string, status: string) => void) => { listeners.add(listener); return () => { listeners.delete(listener); }; } };
 }

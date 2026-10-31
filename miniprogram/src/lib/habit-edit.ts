@@ -3,6 +3,7 @@ import { alignHabitDomain } from './habit-domains';
 import { habitTimePeriod, isHabitPriority, isHabitTimePeriod, type HabitPriority } from './habit-metadata';
 import { getLibraryIcon, type LibraryIconId } from './icon-library';
 import { cleanState, type Reminder, type ReminderState } from './reminder-data';
+import { OTHER_DOMAIN_NAME, domainDisplayName, findFallbackDomain, isFallbackDomainName } from './domain-fallback';
 
 export type HabitDetailChange = { field: 'domain'; value: string } | { field: 'icon'; value: LibraryIconId } | { field: 'priority'; value: HabitPriority };
 
@@ -14,7 +15,7 @@ export function patchHabitDetails(state: ReminderState, id: string, change: Habi
   if (change.field === 'domain') {
     const domain = domains.find(item => item.id === change.value);
     if (change.value && !domain) throw new Error('这个领域已变化，请重新选择。');
-    patch = { domainId: domain?.id, group: domain?.name || '未分类' };
+    patch = { domainId: domain?.id, group: domain ? domainDisplayName(domain.name) : OTHER_DOMAIN_NAME };
   } else if (change.field === 'icon') {
     const icon = getLibraryIcon(change.value);
     if (!icon) throw new Error('这个图标不可用，请重新选择。');
@@ -31,10 +32,10 @@ export function patchHabitDetails(state: ReminderState, id: string, change: Habi
 export function prepareHabitEdit(draft: Reminder, domains: readonly Domain[]): Reminder {
   if (!draft.title.trim()) throw new Error('写下想养成的习惯。');
   if (draft.timePeriod !== undefined && !isHabitTimePeriod(draft.timePeriod)) throw new Error('请选择习惯时段。');
-  const domain = domains.find(domain => domain.id === draft.domainId) || domains.find(domain => domain.name === draft.group);
-  if (!domain && draft.group !== '未分类') throw new Error('这个领域已变化，请重新选择。');
+  const domain = domains.find(domain => domain.id === draft.domainId) || domains.find(domain => domain.name === draft.group) || (isFallbackDomainName(draft.group) ? findFallbackDomain(domains) : undefined);
+  if (!domain && !isFallbackDomainName(draft.group)) throw new Error('这个领域已变化，请重新选择。');
   return { ...draft, title: draft.title.trim().slice(0, 60), note: draft.note.trim().slice(0, 240),
-    group: domain?.name || '未分类', domainId: domain?.id, priority: draft.priority || 'none', timePeriod: habitTimePeriod(draft) };
+    group: domain ? domainDisplayName(domain.name) : OTHER_DOMAIN_NAME, domainId: domain?.id, priority: draft.priority || 'none', timePeriod: habitTimePeriod(draft) };
 }
 
 /** Update only editor fields; keep current identity, lifecycle and check-in data. */

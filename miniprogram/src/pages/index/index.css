@@ -1,5 +1,7 @@
 .today-page { padding: 24px 32px calc(28px + env(safe-area-inset-bottom)); max-width: 1000px; margin: 0 auto; }
 .today-brand { display: flex; align-items: center; justify-content: space-between; }
+.today-header-actions { display: flex; align-items: center; gap: 6PX; margin-left: auto; }
+.today-account-button { flex: none; margin: 0; }
 .today-wordmark { display: flex; align-items: center; gap: 12px; color: #f3eddf; font-size: 35px; font-weight: 750; letter-spacing: -1px; }
 .today-wordmark image { width: 44px; height: 44px; border-radius: 12px; }
 .today-date { font-size: 22px; color: #a2afbb; font-variant-numeric: tabular-nums; }
@@ -15,7 +17,7 @@
 .today-shortcut-scroll { flex: 1; min-height: 0; height: 0; width: 100%; }
 .today-page .core-screen .today-grid { grid-auto-rows: minmax(0,1fr); height: 100%; min-height: 100%; }
 .today-entry { min-width: 0; }
-.today-page .today-many-shortcuts .today-grid { height: auto; grid-auto-rows: minmax(120PX,auto); padding-bottom: 1PX; }
+.today-page .today-many-shortcuts .today-grid { height: auto; grid-auto-rows: minmax(120PX,auto);  }
 .today-page .more-section-title { font-size: 20PX; line-height: 1.4; margin-bottom: 12PX; }
 .today-page .more-section > .screen-return-hint { margin-bottom: 8PX; }
 .today-page .today-recent { display: flex; justify-content: space-between; align-items: center; gap: 12PX; font-size: 23px; margin: 0 0 16PX; padding: 12px 22px; border: 1px solid #30413f; border-radius: 14px; background: #182925; color: #b9dbca; box-shadow: none; }

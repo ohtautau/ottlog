@@ -8,6 +8,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
 using Ottlog.Api.Data;
+using Ottlog.Api.Services;
 
 namespace Ottlog.Api.Controllers;
 
@@ -34,7 +35,7 @@ public sealed class AccountController(BlogDb db, IAntiforgery antiforgery, IWebH
         db.Readers.Add(reader);
         try { await db.SaveChangesAsync(); }
         catch (DbUpdateException) { return Conflict(new { title = "该用户名不可用" }); }
-        await SignIn(reader); return Ok(new { reader.UserName });
+        await SignIn(reader, input.RememberMe); return Ok(new { reader.UserName });
     }
     [HttpPost("login"), EnableRateLimiting("login")]
     public async Task<IActionResult> Login(Credentials input)
@@ -56,15 +57,15 @@ public sealed class AccountController(BlogDb db, IAntiforgery antiforgery, IWebH
                 await db.SaveChangesAsync(); return Unauthorized(new { title = "账号密码错误，或暂时已锁定" });
             }
             reader.FailedLogins = 0; reader.LockedUntil = 0;
-            await db.SaveChangesAsync(); await SignIn(reader); return Ok(new { reader.UserName });
+            await db.SaveChangesAsync(); await SignIn(reader, input.RememberMe); return Ok(new { reader.UserName });
         }
         finally { Gate.Release(); }
     }
     [HttpPost("logout"), Authorize]
     public async Task<IActionResult> Logout() { await HttpContext.SignOutAsync(); return NoContent(); }
-    private Task SignIn(Reader r) => HttpContext.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme,
+    private Task SignIn(Reader r, bool rememberMe) => HttpContext.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme,
         new ClaimsPrincipal(new ClaimsIdentity([new Claim(ClaimTypes.NameIdentifier, r.Id.ToString()),
-            new Claim(ClaimTypes.Name, r.UserName), new Claim(ClaimTypes.Role, "reader"), new Claim("stamp", r.SecurityStamp)], CookieAuthenticationDefaults.AuthenticationScheme)));
+            new Claim(ClaimTypes.Name, r.UserName), new Claim(ClaimTypes.Role, "reader"), new Claim("stamp", r.SecurityStamp)], CookieAuthenticationDefaults.AuthenticationScheme)), LoginSession.Properties(rememberMe));
 }
 
 [ApiController, Route("api/favorites"), Authorize, AutoValidateAntiforgeryToken]

@@ -177,7 +177,7 @@ module.exports = async function checkDailyWorkflow({ page, origin, out, width, e
     }
   }
 
-  const grid = () => core.locator('.swipe-panel-current .daily-habit-scroll');
+  const grid = () => core.locator('.daily-habit-pages > .daily-habit-scroll');
   const scrollPane = () => grid().locator('.daily-time-period-section[data-time-period="free"] .daily-time-period-scroll').or(grid().filter({ hasNot: page.locator('.daily-time-period-section') }));
   await habitFilter.assertNoStatusRow();
   const order = () => grid().locator('.habit-sort-tile').evaluateAll(rows => rows.map(row => row.id.slice('habit-sort-'.length)));

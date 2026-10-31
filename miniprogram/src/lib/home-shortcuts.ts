@@ -13,11 +13,16 @@ export type ShortcutKey = HomeFeatureKey;
 export type HomeShortcut = { key: ShortcutKey; name: string; color: ShortcutColor; kind: ShortcutKind; rank?: number; background?: ShortcutBackgroundKey; icon?: ShortcutIconKey };
 export type HomeShortcuts = { version: 1; items: HomeShortcut[] };
 export const homeShortcutsStorageKey = 'ottlog.home-shortcuts.v1';
-const previousShortcutNames: Partial<Record<ShortcutKey, readonly string[]>> = { daily: ['习惯养成'], memos: ['备忘录', '写备忘录'], domains: ['领域管理'], growth: ['成长足迹', '领域进展'], todos: ['查看任务'], favorites: ['我的收藏'] };
+const previousShortcutNames: Partial<Record<ShortcutKey, readonly string[]>> = { pomodoro: ['开始番茄钟'], daily: ['习惯养成'], memos: ['备忘录', '写备忘录'], domains: ['领域管理'], growth: ['成长足迹', '领域进展'], todos: ['查看任务'], favorites: ['我的收藏'], journal: ['个人空间', 'Tau 的空间'] };
 // Read the retired identity only to recognize untouched historical defaults.
 // It never becomes a selectable feature or a returned shortcut.
-const retiredFoodShortcut = { key: 'eat', name: '今日食选', color: 'peach' } as const;
-type StoredShortcut = Omit<HomeShortcut, 'key'> & { key: ShortcutKey | 'eat' };
+const retiredShortcuts = {
+  eat: { key: 'eat', name: '今日食选', color: 'peach' },
+  choose: { key: 'choose', name: '选境', color: 'rose' },
+} as const;
+type RetiredShortcutKey = keyof typeof retiredShortcuts;
+const isRetiredShortcut = (key: string): key is RetiredShortcutKey => Object.prototype.hasOwnProperty.call(retiredShortcuts, key);
+type StoredShortcut = Omit<HomeShortcut, 'key'> & { key: ShortcutKey | RetiredShortcutKey };
 const storedRankLimit = Math.max(19, shortcutCatalog.length);
 const previousDefaultOrder = ['eat', 'pomodoro', 'create', 'daily', 'memos', 'choose', 'todos', 'posts'];
 const lastDefaultOrder = ['create', 'pomodoro', 'daily', 'memos', 'eat', 'choose', 'todos', 'posts'];
@@ -47,17 +52,17 @@ export function normalizeHomeShortcuts(value: unknown): HomeShortcuts {
   let hasSelectedBackground = false;
   for (const item of value.items) {
     if (!item || typeof item !== 'object') continue;
-    const original = item.key === 'eat' ? retiredFoodShortcut : shortcutCatalog.find(entry => entry.key === item.key);
+    const original = isRetiredShortcut(item.key) ? retiredShortcuts[item.key as RetiredShortcutKey] : shortcutCatalog.find(entry => entry.key === item.key);
     if (!original || used.has(original.key)) continue;
     used.add(original.key);
     const name = typeof item.name === 'string' ? item.name.trim() : '';
     // Rename the former habit label without treating a custom order as an old default layout.
     const displayName = original.key === 'daily' && name === '习惯打卡' ? original.name : name;
-    const previousName = original.key === 'eat' ? name === '吃什么' : previousShortcutNames[original.key]?.includes(name) === true;
+    const previousName = isRetiredShortcut(original.key) ? original.key === 'eat' && name === '吃什么' : previousShortcutNames[original.key]?.includes(name) === true;
     hasPreviousName ||= previousName;
     hasSelectedBackground ||= isShortcutBackground(item.background);
-    const rank = Number.isInteger(item.rank) && item.rank > 0 && item.rank <= storedRankLimit && (original.key === 'eat' || !ranks.has(item.rank)) ? item.rank : undefined;
-    if (rank && original.key !== 'eat') ranks.add(rank);
+    const rank = Number.isInteger(item.rank) && item.rank > 0 && item.rank <= storedRankLimit && (isRetiredShortcut(original.key) || !ranks.has(item.rank)) ? item.rank : undefined;
+    if (rank && !isRetiredShortcut(original.key)) ranks.add(rank);
     const icon = normalizeShortcutIcon(item.icon);
     items.push({ key: original.key, kind: item.kind === 'link' ? 'link' : 'card', rank,
       ...(icon ? { icon } : {}),
@@ -66,17 +71,22 @@ export function normalizeHomeShortcuts(value: unknown): HomeShortcuts {
       color: shortcutColors.some(color => color.key === item.color) ? item.color : original.color });
   }
   // Upgrade only the untouched six-card default, including its assigned ranks.
+  const previousColors: Partial<Record<ShortcutKey, ShortcutColor>> = { pomodoro: 'mint', journal: 'rose' };
+  if (!hasSelectedBackground && items.length === defaultShortcutOrder.length && items.every((item, index) => {
+    const original = makeShortcut(defaultShortcutOrder[index]);
+    return item.key === original.key && item.name === original.name && item.color === (previousColors[item.key as ShortcutKey] || original.color) && item.kind === 'card' && item.rank === index + 1 && (!item.icon || item.icon === original.icon);
+  })) return defaultHomeShortcuts();
   if (!hasSelectedBackground && items.length === previousSixDefaultOrder.length && items.every((item, index) => {
-    const original = item.key === 'eat' ? retiredFoodShortcut : makeShortcut(item.key);
-    return item.key === previousSixDefaultOrder[index] && item.name === original.name && item.color === original.color && item.kind === 'card' && !item.icon && (!item.rank || item.rank === index + 1);
+    const original = isRetiredShortcut(item.key) ? retiredShortcuts[item.key] : makeShortcut(item.key);
+    return item.key === previousSixDefaultOrder[index] && item.name === original.name && (item.color === original.color || item.key === 'pomodoro' && item.color === 'mint') && item.kind === 'card' && !item.icon && (!item.rank || item.rank === index + 1);
   })) return defaultHomeShortcuts();
   // Upgrade a saved older default layout; preserve customized order and styling.
   const oldOrders = hasPreviousName ? [previousDefaultOrder, lastDefaultOrder] : [lastDefaultOrder];
   if (!hasSelectedBackground && !items.some(item => item.rank || item.icon) && oldOrders.some(oldOrder => items.length === oldOrder.length && items.every((item, index) => {
-    const original = item.key === 'eat' ? { ...retiredFoodShortcut, kind: index < 6 ? 'card' : 'link' } : makeShortcut(item.key, index < 6 ? 'card' : 'link');
-    return item.key === oldOrder[index] && item.name === original.name && item.color === original.color && item.kind === original.kind;
+    const original = isRetiredShortcut(item.key) ? { ...retiredShortcuts[item.key], kind: index < 6 ? 'card' : 'link' } : makeShortcut(item.key, index < 6 ? 'card' : 'link');
+    return item.key === oldOrder[index] && item.name === original.name && (item.color === original.color || item.key === 'pomodoro' && item.color === 'mint') && item.kind === original.kind;
   }))) return defaultHomeShortcuts();
-  const activeItems = items.filter((item): item is HomeShortcut => item.key !== 'eat');
+  const activeItems = items.filter((item): item is HomeShortcut => !isRetiredShortcut(item.key));
   for (const item of groupHomeShortcuts(activeItems)) {
     if (!item.rank) item.rank = nextHomeShortcutRank(activeItems);
   }

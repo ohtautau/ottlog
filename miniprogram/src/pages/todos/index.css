@@ -19,7 +19,7 @@
 .todo-quadrant-caption { display: block; padding-left: 34rpx; font-size: 21rpx; color: #bac5ca; line-height: 1.45; margin-top: 4rpx; white-space: nowrap; }
 .todo-quadrant-add { flex: none; width: 40PX; margin: 0; }
 .todo-quadrant-scroll { flex: 1; min-height: 0; height: 0; width: 100%; }
-.todo-quadrant-items { padding: 0 8rpx 12rpx; }
+
 .todo-quadrant-empty { padding: 46rpx 8rpx; font-size: 25rpx; line-height: 1.7; text-align: center; color: #b4c2c7; }
 .todo-quadrant-empty text { display: block; margin-top: 8rpx; font-size: 21rpx; color: #96adb5; }
 .todo-quadrant-empty.is-clear { padding: 22rpx 8rpx; font-size: 22rpx; color: #96adb5; }

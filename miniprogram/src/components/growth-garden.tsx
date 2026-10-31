@@ -1,9 +1,10 @@
+import EmptyState from './empty-state';
 import { trimTextEnd } from '../lib/text-whitespace';
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import Taro from '@tarojs/taro';
 import { Button, ScrollView, Text, Textarea, View } from '@tarojs/components';
 import { hasVolatilePersonalTool, usePersonalToolState } from '../lib/use-personal-tool-state';
-import { initialGrowthState, demoGrowthState, isGrowthState, growthPoints, recordGrowth, undoGrowth, saveGrowthDomain, setGrowthGoal, completeGrowthGoal, setGrowthDomainArchived, reorderGrowthDomains, type GrowthState, type GrowthSize } from '../lib/growth-data';
+import { initialGrowthState, isGrowthState, growthPoints, recordGrowth, undoGrowth, saveGrowthDomain, setGrowthGoal, completeGrowthGoal, setGrowthDomainArchived, reorderGrowthDomains, type GrowthState, type GrowthSize } from '../lib/growth-data';
 import LibraryIcon from './library-icon';
 import ActionButton, { ChoiceButton } from './ui-button';
 import EditorHeading from './editor-heading';
@@ -27,7 +28,7 @@ function Sheet({ className, title, closeLabel, onClose, children }: { className:
 const displayTime = (stamp: string) => { const date = new Date(stamp); return `${date.getMonth() + 1}月${date.getDate()}日 ${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}`; };
 
 export default function GrowthGarden({ date, disabled = false }: { date: Date; disabled?: boolean }) {
-  const defaults = useMemo(() => demoGrowthState(), []);
+  const defaults = useMemo(() => initialGrowthState, []);
   const { value, setValue, ready, owner, status, retry } = usePersonalToolState('growth', defaults);
   const valid = useMemo(() => isGrowthState(value), [value]), writable = ready && valid && !!owner && !disabled;
   const state = ready && valid ? value : initialGrowthState;
@@ -162,7 +163,7 @@ export default function GrowthGarden({ date, disabled = false }: { date: Date; d
             <Text className={`growth-domain-goal${domain.currentGoal ? '' : ' is-empty'}`}>{trimTextEnd(domain.currentGoal?.title || '设定下一个小目标')}</Text>
           </Button>;
         })}
-      </View>{!active.length && <View className='growth-empty'><Text>暂无领域</Text><Button className='button-label' onClick={() => editDomain()}>添加第一个领域</Button><Button className='button-label growth-secondary' onClick={() => setManageOwner(owner)}>查看已收起的领域</Button></View>}</ScrollView>}
+      </View>{!active.length && <View className='growth-empty'><EmptyState kind='domains' /><Button className='button-label' onClick={() => editDomain()}>添加第一个领域</Button><Button className='button-label growth-secondary' onClick={() => setManageOwner(owner)}>查看已收起的领域</Button></View>}</ScrollView>}
       <View className='growth-record-panel'>
         {selected && <View className='growth-current-goal'>
           <Button className='growth-goal-open' ariaLabel={selected.currentGoal ? '编辑小目标' : '设置小目标'} disabled={!writable || !!sorting || busy} onClick={editGoal}><Text className='growth-goal-symbol'>{selected.currentGoal ? '◇' : '＋'}</Text><Text>{trimTextEnd(selected.currentGoal?.title || '设定下一个小目标')}</Text><EditSymbol /></Button>

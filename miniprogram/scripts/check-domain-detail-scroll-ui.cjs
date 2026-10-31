@@ -52,6 +52,18 @@ module.exports = async function checkDomainDetailScroll({ page, origin, out, wid
     expect(result.columns[0].bottom).toBeCloseTo(result.columns[1].bottom, 1);
   }
   await fresh('long'); await geometry();
+  const beforeHistory = await saved();
+  const completedGoals = page.getByRole('button', { name: '查看工作已完成目标', exact: true });
+  await expect(completedGoals).toHaveText('');
+  await expect(completedGoals.locator('.completed-goals-symbol')).toHaveCount(1);
+  const completedBox = await completedGoals.boundingBox();
+  expect(completedBox.width).toBeGreaterThanOrEqual(40); expect(completedBox.height).toBeGreaterThanOrEqual(40);
+  await completedGoals.click();
+  await expect(page.locator('.domain-sheet')).toBeVisible();
+  await expect(page.locator('.domain-history-item')).toHaveCount(state.completedGoals.filter(goal => goal.domainId === 'work').length);
+  await page.locator('.domain-sheet').getByRole('button', { name: '关闭编辑', exact: true }).click();
+  await expect(page.locator('.domain-sheet')).toHaveCount(0);
+  expect(await saved(), 'Opening completed goals does not write domain data').toEqual(beforeHistory);
   await require('./check-domain-record-height.cjs')({ rows: page.locator('.domain-card .domain-record'), expect });
   await expect(page.locator('.domain-habit-grid')).toHaveCount(1);
   const habits = () => page.locator('.domain-habit-scroll');

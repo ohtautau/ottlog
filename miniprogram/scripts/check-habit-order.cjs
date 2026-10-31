@@ -17,7 +17,8 @@ const { sortHabits, habitTimePeriod } = load(path.join(__dirname, '../src/lib/ha
 const { alignHabitDomain } = load(path.join(__dirname, '../src/lib/habit-domains.ts'));
 const { orderedHabits, saveHabitOrder } = load(path.join(__dirname, '../src/lib/habit-order.ts'));
 const { toggleReminderDone, localDate, isReminderState } = load(path.join(__dirname, '../src/lib/reminder-data.ts'));
-const { initialDomainState, saveDomainHabit } = load(path.join(__dirname, '../src/lib/domain-data.ts'));
+const { legacyHabitDomains, saveDomainHabit } = load(path.join(__dirname, '../src/lib/domain-data.ts'));
+const initialDomainState = require('./fixtures/starter-data.cjs').domainState({ legacyHabitDomains });
 const webHabits = load(path.join(__dirname, '../../web/src/app/daily/reminders.ts'));
 const custom = { id: 'custom', title: '一个习惯', note: '', kind: 'plant', group: '自定义领域', domainId: 'custom-domain', minutes: 0, enabled: true, priority: 'medium', createdAt: 12345 };
 const roundTrip = cleanState(webHabits.cleanState(cleanState({ version: 1, items: [custom], done: {} })));
@@ -55,11 +56,11 @@ assert.deepEqual(applyHabitOrder(items, ['c', 'deleted', 'c', 'a', 'b']).map(row
 assert.deepEqual(items.map(row => row.id), ['a', 'hidden', 'b', 'paused', 'c', 'new']);
 const now = new Date(2026, 8, 15, 10).getTime();
 const state = { version: 1, items: ['old', 'recent', 'never', 'today', 'also-never'].map(id => item(id)).concat(item('paused', false)), done: { '2026-09-15': ['today'], '2026-09-14': ['recent'] }, completionHistory: { old: [[habitDayIndex('2025-01-01'), habitDayIndex('2025-01-01')]] } };
-assert.deepEqual(longestUncheckedHabits(state, now).map(row => row.id), ['never', 'also-never']);
+assert.deepEqual(longestUncheckedHabits(state, now).map(row => row.id), ['never', 'also-never', 'old', 'recent']);
 assert.deepEqual(longestUncheckedHabits({ ...state, items: state.items.filter(row => !row.id.includes('never')) }, now).map(row => row.id), ['old', 'recent']);
 assert.deepEqual(longestUncheckedHabits({ ...state, items: [item('today'), item('paused', false)] }, now), []);
 const allHistory = cleanState({ ...state, done: { ...state.done, '2026-09-01': ['never', 'also-never'] } });
-assert.deepEqual(longestUncheckedHabits(allHistory, now).map(row => row.id), ['old', 'never']);
+assert.deepEqual(longestUncheckedHabits(allHistory, now).map(row => row.id), ['old', 'never', 'also-never', 'recent']);
 assert.deepEqual(longestUncheckedHabits({ ...state, items: [item('old')] }, now).map(row => row.id), ['old']);
 assert.deepEqual(longestUncheckedHabits({ ...state, items: [] }, now), []);
 console.log('Habit order: filtered moves, stale drafts, durable history, never checked, today and paused exclusions passed');

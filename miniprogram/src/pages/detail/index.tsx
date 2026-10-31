@@ -1,3 +1,6 @@
+import { openAccount } from '../../lib/account-navigation';
+import { CommentCard } from '../../components/data-card-views';
+import EmptyState from '../../components/empty-state';
 import { trimTextEnd } from '../../lib/text-whitespace';
 import SectionTitle from '../../components/section-title';
 import { CoreScreen, MoreSection } from '../../components/page-sections';
@@ -74,7 +77,7 @@ export default function Detail() {
     if (saveBusy) return;
     if (!account?.authenticated) {
       const result = await requestAppConfirmation({ title: '把喜欢的文章留在账号里', content: '登录博客账号后，网页和小程序可以同步收藏。', confirmText: '去登录', cancelText: '继续阅读' });
-      if (result.confirm) await Taro.switchTab({ url: '/pages/favorites/index' });
+      if (result.confirm) await openAccount();
       return;
     }
     setSaveBusy(true); setSaveError('');
@@ -118,8 +121,8 @@ export default function Detail() {
         <View className='detail-section-title'><SectionTitle inRow>读者留言</SectionTitle><Text className='eyebrow'>{comments.length.toString().padStart(2, '0')}</Text></View>
         {commentsLoading && <View className='muted'>正在加载留言…</View>}
         {commentsError && <View className='detail-error'><Text>{commentsError}</Text><Text className='detail-text-button' onClick={() => { void loadComments(slug); }}>重新加载留言</Text></View>}
-        {!commentsLoading && !commentsError && !comments.length && <View className='detail-empty'>暂无留言</View>}
-        {comments.map(comment => <View className='detail-comment' key={comment.id}><View className='detail-comment-head'><Text className='detail-comment-author'>{trimTextEnd(comment.name)}</Text><Text className='detail-comment-date'>{comment.createdAt.slice(0, 10).split('-').join('.')}</Text></View><Text className='detail-comment-content' selectable>{trimTextEnd(comment.text)}</Text></View>)}
+        {!commentsLoading && !commentsError && !comments.length && <EmptyState kind='comments' compact />}
+        {comments.map(comment => <CommentCard key={comment.id} name={trimTextEnd(comment.name)} date={comment.createdAt.slice(0, 10).split('-').join('.')} text={trimTextEnd(comment.text)} />)}
         <View className='detail-comment-form'><Text className='detail-label'>留下一句话</Text><Input maxlength={40} placeholder='你的昵称' value={name} onInput={event => setName(event.detail.value)} /><Textarea maxlength={2000} placeholder='读完以后，想说点什么？' value={text} onInput={event => setText(event.detail.value)} /><View className='detail-form-note'><Text>审核通过后展示</Text><Text>{text.length} / 2000</Text></View><ActionButton appearance='primary' className='button-label' disabled={sending || !name.trim() || !text.trim()} loading={sending} onClick={sendComment}>提交留言</ActionButton>{commentMessage && <View className='detail-feedback'>{commentMessage}</View>}</View>
       </View>
     </MoreSection></>}

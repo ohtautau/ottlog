@@ -17,7 +17,7 @@ module.exports = async function checkHabitSplitLayout({ page, origin, out, width
     location.hash = '#/pages/daily/index';
     return reminders;
   });
-  const root = page.locator('.swipe-panel-current .daily-habit-scroll');
+  const root = page.locator('.daily-habit-pages > .daily-habit-scroll');
   const free = () => root.locator('.daily-time-period-section[data-time-period="free"]');
   const timed = () => root.locator('.daily-time-period-section:not([data-time-period="free"])');
   const freeScroll = () => free().locator('.daily-time-period-scroll');
@@ -38,12 +38,12 @@ module.exports = async function checkHabitSplitLayout({ page, origin, out, width
   await expect(timed()).toHaveAttribute('data-time-period', 'morning');
   await expect(root.locator('.section-title-disclosure,.select-chevron')).toHaveCount(0);
   await expect(root.locator('.daily-time-period-categories button')).toHaveText(['上午', '中午', '下午', '晚上']);
-  await expect(page.locator('.daily-reminder-heading .section-title')).toHaveText('提醒');
+  await expect(page.locator('.daily-neglected .habit-list-section-heading .section-title')).toHaveText('提醒');
   const geometry = await root.evaluate(node => {
     const bounds = value => { const r = value.getBoundingClientRect(); return { left: r.left, right: r.right, top: r.top, bottom: r.bottom, width: r.width, height: r.height }; };
     const sections = [...node.querySelectorAll('.daily-time-period-section')];
     const cards = [...node.querySelectorAll('.daily-suggestion')];
-    return { outer: bounds(document.querySelector('.page-scroll')), root: bounds(node), rootOverflow: node.scrollHeight - node.clientHeight, reminder: bounds(document.querySelector('.daily-reminder-heading')),
+    return { outer: bounds(document.querySelector('.page-scroll')), root: bounds(node), rootOverflow: node.scrollHeight - node.clientHeight, reminder: bounds(document.querySelector('.daily-neglected .habit-list-section-heading')),
       sections: sections.map(section => ({ box: bounds(section), header: bounds(section.querySelector('.habit-list-section-heading')), scroll: bounds(section.querySelector('.daily-time-period-scroll')), overflow: section.querySelector('.daily-time-period-scroll').scrollHeight - section.querySelector('.daily-time-period-scroll').clientHeight })),
       buttons: [...node.querySelectorAll('.daily-time-period-categories button')].map(button => ({ ...bounds(button), weight: Number(getComputedStyle(button).fontWeight) })),
       cards: cards.map(card => ({ height: card.getBoundingClientRect().height, padding: parseFloat(getComputedStyle(card.querySelector('.daily-suggestion-open')).paddingTop), overflow: card.scrollWidth - card.clientWidth })),

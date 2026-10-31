@@ -1,0 +1,290 @@
+/* Desktop presentation only. The shared mini-program still owns all data,
+   actions and editor guards; bounded regions keep long content reachable. */
+.tool-app-root {
+  --web-card-gap: 12px;
+  --web-habit-card-min-width: 224px;
+  --habit-card-min-height: 88px;
+  --web-domain-card-min-width: 260px;
+  --web-domain-card-height: 132px;
+}
+.tool-app-root .daily-core .daily-suggestion-grid,
+.tool-app-root .domain-detail-page .domain-habit-grid {
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, var(--web-habit-card-min-width)), 1fr));
+  gap: var(--web-card-gap);
+  align-content: start;
+}
+.tool-app-root .daily-suggestion-check { left: 12px; width: 44px; }
+.tool-app-root .daily-suggestion-icon { width: 44px; height: 44px; border-width: 3px; }
+.tool-app-root .daily-suggestion-icon .habit-icon { width: 28px; height: 28px; }
+.tool-app-root .daily-suggestion-open { min-height: calc(var(--habit-card-min-height) - 2px); padding: 10px 12px 10px 68px; }
+.tool-app-root .daily-suggestion-title { font-size: 15px; line-height: 22px; max-height: 44px; margin-bottom: 4px; }
+.tool-app-root .daily-suggestion .daily-suggestion-days { font-size: 12px; line-height: 18px; gap: 12px; }
+.tool-app-root .domains-list .domain-card-groups {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, var(--web-domain-card-min-width)), 1fr));
+  grid-auto-rows: var(--web-domain-card-height);
+  align-content: start;
+  gap: var(--web-card-gap);
+}
+.tool-app-root .domains-list .domain-entry-grid { display: contents; }
+.tool-app-root .domains-page.domains-list .domain-entry { height: 100%; min-height: 0; padding: 12px 16px 32px; }
+.tool-app-root .domains-list .domain-progress-summary.without-goals { gap: 12px; }
+.tool-app-root .domains-list .domain-progress-summary.without-goals .domain-progress-icon { width: 36px; height: 36px; }
+.tool-app-root .domains-list .domain-progress-name { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; max-height: 44px; white-space: normal; overflow-wrap: anywhere; font-size: 16px; line-height: 22px; }
+@media (min-width: 900px) {
+  .tool-app-root .domains-page.domains-list,
+  .tool-app-root .domains-page.domain-detail-page,
+  .tool-app-root .tool-page.daily-page.core-page {
+    height: 100%;
+    min-height: 0;
+    max-height: 100%;
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
+  }
+
+  /* Recent records and cards share the available screen, with their own scroll
+     positions rather than adding another full page below the website header. */
+  .tool-app-root .domains-list .domains-index {
+    display: flex;
+    height: 100%;
+    min-height: 0;
+    padding: 0;
+    overflow: hidden;
+    gap: 12px;
+  }
+  .tool-app-root .domains-index .domains-page-toolbar { flex: none; margin: 0; }
+  .tool-app-root .domains-index .domains-recent-records {
+    flex: none;
+    height: clamp(88px, calc(var(--app-page-height) * .18), 120px);
+    min-height: 0;
+    margin: 0;
+    padding: 10px 14px;
+  }
+  .tool-app-root .domains-list .domain-entry-scroll {
+    flex: 1;
+    height: 0;
+    min-height: 0;
+    overflow-x: hidden !important;
+    overflow-y: auto !important;
+    overscroll-behavior: contain;
+    scrollbar-gutter: stable;
+  }
+  .tool-app-root .domains-list .domains-feedback-scroll {
+    position: static;
+    flex: none;
+    width: 100%;
+    height: auto;
+    min-height: 0;
+    max-height: 48px;
+    margin: 0;
+    padding: 0 10px;
+  }
+  .tool-app-root .domains-recent-records .domain-record-scroll {
+    flex: 1;
+    height: 0;
+    min-height: 0;
+    max-height: none;
+    overflow-y: auto !important;
+    overscroll-behavior: contain;
+  }
+
+  /* The detail dashboard puts goals opposite habits, then gives the positive
+     and negative histories equal, independent remaining space. */
+  .tool-app-root .domain-detail-page .domain-detail-toolbar { flex: none; margin: 0 0 12px; }
+  .tool-app-root .domain-detail-page .domain-detail-grid {
+    display: flex;
+    flex: 1;
+    height: 0;
+    min-height: 0;
+    overflow: hidden;
+  }
+  .tool-app-root .domain-detail-page .domain-card {
+    display: grid;
+    flex: 1;
+    height: 100%;
+    min-height: 0;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    grid-template-rows: auto auto minmax(0, 1fr) minmax(0, 1.1fr);
+    align-items: stretch;
+    gap: 8px 20px;
+    padding: 16px;
+    overflow: hidden;
+  }
+  .tool-app-root .domain-detail-page .domain-heading { grid-column: 1 / -1; grid-row: 1; min-height: 40px; margin: 0; }
+  .tool-app-root .domain-detail-page .domain-goals {
+    grid-column: 1;
+    grid-row: 2 / 4;
+    display: grid;
+    grid-auto-rows: minmax(72px, 1fr);
+    gap: 8px;
+    min-height: 0;
+    margin: 0;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+  }
+  .tool-app-root .domain-detail-page .domain-goal-toggle { min-height: 40px; padding: 10px 12px; }
+  .tool-app-root .domain-detail-page .domain-habits-heading { grid-column: 2; grid-row: 2; margin: 0; min-height: 22px; }
+  .tool-app-root .domain-detail-page .domain-habit-scroll,
+  .tool-app-root .domain-detail-page .domain-habit-scroll.is-single-row,
+  .tool-app-root .domain-detail-page .domain-habit-notice {
+    grid-column: 2;
+    grid-row: 3;
+    height: 100%;
+    min-height: 0;
+    max-height: none;
+    margin: 0;
+    overflow-y: auto !important;
+    overscroll-behavior: contain;
+  }
+  .tool-app-root .domain-detail-page .domain-habit-grid { grid-auto-rows: minmax(var(--habit-card-min-height), auto); }
+  .tool-app-root .domain-detail-page .domain-records {
+    grid-column: 1 / -1;
+    grid-row: 4;
+    height: 100%;
+    min-height: 0;
+    margin: 0;
+    padding-top: 8px;
+    overflow: hidden;
+  }
+  .tool-app-root .domain-detail-page .domain-record-column.has-scroll { min-height: 0; overflow: hidden; }
+  .tool-app-root .domain-detail-page .domain-record-scroll {
+    flex: 1;
+    height: 0;
+    min-height: 0;
+    max-height: none;
+    overflow-y: auto !important;
+    overscroll-behavior: contain;
+    scrollbar-gutter: stable;
+  }
+  .tool-app-root .domain-detail-page .domains-status { max-height: 48px; overflow-y: auto; }
+
+  /* Habits use three simultaneous work areas: free, selected period, reminders.
+     The reminder list is secondary but never pushed below another screen. */
+  .tool-app-root .daily-page .daily-core,
+  .tool-app-root .daily-page .daily-core > .core-content {
+    display: flex;
+    height: 100%;
+    min-height: 0;
+    padding: 0;
+    overflow: hidden;
+  }
+  .tool-app-root .daily-page .daily-core > .core-content { flex: 1; }
+  .tool-app-root .daily-core .daily-page-toolbar { flex: none; margin-bottom: 12px; }
+  .tool-app-root .daily-core .daily-habit-sections {
+    --habit-list-width: 100%;
+    --habit-list-offset: 0px;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) clamp(240px, 24vw, 320px);
+    grid-template-rows: auto minmax(0, 1fr);
+    flex: 1;
+    height: 0;
+    min-height: 0;
+    gap: 10px 16px;
+    overflow: hidden;
+  }
+  .tool-app-root .daily-habit-sections > .daily-core-filter-scroll { grid-column: 1; grid-row: 1; margin: 0; }
+  .tool-app-root .daily-habit-sections > .daily-sort-retry { grid-column: 1 / -1; grid-row: 1; z-index: 2; background: #192633; }
+  .tool-app-root .daily-core .daily-habit-pages {
+    grid-column: 1;
+    grid-row: 2;
+    flex: 1;
+    width: 100%;
+    height: 100%;
+    min-height: 0;
+    margin: 0;
+    overflow: hidden;
+  }
+  .tool-app-root .daily-core .daily-habit-scroll,
+  .tool-app-root .daily-core .daily-time-period-layout { height: 100%; min-height: 0; }
+  .tool-app-root .daily-core .daily-habit-scroll { overflow-y: auto !important; overscroll-behavior: contain; }
+  .tool-app-root .daily-core .daily-habit-scroll:has(> .daily-time-period-layout) { overflow: hidden !important; }
+  .tool-app-root .daily-core .daily-habit-content { height: auto; min-height: 100%; }
+  .tool-app-root .daily-core .daily-time-period-layout {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: repeat(2, minmax(0, 1fr));
+    align-items: stretch;
+    gap: 16px;
+  }
+  .tool-app-root .daily-core .daily-time-period-section { display: flex; height: 100%; min-height: 0; }
+  .tool-app-root .daily-core .daily-time-period-section .habit-list-section-viewport { flex: 1; height: 0; min-height: 0; overflow: hidden; }
+  .tool-app-root .daily-core .daily-time-period-section .habit-list-section-scroll { height: 100%; min-height: 0; max-height: none; overflow-y: auto !important; }
+  .tool-app-root .daily-core .daily-time-period-empty { min-height: 96px; height: 100%; }
+  .tool-app-root .daily-core .daily-neglected {
+    grid-column: 2;
+    grid-row: 1 / 3;
+    width: 100%;
+    min-height: 0;
+    margin: 0;
+    padding-left: 16px;
+    border-left: 1px solid #30424e;
+    overflow-x: hidden;
+    height: 100%;
+    overflow-y: hidden;
+    overscroll-behavior: contain;
+  }
+  .tool-app-root .daily-neglected .habit-list-section-heading { margin-bottom: 8px; }
+  .tool-app-root .daily-core .daily-neglected .daily-suggestion-grid { grid-template-columns: minmax(0, 1fr); gap: var(--web-card-gap); }
+  .tool-app-root .daily-core .daily-core-empty { min-height: 0; height: 100%; }
+  .tool-app-root .daily-core .daily-message,
+  .tool-app-root .daily-core .tool-status { flex: none; max-height: 64px; margin-top: 8px; padding: 8px; overflow-y: auto; }
+
+  /* Shared habit detail hosts use the same wide information/calendar layout.
+     Dates keep 40px targets; short displays scroll only the sheet body. */
+  .tool-app-root .daily-detail-sheet.habit-calendar-editor,
+  .tool-app-root .domain-sheet.domain-sheet-habit-detail.habit-calendar-editor {
+    width: min(100%, 1040px);
+    max-width: 1040px;
+    height: min(680px, calc(100dvh - 56px));
+    max-height: calc(100dvh - 56px);
+    margin: 0;
+    border-radius: var(--desktop-panel-radius);
+  }
+  .tool-app-root .habit-calendar-editor .habit-detail-body {
+    display: grid;
+    grid-template-columns: minmax(240px, .8fr) minmax(0, 1.25fr);
+    grid-template-rows: auto auto minmax(0, 1fr);
+    align-items: start;
+    gap: 12px 24px;
+    height: auto;
+    min-height: 100%;
+    padding: 12px 20px 20px;
+  }
+  .tool-app-root .habit-calendar-editor .habit-detail-domain-field { grid-column: 1; grid-row: 1; margin: 0; }
+  .tool-app-root .habit-calendar-editor .habit-detail-header { grid-column: 1; grid-row: 2; margin: 0; }
+  .tool-app-root .habit-calendar-editor .habit-detail-note-section { grid-column: 1; grid-row: 3; margin: 0; }
+  .tool-app-root .habit-calendar-editor .habit-calendar.is-detail { grid-column: 2; grid-row: 1 / 4; width: 100%; min-width: 0; margin: 0; }
+  .tool-app-root .habit-calendar-editor .habit-calendar.is-detail .habit-calendar-stats { padding-top: 0; padding-bottom: 8px; }
+  .tool-app-root .habit-calendar-editor .habit-calendar.is-detail .habit-calendar-panel { margin-top: 0; }
+  .tool-app-root .habit-calendar-editor .habit-calendar.is-detail .habit-calendar-log-scroll { height: 80px; min-height: 80px; }
+  .tool-app-root .habit-calendar-editor .habit-detail-body > .daily-message,
+  .tool-app-root .habit-calendar-editor .habit-detail-body > .domain-error { grid-column: 1 / -1; }
+  .tool-app-root .daily-detail-sheet .daily-detail-scroll,
+  .tool-app-root .daily-editor-sheet .daily-editor-scroll,
+  .tool-app-root .domain-sheet .domain-sheet-scroll,
+  .tool-app-root .daily-history-sheet .daily-history-scroll {
+    flex: 1;
+    height: 0;
+    min-height: 0;
+    max-height: none;
+    overflow-y: auto !important;
+    overscroll-behavior: contain;
+  }
+  .tool-app-root .daily-editor-sheet > .editor-heading,
+  .tool-app-root .daily-detail-sheet > .editor-heading,
+  .tool-app-root .daily-history-sheet > .editor-heading,
+  .tool-app-root .domain-sheet > .editor-heading,
+  .tool-app-root .daily-editor-sheet > .sheet-actions,
+  .tool-app-root .daily-detail-sheet > .sheet-actions,
+  .tool-app-root .daily-history-sheet > .sheet-actions,
+  .tool-app-root .domain-sheet > .sheet-actions { flex: none; }
+  .tool-app-root .daily-reflection-sheet { width: min(100%, 640px); }
+  .tool-app-root .daily-reflection-sheet .daily-reflection-scroll { min-height: 0; max-height: calc(100dvh - 230px); overflow-y: auto !important; }
+  .tool-app-root .daily-editor-sheet { height: min(590px, calc(100dvh - 56px)); }
+  .tool-app-root .domain-sheet.domain-sheet-goal { height: min(500px, calc(100dvh - 56px)); }
+  .tool-app-root .domain-sheet.domain-sheet-history { height: min(640px, calc(100dvh - 56px)); }
+  .tool-app-root .domain-sheet.domain-sheet-record-edit { height: min(560px, calc(100dvh - 56px)); }
+  .tool-app-root .domain-definition-root .domain-definition-panel { max-width: 640px; }
+
+}

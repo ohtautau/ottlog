@@ -205,7 +205,7 @@ module.exports = async function ({ page, origin, out, width, expect, checkButton
   await page.getByRole('button',{name:'恢复快捷方式',exact:true}).click(); await expect(page.locator('.home-editor-preview .today-entry-name')).toHaveText('便签小册'); await cancel();
   await cardReplace('memo-list'); await expect(page.locator('.home-editor-title')).toHaveText('替换快捷方式');
   await expect(page.locator('.home-editor-option')).toHaveCount(16); await expect(page.locator('.home-editor-fields,.home-editor-preview')).toHaveCount(0);
-  await expect(page.getByRole('button',{name:'替换为：开始番茄钟',exact:true})).toBeDisabled();
+  await expect(page.getByRole('button',{name:'替换为：专注',exact:true})).toBeDisabled();
   await page.getByRole('button',{name:'替换为：创建任务',exact:true}).click(); expect(await page.evaluate(key=>localStorage.getItem(key),key),'Replacement only changes the local picker until saved').toBe(savedAppearance);
   await cancel(); await expect(page.locator('#home-sort-memo-list .today-entry-name')).toHaveText('便签小册');
   await cardReplace('memo-list'); await page.getByRole('button',{name:'替换为：创建任务',exact:true}).click();
@@ -256,7 +256,7 @@ module.exports = async function ({ page, origin, out, width, expect, checkButton
   await expect(page.locator('.today-recent')).toContainText('创建任务');
   await expect(page.locator('.today-recent .button-add-symbol'), 'Recent task creation uses the same title exception').toHaveCount(0);
   await page.goto(home);
-  await page.getByRole('button', { name: '开始番茄钟', exact: true }).click();
+  await page.getByRole('button', { name: '专注', exact: true }).click();
   await expect(page).toHaveURL(/pages\/pomodoro\/index$/);
   await expect(page.locator('.focus-live')).toContainText('正在计时');
   await page.goto(home);
@@ -272,7 +272,7 @@ module.exports = async function ({ page, origin, out, width, expect, checkButton
   await save(); await expect(page.locator('.home-editor-sheet')).toBeVisible();
   expect(await page.evaluate(() => window.__miniNotices.at(-1))).toContain('保存失败'); expect(await page.evaluate(key=>localStorage.getItem(key),key)).toBe(beforeSelection);
   await page.evaluate(() => { window.__miniFixture.failHomeShortcutWrites = false; });
-  await save(); await page.reload(); await expect(page.locator('.today-entry-name')).toHaveText(['便签','开始番茄钟','习惯','统计','领域','饮食记录']);
+  await save(); await page.reload(); await expect(page.locator('.today-entry-name')).toHaveText(['便签','专注','习惯','统计','领域','饮食记录']);
   await writeLayout(page,null); await expect(page.locator('.today-entry-name')).toHaveText(defaultNames);  // Extra cards scroll in their middle region while capture remains in the first viewport.
   await edit();
   for (const name of ['饮食记录', '文章分类', '收藏', '创建习惯']) await page.getByRole('button', { name: `添加快捷方式：${name}`, exact: true }).click();

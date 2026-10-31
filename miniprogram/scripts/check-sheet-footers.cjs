@@ -28,6 +28,8 @@ module.exports = async function checkSheetFooters({ page, origin, out, width, ex
         createdAt: new Date(`${day}T10:00:00`).getTime(),
       }))) },
     };
+    window.__miniFixture.sessionProfile = { authenticated: true, userName: 'footer-reader', isAdmin: false };
+    window.__miniFixture.accountToolStates = { 'footer-reader': window.__miniFixture.guestToolStates };
     location.hash = '#/pages/todos/index';
   }, { shortTitle, longTitle, longNote });
   const businessState = () => page.evaluate(() => Object.fromEntries(['todos', 'domains', 'reminders'].map(key => [key,
@@ -86,6 +88,7 @@ module.exports = async function checkSheetFooters({ page, origin, out, width, ex
   }
 
   await page.locator('.todo-quadrant-later .todo-quadrant-add').click();
+  await expect(page.locator('.entry-composer .entry-load')).toHaveCount(0);
   await expect(page.locator('.entry-composer .todo-editor-meta')).toBeVisible();
   const taskSpacing = await page.locator('.entry-composer').evaluate(node => {
     const row = node.querySelector('.todo-editor-meta'), button = row.querySelector('.todo-schedule-trigger');
@@ -120,6 +123,7 @@ module.exports = async function checkSheetFooters({ page, origin, out, width, ex
     if (nativeTabBar) await page.getByRole('button', { name: '记录进展', exact: true }).click();
     else await page.locator('.domain-record-column.is-positive').dispatchEvent('click');
     const creator = page.locator('.entry-composer');
+    await expect(creator.locator('.entry-load')).toHaveCount(0);
     await expect(creator.locator('.progress-record-field')).toHaveCount(2);
     await expect(creator.locator('.entry-footer button')).toHaveText(['', '保存记录']);
     const progressSpacing = await creator.evaluate(node => {

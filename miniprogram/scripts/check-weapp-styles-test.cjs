@@ -13,4 +13,10 @@ for (const source of ['.editor-fields-layout > *{flex-shrink:0}', '*{margin:0}',
 for (const source of ['.field > view,.field > textarea{flex-shrink:0}', '[data-title="*"]{margin:0}', '[data-title*="field"]{margin:0}', '.field{/* * */content:"*";width:calc(2 * 4px)}']) {
   assert.doesNotThrow(() => checkStyles(source, 'fixture.wxss'), source);
 }
-console.log('PASS WXSS guards: empty statements and universal selectors rejected; valid declarations, attribute selectors, strings, comments, imports and nested media preserved.');
+for (const source of ['.navigation > :first-child{flex:1}', '.navigation :nth-child(2){margin:0}', ':last-child{margin:0}']) {
+  assert.throws(() => checkStyles(source, 'fixture.wxss'), /structural pseudo-class requires an explicit/, source);
+}
+for (const source of ['.navigation > .categories{flex:1}', '.navigation > .categories:first-child{flex:1}', '.navigation > view:first-child{flex:1}', '.navigation > view:not(:first-child){margin:0}']) {
+  assert.doesNotThrow(() => checkStyles(source, 'fixture.wxss'), source);
+}
+console.log('PASS WXSS guards: empty statements, universal and bare structural pseudo selectors rejected; valid scoped selectors, declarations, strings, comments, imports and nested media preserved.');

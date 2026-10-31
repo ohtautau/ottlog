@@ -49,11 +49,13 @@ module.exports = async function checkCalendarLabels({ page, origin, out, width, 
   await page.locator('.calendar-date-overlay .sheet-backdrop').click({ position: { x: 3, y: 3 } });
   await expect(page.locator('.calendar-date-details')).toHaveCount(0);
   await schedule.openSection(page, '设置提醒');
-  await schedule.button(page, '提前30分钟').click();
-  await expect(schedule.sheet(page).locator('.todo-schedule-reminder-days-inline button')).toHaveText(['当天', '前一天', '前两天', '前三天', '前一周', '前一月']);
+  await schedule.chooseReminderTime(page, '提前30分钟');
+  await schedule.openSection(page, '设置提醒');
+  await expect(page.getByLabel('提醒月份', { exact: true })).toHaveValue('05');
+  await expect(page.getByLabel('提醒日期', { exact: true })).toHaveValue('25');
   await expect(schedule.button(page, '选择日期2026-05-25')).toHaveAttribute('aria-pressed', 'true');
   await geometry(schedule.sheet(page).locator('.todo-schedule-calendar'), `${width} main calendar behind reminder choices`);
-  await expect(page.locator('.todo-schedule-reminder-days-inline')).toHaveCount(1);
+  await expect(page.locator('.todo-schedule-reminder-popover .time-wheel-picker')).toHaveCount(1);
   await expect(page.locator('.todo-schedule-reminder-popover')).toBeVisible();
   await page.screenshot({ path: path.join(out, `calendar-reminder-${width}.png`) });
   await schedule.closeSchedule(page, expect);

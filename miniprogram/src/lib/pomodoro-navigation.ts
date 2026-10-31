@@ -7,7 +7,7 @@ let pending: PomodoroEntry | null = null;
 export function openPomodoro(options: PomodoroEntry = {}) {
   const entry = { ...options, ...(options.event !== undefined ? { event: encodeURIComponent(options.event) } : {}), ...(options.task !== undefined ? { task: encodeURIComponent(options.task) } : {}) };
   pending = entry;
-  return Taro.navigateTo({ url: '/pages/pomodoro/index' }).catch(error => {
+  return Taro.switchTab({ url: '/pages/pomodoro/index' }).catch(error => {
     if (pending === entry) pending = null;
     throw error;
   });

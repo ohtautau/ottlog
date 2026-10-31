@@ -103,16 +103,18 @@ module.exports = async function checkGrowthArchives({ page, origin, out, width, 
   await values('旧工作存档', 120, 4, 9);
 
   if (width !== 360) return;
-  await go('favorites/index');
+  await go('index/index');
+  await page.getByRole('button', { name: /^打开账号窗口/ }).click();
   await page.getByPlaceholder('输入博客账号').fill('preview-reader');
   await page.getByPlaceholder('输入密码', { exact: true }).fill('fixture-only-password');
   await click('登录并同步');
-  await expect(page.locator('.account-user-name')).toHaveText('preview-reader');
+  await expect(page.locator('.account-window-name')).toHaveText('preview-reader');
   await go('statistics/index?panel=growth');
   await expect(card('旧工作存档')).toHaveCount(0);
   await expect(card('已归档旧领域')).toHaveCount(0);
-  await go('favorites/index');
-  await click('退出');
+  await go('index/index');
+  await page.getByRole('button', { name: /^打开账号窗口/ }).click();
+  await click('退出登录');
   await go('statistics/index?panel=growth');
   await values('旧工作存档', 120, 4, 9);
   await expect(card('旧工作存档').locator('.statistics-growth-total')).toHaveText('累计 320 · 66 次记录 · 已完成目标 1');

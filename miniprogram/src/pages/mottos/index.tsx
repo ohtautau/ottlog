@@ -1,19 +1,20 @@
+import { MottoRow } from '../../components/data-card-views';
+import EmptyState from '../../components/empty-state';
+import CardGroupContent from '../../components/card-group-content';
 import SheetActions, { SheetDeleteButton } from '../../components/sheet-actions';
 import { trimTextEnd } from '../../lib/text-whitespace';
 import { useEffect, useRef, useState } from 'react';
-import { useDidShow } from '@tarojs/taro';
 import { Button, ScrollView, Text, Textarea, View } from '@tarojs/components';
 import ActionButton from '../../components/ui-button';
-import ManageSymbol, { EditSymbol } from '../../components/manage-symbol';
-import { api } from '../../api';
-import { defaultMottos } from '../../lib/motto-defaults';
+import ManageSymbol from '../../components/manage-symbol';
+import { openAccount } from '../../lib/account-navigation';
 import { displayedMottos, initialPersonalMottos, isPersonalMottos, MAX_MOTTO_LENGTH, mottoRotationMs, removeMotto, writeMotto } from '../../lib/motto-data';
 import { writeMottoRotation } from '../../lib/motto-settings';
 import { hasVolatilePersonalTool, usePersonalToolState } from '../../lib/use-personal-tool-state';
 import CreateButton from '../../components/create-button';
 import PageToolbar from '../../components/page-toolbar';
 import { ChoicePopover, PopoverHeading, PopoverActions } from '../../components/form-options';
-import SingleLineInput, { NumericInputRow } from '../../components/single-line-input';
+import DurationWheelPicker from '../../components/duration-wheel-picker';
 import useEditorCloseGuard from '../../lib/use-editor-close-guard';
 import { requestAppConfirmation } from '../../lib/app-dialog';
 import { AppDialogHost } from '../../components/app-dialog';
@@ -23,36 +24,27 @@ import './index.css';
 
 export default function MottosPage() {
   const { value, setValue, ready, owner, status, retry } = usePersonalToolState('mottos', initialPersonalMottos);
-  const [defaults, setDefaults] = useState(defaultMottos);
-  const [loadingDefaults, setLoadingDefaults] = useState(true);
+  const defaults: string[] = [];
   const [editor, setEditor] = useState<{ owner: string; original: string | null } | null>(null);
   const [draft, setDraft] = useState('');
   const [message, setMessage] = useState('');
   const [busy, setBusy] = useState(false);
   const [rotationDraft, setRotationDraft] = useState<{ owner: string; text: string; pending?: number } | null>(null);
   const [rotationBusy, setRotationBusy] = useState(false), [rotationError, setRotationError] = useState('');
+  const [wheelMoving, setWheelMoving] = useState(false);
   const rotationInitial = useRef('');
   const editorPending = useRef<{ remove: boolean; text: string } | null>(null);
   const rotationSaving = useRef(false);
   const saving = useRef(false);
-  const generation = useRef(0);
   const currentOwner = useRef(owner); currentOwner.current = owner;
   const valid = isPersonalMottos(value);
-  const mottos = displayedMottos(value, defaults);
-  const writable = ready && valid && (!loadingDefaults || value.mottos !== null);
-  const rotationWritable = ready && valid && !!owner;
+  const signedIn = ready && !!owner && owner !== 'guest';
+  const mottos = signedIn ? displayedMottos(value, defaults) : [];
+  const writable = signedIn && valid;
+  const rotationWritable = writable;
   const currentRotation = rotationWritable && rotationDraft?.owner === owner ? rotationDraft : null;
 
-  useDidShow(() => {
-    const version = ++generation.current;
-    setLoadingDefaults(true);
-    void api<{ mottos: string[] }>('/mottos').then(result => {
-      if (version !== generation.current) return;
-      if (Array.isArray(result.mottos) && result.mottos.length && result.mottos.every(text => typeof text === 'string' && text.trim() && text.length <= MAX_MOTTO_LENGTH)) setDefaults(result.mottos);
-    }).catch(() => {}).finally(() => { if (version === generation.current) setLoadingDefaults(false); });
-  });
-  useEffect(() => () => { ++generation.current; }, []);
-  useEffect(() => { setEditor(null); setDraft(''); setMessage(''); setBusy(false); saving.current = false; editorPending.current = null; setRotationDraft(null); setRotationError(''); setRotationBusy(false); rotationSaving.current = false; }, [owner]);
+  useEffect(() => { setWheelMoving(false); setEditor(null); setDraft(''); setMessage(''); setBusy(false); saving.current = false; editorPending.current = null; setRotationDraft(null); setRotationError(''); setRotationBusy(false); rotationSaving.current = false; }, [owner]);
 
   function changeRotationOpen(open: boolean) {
     if (rotationSaving.current || saving.current) return;
@@ -62,7 +54,7 @@ export default function MottosPage() {
     setRotationDraft(rotationWritable ? { owner, text: rotationInitial.current } : null);
   }
   async function saveRotation() {
-    if (!currentRotation || rotationSaving.current || saving.current) return;
+    if (!currentRotation || rotationSaving.current || saving.current || wheelMoving) return;
     const capturedOwner = owner, capturedDraft = currentRotation;
     const seconds = capturedDraft.pending ?? (/^\d+$/.test(capturedDraft.text.trim()) ? Number(capturedDraft.text.trim()) : NaN);
     rotationSaving.current = true; setRotationBusy(true); setRotationError('');
@@ -136,25 +128,26 @@ export default function MottosPage() {
   const rotationClose = useEditorCloseGuard({
     scope: currentRotation ? `${owner}:rotation` : '',
     hasChanges: !!currentRotation && (currentRotation.text !== rotationInitial.current || currentRotation.pending !== undefined),
-    blocked: busy || rotationBusy, onSave: saveRotation,
+    blocked: busy || rotationBusy || wheelMoving, onSave: saveRotation,
     onClose: () => { if (!rotationSaving.current) { setRotationDraft(null); setRotationError(''); } },
   });
 
   return <View className='mottos-page'>
     <AppDialogHost />
-    <PageToolbar className='mottos-heading' leading={<Text className='mottos-count'>{mottos.length} 句</Text>}
+    <PageToolbar className='mottos-heading card-group-heading' leading={<Text className='mottos-count'>{mottos.length} 句</Text>}
       manage={<ChoicePopover ariaLabel='格言轮播设置' open={!!currentRotation} onOpenChange={changeRotationOpen} disabled={!rotationWritable || busy || !!editor}
         trigger={<ManageSymbol />} triggerIconOnly triggerSize='compact' showIndicator={false} panelWidth={240} heightMode='content' panelClassName='mottos-rotation-popover' contentKey={rotationError}
         heading={<PopoverHeading className='mottos-rotation-heading' title='轮播设置' actions={<ActionButton appearance='icon' size='compact' ariaLabel='关闭轮播设置' disabled={rotationBusy} onClick={rotationClose.requestClose}>×</ActionButton>} />}
-        footer={<View><PopoverActions className='mottos-rotation-actions' separator={false}><ActionButton appearance='primary' size='compact' width='fill' loading={rotationBusy} disabled={rotationBusy} onClick={() => { void saveRotation(); }}>保存</ActionButton></PopoverActions>{rotationError && <View className='mottos-rotation-error' role='alert'>{rotationError}</View>}</View>}>
-        <NumericInputRow className='mottos-rotation-field'><Text>间隔</Text><SingleLineInput size='compact' type='number' ariaLabel='格言轮播间隔' value={currentRotation?.text || ''} disabled={rotationBusy || currentRotation?.pending !== undefined} maxlength={7}
-          onInput={event => { if (currentRotation && !rotationSaving.current) { setRotationDraft({ ...currentRotation, text: event.detail.value }); setRotationError(''); } }} /><Text>秒</Text></NumericInputRow>
+        footer={<View><PopoverActions className='mottos-rotation-actions' separator={false}><ActionButton appearance='primary' size='compact' width='fill' loading={rotationBusy} disabled={rotationBusy || wheelMoving} onClick={() => { void saveRotation(); }}>保存</ActionButton></PopoverActions>{rotationError && <View className='mottos-rotation-error' role='alert'>{rotationError}</View>}</View>}>
+        <DurationWheelPicker label='格言轮播间隔' value={currentRotation?.text || '15'} max={2147483} unit='seconds' disabled={rotationBusy || currentRotation?.pending !== undefined} onMovingChange={setWheelMoving}
+          onChange={text => { if (currentRotation && !rotationSaving.current) { setRotationDraft({ ...currentRotation, text }); setRotationError(''); } }} />
+        <Text className='wheel-duration-total'>共 {currentRotation?.text || '15'} 秒</Text>
       </ChoicePopover>}
       create={<CreateButton className='mottos-add' label='创建格言' disabled={!writable || rotationBusy} onClick={() => open(null)} />} />
-    {!ready || !valid ? <View className='mottos-empty'><Text>{!ready ? status : '数据格式暂不兼容，请重新读取'}</Text><ActionButton className='button-label' onClick={retry}>重新读取</ActionButton></View> : <ScrollView className='mottos-list-scroll' scrollY enhanced bounces={false} showScrollbar={false}>
-      <View className='mottos-list'>{mottos.map((motto, index) => <Button key={`${index}:${motto}`} className='mottos-row' ariaLabel={`编辑第 ${index + 1} 句格言`} disabled={!writable} onClick={() => open(motto)}><Text className='mottos-number'>{String(index + 1).padStart(2, '0')}</Text><Text className='mottos-text'>{trimTextEnd(motto)}</Text><EditSymbol /></Button>)}
-        {!mottos.length && <View className='mottos-empty'><Text className='mottos-empty-mark' aria-hidden>“</Text><Text>还没有格言</Text><CreateButton label='创建格言' onClick={() => open(null)} /></View>}
-      </View>
+    {!ready || !valid ? <View className='mottos-empty'><Text>{!ready ? status : '数据格式暂不兼容，请重新读取'}</Text><ActionButton className='button-label' onClick={retry}>重新读取</ActionButton></View> : !signedIn ? <View className='mottos-empty'><Text>登录后查看自己的格言</Text><ActionButton appearance='primary' onClick={() => { void openAccount(); }}>登录账号</ActionButton></View> : <ScrollView className='mottos-list-scroll' scrollY enhanced bounces={false} showScrollbar={false}>
+      <CardGroupContent className='mottos-list'>{mottos.map((motto, index) => <MottoRow key={`${index}:${motto}`} text={trimTextEnd(motto)} index={index} disabled={!writable} onEdit={() => open(motto)} />)}
+        {!mottos.length && <EmptyState kind='mottos' />}
+        </CardGroupContent>
     </ScrollView>}
     {!!status && <View className='mottos-status'><View className='mottos-status-dot' /><Text>{status}</Text></View>}
     {editor && <View className='mottos-editor-overlay'><View className='mottos-editor-backdrop' catchMove onClick={editorClose.requestClose} /><View className='mottos-editor-sheet'>

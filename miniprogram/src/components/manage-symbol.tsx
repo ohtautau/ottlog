@@ -28,3 +28,7 @@ export function ResetSymbol() {
 export function PinSymbol() {
   return <View className='pin-symbol' aria-hidden><View><View /><View /><View /></View></View>;
 }
+
+export function CompletedGoalsSymbol() {
+  return <View className='completed-goals-symbol' aria-hidden><View /><View /></View>;
+}

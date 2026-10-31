@@ -29,6 +29,9 @@ backups/
 artifacts/
 deploy/.env
 miniprogram/project.private.config.json
+/project.config.json
+/project.private.config.json
+/local-state/
 deploy/admin-password.txt
 miniprogram/audit*.json
 .tools/

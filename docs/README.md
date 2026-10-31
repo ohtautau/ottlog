@@ -2,6 +2,7 @@
 
 ## 开发前阅读
 
+- [目录与文件管理](repository-layout.md)：源码、设计素材、生成文件、本机配置及备份归位规则。
 - [开发约定](../AGENTS.md)：开发代理与协作者应遵循的规则。
 - [设计与交互](../Design.md)：当前已确认的组件、文案和交互。
 - [按钮分层与动态尺寸](button-guidelines.md)：按功能、组件和局部层级选型，尺寸／宽度自适应及状态验收规则（C60）。
@@ -11,6 +12,7 @@
 
 ## 按功能查阅
 
+- [小程序直连API、网页私密访问](api-direct-access.md)：新加坡独立HTTPS入口、DNS前置条件与验收状态。
 - [GitHub、Vercel 与 Supabase](cloud-deployment.md)：网站发布、共用账号数据、建表与安全迁移准备（C69）。
 
 - [小程序](miniprogram.md)、[微信真机调试](device-debugging.md)、[浏览器预览](../miniprogram/scripts/UI-PREVIEW.md)。

@@ -1,5 +1,7 @@
 # 日常工具数据备份
 
+> 本文保留早期网页导入导出界面与备份格式的历史说明。2026-10-22 日常工具已由小程序共用页面直接挂载，旧工具页及其重复备份窗口已删除，不再提供下文描述的旧网页按钮。数据模型、备份格式校验及旧存档保留，当前入口与数据检查见 [网页同步](web-parity.md)。
+
 五个工具页顶部都有「数据导入 / 导出」入口。每个工具单独导出 JSON 备份，支持在其他浏览器、设备或账号中导入。
 
 ## 使用
@@ -46,4 +48,4 @@
 
 ## 验证
 
-在 `web` 目录运行 `node scripts/check-tool-backup-model.cjs` 验证格式、合并、容量及计时快照。启动隔离预览后，运行 `node scripts/check-tool-backups.cjs` 验证真实下载、五种工具导入、草稿保护、重复导入、过期预览、无 Web Locks 的降级处理、手机弹窗及账号同步。
+保留 `node scripts/check-tool-backup-model.cjs` 的格式、合并、容量及计时快照模型检查，以及 `check-todo-details.cjs` 和 `check-icon-compatibility.cjs` 的旧格式兼容断言。针对已退役旧窗口的 `check-tool-backups.cjs` 已删除；当前页面的账号／缓存／保存重试检查由 `npm.cmd run test:tool-workspace` 执行，测试须使用隔离 API 与合成数据。保留脚本不等于本轮已全部通过，实际结果见网页同步记录。

@@ -10,7 +10,7 @@ import pathlib
 import re
 import sqlite3
 
-KEYS = {"meals", "reminders", "todos", "pomodoro", "memos", "dining", "mottos", "growth", "domains"}
+KEYS = {"meals", "reminders", "todos", "pomodoro", "memos", "dining", "mottos", "growth", "domains", "articles"}
 
 
 def export(database, output=None):

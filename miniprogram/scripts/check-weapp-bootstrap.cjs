@@ -15,6 +15,24 @@ console.log(`PASS WXSS syntax guards: ${sourceStyleCount} source styles and ${em
 checkHomeShortcutBuild(root);
 console.log('PASS emitted home shortcut render and WXSS contract: shared card moves, edit/replacement, library icon backgrounds, six colors, and no old card/editor nodes.');
 const manifest = JSON.parse(fs.readFileSync(path.join(root, 'app.json'), 'utf8'));
+assert.equal(manifest.lazyCodeLoading, 'requiredComponents', 'Enable component injection on demand');
+// VM execution alone accepts syntax that WeChat's preview upload rejects.
+// Parse every emitted chunk, including vendors, against the upload grammar.
+const acorn = require('acorn');
+function checkUploadSyntax(directory) {
+  let count = 0;
+  for (const entry of fs.readdirSync(directory, { withFileTypes: true })) {
+    const file = path.join(directory, entry.name);
+    if (entry.isDirectory()) count += checkUploadSyntax(file);
+    else if (entry.name.endsWith('.js')) {
+      try { acorn.parse(fs.readFileSync(file, 'utf8'), { ecmaVersion: 2019 }); }
+      catch (error) { throw new Error(`${path.relative(root, file)}: unsupported preview upload syntax: ${error.message}`); }
+      count++;
+    }
+  }
+  return count;
+}
+console.log(`PASS preview upload ES2019 grammar: ${checkUploadSyntax(root)} JavaScript files.`);
 const subpackages = manifest.subPackages || manifest.subpackages || [];
 const allPages = [...manifest.pages, ...subpackages.flatMap(pkg => pkg.pages.map(page => `${pkg.root}/${page}`))];
 assert.equal(new Set(allPages).size, allPages.length, 'page routes must be unique across packages');
@@ -84,4 +102,5 @@ for (const componentFirst of [false, true]) {
   assert.equal(test.pages.length, allPages.length);
 }
 assert.ok(!fs.readFileSync(path.join(root, 'runtime.js'), 'utf8').includes('webpackJsonp'), 'loader must not read the shared wx JSONP registry');
+assert.ok(!/<scroll-view\b[^>]*\s+padding=/.test(fs.readFileSync(path.join(root, 'base.wxml'), 'utf8')), 'WebView scroll views must omit the Skyline-only padding attribute');
 console.log(`PASS emitted WeChat bootstrap: ${allPages.length} pages (${manifest.pages.length} main, ${subpackages.length} subpackages), independent/forward/reverse startup, stale global chunk IDs, and native component before/after app; network unavailable.`);

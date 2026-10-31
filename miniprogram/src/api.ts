@@ -27,14 +27,14 @@ export async function api<T>(path: string, method: 'GET' | 'POST' | 'PUT' | 'DEL
   try { response = await Taro.request<T>({ url: origin + '/api' + path + (path.includes('?') ? '&' : '?') + 'channel=mini', method, data, timeout: 10000, header }); }
   catch (error) {
     const reason = String((error as { errMsg?: string })?.errMsg || '');
-    if (/domain|url not in domain|合法域名/i.test(reason)) throw new Error('本地接口被域名校验拦截。请在开发者工具「详情 → 本地设置」关闭合法域名校验，再重新编译。');
+    if (/domain|url not in domain|合法域名/i.test(reason)) throw new Error(/^https:\/\//i.test(origin) ? `接口域名未获微信许可，请在小程序后台配置 request 合法域名 ${origin}，刷新项目域名信息后重新编译。` : '本地接口被域名校验拦截。请在开发者工具「详情 → 本地设置」关闭合法域名校验，再重新编译。');
     throw new Error(/^https?:\/\/(localhost|127\.|192\.168\.|10\.)/i.test(origin) ? '暂时连接不上博客。请确认 VS 后端已启动；手机预览需要使用电脑的局域网地址。' : '暂时连接不上博客，请检查网络后重试。');
   }
   const jar: Record<string, string> = Taro.getStorageSync('ottlog.cookies') || {};
   const raw = response.cookies || [];
   for (const cookie of raw) { const pair = cookie.split(';')[0]; const index = pair.indexOf('='); if (index > 0) { if (!pair.slice(index + 1) || /max-age=0(?:;|$)/i.test(cookie)) delete jar[pair.slice(0,index)]; else jar[pair.slice(0,index)] = pair; } }
   Taro.setStorageSync('ottlog.cookies', jar);
-  if (response.statusCode >= 400) throw new Error((response.data as { title?: string })?.title || (response.statusCode === 401 ? '请到「我的」登录账号' : response.statusCode === 404 ? '内容不存在或尚未公开' : response.statusCode === 429 ? '操作过于频繁，请稍后重试' : '请求失败，请稍后重试'));
+  if (response.statusCode >= 400) throw new Error((response.data as { title?: string })?.title || (response.statusCode === 401 ? '请从今日右上角的账号按钮登录' : response.statusCode === 404 ? '内容不存在或尚未公开' : response.statusCode === 429 ? '操作过于频繁，请稍后重试' : '请求失败，请稍后重试'));
   return response.data;
 }
 export function favorites() { return api<Pick<Post, 'slug' | 'title'>[]>('/favorites'); }

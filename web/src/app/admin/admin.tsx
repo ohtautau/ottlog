@@ -8,6 +8,7 @@ import AdminNavigation from "@/components/admin-navigation";
 import CategoryPicker from "@/components/category-picker";
 import MarkdownEditor, { ImagePicker } from "@/components/markdown-editor";
 import SortDirection from "@/components/sort-direction";
+import RememberLogin from "@/components/remember-login";
 
 type Session = { authenticated: boolean; needsSetup: boolean; userName?: string; csrfToken: string };
 type Article = { id?: string; slug: string; title: string; description: string; date: string; category: string; tags: string[]; content: string; coverUrl: string; published: boolean; publishedMini: boolean; autoCover: boolean; version?: string };
@@ -95,12 +96,13 @@ export default function Admin() {
   if (!session.authenticated && !session.needsSetup) return <p>正在前往账号页面…</p>;
   if (!session.authenticated) return <section className="admin-login"><p className="eyebrow">OTTLOG / ADMIN</p><h1>{"初始化站点账号"}</h1><p className="intro">{session.needsSetup ? "首次使用，请设置你的账号和密码。" : "登录后管理你的文章与图片。"}</p>
     <form onSubmit={event => { event.preventDefault(); const form = new FormData(event.currentTarget); action(async () => {
-      await mutate(`/api/auth/${session.needsSetup ? "setup" : "login"}`, "POST", { userName: form.get("username"), password: form.get("password") });
+      await mutate(`/api/auth/${session.needsSetup ? "setup" : "login"}`, "POST", { userName: form.get("username"), password: form.get("password"), rememberMe: form.get("rememberMe") === "on" });
       await refresh(); setMessage("");
     }); }}>
       <label>账号<input name="username" required minLength={3} maxLength={50} pattern="[a-zA-Z0-9_-]+" autoComplete="username" /></label>
       <label>密码<input name="password" type="password" required minLength={session.needsSetup ? 12 : 1} maxLength={128} autoComplete={session.needsSetup ? "new-password" : "current-password"} /></label>
       {session.needsSetup && <p className="hint">账号使用英文字母、数字、下划线或短横线，密码至少 12 位。</p>}
+      {!session.needsSetup && <RememberLogin disabled={busy}/>}
       <button className="button" disabled={busy}>{busy ? "处理中…" : session.needsSetup ? "创建账号" : "登录"}</button>
     </form><p role="alert">{message}</p></section>;
 

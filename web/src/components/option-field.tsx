@@ -3,8 +3,8 @@
 import Link from 'next/link';
 import { useEffect, useMemo, useRef, useState, type CSSProperties, type ReactNode } from 'react';
 import { ChoiceMark, surfaces } from './choice-visuals';
-import { makeChoiceRegions } from '@/app/choose/choice-geometry';
-import styles from '@/app/choose/choice.module.css';
+import { makeChoiceRegions } from './option-geometry';
+import styles from './option-scene.module.css';
 import layout from './option-field.module.css';
 import ChoiceStepNavigation from './choice-step-navigation';
 

@@ -24,22 +24,34 @@ new Function('exports', 'module', 'require', compiled)(loaded.exports, loaded, i
 const { defaultHomeShortcuts, normalizeHomeShortcuts, moveHomeShortcut, moveHomeShortcutBy, replaceHomeShortcut, makeShortcut, nextHomeShortcutRank, shortcutCatalog } = loaded.exports;
 const { shortcutBackgrounds, isShortcutBackground, defaultShortcutBackground } = backgroundsModule.exports;
 const { defaultKeys, defaultNames, legacyLayout } = require('./home-shortcut-test-helpers.cjs');
-const withBackgrounds = value => ({ ...value, items: value.items.filter(item => item.key !== 'eat').map(item => item.icon ? { ...item, icon: iconsModule.exports.normalizeShortcutIcon(item.icon) } : item) });
-const legacyShortcut = (key, kind = 'card') => { if (key === 'eat') return { key, name: '今日食选', color: 'peach', kind }; const { background, icon, ...item } = makeShortcut(key, kind); return item; };
-const selectedShortcut = (key, kind = 'card') => key === 'eat' ? { ...legacyShortcut(key, kind), icon: 'library:cook' } : makeShortcut(key, kind);
-const legacyRanks = value => withBackgrounds({ ...value, items: [...value.items.filter(item => item.key !== 'eat' && item.kind !== 'link'), ...value.items.filter(item => item.key !== 'eat' && item.kind === 'link')].map((item, index) => ({ ...item, kind: 'card', rank: index + 1 })) });
+const withBackgrounds = value => ({ ...value, items: value.items.filter(item => !['eat', 'choose'].includes(item.key)).map(item => item.icon ? { ...item, icon: iconsModule.exports.normalizeShortcutIcon(item.icon) } : item) });
+const legacyShortcut = (key, kind = 'card') => { if (['eat', 'choose'].includes(key)) return { key, name: key === 'eat' ? '今日食选' : '选境', color: key === 'eat' ? 'peach' : 'rose', kind }; const { background, icon, ...item } = makeShortcut(key, kind); return item; };
+const selectedShortcut = (key, kind = 'card') => ['eat', 'choose'].includes(key) ? { ...legacyShortcut(key, kind), icon: key === 'eat' ? 'library:cook' : 'library:explore' } : makeShortcut(key, kind);
+const legacyRanks = value => withBackgrounds({ ...value, items: [...value.items.filter(item => !['eat', 'choose'].includes(item.key) && item.kind !== 'link'), ...value.items.filter(item => !['eat', 'choose'].includes(item.key) && item.kind === 'link')].map((item, index) => ({ ...item, kind: 'card', rank: index + 1 })) });
 const defaults = defaultHomeShortcuts();
+assert.equal(new Set(defaults.items.map(item => item.color)).size, defaults.items.length, 'Each default shortcut has its own color');
+assert.equal(defaults.items.find(item => item.key === 'pomodoro').color, 'peach');
+const previousCurrentDefault = { version: 1, items: defaults.items.map(item => ({ ...item, ...(item.key === 'pomodoro' ? { name: '开始番茄钟', color: 'mint' } : item.key === 'journal' ? { color: 'rose' } : {}) })) };
+assert.deepEqual(normalizeHomeShortcuts(previousCurrentDefault), defaults, 'Untouched prior defaults receive the focus name and distinct palette');
+const customFocus = { ...makeShortcut('pomodoro'), name: '我的专注', color: 'blue', rank: 1 };
+assert.deepEqual(normalizeHomeShortcuts({ version: 1, items: [customFocus] }).items[0], customFocus, 'Custom focus names and colors are preserved');
 assert.deepEqual(defaults.items.map(item => item.key), defaultKeys);
 assert.deepEqual(defaults.items.map(item => item.name), defaultNames);
+const formerSpace = { ...makeShortcut('journal'), name: '个人空间', rank: 4, color: 'blue', background: 'fold' };
+assert.deepEqual(normalizeHomeShortcuts({ version: 1, items: [formerSpace] }).items[0], { ...formerSpace, name: '文章' }, 'Old space labels become articles without changing appearance or rank');
 assert.deepEqual(defaults.items.map(item => item.rank), [1, 2, 3, 4, 5, 6]);
 assert.ok(defaults.items.every(item => item.icon === iconsModule.exports.defaultShortcutIcon(item.key)), 'New defaults explicitly preserve their effective icon backgrounds');
 const manuallySelectedOldSix = { version: 1, items: ['create','pomodoro','daily','memos','growth','eat'].map((key,index) => ({ ...selectedShortcut(key), rank: index + 1 })) };
 assert.deepEqual(normalizeHomeShortcuts(manuallySelectedOldSix), withBackgrounds(manuallySelectedOldSix), 'Intentionally selecting the former six defaults is not mistaken for an untouched legacy layout');
 assert.deepEqual(normalizeHomeShortcuts(JSON.parse(JSON.stringify(manuallySelectedOldSix))), withBackgrounds(manuallySelectedOldSix), 'The selected old-six layout survives saving and reopening');
-assert.equal(shortcutCatalog.length, 18);
+assert.equal(shortcutCatalog.length, 16);
 const retiredOnly = { version: 1, items: [{ ...legacyShortcut('eat'), rank: 1, name: '我的食选' }] };
 assert.deepEqual(normalizeHomeShortcuts(retiredOnly), { version: 1, items: [] }, 'A sole retired card becomes an intentional empty layout');
-const kept = { ...makeShortcut('meals'), rank: 19, name: '我的餐单', color: 'rose', background: 'fold' };
+const kept = { ...makeShortcut('journal'), rank: 19, name: '我的空间', color: 'rose', background: 'fold' };
+const retiredMeals = { version: 1, items: [{ key: 'meals', name: '旧饮食卡', rank: 2 }, kept] };
+const retiredMealsBefore = JSON.stringify(retiredMeals);
+assert.deepEqual(normalizeHomeShortcuts(retiredMeals).items, [kept], 'Retired nutrition cards are excluded while other custom cards remain intact');
+assert.equal(JSON.stringify(retiredMeals), retiredMealsBefore, 'Retiring nutrition never rewrites a saved source while reading');
 const removedFood = { ...legacyShortcut('eat'), rank: 19, icon: 'library:cook' };
 const mixedRetirement = { version: 1, items: [removedFood, kept] }, retiredBefore = JSON.stringify(mixedRetirement);
 assert.deepEqual(normalizeHomeShortcuts(mixedRetirement).items, [kept], 'Retirement preserves a remaining custom card and its historical rank limit');
@@ -106,7 +118,7 @@ const selectedOldBackground = { ...lastDefaults, items: lastDefaults.items.map((
 assert.deepEqual(normalizeHomeShortcuts(selectedOldBackground), legacyRanks(selectedOldBackground), 'A selected background preserves the older eight-entry layout');
 const customized = { version: 1, items: previousDefaults.items.map(item => item.key === 'eat' ? { ...item, name: '午餐灵感', color: 'rose' } : item) };
 const migratedCustom = normalizeHomeShortcuts(customized);
-assert.deepEqual(migratedCustom.items.map(item => item.key), customized.items.filter(item => item.key !== 'eat').map(item => item.key), 'Custom layouts retain their order');
+assert.deepEqual(migratedCustom.items.map(item => item.key), customized.items.filter(item => !['eat', 'choose'].includes(item.key)).map(item => item.key), 'Custom layouts retain their order');
 assert.ok(!migratedCustom.items.some(item => item.key === 'eat'));
 assert.equal(migratedCustom.items[0].key, 'pomodoro');
 assert.equal(migratedCustom.items.find(item => item.key === 'daily').name, '习惯');
@@ -133,7 +145,7 @@ assert.deepEqual(normalizeHomeShortcuts({ version: 1, items: [] }).items, []);
 const cleaned = normalizeHomeShortcuts({ version: 1, items: [
   { key: 'memos', name: '   ', color: 'injected-class', kind: 'unknown' },
   { key: 'memos' }, { key: '/malicious-route' }, null,
-  { key: 'meals', name: '一二三四五六七八九十', color: 'rose', kind: 'link' },
+  { key: 'journal', name: '一二三四五六七八九十', color: 'rose', kind: 'link' },
 ] });
 assert.equal(cleaned.items.length, 2);
 assert.deepEqual(cleaned.items[0], { ...legacyShortcut('memos'), rank: 1 }, 'Reading a legacy implicit icon does not materialize it');
@@ -183,7 +195,7 @@ const gaps = defaults.items.filter(item => !['memo-list', 'daily'].includes(item
 const gapsBefore = JSON.stringify(gaps);
 assert.deepEqual(normalizeHomeShortcuts({ version: 1, items: gaps }).items, gaps, 'Save/reload preserves vacant ranks and every surviving rank');
 assert.equal(nextHomeShortcutRank(gaps), 1);
-const filled = [...gaps, { ...makeShortcut('choose'), rank: nextHomeShortcutRank(gaps) }];
+const filled = [...gaps, { ...makeShortcut('favorites'), rank: nextHomeShortcutRank(gaps) }];
 assert.equal(nextHomeShortcutRank(filled), 3, 'Allocation uses the smallest free rank, across both size groups');
 const filledAgain = [...filled, { ...makeShortcut('daily'), rank: nextHomeShortcutRank(filled) }];
 assert.equal(nextHomeShortcutRank(filledAgain), 7);
@@ -197,7 +209,7 @@ assert.deepEqual(normalizeHomeShortcuts(mixedLegacy), legacyRanks(mixedLegacy), 
 const invalidRanks = normalizeHomeShortcuts({ version: 1, items: [
   { ...makeShortcut('create'), rank: 4 }, { ...makeShortcut('daily'), rank: 4 },
   { ...makeShortcut('posts', 'link'), rank: 2 }, { ...makeShortcut('memos'), rank: -1 },
-  { ...makeShortcut('meals'), rank: '3' }, { ...makeShortcut('choose'), rank: 1.5 },
+  { ...makeShortcut('journal'), rank: '3' }, { ...makeShortcut('favorites'), rank: 1.5 },
   { ...makeShortcut('growth'), rank: 999 },
 ] });
 assert.equal(invalidRanks.items.find(item => item.key === 'create').rank, 4);
@@ -242,9 +254,13 @@ assert.equal(outlineCamera.props.children.props.name, libraryCamera.props.childr
 assert.equal(outlineCamera.props.children.props.variant, 'outline', 'The decorative card background explicitly requests the shared outline variant');
 const { homeFeatureGroups, homeFeatureCatalog } = catalogModule.exports;
 assert.equal(shortcutCatalog, homeFeatureCatalog, 'Shortcut selection and directory use the same canonical definitions');
-assert.deepEqual(homeFeatureGroups.map(group => group.title), ['快捷操作', '功能界面', '阅读与空间']);
+assert.deepEqual(homeFeatureGroups.map(group => group.title), ['快捷操作', '功能界面', '阅读']);
 assert.deepEqual(homeFeatureGroups[0].items.map(item => item.key), ['create', 'memos', 'create-habit', 'create-domain', 'pomodoro']);
-assert.equal(new Set(homeFeatureGroups.flatMap(group => group.items.map(item => item.key))).size, 16);
+assert.equal(new Set(homeFeatureGroups.flatMap(group => group.items.map(item => item.key))).size, 14);
+const retiredChoice = { version: 1, items: [{ key: 'choose', name: '我的选境', rank: 1, color: 'blue' }, kept] };
+const retiredChoiceBefore = JSON.stringify(retiredChoice);
+assert.deepEqual(normalizeHomeShortcuts(retiredChoice).items, [kept], 'Retired choice shortcut disappears while unrelated custom appearance stays intact');
+assert.equal(JSON.stringify(retiredChoice), retiredChoiceBefore, 'Retirement never writes or mutates the old archive');
 assert.ok(!homeFeatureGroups.flatMap(group => group.items).some(item => item.key === 'posts' || item.key === 'domains'), 'Directory omits reading and duplicate domain destinations while saved identities remain valid');
 for (const group of homeFeatureGroups) for (const item of group.items) {
   assert.equal(item, shortcutCatalog.find(entry => entry.key === item.key));

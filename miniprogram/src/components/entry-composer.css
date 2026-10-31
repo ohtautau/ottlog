@@ -7,7 +7,7 @@
 .entry-composer .entry-footer { align-items: center; gap: 8PX; padding-top: 8PX; }
 .entry-composer .entry-footer button { flex: 1; min-width: 0; margin: 0; }
 .entry-composer .entry-footer .entry-clear { flex: none; width: 40PX; }
-.entry-load { display: flex; align-items: center; justify-content: space-between; padding: 24PX 0; color: #a7bcc6; font-size: 16PX; }
+.entry-load { display: flex; align-items: center; justify-content: space-between; gap: 8PX; padding: 4PX 0; color: #a7bcc6; font-size: 12PX; }
 .entry-load button { margin: 0; }
 .entry-error { padding: 12PX 0 4PX; color: #e7a097; font-size: 14PX; line-height: 1.5; overflow-wrap: anywhere; }
 .entry-info { padding: 8PX 0; color: #b9dbca; font-size: 14PX; line-height: 1.5; }

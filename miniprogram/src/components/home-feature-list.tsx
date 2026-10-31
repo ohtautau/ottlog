@@ -4,6 +4,7 @@ import { homeFeatureGroups, type HomeFeature, type HomeFeatureKey } from '../lib
 import { CardMoveActions } from './card-corner-actions';
 import SectionTitle from './section-title';
 import ShortcutIcon from './shortcut-icon';
+import CardGroupContent from './card-group-content';
 import ActionButton, { ChoiceButton } from './ui-button';
 import './home-feature-list.css';
 
@@ -18,8 +19,8 @@ export default function HomeFeatureList({ variant = 'navigation', disabled = fal
 }) {
   const moving = variant === 'navigation' && sorting;
   return <View className={`home-feature-list is-${variant}${moving ? ' is-sorting' : ''} ${className}`}>{groups.map(group => <View key={group.title} className='home-feature-group'>
-    <SectionTitle className='home-feature-heading'>{trimTextEnd(group.title)}</SectionTitle>
-    <View className='home-feature-grid'>{group.items.map((feature, index) => {
+    <SectionTitle className='home-feature-heading card-group-heading'>{trimTextEnd(group.title)}</SectionTitle>
+    <CardGroupContent className='home-feature-grid'>{group.items.map((feature, index) => {
       const state = optionState?.(feature) ?? {};
       const children = <><ShortcutIcon name={feature.key} /><Text className='home-feature-name'>{trimTextEnd(feature.name)}</Text>
         {variant === 'selection' && state.rank ? <Text className='home-feature-rank' aria-hidden>{state.rank}</Text> : variant === 'navigation' && feature.type === 'page' ? <View className='home-feature-arrow' aria-hidden /> : null}</>;
@@ -30,6 +31,6 @@ export default function HomeFeatureList({ variant = 'navigation', disabled = fal
         <ActionButton {...props} appearance='secondary'>{children}</ActionButton>
         {moving && onMove && <CardMoveActions objectLabel={feature.name} disabled={disabled} upDisabled={index === 0} downDisabled={index === group.items.length - 1} onMoveUp={() => onMove(feature.key, -1)} onMoveDown={() => onMove(feature.key, 1)} />}
       </View>;
-    })}</View>
+    })}</CardGroupContent>
   </View>)}</View>;
 }

@@ -116,7 +116,12 @@ module.exports = async function checkDomainPreviewUI({ page, origin, out, width,
   const sample = seeded.data.domains.find(domain => domain.id === 'work');
   await expect(screen().locator('.domain-goal-content')).toHaveText([sample.longTermGoal.content, sample.shortTermGoal.content]);
   await expect(screen().getByRole('button', { name: '查看习惯：正事番茄钟', exact: true }), 'The domain still displays the original shared reminders habit').toHaveCount(1);
-  await page.getByRole('button', { name: '查看工作已完成目标', exact: true }).click();
+  const completedGoals = page.getByRole('button', { name: '查看工作已完成目标', exact: true });
+  await expect(completedGoals).toHaveText('');
+  await expect(completedGoals.locator('.completed-goals-symbol')).toHaveCount(1);
+  const completedGoalBox = await completedGoals.boundingBox();
+  expect(completedGoalBox.width).toBeGreaterThanOrEqual(40); expect(completedGoalBox.height).toBeGreaterThanOrEqual(40);
+  await completedGoals.click();
   const history = samples.completedGoals.filter(goal => goal.domainId === 'work').slice().reverse();
   await expect(page.locator('.domain-history-item')).toHaveCount(history.length);
   await expect(page.locator('.domain-history-item')).toContainText(history.map(goal => goal.content));

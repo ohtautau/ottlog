@@ -1,3 +1,4 @@
+import { OTHER_DOMAIN_NAME, domainDisplayName } from '../lib/domain-fallback';
 import { Image, Text, View } from '@tarojs/components';
 import type { EntryDraft } from '../lib/entry-draft';
 import { trimTextEnd } from '../lib/text-whitespace';
@@ -20,7 +21,7 @@ export default function EntryPreview({ draft, domains }: { draft: EntryDraft; do
     {!!images?.length && <View className='memo-images'>{images.map(image => <View className='memo-image' key={image.id}><Image src={image.dataUrl} mode='aspectFill' /></View>)}</View>}
   </EditorFieldsLayout>;
   if (draft.mode === 'progress' && draft.progress) return <EditorFieldsLayout className='progress-editor-fields entry-preview'>
-    <View className='progress-domain-row entry-preview-domain'><Text>{trimTextEnd(domains.domains.find(domain => domain.id === draft.progress!.domainId)?.name || '未分类')}</Text></View>
+    <View className='progress-domain-row entry-preview-domain'><Text>{trimTextEnd(domainDisplayName(domains.domains.find(domain => domain.id === draft.progress!.domainId)?.name || OTHER_DOMAIN_NAME))}</Text></View>
     {progressRows(draft.progress).map(({ slot, kind, record }) => <ProgressRecordField key={record.id} slot={slot} kind={kind}>{note(record.content, '有什么需要记录的？', record.images, true, true)}</ProgressRecordField>)}
   </EditorFieldsLayout>;
   const task = draft.mode === 'task';

@@ -1,0 +1,3 @@
+page { --card-group-inset: 8PX; }
+.card-group-content { box-sizing: border-box; width: 100%; min-width: 0; padding: var(--card-group-inset); }
+.card-group-heading { box-sizing: border-box; padding-left: var(--card-group-inset); padding-right: var(--card-group-inset); }

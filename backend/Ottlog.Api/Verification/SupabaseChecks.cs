@@ -26,6 +26,9 @@ public static class SupabaseChecks
         Check(await store.ReadAsync(ownerA, "growth", default) == "null", "JSON null compatibility");
         await store.WriteAsync(ownerA, "growth", data, default);
         Check(handler.Rows.Count == 1, "Retry upserts one composite identity");
+        await store.WriteAsync(ownerA, "articles", "{\"version\":1,\"articles\":[]}", default);
+        Check(await store.ReadAsync(ownerA, "articles", default) is not null, "Personal articles round-trip through the configured cloud store");
+        Check(await store.ReadAsync(ownerB, "articles", default) is null, "Personal articles remain account isolated in cloud storage");
         Check(handler.CorrectHeaders, "Only server apikey; correct upsert preference");
         Check(await store.ReadyAsync(default), "Ready queries no account data");
         var calls = handler.Calls;

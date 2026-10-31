@@ -15,55 +15,9 @@ export const MAX_GROWTH_GOAL_LENGTH = 80;
 export const MAX_GROWTH_NOTE_LENGTH = 120;
 // Keep room for the API request envelope under its 1 MB payload limit.
 export const MAX_GROWTH_DATA_BYTES = 980 * 1024;
-export const initialGrowthState: GrowthState = {
-  version: 1,
-  domains: [
-    { id: 'work', name: '工作', iconId: 'work', archived: false },
-    { id: 'health', name: '健康', iconId: 'pulse', archived: false },
-    { id: 'mind', name: '精神', iconId: 'plant', archived: false },
-    { id: 'fitness', name: '健身', iconId: 'exercise', archived: false },
-    { id: 'photo', name: '摄影', iconId: 'camera', archived: false },
-    { id: 'english', name: '英语', iconId: 'language', archived: false },
-    { id: 'media', name: '自媒体', iconId: 'film', archived: false },
-  ],
-  events: [],
-  completedGoals: [],
-};
 
-// Starter data is used only when no saved state exists; saved edits and empty
-// histories are never replaced. Relative dates keep the preview useful over time.
-export function demoGrowthState(now = new Date()): GrowthState {
-  const at = (daysAgo: number) => {
-    const date = new Date(now);
-    date.setDate(date.getDate() - daysAgo);
-    return date.toISOString();
-  };
-  const samples = [
-    { goal: '完成项目第一版并收集反馈', done: '梳理本月工作重点', notes: ['推进核心功能', '整理用户反馈', '完成一次项目复盘'], count: 28 },
-    { goal: '本周有五天在十一点前休息', done: '连续一周坚持饭后散步', notes: ['提前半小时休息', '准备一份均衡午餐', '饭后散步二十分钟'], count: 22 },
-    { goal: '读完一本书并写下三点感受', done: '完成七天睡前阅读', notes: ['安静阅读二十分钟', '写下今天的感受', '留出十分钟冥想'], count: 18 },
-    { goal: '完成本周三次力量训练', done: '学会一组基础拉伸动作', notes: ['完成全身力量训练', '练习深蹲动作', '跑步后认真拉伸'], count: 25 },
-    { goal: '拍一组有故事感的街头照片', done: '整理十张满意的作品', notes: ['练习捕捉傍晚光线', '尝试新的街头构图', '整理照片并记录思路'], count: 15 },
-    { goal: '用英语做一次三分钟分享', done: '完成十次口语跟读', notes: ['跟读一段英文播客', '录制一分钟口语', '复习今天的新表达'], count: 24 },
-    { goal: '发布一篇完整的图文作品', done: '整理出五个内容选题', notes: ['打磨文章开头', '整理选题素材', '完成图文内容初稿'], count: 12 },
-  ];
-  const events: GrowthEvent[] = [];
-  const completedGoals: GrowthCompletedGoal[] = [];
-  const domains = initialGrowthState.domains.map((domain, index) => {
-    const sample = samples[index];
-    for (let entry = 0; entry < sample.count; entry++) {
-      // Recent entries populate this week/month; the rest span three months.
-      const daysAgo = entry < 3 ? entry : 4 + (entry - 3) * 3;
-      events.push({ id: `demo-growth-${domain.id}-${entry + 1}`, domainId: domain.id,
-        size: (['small', 'medium', 'large'] as const)[(entry + index) % 3],
-        createdAt: at(daysAgo), note: `示例：${sample.notes[entry % sample.notes.length]}` });
-    }
-    completedGoals.push({ id: `demo-completed-${domain.id}`, domainId: domain.id,
-      title: sample.done, createdAt: at(28 + index), completedAt: at(8 + index) });
-    return { ...domain, currentGoal: { id: `demo-goal-${domain.id}`, title: sample.goal, createdAt: at(7) } };
-  });
-  return { version: 1, domains, events, completedGoals };
-}
+// Runtime defaults never seed business records.
+export const initialGrowthState: GrowthState = { version: 1, domains: [], events: [], completedGoals: [] };
 
 const isObject = (value: unknown): value is Record<string, unknown> => !!value && typeof value === 'object' && !Array.isArray(value);
 const isId = (value: unknown): value is string => typeof value === 'string' && /^[a-zA-Z0-9][a-zA-Z0-9_-]{0,79}$/.test(value);

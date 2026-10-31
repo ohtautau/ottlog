@@ -1,6 +1,35 @@
 # 微信真机调试
 
+## 当前上线前步骤（2026-10-31）
+
+用户已完成小程序备案，代码直连https://api.ohtautau.com且公网HTTPS已验证。本轮未上传、提审或发布小程序。
+
+1. 微信公众平台补全名称、图标、简介、与功能一致的服务类目及用户隐私保护指引。
+2. 开发管理／开发设置添加https://api.ohtautau.com为request合法域名，图片下载按需要添加downloadFile域名。小程序备案与接口域名ICP备案不同；后台若拒绝域名，按实际提示完成要求，不能把本地跳过校验当作上线通过。
+3. 排除当前工具“模拟器启动失败”，再以开启域名校验的正常构建检查真实手机的登录、数据保存、专注、图片与提醒授权。当前构建和包体通过，模拟器及手机本轮未通过实际验收。
+4. 工具上传版本，后台版本管理设置体验版，由体验成员测试；审核需登录的功能准备独立测试账号，不使用个人真实记录或在文档中公开密码。
+5. 提交审核，通过后管理员确认发布。如需微信通知，先完成订阅模板、后端配置与真机授权，提醒时间可保存不等同通知可用。
+
+## 首页旧编译缓存导致空白（T06，2026-10-30复验）
+
+本次用户日志为基础库3.17.2、开发者工具2.02.2608080，首页在Webpack模块装载器抛出`e[r] is not a function`，入口编号3605与当前磁盘产物不同。先通过官方自动化SDK确认模拟器确实空白；只清除当前项目的compile缓存再重新编译，未重建或修改业务源码，首页随即恢复。因此本次恢复点在开发者工具编译缓存，不能用Node VM启动通过代替这项检查。
+
+当前窗口打开的是仓库根目录`D:\Projects\ottlog`，其miniprogramRoot指向miniprogram/dist。对同一项目路径运行官方CLI的`cache --clean compile --project <仓库根目录>`，然后重新编译；不要使用storage、auth、session或all，也不要在根目录、miniprogram和dist三个入口之间换开后比较不同的缓存。
+
+实际检查包含首页reLaunch、右上角账号窗口打开／关闭、今日／待办／领域／习惯／专注往返；SDK异常事件与wx.onError均无记录。额外发现本机127.0.0.1:3300私有API通道停止，恢复原有SSH隧道后health为200 Healthy；未修改服务器配置或公开域名，也未提交登录或清理用户存储。原生复查报告见miniprogram/test-results/native-startup-recovery.json，截图为native-startup-recovered.png及native-startup-account.png。
+
+
 在 `miniprogram` 中运行 `npm.cmd run build:device`，再在微信开发者工具重新编译并开始真机调试。
+
+## 本地配置同步与 ScrollView 警告（2026-10-21）
+
+在 `miniprogram` 中运行 `npm.cmd run debug:config`。公共配置只维护 `miniprogram/project.config.json`；脚本生成仓库根目录入口，并同步根目录、小程序目录和已有 dist 的私有设置：关闭域名校验、热重载及重复 JS 转换，保持压缩，基础库版本沿用小程序私有配置。其余各入口的本机设置保留。`build:local`／`dev:weapp`／`build:device` 自动调用同一同步逻辑。正式公共配置仍开启域名校验，不因本地调试修改线上规则。
+
+推荐开发者工具打开本仓库的 `miniprogram/dist`；本文早期记录的 E 盘路径仅是当时环境。配置修改后重新打开项目、清除编译缓存并冷启动，不清 Storage。关闭本地域名校验只影响调试；线上仍需配置实际 API 的 request 合法域名。
+
+首页 padding 警告来自 Taro 自动生成的 ScrollView 原生 `padding` 属性（即使页面未传入也会输出默认数组），不是首页 CSS 内距。当前项目使用 WebView，在 Taro 公共构建钩子中移除各 WXML 的该属性，保留内部 View 的布局；不修改 node_modules 或手工修改 dist。产物启动检查断言 base.wxml 不再携带它。
+
+2026-10-21 使用本机 curl 在沙箱外复查 `https://ohtautau.com/health`，返回退出码 6（无法解析主机）；没有取得 HTTP 状态或响应体，不能报告 health 正常。需修复域名解析后重新检查，再验证微信和手机访问。
 
 ## 真机调试按钮无响应（T32，待诊断）
 

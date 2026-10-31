@@ -4,6 +4,7 @@ import { api, Session } from '../api';
 import { createPersonalToolStore, toolCacheKey, type PersonalToolKey, type ToolLoad } from './tool-state-store';
 import { toolPageStatus } from './tool-status-display';
 import { previewMode, previewStorageKey } from './development-preview';
+import type { PersonalToolEdit } from './tool-state-store';
 
 export type { PersonalToolKey } from './tool-state-store';
 export type PersonalToolSetter<T> = (next: SetStateAction<T>) => Promise<void>;
@@ -24,9 +25,14 @@ export function hasVolatilePersonalTool(key: PersonalToolKey, owner: string): bo
   return store.isVolatile(toolCacheKey(owner, key));
 }
 
+/** Local edit events only; reads, account refreshes and upload acknowledgements do not emit. */
+export function subscribePersonalToolEdits(key: PersonalToolKey, owner: string, listener: (edit: PersonalToolEdit) => void) {
+  return store.subscribeEdits(edit => { if (edit.key === key && edit.owner === owner) listener(edit); });
+}
+
 /** A reminder must never be scheduled against an edit that only exists locally. */
 export async function syncPersonalTool(key: PersonalToolKey, owner: string): Promise<void> {
-  if (!owner || owner === 'guest') throw new Error('请先到「我的」登录，再开启微信提醒');
+  if (!owner || owner === 'guest') throw new Error('请先从今日右上角登录，再开启微信提醒');
   await store.flush(key, owner);
   const current = store.cache(toolCacheKey(owner, key));
   if (!current || current.pending) throw new Error('任务还未同步到账号，请联网同步后再开启提醒');
@@ -48,7 +54,11 @@ export function usePersonalToolState<T>(key: PersonalToolKey, initial: T): {
     context.current = null;
     setReady(false); setOwner(''); setStatus('正在读取…'); update(defaults.current);
     try {
-      const result = await store.load(key, defaults.current);
+      const result = await store.load(key, defaults.current, cached => {
+        if (!mounted.current || generation.current !== current) return;
+        context.current = cached;
+        update(cached.value); setOwner(cached.owner); setStatus(cached.status); setReady(true);
+      });
       if (!mounted.current || generation.current !== current) return;
       context.current = result;
       update(result.value); setOwner(result.owner); setStatus(result.status); setReady(true);

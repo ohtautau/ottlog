@@ -10,6 +10,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
 using Ottlog.Api.Data;
+using Ottlog.Api.Services;
 
 namespace Ottlog.Api.Controllers;
 
@@ -45,7 +46,7 @@ public sealed class AuthController(BlogDb db, IAntiforgery antiforgery, IWebHost
             admin.PasswordHash = new PasswordHasher<Administrator>().HashPassword(admin, input.Password);
             db.Administrators.Add(admin);
             await db.SaveChangesAsync();
-            await SignIn(admin);
+            await SignIn(admin, input.RememberMe);
             return Ok(new { admin.UserName });
         }
         finally { Gate.Release(); }
@@ -70,7 +71,7 @@ public sealed class AuthController(BlogDb db, IAntiforgery antiforgery, IWebHost
             admin.FailedLogins = 0;
             admin.LockedUntil = 0;
             await db.SaveChangesAsync();
-            await SignIn(admin);
+            await SignIn(admin, input.RememberMe);
             return Ok(new { admin.UserName });
         }
         finally { Gate.Release(); }
@@ -92,11 +93,11 @@ public sealed class AuthController(BlogDb db, IAntiforgery antiforgery, IWebHost
         return NoContent();
     }
 
-    private Task SignIn(Administrator admin) => HttpContext.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme,
+    private Task SignIn(Administrator admin, bool rememberMe) => HttpContext.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme,
         new ClaimsPrincipal(new ClaimsIdentity([new Claim(ClaimTypes.NameIdentifier, admin.Id.ToString()),
-            new Claim(ClaimTypes.Name, admin.UserName), new Claim("stamp", admin.SecurityStamp), new Claim(ClaimTypes.Role, "admin")], CookieAuthenticationDefaults.AuthenticationScheme)));
+            new Claim(ClaimTypes.Name, admin.UserName), new Claim("stamp", admin.SecurityStamp), new Claim(ClaimTypes.Role, "admin")], CookieAuthenticationDefaults.AuthenticationScheme)), LoginSession.Properties(rememberMe));
 }
 public record Credentials([Required, StringLength(50, MinimumLength = 3), RegularExpression(@"[a-zA-Z0-9_-]+") ] string UserName,
-    [Required, StringLength(128)] string Password);
+    [Required, StringLength(128)] string Password, bool RememberMe = false);
 public record ChangePassword([Required, StringLength(128)] string CurrentPassword,
     [Required, StringLength(128, MinimumLength = 12)] string NewPassword);

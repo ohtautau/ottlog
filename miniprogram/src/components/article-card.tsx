@@ -16,31 +16,31 @@ export function openPostFilter(filter: PostFilterLink) {
   });
 }
 
-export default function ArticleCard({ post, onCategory, onTag, featured = false }: {
-  post: Post; onCategory?: (category: string) => void; onTag?: (tag: string) => void; featured?: boolean;
+export default function ArticleCard({ post, onCategory, onTag, onOpen, coverSource, featured = false, readOnly = false }: {
+  post: Omit<Post, 'slug'> & { slug?: string }; onCategory?: (category: string) => void; onTag?: (tag: string) => void; onOpen?: () => void; coverSource?: string; featured?: boolean; readOnly?: boolean;
 }) {
   const [failedImage, setFailedImage] = useState(false);
-  useEffect(() => setFailedImage(false), [post.coverUrl]);
-  const open = () => Taro.navigateTo({ url: `/pages/detail/index?slug=${encodeURIComponent(post.slug)}` }).catch(() => {
+  useEffect(() => setFailedImage(false), [post.coverUrl, coverSource]);
+  const open = () => !readOnly && onOpen ? onOpen() : !readOnly && post.slug ? Taro.navigateTo({ url: `/pages/detail/index?slug=${encodeURIComponent(post.slug)}` }).catch(() => {
     showAppMessage({ title: '暂时无法打开文章', icon: 'none' });
-  });
+  }) : undefined;
   const date = /^\d{4}-\d{2}-\d{2}/.test(post.date) ? post.date.slice(0, 10) : post.date;
   return <View className={`article-card${featured ? ' article-card-featured' : ''}`}>
     <View className='article-cover' onClick={open} ariaLabel={`阅读${post.title}`}>
-      {post.coverUrl && !failedImage
-        ? <Image className='article-image' src={imageUrl(post.coverUrl)} mode='aspectFill' lazyLoad={!featured} onError={() => setFailedImage(true)} />
+      {(coverSource || post.coverUrl) && !failedImage
+        ? <Image className='article-image' src={coverSource || imageUrl(post.coverUrl)} mode='aspectFill' lazyLoad={!featured} onError={() => setFailedImage(true)} />
         : <View className='article-cover-fallback'><Text className='article-cover-monogram'>τ</Text><Text>OTTLOG / {post.category}</Text></View>}
       {featured && <Text className='article-latest'>● 最新记录</Text>}
     </View>
     <View className='article-body'>
       <View className='article-meta'>
-        <ActionButton appearance='quiet' className="button-label article-category" onClick={() => onCategory ? onCategory(post.category) : void openPostFilter({ category: post.category })}>{post.category}</ActionButton>
+        {readOnly ? <View className='article-category'>{post.category}</View> : <ActionButton appearance='quiet' className="button-label article-category" onClick={() => onCategory ? onCategory(post.category) : void openPostFilter({ category: post.category })}>{post.category}</ActionButton>}
         <Text className='article-reading'>{post.minutes} 分钟阅读</Text>
       </View>
       <View className='article-title' onClick={open}>{trimTextEnd(post.title)}</View>
       {post.description && <View className='article-description' onClick={open}>{trimTextEnd(post.description)}</View>}
-      {post.tags.length > 0 && <View className='article-tags'>{post.tags.map(tag => <Button key={tag} className='article-tag' onClick={() => onTag ? onTag(tag) : void openPostFilter({ tag })}><Text className='article-hash'>#</Text>{tagLabel(tag).slice(1)}</Button>)}</View>}
-      <View className='article-footer'><Text className='article-date'>{date.replace(/-/g, '.')}</Text><ActionButton appearance='quiet' className="button-label article-read" onClick={open}>阅读全文</ActionButton></View>
+      {post.tags.length > 0 && <View className='article-tags'>{post.tags.map(tag => readOnly ? <View key={tag} className='article-tag'><Text className='article-hash'>#</Text>{tagLabel(tag).slice(1)}</View> : <Button key={tag} className='article-tag' onClick={() => onTag ? onTag(tag) : void openPostFilter({ tag })}><Text className='article-hash'>#</Text>{tagLabel(tag).slice(1)}</Button>)}</View>}
+      <View className='article-footer'><Text className='article-date'>{date.replace(/-/g, '.')}</Text>{readOnly ? <View className='article-read'>阅读全文</View> : <ActionButton appearance='quiet' className="button-label article-read" onClick={open}>阅读全文</ActionButton>}</View>
     </View>
   </View>;
 }

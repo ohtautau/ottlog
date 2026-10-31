@@ -1,0 +1,19 @@
+.account-window-overlay { position: fixed; inset: 0; z-index: 90; display: flex; align-items: center; justify-content: center; padding: 12PX; background: #040a0fad; }
+.account-window { position: relative; display: flex; flex-direction: column; width: 100%; max-width: 440PX; max-height: calc(100% - 24PX); border: 1PX solid #334752; border-radius: 16PX; background: #14212c; color: #f3eddf; overflow: hidden; }
+.account-window-scroll { flex: 0 1 auto; min-height: 0; }
+.account-window-fields { padding: 0 16PX 8PX; }
+.account-window-tabs { display: flex; gap: 8PX; }
+.account-window-tabs > .ui-button { flex: 1; }
+.account-window-status { display: block; color: #9eb1be; font-size: 13PX; line-height: 1.65; }
+.account-window-label { display: block; margin-bottom: 4PX; color: #c5d3dc; font-size: 14PX; }
+.account-window-profile { display: flex; align-items: center; gap: 12PX; min-width: 0; padding: 8PX 0; }
+.account-window-avatar { display: flex; align-items: center; justify-content: center; flex: none; width: 48PX; height: 48PX; border-radius: 12PX; background: #b9dbca; color: #19352d; font-size: 24PX; font-weight: 600; }
+.account-window-profile > view { min-width: 0; }
+.account-window-name { display: block; color: #f3eddf; font-size: 18PX; font-weight: 600; overflow-wrap: anywhere; }
+.account-window-error { display: block; color: #efb7a2; font-size: 13PX; line-height: 1.5; }
+.account-symbol { position: relative; width: 20PX; height: 20PX; }
+.account-symbol.is-authenticated { color: #b9dbca; }
+.account-symbol.is-authenticated::before,.account-symbol.is-authenticated::after { background: currentColor; }
+.account-symbol.is-unconfirmed { opacity: .5; }
+.account-symbol::before { content: ''; position: absolute; top: 0; left: 6PX; width: 8PX; height: 8PX; border: 1.5PX solid currentColor; border-radius: 50%; }
+.account-symbol::after { content: ''; position: absolute; left: 2PX; bottom: 0; width: 16PX; height: 9PX; border: 1.5PX solid currentColor; border-radius: 10PX 10PX 2PX 2PX; }

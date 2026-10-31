@@ -1,6 +1,7 @@
 name: ottlog
 services:
   api:
+    image: ottlog-api:${OTTLOG_RELEASE_ID:-local}
     build:
       context: ..
       dockerfile: backend/Ottlog.Api/Dockerfile
@@ -9,9 +10,11 @@ services:
       Admin__UserName: admin
       Admin__PasswordFile: /run/secrets/admin_password
       Site__Url: https://ohtautau.com
+      SeedExamples: 'false'
       ReverseProxy__Address: 172.30.41.2
       WeChat__AppSecret: ${WECHAT_APP_SECRET:-}
     secrets: [admin_password]
+    group_add: ['${OTTLOG_SECRET_GID:-1000}']
     volumes: [blog_data:/data]
     networks:
       blog:
@@ -26,13 +29,16 @@ services:
       driver: json-file
       options: {max-size: 10m, max-file: '3'}
   web:
+    image: ottlog-web:${OTTLOG_RELEASE_ID:-local}
     build:
       context: ..
       dockerfile: web/Dockerfile
     restart: unless-stopped
     depends_on:
       api: {condition: service_healthy}
-    networks: [blog]
+    networks:
+      blog:
+        ipv4_address: 172.30.41.4
     healthcheck:
       test: [CMD, node, -e, "fetch('http://127.0.0.1:3000').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
       interval: 30s
@@ -53,12 +59,12 @@ services:
   backup:
     image: python:3.13-alpine
     profiles: [tools]
-    volumes: ['blog_data:/data:ro', '../backups:/backups', '../scripts:/scripts:ro']
+    volumes: ['blog_data:/data:ro', '${OTTLOG_BACKUP_DIRECTORY:-../backups}:/backups', '../scripts:/scripts:ro']
     command: [python, /scripts/backup.py, /data, /backups]
   restore:
     image: python:3.13-alpine
     profiles: [tools]
-    volumes: ['blog_data:/data', '../backups:/backups:ro', '../scripts:/scripts:ro']
+    volumes: ['blog_data:/data', '${OTTLOG_BACKUP_DIRECTORY:-../backups}:/backups:ro', '../scripts:/scripts:ro']
     entrypoint: [python, /scripts/backup.py]
 networks:
   blog:
@@ -70,4 +76,4 @@ volumes:
   caddy_config:
 secrets:
   admin_password:
-    file: ./admin-password.txt
+    file: ${OTTLOG_ADMIN_PASSWORD_FILE:-./admin-password.txt}

@@ -37,7 +37,7 @@ module.exports = async ({ page, origin, out, width, expect }) => {
   const original = await keys(), sort = () => page.getByRole('button', { name: '排序全部功能', exact: true });
   await sort().click();
   await expect(card('create').getByRole('button', { name: '上移创建任务', exact: true })).toBeDisabled();
-  await expect(card('pomodoro').getByRole('button', { name: '下移开始番茄钟', exact: true })).toBeDisabled();
+  await expect(card('pomodoro').getByRole('button', { name: '下移专注', exact: true })).toBeDisabled();
   await expect(card('todos').getByRole('button', { name: '上移任务', exact: true })).toBeDisabled();
   await expect(card('choose').getByRole('button', { name: '下移选境', exact: true })).toBeDisabled();
   await expect(card('categories').getByRole('button', { name: '上移文章分类', exact: true })).toBeDisabled();

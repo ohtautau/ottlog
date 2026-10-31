@@ -6,19 +6,23 @@ const { spawnSync } = require('node:child_process');
 // preserve function names and archive source maps outside the upload directory.
 const root = path.resolve(__dirname, '..');
 require('./check-weapp-project.cjs').checkProject(root);
+const { syncLocalProjectConfig } = require('./local-project-config.cjs');
+syncLocalProjectConfig();
 const { deviceBuildEnvironment } = require('./device-build-config.cjs');
+const { apiOrigin } = require('../config/api-endpoint.cjs');
 let buildEnvironment;
 try { buildEnvironment = deviceBuildEnvironment(process.env, process.argv.slice(2)); }
 catch (error) { console.error(error.message); process.exit(1); }
-console.log(`Device API: ${buildEnvironment.TARO_APP_API_BASE_URL || 'https://ohtautau.com (project default)'}`);
+console.log(`Device API: ${apiOrigin(buildEnvironment)}`);
 console.log(`Device data: ${buildEnvironment.OTTLOG_MINIPROGRAM_PREVIEW === '1' ? 'isolated preview records' : 'normal accounts/storage'}`);
 const result = spawnSync(process.execPath, [path.join(root, 'node_modules/@tarojs/cli/bin/taro'), 'build', '--type', 'weapp'], {
   cwd: root,
   stdio: 'inherit',
-  env: buildEnvironment,
+  env: { ...buildEnvironment, OTTLOG_LOCAL_DEBUG: '1' },
 });
 if (result.error) { console.error(result.error.message); process.exit(1); }
 if (result.status !== 0) process.exit(result.status ?? 1);
+syncLocalProjectConfig();
 
 const output = path.join(root, 'dist');
 const maps = path.join(root, 'test-results', 'device-sourcemaps');

@@ -1,6 +1,7 @@
 import { habitTimePeriod, isHabitPriority, isHabitTimePeriod, type HabitMetadata } from './habit-metadata';
 import { validNoteImages } from './note-image-data';
 import type { MemoImage } from './tool-records';
+import { OTHER_DOMAIN_NAME, domainDisplayName, findFallbackDomain } from './domain-fallback';
 export type GoalKind = 'longTerm' | 'shortTerm';
 export type RecordKind = 'positive' | 'negative';
 export type Goal = { id: string; content: string; status: 'active' | 'completed'; createdAt: string; completedAt?: string };
@@ -28,19 +29,12 @@ const defaultDomainIcons = new Map<string, string>([
   ['growth', 'plant'], ['work', 'work'], ['english', 'language'], ['fitness', 'exercise'],
   ['life', 'home'], ['mind', 'breathe'], ['photo', 'camera'], ['media', 'film'],
 ]);
-const starters = [
+// Compatibility definitions for the retained habit catalog, never seeded as real domains.
+export const legacyHabitDomains: Domain[] = [
   ['growth', '成长'], ['work', '工作'], ['english', '英语'], ['fitness', '健身'],
   ['life', '生活'], ['mind', '心理'], ['photo', '摄影'], ['media', '自媒体'],
-] as const;
-export const initialDomainState: DomainState = {
-  version: 1,
-  domains: starters.map(([id, name]) => ({
-    id, name, iconId: defaultDomainIcons.get(id), longTermGoal: null, shortTermGoal: null,
-    habits: [],
-    positiveRecords: [], negativeRecords: [],
-  })),
-  completedGoals: [],
-};
+].map(([id, name]) => ({ id, name, iconId: defaultDomainIcons.get(id), longTermGoal: null, shortTermGoal: null, habits: [], positiveRecords: [], negativeRecords: [] }));
+export const initialDomainState: DomainState = { version: 1, domains: [], completedGoals: [] };
 
 const isObject = (value: unknown): value is Record<string, unknown> => !!value && typeof value === 'object' && !Array.isArray(value);
 const isId = (value: unknown): value is string => typeof value === 'string' && /^[a-zA-Z0-9][a-zA-Z0-9_-]{0,79}$/.test(value);
@@ -148,7 +142,7 @@ export type RecentDomainRecord = { domainId: string; domainName: string; kind: R
 export function recentDomainRecords(state: DomainState, limit = 10): RecentDomainRecord[] {
   if (!Number.isFinite(limit) || limit < 1) return [];
   const records = state.domains.flatMap(domain => (['positive', 'negative'] as const).flatMap(kind =>
-    (kind === 'positive' ? domain.positiveRecords : domain.negativeRecords).map(record => ({ domainId: domain.id, domainName: domain.name, kind, record }))));
+    (kind === 'positive' ? domain.positiveRecords : domain.negativeRecords).map(record => ({ domainId: domain.id, domainName: domainDisplayName(domain.name), kind, record }))));
   return records.filter(item => Number.isFinite(Date.parse(item.record.createdAt))).sort((a, b) =>
     Date.parse(b.record.createdAt) - Date.parse(a.record.createdAt) || (a.record.id < b.record.id ? 1 : a.record.id > b.record.id ? -1 : 0)).slice(0, Math.min(10, Math.floor(limit)));
 }
@@ -271,8 +265,8 @@ export function deleteDomainRecord(state: DomainState, domainId: string, kind: R
 /** Create the fallback domain only when saving; opening/cancelling never changes data. */
 export function addUncategorizedDomainRecord(state: DomainState, kind: RecordKind, content: string, now = new Date()): DomainState {
   assertState(state);
-  const existing = state.domains.find(domain => domain.name.trim() === '未分类');
-  const next = existing ? state : saveDomain(state, { name: '未分类', iconId: 'notes' });
+  const existing = findFallbackDomain(state.domains);
+  const next = existing ? state : saveDomain(state, { name: OTHER_DOMAIN_NAME, iconId: 'notes' });
   return addDomainRecord(next, existing?.id ?? next.domains[next.domains.length - 1].id, kind, content, now);
 }
 
@@ -284,8 +278,8 @@ export function saveDomainRecords(state: DomainState, domainId: string, entries:
   const all = state.domains.flatMap(domain => [...domain.positiveRecords, ...domain.negativeRecords]);
   // Validate the complete batch before creating even the fallback domain.
   if (all.length + entries.filter(entry => !all.some(record => record.id === entry.record.id)).length > MAX_DOMAIN_RECORDS) throw new Error(`最多保存 ${MAX_DOMAIN_RECORDS} 条记录`);
-  const fallback = state.domains.find(domain => domain.name.trim() === '未分类');
-  const next = domainId || fallback ? state : saveDomain(state, { name: '未分类', iconId: 'notes' });
+  const fallback = findFallbackDomain(state.domains);
+  const next = domainId || fallback ? state : saveDomain(state, { name: OTHER_DOMAIN_NAME, iconId: 'notes' });
   const domain = domainIn(next, domainId || fallback?.id || next.domains[next.domains.length - 1].id);
   let updated = domain;
   for (const { kind, record } of entries) {

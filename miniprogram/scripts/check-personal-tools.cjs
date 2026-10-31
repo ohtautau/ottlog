@@ -13,7 +13,8 @@ function loadModule(name) {
 }
 const { createPersonalToolStore, toolCacheKey } = loadModule('tool-state-store');
 const { isTodoState, isMemoState, initialTodoState } = loadModule('tool-records');
-const { initialReminders, isReminderState } = loadModule('reminder-data');
+const { initialReminders, emptyReminderState, isReminderState } = loadModule('reminder-data');
+const { initialArticleState, isArticleState, putArticle } = loadModule('article-data');
 const copy = value => value === undefined ? value : JSON.parse(JSON.stringify(value));
 const deferred = () => { let resolve; const promise = new Promise(done => { resolve = done; }); return { promise, resolve }; };
 function fixture() {
@@ -73,21 +74,20 @@ async function testExerciseSplit() {
     assert.ok(isReminderState(initialReminders));
     const f = fixture();
     const loaded = await f.store.load('reminders', initialReminders);
-    assert.equal(loaded.value.items.find(item => item.id === 'exercise').title, '力量训练');
-    assert.equal(loaded.value.items.find(item => item.id === 'cardio').title, '有氧运动');
-    assert.equal(f.puts.length, 0, 'Fresh guest defaults never trigger account writes');
+    assert.deepEqual(copy(loaded.value), copy(emptyReminderState), 'A guest never receives the historical habit catalog');
+    assert.equal(f.puts.length, 0, 'Guest previews never trigger account writes');
   }
   {
     const f = fixture(), original = legacyExerciseState(), key = toolCacheKey('guest', 'reminders');
     f.storage.set(key, { data: copy(original), pending: false, revision: 1 });
     const loaded = await f.store.load('reminders', initialReminders);
-    assertExerciseSplit(loaded.value, original);
-    assertExerciseSplit(f.storage.get(key).data, original);
+    assert.deepEqual(copy(loaded.value), copy(emptyReminderState));
+    assert.deepEqual(f.storage.get(key).data, original, 'Old guest archives are preserved without displaying or migrating them');
     assert.equal(f.storage.get(key).pending, false);
     const revision = f.storage.get(key).revision;
     f.state.offline = true;
     const reopened = await createPersonalToolStore(f.adapter).load('reminders', initialReminders);
-    assertExerciseSplit(reopened.value, original);
+    assert.deepEqual(copy(reopened.value), copy(emptyReminderState));
     assert.equal(f.storage.get(key).revision, revision, 'Guest reopening does not repeat the split or its save');
     assert.equal(f.puts.length, 0);
     assert.equal(original.items[0].title, '力量训练 / 有氧运动', 'Reading and migrating never mutate the adapter fixture');
@@ -185,7 +185,7 @@ async function testExerciseSplit() {
     assert.ok(f.puts.every(put => put.owner === persisted.owner));
   }
   {
-    for (const owner of ['guest', 'reader:alice']) {
+    for (const owner of ['reader:alice']) {
       const f = fixture(), original = legacyExerciseState();
       f.state.owner = owner; f.state.fingerprint = `${owner}-cookie`;
       await f.store.load('todos', { count: 0 });
@@ -218,7 +218,9 @@ async function testExerciseSplit() {
     }
   }
   {
-    const f = fixture(), invalid = { ...legacyExerciseState(), version: 2 }, key = toolCacheKey('guest', 'reminders');
+    const f = fixture(), invalid = { ...legacyExerciseState(), version: 2 }, key = toolCacheKey('reader:alice', 'reminders');
+    f.state.owner = 'reader:alice'; f.state.fingerprint = 'alice-cookie';
+    await f.store.load('todos', { count: 0 }); f.state.offline = true;
     f.storage.set(key, { data: invalid, pending: false, revision: 1 });
     const loaded = await f.store.load('reminders', initialReminders);
     assert.deepEqual(copy(loaded.value), invalid, 'Unrecognized schemas remain untouched for the existing compatibility UI');
@@ -227,6 +229,73 @@ async function testExerciseSplit() {
 }
 
 async function test() {
+  {
+    const f = fixture(), stamp = new Date().toISOString();
+    const article = { id: 'stable-article', title: 'A文章', body: '**内容**', category: '记录', tags: ['生活'], createdAt: stamp, updatedAt: stamp };
+    const guest = await f.store.load('articles', initialArticleState);
+    assert.throws(() => f.store.edit('articles', guest, { version: 1, articles: [article] }), /请先登录/);
+    f.state.owner = 'reader:alice'; f.state.fingerprint = 'alice';
+    const alice = await f.store.load('articles', initialArticleState);
+    f.store.edit('articles', alice, old => putArticle(old, article, true)); await f.store.flush('articles', alice.owner);
+    assert.equal(f.remote.get('reader:alice:articles').articles.length, 1);
+    f.store.edit('articles', alice, old => putArticle(old, { ...article, title: '更新' }, true)); await f.store.flush('articles', alice.owner);
+    assert.equal(f.remote.get('reader:alice:articles').articles.length, 1, 'Same-ID create retries do not duplicate articles');
+    assert.throws(() => putArticle(initialArticleState, article, false), /已删除/);
+    assert.equal(isArticleState({ version: 1, articles: [{ ...article, images: [{ id: 'bad', dataUrl: 'javascript:bad' }] }] }), false);
+    assert.equal(isArticleState({ version: 1, articles: [{ ...article, updatedAt: 123 }] }), false);
+    f.state.owner = 'reader:bob'; f.state.fingerprint = 'bob';
+    assert.deepEqual(copy((await f.store.load('articles', initialArticleState)).value), copy(initialArticleState));
+    assert.equal(f.remote.get('reader:alice:articles').articles[0].title, '更新');
+  }
+  {
+    const f = fixture(), original = legacyExerciseState();
+    const guestKey = toolCacheKey('guest', 'reminders');
+    f.storage.set(guestKey, { data: copy(original), pending: true, revision: 8 });
+    const before = copy(f.storage.get(guestKey)), cached = [];
+    const guest = await f.store.load('reminders', initialReminders, value => cached.push(value));
+    assert.deepEqual(copy(guest.value), copy(emptyReminderState));
+    assert.equal(cached.length, 0, 'Guest archives never reach early cache subscribers');
+    assert.throws(() => f.store.edit('reminders', guest, original), /请先登录/);
+    assert.deepEqual(copy(f.storage.get(guestKey)), before);
+    f.state.owner = 'reader:alice'; f.state.fingerprint = 'alice-cookie';
+    f.remote.set('reader:alice:reminders', { ...original, items: [original.items[1]] });
+    const alice = await f.store.load('reminders', initialReminders);
+    assert.equal(alice.value.items[0].title, '其他习惯');
+    f.state.owner = 'reader:bob'; f.state.fingerprint = 'bob-cookie';
+    const bob = await f.store.load('reminders', initialReminders);
+    assert.deepEqual(copy(bob.value), copy(emptyReminderState), 'A new account gets neither a catalog nor guest/previous account records');
+    f.state.owner = 'guest'; f.state.fingerprint = '';
+    const loggedOut = await f.store.load('reminders', initialReminders);
+    assert.deepEqual(copy(loggedOut.value), copy(emptyReminderState));
+    assert.equal(f.puts.length, 0, 'Reading previews and switching accounts never imports guest data');
+    assert.deepEqual(copy(f.storage.get(guestKey)), before);
+  }
+  {
+    const f = fixture(); f.state.owner = 'reader:cached';
+    const key = toolCacheKey('reader:cached', 'memos');
+    const original = { version: 1, notes: [{ id: 'kept-cache', title: 'cached' }] };
+    f.storage.set(key, { data: original, pending: false, revision: 1 });
+    f.state.heldGet = deferred();
+    const seen = [];
+    const loading = f.store.load('memos', { version: 1, notes: [] }, value => seen.push(copy(value)));
+    await new Promise(resolve => setImmediate(resolve));
+    assert.equal(seen.length, 1, 'A confirmed same-owner cache is shown before a slow remote request');
+    assert.equal(seen[0].owner, 'reader:cached');
+    assert.deepEqual(seen[0].value, original);
+    assert.equal(seen[0].cloud, true, 'Confirmed online cached forms retain their upload route');
+    f.store.edit('memos', seen[0], previous => ({ ...previous, notes: [...previous.notes, { id: 'quick-save', title: 'saved before remote GET finishes' }] }));
+    await new Promise(resolve => setImmediate(resolve));
+    assert.equal(f.remote.get('reader:cached:memos').notes.length, 2, 'A quick save uploads independently of the editor lifecycle');
+    f.state.heldGet.resolve(); await loading;
+  }
+  {
+    const hold = deferred(); let sessions = 0;
+    const f = fixture();
+    f.adapter.session = async () => { sessions++; await hold.promise; return { authenticated: false }; };
+    const a = f.store.load('todos', {}), b = f.store.load('memos', {});
+    assert.equal(sessions, 1, 'Concurrent tools share one in-flight account confirmation');
+    hold.resolve(); await Promise.all([a, b]);
+  }
   {
     const f = fixture(); f.state.offline = true; f.state.fingerprint = '';
     const guest = await f.store.load('todos', { count: 0 });

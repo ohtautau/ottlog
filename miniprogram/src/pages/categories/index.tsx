@@ -1,3 +1,4 @@
+import EmptyState from '../../components/empty-state';
 import { trimTextEnd } from '../../lib/text-whitespace';
 import SectionTitle from '../../components/section-title';
 import { CoreScreen, MoreSection } from '../../components/page-sections';
@@ -35,7 +36,7 @@ export default function CategoriesPage() {
     <View className='categories-summary'><Text>{groups.categories.length} 个分类</Text><Text>{posts.length} 篇记录</Text><Text>{groups.tags.length} 个标签</Text></View>
     {busy && !posts.length && <View className='categories-loading'>正在整理分类…</View>}
     {message && <View className='notice'><Text>{message}</Text><ActionButton className='button-label' onClick={load}>重新连接</ActionButton></View>}
-    {!busy && !message && !posts.length && <View className='notice'><View>分类从第一篇记录开始。</View><Text className='muted'>发布到小程序的文章会自动出现在这里。</Text></View>}
+    {!busy && !message && !posts.length && <EmptyState kind='articles' />}
     <View className='categories-grid'>{groups.categories.slice(0, 4).map((group, index) => <Button key={group.name} className='categories-tile' style={{ borderTopColor: accents[index % accents.length] }} onClick={() => void openPostFilter({ category: group.name })}>
       <View className='categories-tile-top'><Text style={{ color: accents[index % accents.length] }}>{String(index + 1).padStart(2, '0')}</Text><Text>COLLECTION</Text></View>
       <View className='categories-tile-name'>{trimTextEnd(group.name)}</View>

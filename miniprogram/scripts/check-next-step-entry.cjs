@@ -33,6 +33,7 @@ module.exports = async function checkNextStepEntry({ page, origin, out, width, e
     }
   }
   await page.getByRole('button', { name: '创建无优先级任务', exact: true }).click();
+  await expect(field(1)).toBeEnabled();
   await expect(rows()).toHaveCount(1); await expect(field(1)).toHaveAttribute('placeholder', '还要做什么？');
   await checkRowAlignment();
   await field(1).evaluate(node => { window.__firstNextNode = node; });

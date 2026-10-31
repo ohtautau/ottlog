@@ -83,7 +83,7 @@ module.exports = async function checkTodoScheduleEditor({ page, origin, out, wid
   await expect.poll(() => storedTask('schedule-clear-repeat').then(task => task.recurrence)).toBe(undefined);
   const savedRepeatTask = await storedTask('schedule-clear-repeat');
   for (const key of ['id', 'title', 'createdAt', 'dueDate', 'dueTime', 'reminderAt']) expect(savedRepeatTask[key]).toEqual(originalRepeatTask[key]);
-  await page.getByRole('button', { name: '关闭编辑', exact: true }).click();
+  await expect(page.locator('.todo-sheet'), 'Saving repeat changes closes the reminder task editor').toHaveCount(0);
   await page.getByRole('button', { name: '编辑任务：重复清除验证', exact: true }).click();
   await schedule.openSchedule(page, expect); await expect(clearRepeat()).toHaveCount(0); await schedule.closeSchedule(page, expect);
   await page.getByRole('button', { name: '关闭编辑', exact: true }).click();
@@ -119,12 +119,12 @@ module.exports = async function checkTodoScheduleEditor({ page, origin, out, wid
     await page.getByRole('button', { name: `编辑任务：${fixture.title}`, exact: true }).click();
     await schedule.openSchedule(page, expect);
     await schedule.openSection(page, '设置提醒');
-    await schedule.button(page, fixture.choice).click();
+    await schedule.chooseReminderTime(page, fixture.choice);
     await schedule.checkReminderValues(page, expect, fixture.reminderDate, fixture.reminderHour, fixture.reminderMinute, fixture.choice);
     if (fixture.dateFirst) await schedule.selectDate(page, fixture.nextDate);
     else await schedule.setTime(page, fixture.nextHour, fixture.nextMinute);
     await schedule.checkReminderValues(page, expect, fixture.reminderDate, fixture.reminderHour, fixture.reminderMinute);
-    await expect(schedule.button(page, fixture.choice)).toHaveAttribute('aria-pressed', 'false');
+    await expect(schedule.button(page, '设置提醒')).toContainText('提醒');
     if (fixture.dateFirst) await schedule.setTime(page, fixture.nextHour, fixture.nextMinute);
     else await schedule.selectDate(page, fixture.nextDate);
     await schedule.checkReminderValues(page, expect, fixture.reminderDate, fixture.reminderHour, fixture.reminderMinute);
@@ -136,7 +136,7 @@ module.exports = async function checkTodoScheduleEditor({ page, origin, out, wid
     expect(saved.dueTime).toBe(`${String(fixture.nextHour).padStart(2, '0')}:${String(fixture.nextMinute).padStart(2, '0')}`);
     const absoluteReminder = await page.evaluate(({ date, hour, minute }) => new Date(`${date}T${String(hour).padStart(2, '0')}:${String(minute).padStart(2, '0')}:00`).toISOString(), { date: fixture.reminderDate, hour: fixture.reminderHour, minute: fixture.reminderMinute });
     expect(saved.reminderAt).toBe(absoluteReminder);
-    await page.getByRole('button', { name: '关闭编辑', exact: true }).click();
+    await expect(page.locator('.todo-sheet'), 'Saving an absolute reminder closes the task editor').toHaveCount(0);
   }
 
   await page.getByRole('button', { name: '编辑任务：旧无效日期可以编辑', exact: true }).click();

@@ -5,6 +5,7 @@ import { SelectChevron } from './select-trigger';
 import { tagLabel } from '../lib/tag-label';
 import { trimTextEnd } from '../lib/text-whitespace';
 import './form-options.css';
+import './sheet-actions.css';
 import ActionButton, { ChoiceButton, choiceControlStyle, type ButtonAppearance, type ButtonSize, type ButtonWidth } from './ui-button';
 import SingleLineInput from './single-line-input';
 import EditorHeading from './editor-heading';
@@ -94,7 +95,7 @@ export function ChoicePopover({ ariaLabel, open, onOpenChange, trigger, anchorId
   const triggerContent = <>{trigger}{showIndicator && <SelectChevron expanded={open} />}</>;
   const layer = renderLayer && open && !disabled ? <View id={`${id}-layer`} className={`form-popover-layer ${layerClassName}`} catchMove>
       <View className='form-popover-backdrop' onClick={event => { event.stopPropagation(); onOpenChange(false); }} />
-      <View id={`${id}-panel`} className={`form-popover-panel body-${bodySpacing}${heading || footer ? ' has-chrome' : ''}${position ? ' is-positioned' : ''}${heightMode === 'content' ? ' is-content-height' : ''}${placement === 'center' ? ' is-centered' : ''} ${panelClassName}`} role='dialog' ariaLabel={ariaLabel} style={position ? { left: `${position.left}px`, top: position.bottom === undefined ? `${position.top}px` : 'auto', ...(position.bottom === undefined ? {} : { bottom: `${position.bottom}px` }), width: `${position.width}px`, maxHeight: `${position.maxHeight}px`, ...(heightMode === 'measured' && (heading || footer) ? { height: `${position.height}px` } : {}) } : { visibility: 'hidden' }} onClick={event => event.stopPropagation()}>
+      <View id={`${id}-panel`} className={`form-popover-panel floating-window body-${bodySpacing}${heading || footer ? ' has-chrome' : ''}${position ? ' is-positioned' : ''}${heightMode === 'content' ? ' is-content-height' : ''}${placement === 'center' ? ' is-centered' : ''} ${panelClassName}`} role='dialog' ariaLabel={ariaLabel} style={position ? { left: `${position.left}px`, top: position.bottom === undefined ? `${position.top}px` : 'auto', ...(position.bottom === undefined ? {} : { bottom: `${position.bottom}px` }), width: `${position.width}px`, maxHeight: `${position.maxHeight}px`, ...(heightMode === 'measured' && (heading || footer) ? { height: `${position.height}px` } : {}) } : { visibility: 'hidden' }} onClick={event => event.stopPropagation()}>
         {!!heading && <View className='form-popover-heading'>{heading}</View>}
         <ScrollView scrollY className='form-popover-scroll' showScrollbar={false}><View className='form-popover-body'>{children}</View></ScrollView>
         {!!footer && <View className='form-popover-footer'>{footer}</View>}
@@ -107,24 +108,30 @@ export function ChoicePopover({ ariaLabel, open, onOpenChange, trigger, anchorId
   </View>;
 }
 
-export function SingleChoiceField<T extends string>({ options, value, onChange, readOnly = false, ariaLabel, disabled = false, className = '', size, width }: {
+export function SingleChoiceField<T extends string>({ options, value, onChange, readOnly = false, ariaLabel, disabled = false, className = '', size, width, open: controlledOpen, onOpenChange, anchorId, triggerId, renderLayer = true, panelWidth, panelClassName, layerClassName }: {
   options: readonly Choice<T>[]; value: T; ariaLabel: string; disabled?: boolean; className?: string;
   size?: ButtonSize; width?: ButtonWidth;
+  open?: boolean; onOpenChange?: (open: boolean) => void;
+  anchorId?: string; triggerId?: string; renderLayer?: boolean; panelWidth?: number; panelClassName?: string; layerClassName?: string;
 } & ({ readOnly: true; onChange?: never } | { readOnly?: false; onChange: (value: T) => void })) {
-  const [open, setOpen] = useState(false);
+  const [localOpen, setLocalOpen] = useState(false);
+  const open = controlledOpen ?? localOpen;
+  const setOpen = onOpenChange ?? setLocalOpen;
   const selected = options.find(option => option.value === value);
   const label = trimTextEnd(selected?.label || value || ariaLabel);
   const content = (option: Choice<T>) => <View className='form-choice-content'><View className='form-choice-icon' aria-hidden>{option.icon}</View><Text className='form-choice-label'>{trimTextEnd(option.label)}</Text></View>;
   if (readOnly) return <View className={`form-choice-field${width === 'fill' ? ' is-fill' : ''} ${className}`}><View className='button-label form-choice-trigger form-choice-readonly' ariaLabel={ariaLabel} style={choiceControlStyle(false, { size, width })}>{selected?.icon ? content(selected) : <Text>{label}</Text>}</View></View>;
-  return <ChoicePopover className={className} ariaLabel={ariaLabel} open={open} onOpenChange={setOpen} disabled={disabled} triggerSize={size} triggerWidth={width} trigger={selected?.icon ? content(selected) : <Text>{label}</Text>}>
+  return <ChoicePopover className={className} ariaLabel={ariaLabel} open={open} onOpenChange={setOpen} disabled={disabled} triggerSize={size} triggerWidth={width} trigger={selected?.icon ? content(selected) : <Text>{label}</Text>}
+    anchorId={anchorId} triggerId={triggerId} renderLayer={renderLayer} panelWidth={panelWidth} panelClassName={panelClassName} layerClassName={layerClassName}>
     <View className='form-option-grid'>{options.map(option => <ChoiceButton key={option.value} className={`button-label form-option${value === option.value ? ' is-selected' : ''}`} ariaLabel={option.ariaLabel || option.label} aria-pressed={value === option.value} disabled={disabled} onClick={() => { onChange?.(option.value); setOpen(false); }}>{option.icon ? content(option) : trimTextEnd(option.label)}</ChoiceButton>)}</View>
   </ChoicePopover>;
 }
 
-export function TagChoiceRow<T extends string>({ options, value, onChange, ariaLabel = '选择标签', frequentValues, disabled = false, className = '', customInput, contentKey = '', labelKind = 'tag' }: {
+export function TagChoiceRow<T extends string>({ options, value, onChange, ariaLabel = '选择标签', frequentValues, disabled = false, className = '', customInput, customInputPlacement = 'popover', contentKey = '', labelKind = 'tag' }: {
   options: readonly Choice<T>[]; value: readonly T[]; onChange: (value: T[]) => void; ariaLabel?: string;
   frequentValues?: readonly T[]; disabled?: boolean; className?: string; customInput?: ReactNode; contentKey?: string;
   labelKind?: 'tag' | 'plain';
+  customInputPlacement?: 'popover' | 'inline';
 }) {
   const [open, setOpen] = useState(false);
   const frequent = frequentValues ? frequentValues.map(key => options.find(option => option.value === key)).filter((option): option is Choice<T> => !!option) : options.slice(0, 4);
@@ -136,9 +143,10 @@ export function TagChoiceRow<T extends string>({ options, value, onChange, ariaL
       <ChoicePopover ariaLabel={ariaLabel} open={open} onOpenChange={setOpen} disabled={disabled} contentKey={`${contentKey}-${JSON.stringify(choices.map(option => [option.value, option.label]))}-${JSON.stringify(value)}`} trigger={value.length ? <Text className='form-tag-count'>{value.length}</Text> : null}
         footer={<PopoverActions layout='fill'><ActionButton className='button-label form-popover-done' size='compact' width='fill' onClick={() => setOpen(false)}>完成</ActionButton></PopoverActions>}>
         <View className='form-option-grid form-tag-options'>{choices.map(option => choice(option, 'all'))}</View>
-        {!!customInput && <View className='form-tag-custom'>{customInput}</View>}
+        {!!customInput && customInputPlacement === 'popover' && <View className='form-tag-custom'>{customInput}</View>}
       </ChoicePopover>
     </View>
+    {!!customInput && customInputPlacement === 'inline' && <View className='form-tag-custom is-inline'>{customInput}</View>}
   </View>;
 }
 

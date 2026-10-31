@@ -1,7 +1,8 @@
-import { initialDomainState } from './domain-data';
+import { legacyHabitDomains } from './domain-data';
 import { habitTimePeriod, isHabitPriority, isHabitSort, isHabitTimePeriod, type HabitMetadata, type HabitSort } from './habit-metadata';
 import { alignHabitDomain } from './habit-domains';
-export const groups = initialDomainState.domains.map(domain => domain.name);
+import { OTHER_DOMAIN_NAME, domainDisplayName } from './domain-fallback';
+export const groups = legacyHabitDomains.map(domain => domain.name);
 export const scenes = {
   exercise: "力量 / 运动", unplug: "放下手机", supplement: "个人补剂安排", music: "音乐", moon: "月夜",
   shower: "淋浴", brush: "刷牙", celebrate: "庆祝", breathe: "心跳 / 呼吸", pause: "暂停",
@@ -30,7 +31,10 @@ export function isReminderState(value: unknown): value is ReminderState {
     && Object.values(state.done).every(ids => Array.isArray(ids) && ids.every(id => typeof id === 'string'))
     && (state.sort === undefined || isHabitSort(state.sort));
 }
-const item = (id: string, title: string, group: string, kind: Scene, note: string, minutes = 0): Reminder => alignHabitDomain({ id, title, group, kind, note, minutes, enabled: true, priority: 'none' }, initialDomainState.domains);
+export const emptyReminderState: ReminderState = { version: 1, items: [], done: {} };
+// Historical catalog for explicit development fixtures only. Never seed a new
+// account or display this catalog as guest business data.
+const item = (id: string, title: string, group: string, kind: Scene, note: string, minutes = 0): Reminder => alignHabitDomain({ id, title, group, kind, note, minutes, enabled: true, priority: 'none' }, legacyHabitDomains);
 export const initialReminders: ReminderState = { version: 1, done: {}, items: [
   item("exercise", "力量训练", "健康", "exercise", "看看今天的训练安排。先换上运动鞋，也算开始。"),
   { ...item("cardio", "有氧运动", "健康", "walk", "按今天的安排，完成有氧运动。"), iconId: 'run' },
@@ -55,8 +59,6 @@ export const initialReminders: ReminderState = { version: 1, done: {}, items: [
   item("measure", "测量身体数据", "健身", "measure", "按自己的记录习惯，补上今天的数据。"),
   item("bag", "携带训练用品", "健身", "bag", "水、毛巾、训练用品。出门前看一眼包。"),
   item("stretch", "活动度训练", "健身", "stretch", "想起自己的活动度练习，从熟悉的动作开始。"),
-  item("food", "记录饮食", "饮食", "food", "记下刚才吃了什么，一句话也可以。"),
-  item("slow", "记得慢点吃饭", "饮食", "slow", "暂时放下屏幕，好好尝一口眼前的食物。"),
 ] };
 
 /** Split only the original combined default; retain its identity and history. */
@@ -101,12 +103,12 @@ export function splitDefaultExerciseHabit(value: ReminderState): ReminderState {
 }
 
 export function cleanState(value: ReminderState): ReminderState {
-  if (!value || !Array.isArray(value.items)) return initialReminders;
+  if (!value || !Array.isArray(value.items)) return emptyReminderState;
   const seen = new Set<string>();
   const items = value.items.filter(r => r && typeof r.id === "string" && r.id.length <= 80 && !seen.has(r.id) && seen.add(r.id)
     && typeof r.title === "string" && r.title.trim() && typeof r.note === "string" && typeof r.group === "string" && Object.prototype.hasOwnProperty.call(scenes, r.kind))
     .slice(0, 80).map(r => {
-      const result = { ...r, title: r.title.slice(0, 60), note: r.note.slice(0, 240), group: r.group.trim().slice(0, 24) || '未分类', priority: isHabitPriority(r.priority) ? r.priority : 'none' as const, enabled: r.enabled !== false, minutes: Math.min(120, Math.max(0, Number(r.minutes) || 0)) };
+      const result = { ...r, title: r.title.slice(0, 60), note: r.note.slice(0, 240), group: domainDisplayName(r.group.trim().slice(0, 24) || OTHER_DOMAIN_NAME), priority: isHabitPriority(r.priority) ? r.priority : 'none' as const, enabled: r.enabled !== false, minutes: Math.min(120, Math.max(0, Number(r.minutes) || 0)) };
       if (r.timePeriod !== undefined) result.timePeriod = habitTimePeriod(r);
       if (result.backgroundKind !== undefined && !Object.prototype.hasOwnProperty.call(scenes, result.backgroundKind)) delete result.backgroundKind;
       if (result.backgroundImage !== undefined && !isBackgroundImage(result.backgroundImage)) delete result.backgroundImage;

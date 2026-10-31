@@ -12,7 +12,7 @@ function load(relative) {
 }
 const growth = load('../src/lib/growth-data.ts');
 const clone = value => JSON.parse(JSON.stringify(value));
-const initial = () => clone(growth.initialGrowthState);
+const initial = () => require('./fixtures/starter-data.cjs').growthState(growth);
 {
   const source = initial();
   source.domains[1].archived = true;
@@ -26,7 +26,7 @@ const initial = () => clone(growth.initialGrowthState);
 }
 const date = (month, day, hour = 0, minute = 0) => new Date(2026, month - 1, day, hour, minute);
 for (const now of [date(9, 16, 12), date(9, 1), date(1, 1), new Date(2024, 1, 29)]) {
-  const demo = growth.demoGrowthState(now);
+  const demo = require('./fixtures/example-records.cjs').demoGrowthState(now);
   assert.ok(growth.isGrowthState(demo), 'Starter data satisfies the persisted schema');
   assert.equal(demo.events.length, 144);
   assert.equal(demo.completedGoals.length, 7);
@@ -37,7 +37,7 @@ for (const now of [date(9, 16, 12), date(9, 1), date(1, 1), new Date(2024, 1, 29
     assert.ok(stats.week > 0 && stats.month > 0 && stats.recentMonths > stats.week, 'Sample periods include current and older progress');
   }
   demo.domains[0].name = 'edited';
-  assert.equal(growth.initialGrowthState.domains[0].name, '工作', 'Sample edits never mutate the empty template');
+  assert.deepEqual(growth.initialGrowthState.domains, [], 'Sample edits never populate production defaults');
 }
 const event = (id, when, size = 'small', domainId = 'work', note) => ({ id, domainId, size, createdAt: when.toISOString(), ...(note === undefined ? {} : { note }) });
 function deeplyFreeze(value) {

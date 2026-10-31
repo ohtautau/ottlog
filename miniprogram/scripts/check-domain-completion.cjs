@@ -25,7 +25,7 @@ function freeze(value) {
   for (const child of Object.values(value)) if (child && typeof child === 'object') freeze(child);
   return value;
 }
-const initial = () => clone(domainData.initialDomainState);
+const initial = () => require('./fixtures/starter-data.cjs').domainState(domainData);
 const habit = (id, overrides = {}) => ({ id, title: id, group: '工作', domainId: 'work', kind: 'focus', note: '', minutes: 25, enabled: true, ...overrides });
 const count = (domains, reminders, date, id = 'work', period) => domainCompletionCounts(domains, reminders, date, period).find(item => item.domainId === id);
 const emptyHabits = () => ({ version: 1, items: [], done: {} });

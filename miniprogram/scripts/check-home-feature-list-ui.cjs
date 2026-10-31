@@ -26,7 +26,7 @@ module.exports = async function checkHomeFeatureList({ page, origin, out, width,
   await expect(sheet.getByRole('button', { name: '替换为：便签', exact: true })).toHaveAttribute('aria-pressed', 'true');
   await expect(sheet.getByRole('button', { name: '替换为：便签', exact: true })).toHaveCSS('opacity', '1');
   expect(await sheet.locator('.home-feature-option[aria-pressed="true"]').evaluateAll(nodes => nodes.map(node => node.dataset.featureKey).sort()), 'All configured shortcuts stay visibly selected, including unavailable duplicates').toEqual(configuredKeys);
-  await expect(sheet.getByRole('button', { name: '替换为：开始番茄钟', exact: true })).toHaveAttribute('aria-pressed', 'true');
+  await expect(sheet.getByRole('button', { name: '替换为：专注', exact: true })).toHaveAttribute('aria-pressed', 'true');
   const controls = await sheet.locator('.home-feature-option').evaluateAll(nodes => nodes.map(node => {
     const r = node.getBoundingClientRect(), grid = node.parentElement;
     return { width: r.width, height: r.height, columns: getComputedStyle(grid).gridTemplateColumns.split(' ').length, overflow: grid.scrollWidth - grid.clientWidth };
@@ -42,7 +42,7 @@ module.exports = async function checkHomeFeatureList({ page, origin, out, width,
   await page.screenshot({ path: path.join(out, `shared-feature-replacement-bottom-${width}.png`) });
   await sheet.getByRole('button', { name: '替换为：番茄钟', exact: true }).click();
   await expect(sheet.getByRole('button', { name: '替换为：番茄钟', exact: true })).toHaveAttribute('aria-pressed', 'true');
-  await expect(sheet.getByRole('button', { name: '替换为：开始番茄钟', exact: true })).toHaveAttribute('aria-pressed', 'false');
+  await expect(sheet.getByRole('button', { name: '替换为：专注', exact: true })).toHaveAttribute('aria-pressed', 'false');
   await expect(sheet.getByRole('button', { name: '替换为：便签', exact: true })).toBeDisabled();
   await expect(sheet.getByRole('button', { name: '替换为：便签', exact: true })).toHaveAttribute('aria-pressed', 'true');
   expect(await page.evaluate(key => localStorage.getItem(key), storageKey)).toBe(saved);

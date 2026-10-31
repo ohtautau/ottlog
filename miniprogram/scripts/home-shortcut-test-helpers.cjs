@@ -2,9 +2,9 @@ const path = require('node:path');
 
 const storageKey = 'ottlog.home-shortcuts.v1';
 const defaultKeys = ['memo-list', 'pomodoro', 'daily', 'statistics', 'growth', 'journal'];
-const defaultNames = ['便签', '开始番茄钟', '习惯', '统计', '领域', '个人空间'];
+const defaultNames = ['便签', '专注', '习惯', '统计', '领域', '文章'];
 const legacyKeys = ['create', 'pomodoro', 'daily', 'memos', 'growth', 'eat'];
-const legacyNames = ['创建任务', '开始番茄钟', '习惯', '创建便签', '领域', '今日食选'];
+const legacyNames = ['创建任务', '专注', '习惯', '创建便签', '领域', '今日食选'];
 const legacyColors = ['blue', 'mint', 'yellow', 'lilac', 'rose', 'peach'];
 const legacyLayout = (custom = false) => ({ version: 1, items: legacyKeys.map((key, index) => ({
   key, name: legacyNames[index], color: custom && index === 0 ? 'rose' : legacyColors[index], kind: 'card', rank: index + 1,
@@ -50,7 +50,7 @@ async function checkDefaultEntrances({ page, expect, out, width }) {
   await page.getByRole('button', { name: '返回上一页', exact: true }).click();
   await expect(page).toHaveURL(/pages\/index\/index$/);
   await page.locator('#home-sort-journal').click();
-  await expect(page).toHaveURL(/pages\/journal\/index$/);
+  await expect(page).toHaveURL(/pages\/articles\/index$/);
   await expect(page.locator('.home-brand')).toContainText('TAU / JOURNAL');
   await page.locator('.preview-native-header > button').click();
   await expect(page).toHaveURL(/pages\/index\/index$/);

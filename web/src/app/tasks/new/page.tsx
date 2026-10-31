@@ -1,4 +1,4 @@
 import type { Metadata } from 'next';
-import TaskCapture from './task-capture';
+import ToolWorkspace from '@/components/tool-workspace';
 export const metadata: Metadata = { title: '创建任务' };
-export default function NewTaskPage() { return <TaskCapture />; }
+export default function NewTaskPage() { return <ToolWorkspace page='todos' query='create=1' />; }

@@ -1,0 +1,42 @@
+const assert = require('node:assert/strict');
+const path = require('node:path');
+const esbuild = require('esbuild');
+function load(name) {
+  const code = esbuild.buildSync({entryPoints:[path.join(__dirname,'../src/lib',name+'.ts')],bundle:true,platform:'node',format:'cjs',write:false}).outputFiles[0].text;
+  const module = {exports:{}}; new Function('module','exports',code)(module,module.exports); return module.exports;
+}
+const model = load('todo-data'), undo = load('todo-undo'), {createPersonalToolStore} = load('tool-state-store');
+const clone = value => JSON.parse(JSON.stringify(value));
+const task = (id,title=id) => ({...model.createTodo(),id,title});
+const base = {version:1,tasks:[task('first'),task('second')],categories:[]};
+const verify = (before,after,label) => {const beforeJson=JSON.stringify(before),afterJson=JSON.stringify(after);assert.deepEqual(undo.undoTodoOperation(after,before,after),before);assert.equal(undo.todoOperationLabel(before,after),label);assert.equal(JSON.stringify(before),beforeJson);assert.equal(JSON.stringify(after),afterJson);};
+verify(base,model.saveTodo(base,task('third')),'已创建任务');
+verify(base,{...base,tasks:base.tasks.filter(item=>item.id!=='first')},'已删除任务');
+verify(base,model.saveTodo(base,{...base.tasks[0],title:'修改后的标题',tags:['工作']}),'已修改任务');
+verify(base,model.toggleTodo(base,'first'),'已完成任务');
+const completed=model.toggleTodo(base,'first');verify(completed,model.toggleTodo(completed,'first'),'已重新打开任务');
+verify(base,model.moveTodo(base,'first','do',null,['first','second']),'已移动任务');
+verify(base,model.applyTodoSort(base,'schedule'),'已调整排序');
+const deleted={...base,tasks:base.tasks.slice(1)},unrelated={...deleted,tasks:[{...deleted.tasks[0],description:'另一处的新修改'},task('external')]};
+const restored=undo.undoTodoOperation(unrelated,base,deleted);
+assert.deepEqual(restored.tasks.map(item=>item.id),['first','second','external']);
+assert.equal(restored.tasks[1].description,'另一处的新修改');
+const changed=model.saveTodo(base,{...base.tasks[0],title:'新标题'}),conflict={...changed,tasks:changed.tasks.map(item=>item.id==='first'?{...item,description:'其他设备的新内容'}:item)};
+assert.throws(()=>undo.undoTodoOperation(conflict,base,changed),/其他修改/);
+assert.equal(undo.undoTodoOperation(base,base,changed),base,'A durable retry of an already-restored snapshot is idempotent');
+const full={...deleted,tasks:Array.from({length:200},(_,index)=>task('external-'+index))};
+assert.throws(()=>undo.undoTodoOperation(full,base,deleted),/数量|格式/);
+const moved=model.moveTodo(base,'first','later',null,['first','second']);
+const withNew={...moved,tasks:[task('new-task'),...moved.tasks]};
+assert.deepEqual(undo.undoTodoOperation(withNew,base,moved).tasks.map(item=>item.id),['new-task','first','second']);
+(async()=>{
+  const cache=new Map(),events=[];let fail=false;
+  const store=createPersonalToolStore({read:key=>cache.get(key),write:(key,value)=>{if(fail)throw Error('quota');cache.set(key,clone(value));},fingerprint:()=>'',session:async()=>({authenticated:false}),get:async()=>({data:null}),put:async()=>{}});
+  store.subscribeEdits(event=>events.push(event));
+  const context=await store.load('todos',base);assert.equal(events.length,0,'Reading initial state never creates operation feedback');
+  fail=true;store.edit('todos',context,changed);assert.equal(events.length,1);assert.equal(events[0].durable,false);
+  fail=false;store.edit('todos',context,changed);assert.equal(events.length,2);assert.equal(events[1].durable,true);
+  store.edit('todos',context,changed);assert.equal(events.length,2,'An unchanged durable retry emits no extra operation');
+  await store.flush('todos','guest');assert.equal(events.length,2,'Upload/refresh state does not create an operation');
+  console.log('PASS task undo: create/edit/complete/reopen/delete/move/sort, stable IDs, immutable snapshots, unrelated changes preserved, conflicts and capacity rejected, idempotent retry, local-only events and failed storage recovery.');
+})().catch(error=>{console.error(error);process.exitCode=1;});

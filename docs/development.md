@@ -1,8 +1,263 @@
 # 开发说明
 
+## 精简选境、分类城市及预览上传兼容（2026-10-31）
+
+两端选境入口、问答／结果实现、小程序choose分包及8张板图删除；网页分类城市、3D地形／建筑模块、three及类型依赖删除。/choose与/city只保留到/today及/posts的服务端跳转；/options原目录继续复用独立的多边形底座，其样式和几何移入components，不依赖退役页面。文章正常分类／标签保留。旧选境快捷卡只读过滤，并验证其他卡的名称／颜色／顺序和旧存档不变。
+
+退役饮食的闲置前端备份模型、旧状态Hook及专属检查脚本删除；服务器兼容键与现有业务数据不删。源码及测试需继续沿共用小程序实现，不恢复旧网页业务副本。微信预览报错vendors.js Unexpected token .来自markdown-it的可选链；将该包明确纳入Taro Babel转译，保留原不二次转换的开发工具设置，所有产物JS新增ES2019解析守卫。app.config开启requiredComponents按需注入。
+
+正常构建通过：15页（5主包／10分包）、21个JS语法与独立／逆向／旧全局编号启动、97源码／17产物样式，主包1,422,991字节；快捷方式与目录排序回归通过。媒体总量288,535字节；读取当前开发工具规则确认200KB检查为所有图片／音频总量，不是单文件。最大文件30,670字节，没有大图；该资源建议仍未通过，未为消除提示损失图标质量或新增联网资源依赖。本轮尚待用户重新编译、预览和手机验证；不将本地语法检查当作微信预览上传成功。
+
+## 今日主页与可选记住登录（2026-10-31，后续）
+
+根地址/改为Next服务端307跳转/today，今日页面和选中导航同源，原OptionsHome仅在/options保留。账号页、管理登录及今日账号窗口共用RememberLogin；浏览器构建将小程序LoginPreference空底座替换为同一组件，不复制账号业务。默认未选，勾选才传rememberMe=true，小程序仍不显示或发送true。
+
+Credentials增加默认false的RememberMe，读者注册／登录及管理员入口沿LoginSession统一产生8小时普通会话或30天持久Cookie，不自动延长。HttpOnly／Secure／SameSite Strict、CSRF、owner及安全戳保持；退出清Cookie、改密使旧票据失效，不保存密码到JS存储。API依据运行版本7fc41e9隔离取源码，并合入服务器既有的账号格言、个人文章控制器与存储兼容补丁、SeedExamples=false；再更新两登录控制器及新增策略，以原bot-auth镜像叠加DLL，保留机器人授权／运行库／数据／密钥。部署助手核对原镜像哈希、验证程序集、备份数据库，健康失败恢复原Compose链；不新增迁移。
+
+test:remember-login使用隔离数据库验证普通／小程序会话、读者和管理员的30天Cookie、真实浏览器重启、退出重启、CSRF及改密失效。实际HTTPS核对首页跳转、今日选中、Logo返回及浏览器后退、/options保留；现有账号记住／不记住、关闭重开、退出和390px今日窗口均通过，不改业务记录。显示复核发现工具全局input把复选框撑宽，已由共用组件显式拥有20px方框与正常行布局，并补几何检查。报告web/test-results/home-login。TypeScript、定向ESLint、Docker生产构建及正常小程序构建通过，主包1,462,905字节。
+
+完整回归发现首个API构建遗漏服务器源码补丁，文章键返回404；已恢复旧API、合并上述补丁后重新部署。最终八类工具在网页与API同账号返回一致数据，匿名格言401，空账号不回退全局格言；20个1440／390px页面无溢出或脚本错误，业务记录未写入。隔离测试也覆盖这三项兼容性；本地HTTP测试需允许回环网络，沙箱限制导致的就绪超时不算服务故障。最终线上和隔离测试均通过。
+
+API为ottlog-api:remember-login-20261031132436-e7c03929，基于原bot-auth-7fc41e9并保留服务器补丁；网页最终版本ottlog-web:20261031T131739Z-272198f6eebf。本次API部署备份~/ottlog/backups/before-remember-login-20261031T132441Z；当前线上镜像和各容器Compose链记录于~/ottlog/shared/public-deployment.json。
+
+## 新加坡网页正式启用与API直连（2026-10-31，后续）
+
+用户将网页要求由私密访问改为正式公开，完成根域名及api子域名的A记录，并放行IPv4 TCP443。https://ohtautau.com及https://api.ohtautau.com的受信任HTTPS均为200，HTTP跳转HTTPS，Caddy自动管理两个证书。网页已切到ottlog-web:20261031T123156Z-48fe8ed8809a（Next16.4.3）；原API容器ad4546aa1901及ottlog-api:bot-auth-7fc41e9／sha256:c629ff0931c8保持，没有覆盖账号文章或机器人授权更新。
+
+上线核对发现Next16.3.8有已公布严重漏洞，同主版本升级至16.4.3并同步eslint-config-next；生产依赖审计高危与严重为0，另4项低危仍留报告，未强制跨主版本修复。新加坡Docker生产构建与TypeScript通过。真实域名上ohtautau分别登录网页和API，八类工具数据相同；匿名个人内容401、错误CSRF400、读者管理权限403、API子域名网页／管理入口404通过，没有创建／删除或覆盖业务记录。20个1440／390px正式视图检查无横向溢出或页面脚本错误，显示复核另发现网页logo被/images通配转发至API，已改为网页图片先由Next静态文件匹配，缺失上传路径再沿原rewrite到API，并加入图片检查。
+
+部署前数据库一致备份位于服务器~/ottlog/backups/before-sync-qa-20261031T121921Z.db，代理每次切换前另存api-edge-<时间>配置和镜像元数据。网页源发布目录~/ottlog/releases/20261031T123156Z-48fe8ed8809a，沿--source-only提取，不改私有环境或密码；当前配置元数据见~/ottlog/shared/public-deployment.json。
+
+小程序运行包已重新构建为https://api.ohtautau.com，没有3300接口，16页启动／100源码与18产物样式／主包1,462,719字节预算通过；电脑3000和3300均未运行。官方CLI auto连接成功，但SDK等待响应超时，界面观察为“模拟器启动失败”；继续编译时Computer Use收到用户物理Esc而停止，未继续窗口操作或清理Storage。因此本轮没有把服务器和构建通过等同微信模拟器实际直连通过，也没有发布小程序或验证手机真机。
+
+正式网页截图与只读验证报告见web/test-results/public-release。初始仅API公开及待DNS的准备记录在下节保留为历史状态。
+
+## 小程序直连API配置准备（2026-10-31）
+
+用户授权API单独公开、网页保持私密。Caddyfile.api-private-web与Compose追加覆盖分离公网443及回环8088，configure-api-edge.py保留当前镜像与业务卷，只在DNS匹配后允许激活proxy。配置已上传新加坡，Caddy／Compose验证通过；临时容器不发布端口，真实API／profile可达、匿名个人数据401、网页／管理／错误Host404、私密网页可达均通过，测试容器已清理。未将HTTP隔离测试当作公网HTTPS／Secure Cookie登录通过。
+
+api-endpoint.cjs统一普通／本地／设备默认，start-shared-test不会再把小程序改回本地3300。API模拟检查覆盖CSRF／Cookie／owner及公网域名许可／网络提示，设备回环守卫与TypeScript通过。截至本次准备，DNS仍无api记录，公网入口未激活，运行中的小程序dist保持原包；完成DNS、证书、微信许可及实际登录后再生成最终直连运行包。具体步骤见[API直连](api-direct-access.md)。
+
+## 网页卡片尺寸及两端待办撤销（2026-10-31）
+
+网页习惯卡使用224px建议最小宽／88px最小高，领域卡使用260px建议最小宽／132px固定高，随容器自动分列，创建卡同高。习惯时段／自由／提醒／领域详情复用尺寸，提醒仍单列；卡距12px、CardGroupContent内距8px。尺寸由desktop-domains-habits.css拥有，未改小程序卡片或业务记录。375／768／1024／1440／2407px覆盖领域0／1／7／8／13／旧系统卡目录，检查顺序、同高、内距、排序及最后卡可达通过；1440／390px合成数据的18视图检查通过，无横向溢出和页面错误。
+
+待办共用OperationToast、useTodoUndo及todo-undo：store只在同账号本地edit发送前后快照，读取和上传回执不产生提示；成功持久化且编辑器关闭后显示操作及撤销符号5秒，最近一次替换。撤销恢复受影响内容／顺序／设置，保留其他记录，冲突拒绝，失败沿同目标重试；账号／离页／卸载代际隔离且不新增存档。任务提醒恢复不自动授权订阅，失效的当前提醒沿原取消入口处理。网页仍只适配指针；释放后拦截旧click，但新pointerdown可立即撤销，旧帧也不能取消新拖动。
+
+test:todo-undo覆盖创建／编辑／完成／重新打开／删除／移动／排序、不可变快照、冲突／容量及存储失败；360／375／430／768共享界面覆盖创建／编辑／完成／删除／排序撤销、保存失败重试、5秒消失及切账号。网页1440／390px实际浏览器覆盖每个象限移动后立即撤销、再次拖动、快捷删除撤销和创建撤销，全部使用模拟接口。TypeScript、定向ESLint、账号队列与任务检查、共享网页生成及正常小程序构建通过；100份源码／18份生成样式、16页启动及主包小于1.5MB守卫通过。本轮未将浏览器共享界面测试或构建等同微信原生／手机真机交互验收；未更改真实账号业务数据。
+
+## 网页任务交互、列表审查及预览退役（2026-10-30，最新）
+
+补充范围：订阅、兼容跳转及模拟管理员界面两尺寸共20视图无横向溢出或脚本错误，报告web/test-results/secondary-pages。管理员仅使用模拟接口，没有登录或写入真实管理账号；下文“未做管理员实际验收”仍指真实权限与发布流程。格言工具栏也沿card-group-heading对齐同一8px卡片边界。
+
+长格言列表额外修正旧desktop.css中height:auto／overflow:visible规则：格言页使用真实剩余视口，工具栏固定，mottos-list-scroll独立滚动，条目最小高收为64px。检查最后一条可见时工具栏仍完整位于视口，窗口本身不滚动；避免只检查空状态而漏掉真实长列表的可达性。
+
+网页构建将todo-drag替换为只负责输入和测量的浏览器适配：鼠标移动5px激活、捕获指针、逐帧测量四象限与卡片顺序、边缘自动滚动、Escape／失焦／指针取消及账号变化释放。拖动时在当前工具视口上方显示删除区，松手调用共用页面的performDelete；排序仍沿moveTodo及原队列，删除仍核对owner／本机持久化并处理提醒取消与失败重试，不复制业务模型。原生hook保留原长按，浏览器完成列表默认折叠、无日期标题居中及直接输入标签沿tool-platform与TagChoiceRow的inline放置实现。web/scripts/check-todo-browser-interactions.mjs（npm run test:todo-browser）使用模拟接口覆盖1440／390的快速四象限移动、Escape不写入、删除区显示与快捷删除、完成默认折叠、无日期居中和新标签持久化。
+
+空数据示例组件、角标、示例目录、独立preview-data页面和启动跳转已删除；所有宿主改用EmptyState，只显示真实空状态。demoTodos／demoMemos／demoGrowthState移到scripts/fixtures/example-records.cjs，仅由显式测试引用；生产源码不含原预览角标或示例生成器，不重置／迁移现有业务数据。--empty-state在360／375／430／768验证无虚构卡片、无角标、初始不写业务记录及真实便签创建。任务、账号队列、领域、成长、最近活动、快捷方式模型与TypeScript检查通过；正常小程序构建、99份源码／18份生成样式、16页启动与包体守卫通过，主包1,453,982字节。
+
+格言列表改由CardGroupContent拥有8px内距。原“开始番茄钟”改为“专注”，默认六张快捷卡颜色不重复（专注peach暖色、文章mint），完整未自定义旧默认目录只读升级，自定义名称／颜色／顺序保持，相关兼容检查通过。
+
+网页原结构下收紧账户卡空白和说明、个人文章工具栏计数、公开文章窄屏筛选两列与44px操作，并补分类城市空态的水平内距。15个导航入口×1440／390共30个页面检查无横向溢出、页面脚本错误或预览角标；另用合成记录覆盖任务长列表、8领域与详情、35习惯、24便签、22格言、12文章及统计共18视图，确认共用内距、格言末项可滚动访问及无页面错误。截图及报告在web/test-results/page-audit、populated-pages，未把合成记录写入真实账号。发布文章详情及管理员登录后界面需要实际文章／对应权限，未将这些状态计为本轮实际浏览器验收。
+
+## 常驻状态、今日账号符号与浮窗内距（2026-10-30，后续）
+
+toolPageStatus统一隐藏“已连接账号 · 修改自动保存”，不改store及保存队列，读取／离线／待同步／失败提示保留。今日从/account/profile独立确认图标状态，不再等待专注提醒配置成功；请求代际与卸载守卫保持，登录事件刷新后图标立即更新。网页移除隐藏今日账号按钮的旧适配规则。
+
+floating-window将共享--popup-actions-bottom-space设为--floating-window-bottom-space（app.css定义16px），账号、ChoicePopover、AppDialog及专注本次时长接入；桌面从底部面板变为居中的编辑器沿同一变量。SheetActions键盘时保留变量，PopoverActions复用同一间距；底部贴边面板原8px／安全区不变。四种尺寸账号窗口登录／退出／关闭／防跨账号检查通过，1440／390网页确认符号、窗口16px及工具页无常驻提示，定向底栏在360／375／430／768及短屏通过8／34px安全区与内容可达检查。旧底栏夹具改为已登录账号并等待静态表单加载完成再测量，符合当前账号习惯规则。TypeScript、正常小程序构建、99份源码／18份生成样式和16页启动通过，主包1,476,452字节；本轮原生自动化重新连接后响应超时，不把构建和浏览器适配测试作为本轮原生交互通过的证据。
+
+## 文章WXSS兼容与网页导航（2026-10-30，后续）
+
+微信原生编译拒绝personal-article-navigation > :first-child，导致文章页面无法打开；改为给CategoryRow传personal-article-categories显式类名，布局保持。check-weapp-styles及其夹具补充裸结构伪类选择器守卫，保留view:not(:first-child)等有外层作用域的既有规则。正常小程序构建、99份源码／18份生成样式、16页启动及包体检查通过；微信开发者工具实际navigateTo文章页、分类栏渲染与无运行时异常通过，不只以浏览器预览作为验收。
+
+随后实际联调通过：网页创建唯一标记文章→微信开发者工具读取／编辑→网页读取修改／删除→小程序刷新为空；旧journal链接跳转articles正常，临时文章已清理，原35条习惯和22条格言未变。报告miniprogram/test-results/real-personal-articles.json，原生截图native-articles-fixed-open.png与real-personal-article.png。该验收为开发者工具模拟器，未宣称手机真机通过。
+
+网页个人文章/articles沿appTools进入下排日常工具，格言之后；上排及窄屏主导航移除原文章和收藏链接，公开文章/posts保持，收藏页面及数据保留。1440与390px隔离浏览器核对上下排、选中高亮、窄屏横向可达与抽屉目录通过。
+
+## ohtautau原领域目录恢复（2026-10-30）
+
+用户确认消失的名称后，核对旧initialDomainState八项默认目录及当前35条习惯的domainId；此前空数据整理已将初值改空，这份目录未随保留习惯存入账号，并非最新“其它”投影删除了领域。备份当前账号各工具后，通过同owner与CSRF接口将成长／工作／英语／健身／生活／心理／摄影／自媒体八项原ID和图标一次性恢复到ohtautau。生产isDomainState校验、保存回读、35条习惯关联及其余工具逐项不变检查通过，网页实际显示确认；没有导入隔离预览的目标、进展或娱乐测试卡。此为本次账号恢复操作，不增加新账号默认目录、不在启动或浏览时自动迁移；备份与恢复报告留在backups/。
+
+## 领域列表不再显示示例领域（2026-10-30，后续）
+
+默认“其它”卡已提供真实入口，领域列表取消学习／生活两张预览卡。没有自建领域时仅显示其它和＋；已有领域仍按普通领域→其它→＋排列。直接移除列表的EmptyDataPreview调用，两端沿同一源码生效，不写入、删除或迁移业务记录。
+
+TypeScript、共享网页资源生成及正常小程序构建通过；16页启动和包体守卫通过，主包1,475,664字节。现有领域布局验收同步改为断言空列表仅两张卡，且卡片容器没有领域预览。
+
+## 其它领域名称与卡片顺序（2026-10-30）
+
+domain-fallback集中兼容旧“未分类”与新“其它”名称，domain-display只读投影保留原ID及记录；新建兜底记录使用其它，旧身份继续复用。领域列表把其它计入同一前八卡／续接数组，普通领域之后、创建卡之前；详情、进展／习惯选择器及习惯归属同步使用共用名称，原系统卡保护和链接保持。旧游客或账号数据不在浏览时重写。
+
+TypeScript及领域数据、习惯编辑、完成统计、进展草稿、账号队列检查通过，包含旧记录保留、别名复用及已有自建“其它”不被吞并。真实网页采用独立拦截接口的夹具，在375／768／1024／1440／2407px覆盖0／1／7／8／13个普通领域及旧系统卡在首位的存档，确认普通→其它→＋顺序、同尺寸／内距、排序及列表末项可达；未修改实际账号数据。截图见web/test-results/shared-domain-cards。正常小程序构建通过，16页（5主包／11分包）、主包1,475,731字节，样式与独立／正反序启动检查通过；本轮未把构建当作微信真机验收。
+
+## 习惯游客预览与文章入口验收（2026-10-30）
+
+createPersonalToolStore对reminders的游客读取在访问缓存前返回emptyReminderState，拒绝游客修改；所有正式消费者改用空初值，旧内置目录仅供显式开发夹具。保留历史缓存且不导入新账号。领域详情游客使用相同只读预览；习惯页排序／筛选禁用，创建改为登录入口。个人空间页改为官方redirectTo兼容跳转，避免直接import另一页面造成Taro重复注册；posts列表及ArticleCard保持，旧主页样式已删除。文章创建权限尚待用户确认，未开放新发布权限或写文章。
+
+网页从同一小程序源码生成资源；真实Next的独立游客上下文预置旧习惯缓存后，只显示只读预览，登录ohtautau后显示35项且无预览。只读核对记录数保持，报告web/test-results/account-habits.json，截图account-{guest,signed}-habits.png；原网页个人主页不在本次默认小程序范围内。
+
+验证通过：个人工具逻辑（旧guest缓存不出现在早期缓存回调、不写入／不迁移、拒绝游客编辑、空新账号、A/B及退出隔离、账号离线历史与队列）；四尺寸360／375／430／768px隔离源页面验证只读预览／切账号／登录入口；小程序TypeScript、快捷方式及目录排序逻辑、正常构建／15页独立与正反序启动及包体守卫通过，主包1,469,690字节。官方SDK在原微信开发者工具实例实际退出→游客预览→登录入口→重新登录，35个习惯及完整历史哈希一致、旧游客存档不变，并核对旧journal最终进入posts。报告miniprogram/test-results/native-account-habits.json及native-{guest,account}-habits.png。当前已返回登录后的首页；未清理Storage、未修改业务数据，不代表手机真机验收。
+
+## 真实账号双端同步与格言隔离（2026-10-30，最新）
+
+本次沿原D:\Projects\ottlog开发者工具实例，经官方CLI／自动化SDK与实际Next网页，使用同一ohtautau账号及服务器私有API完成验证。新密码登录两端均成功；密码只保存在本机私有凭据，不写入仓库文档。服务仍通过本机3300→服务器回环8088隧道访问，域名、公网入口和备案配置未变；网页用ohtautau.localhost:3000测试Secure Cookie。
+
+实际验证覆盖七类工具GET结果相同；网页创建任务→小程序修改→网页显示，网页删除→小程序刷新消失，以及小程序新建→网页显示；网页创建格言→小程序修改→网页显示。习惯两端显示保留内容，提醒说明行已移除。35个习惯、完整留言／打卡记录与22条格言及16秒轮播保持；只清理每次唯一标记的测试记录。报告miniprogram/test-results/real-client-sync.json，截图real-sync-*。领域／专注／成长本次核对读取相同，未制造真实打卡、计时或领域历史；此结论属于微信开发者工具模拟器与真实网页，不代表手机真机或已公开上线。
+
+便签追加真实验证：小程序创建→网页编辑→保存返回同一阅读窗口→小程序刷新显示新标题，通过后移除唯一标记的临时便签，原内容不变。报告miniprogram/test-results/real-memo-sync.json及两端real-sync-*-memo.png。自动化等待表单可编辑及原生按钮disabled解除后再输入提交，不把尚未就绪时的受控只读行为当作保存失败。原网页/journal在独立游客与登录浏览器上下文中复验：游客无格言卡，账号显示22条且“管理格言”沿原导航打开/mottos。
+
+首次真实快速保存暴露缓存优先上下文遗漏cloud的上传路径，已修复为在线同owner缓存立即进入上传队列，不依赖编辑器存活。check-personal-tools新增持有GET时缓存先显示、关窗前快速保存上传及在途身份确认合并回归，原账号切换／离线／晚到GET检查通过。小程序typecheck、正常构建与启动／包体守卫通过（主包1,469,194字节）；网页工具资源重新生成且TypeScript通过；隔离四尺寸格言游客隐藏与切账号检查通过。
+
+旧MottosController已改为账号同源兼容入口；后端编译与135项验证通过，匿名GET返回401。服务器仅替换该控制器对应API程序集，镜像ottlog-api:20261030-account-mottos，网页／代理容器及卷保持。上线前库备份before-account-mottos-api-20261030T063340Z.db、账号密码修改前备份before-ohtautau-password-20261030T061249Z.db在服务器backups；本机保留账号格言和双端联调JSON快照。原全局Settings格言仍保留归档，未自动迁移其他账号。
+
+## 微信首页启动恢复（2026-10-30）
+
+用户日志的`e[r] is not a function`发生在模块加载器，不是表单的事件回调。官方SDK先确认真实模拟器首页空白；使用同一仓库根项目仅清compile缓存并重新编译后，源码不变而首页恢复。原Node VM产物启动检查仍通过，但它不覆盖开发者工具持有的旧编译缓存。此次未修改业务函数、账号逻辑或数据。
+
+在微信开发者工具2.02.2608080／基础库3.17.2实查：首页冷启动、账号窗口开关、五个底栏页面往返均正常，SDK exception及wx.onError监听为空。原有本机私有API通道同时恢复，127.0.0.1:3300/health返回200 Healthy。未清Storage或登录存储，未登录／退出实际账号。报告：miniprogram/test-results/native-startup-recovery.json；操作边界及今后恢复方式见device-debugging.md的2026-10-30小节。
+
+
+## 专注底栏与今日账号窗口（2026-10-29，最新）
+
+小程序五个原生底栏为今日／待办／领域／习惯／专注。专注保留pages/pomodoro/index、原业务状态及绝对计时，改为主包页，openPomodoro沿一次性意图再switchTab，图库原两张图片保持单份。今日右上角用40px账号符号打开独立AccountWindow：读取账号、登录／创建账号、退出登录、显示用户名和角色；共用单行输入、EditorHeading和SheetActions，键盘／防重／CSRF／原owner及失败输入保持，关闭不提交。文章及收藏中的登录请求统一回今日打开窗口。原“我的收藏与工具”第二屏移除；收藏数据与文章操作保留，收藏入口为独立分包单屏列表。网页原账号导航保持，格言与快捷输入卡外框留白只在浏览器适配层设置，不改变小程序这两处的呈现。
+
+验证：TypeScript与普通本地构建通过，15页（5主包／10分包）、主包1,471,039字节，小于1.5MB；产物启动／样式／图像单份检查通过。隔离源页面360／375／430／768px（含375×667）检查账号窗口登录／退出／取消／短密码限制／账号切换拒绝并保留输入、独立收藏登录入口、专注底栏及原首页入口、开始／暂停／继续／结束。网页375／768／1024／1440px检查格言与输入外框边界和卡片一致，1024px首页两栏按剩余高度独立滚动、底部输入保持可见。截图见miniprogram/test-results/ui-preview-account-window-focus-final及web/test-results/card-group-insets。未操作实际账号登录或清理任何数据；构建和浏览器适配检查不代表微信真机验收。
+
+
+## 卡片容器留白与习惯横滑修正（2026-10-29，最新）
+
+小卡与大卡容器之间共用CardGroupContent的四周8px内距；大卡背景透明时也保留。首页快捷方式／全部功能、任务象限、领域卡窗、便签与习惯列表同源，标题按相同边界对齐，ScrollView本身不设置padding。专注和统计原有面板内距继续保留。习惯页移除左右状态切换及相邻预览面板，完成状态沿原筛选，长按排序和各分区独立纵向滚动保持。删除“滑动查看更多”提示及专属测量逻辑；浏览器适配遵守showScrollbar=false并锁定单轴列表的横向溢出。此节替代本日此前关于提醒提示显隐的描述。
+
+验证：小程序TypeScript、习惯排序／完整历史逻辑及普通本地构建通过，主包1,377,991字节。隔离源页面在360／375／430／768px（含375×667）通过内距、左右手势不切换、提醒到底、长按排序／边缘滚动／失败重试／账号隔离；真实Next网页在375／768／1024／1440px通过首页／任务／领域／便签四周8px、习惯卡横向固定、鼠标纵向滚动／末项可达、隐藏滚动条及无外层溢出。截图见miniprogram/test-results/ui-preview-inset-final、ui-preview-habit-drag-without-swipe，以及web/test-results/card-group-insets和habit-sections。以上是隔离浏览器与构建检查，不代表微信真机验收；未改实际账号数据。
+
+
+## 习惯分区与创建窗口（2026-10-29，后续）
+
+HabitListSection统一标题／内容左右8px，并只在内容容器拥有内距；HabitGrid默认8px卡距，daily/core.css移除原扩宽和负偏移。提醒不再截取两个，按原完整打卡历史稳定排序，今天已完成和归档仍排除；改用同源固定标题／独立ScrollView，网页桌面栏也只滚动列表。共享选择器测量视口与内容、监听滚动和窗口变化，在下方有更多内容时才显示提示，底部卡片可完整到达。
+
+EntryComposer原先等待todos／memos／domains全部读取后才创建草稿，现在先显示当前表单的只读结构，按当前类型核对数据与账号；无关类型不阻断任务输入和保存。旧草稿原类型与待切换目标仍需就绪，同owner守卫及原保存队列保持。360／375／430／768px隔离检查覆盖8px留白、20项提醒到底、提示显隐，以及任务400ms／便签2秒／领域2.5秒延迟下的输入保存；实际Next网页375／768／1024／1440px用拦截的只读接口和独立浏览器上下文核对30项、鼠标滚轮、固定标题与外层无溢出。日志为miniprogram/test-results/habit-spacing-ui.log及web/test-results/habit-sections.log；不读写实际服务器账号数据。typecheck、习惯排序逻辑及普通本机3300 API构建通过，主包1,381,488字节，15页启动和96源码／18产物样式守卫通过；原生触摸效果仍需开发者工具／真机验收。
+
+四尺寸完整entry-creation回归也已通过，覆盖任务／备忘／双记录进展、原子保存、字段保留、下一步原生输入节点、草稿恢复、失败重试及账号隔离，无渲染错误和横向溢出；日志为miniprogram/test-results/entry-loading-regression.log。验收等待可编辑阶段后才记录输入节点身份，并在点击领域详情记录前等待详情就绪，避免误点上一页的只读预览列；便签置顶沿已确认的实色雾蓝surface更新旧颜色基准，产品色值未改。
+
+## 正常卡片预览及私密双端联调（2026-10-29）
+
+预览改用正常呈现：data-card-views抽取便签／格言／专注记录／活动／留言／目标历史／收藏，普通宿主保留原操作回调；HabitCard、DomainRecordCard、ArticleCard与StatisticsInsights提供只读变体，DomainProgressSummary与预览共用不带实体ID的DomainProgressView。各类型正常卡片几何与颜色由共用样式拥有，EmptyDataPreview只提供角标、只读示例及少量容器布局。预览没有业务ID、按钮或保存回调；根节点拦截冒泡，记录类角标另留上距避免覆盖正文。去掉便签、格言、文章等预览外面重复的空状态框；任务规则保持。已通过typecheck、API／个人工具owner及队列逻辑、领域完成纯逻辑与360／375／430／768px隔离预览检查，原生包主包1,378,260字节并通过启动／包体守卫。网页从同一源码生成，不复制预览业务。
+
+deploy/start-shared-test.ps1建立本机3300到服务器8088的SSH隧道，以同一API构建小程序并启动本机3000的真实Next网页；均只绑定本机，不启动旧fixture页面，不改公共DNS／防火墙／服务器公网入口。原始微信Storage再次备份，联调使用独立临时账号并在结束后清理，保留账号需另确认才能迁移游客记录。具体入口、Secure Cookie限制及手机真机边界见[私密联调](server-preview.md)。
+
+## 空数据预览及本次数据清理（2026-10-22）
+
+后续已在真实微信开发者工具模拟器完成清理与验收：官方CLI将`D:\Projects\ottlog`与`D:/Projects/ottlog`识别为不同实例，实际旧数据位于前者，不能以新实例空Storage代替清理。先将原实例完整Storage备份到`backups/wechat-before-cleanup-2026-10-22T15-14-29-764Z.json`，保留35个习惯、27条习惯留言、全部打卡历史和格言／16秒轮播设置；旧隔离预览的reminders与mottos按原有效载荷复制到正常命名空间，逐字校验一致，不覆盖已有正常存档。移除10个非保留旧缓存键，包含任务、领域、专注、饮食及旧示例种子；登录运行元数据保持。普通调试构建不启用隔离示例种子，重新进入页面后复查旧内容未重建。模拟器实际页面截图与计数在`miniprogram/test-results/wechat-*`，任务与任务统计均无预览，习惯及格言有真实数据时无预览；便签、领域、专注历史、空领域／成长统计及文章／分类／个人空间文章列表显示明确标记的只读预览。未登录收藏页保持登录入口，不伪造收藏。保留数据哈希、清理清单及复查结果见`wechat-cleanup-report.json`和`wechat-cleanup-verification.json`；这不等同于手机真机验证。
+
+EmptyDataPreview、empty-data-preview.css与lib/empty-data-preview.ts拥有所有展示示例。只在有效、已就绪的空数据处渲染，不把示例交给保存、提醒、排序或统计函数；任务页与任务统计不展示示例。compact适配领域最近记录等小窗口，统计有独立明确标注的示例柱图。便签、习惯、领域／记录、格言、专注历史、文章／分类／收藏／留言与首页活动接入；网页日常工具因直接复用小程序源码一并生效。
+
+用户明确保留习惯、格言，要求其他数据包括旧账号清空。本机数据库及uploads已先做一致快照，实际清理12篇文章与1个旧管理员，保留homepage-mottos；当前浏览器先写独立JSON备份，再仅移除其他Ottlog缓存。历史备份和local-state迁移快照不删除；服务器当时尚无业务数据库，不声称清理了未连接的真机存储。脚本reset-project-data.py必须显式传入--apply，事务内校验保留字段及数据库完整性；不在应用加载或部署时调用。后台SeedExamples缺省false，避免新数据库再插入旧文章。默认任务／便签／领域／成长为空，保留的习惯目录与格言不被标为示例。
+
+已通过完整test:logic、typecheck、隔离四尺寸empty-data-preview UI（360／375／430／768px，含375×667），覆盖明确标记、示例不入存档、真实内容隐藏、筛选无结果、创建便签及刷新保持，以及点选领域记录示例不向父创建区域冒泡；离线重置脚本的临时库保留／完整恢复测试通过。小程序build:device正常存档模式通过，主包1,393,876字节，15页启动与95源码／18产物样式守卫通过；网页生产构建及本地API构建通过。真实Next网页375／1440px检查保留习惯及22条格言、空任务／预览和无横向溢出；服务器实际浏览器登录／CSRF、各工具页与数据库只读核对通过，见[服务器私密预览](server-preview.md)。原生微信运行和真机缓存未操作。日志分别为miniprogram/test-results/empty-data-{logic,preview,build}.log、web/test-results/empty-data-{build,web-ui}.log及server-preview-smoke.log。
+
+## 共用滚轮及发布前界面收尾（2026-10-22）
+
+小程序WheelPicker使用SilentWheelColumn处理位移、有限惯性及吸附，仅调用轻震动，无音频播放；网页保持原鼠标／键盘适配。共用四列宽度、透明mask淡出，节奏四项一行、重复数字／单位双列；reminderCalendarLabel按本地日历比较，覆盖闰年／月底／跨年，精确时长仍沿reminderLeadLabel。SheetActions按实际键盘与内容视口计算覆盖高度，处理原生tab栏和系统已缩短视口两种情况。习惯时段区上移，便签背景及边框为实色。
+
+浏览器隔离测试shared-wheel-refinement-ui.log通过360／375／430／768px的提醒、重复、节奏及格言保存／取消／重开／失败重试；silent-wheel-feedback.log通过触摸取值、取消／范围、震动调用、透明渐隐及键盘覆盖模型。网页移除大标题，八页宽窄屏外层无溢出；习惯时段、自由与提醒区在375×667／375×768／768×768／1440×900均位于视口内，长内容内部滚动可访问。截图与日志位于各端test-results。
+
+类型、提醒／日程纯逻辑、网页生产构建及小程序正常build:device通过，15页（5主包／10分包）、94源码／18产物样式与主包预算通过。未修改普通账号数据，未推送或部署；手机实际声音、震动、惯性及输入法弹出仍待真机验收。Vercel当前构建56b00bb为旧提交，缺API_BASE_URL导致明确停止；用户尚无后端托管，Render仅作为建议方案，尚未创建服务或产生费用。
+
 初版及规则确认：2026-10-04。开发规则见 [AGENTS.md](../AGENTS.md)，交互规则见 [Design.md](../Design.md)，正式决定与实现状态见 [决策记录](decisions.md)。
 
 后续功能开发仅修改小程序（P01）。下文保留网页与 API 的结构和历史验证入口供兼容核对，不表示默认扩大改动范围。
+
+## 两端饮食退役与网页分类按钮（后续授权）
+
+饮食分包／页面／入口、营养统计和最近活动已移除，统计现五类、首页目录15项；保留旧存档兼容和用户记录，不运行清库或迁移。网页旧饮食URL重定向今日。分类栏包括固定「全部」由浏览器共享测量／CSS等宽等高，标题输入12px左右内距；详见[最新网页同步记录](web-parity.md)。下文饮食页面的实现和验收属于历史。
+
+## 网页六页桌面视口与弹窗（2026-10-22，用户继续授权）
+
+任务、领域（含详情）、习惯、便签、专注和统计在≥900px使用真实剩余视口固定主区域，页面标题／主要操作保持可见，长列表、原分析及历史只在对应区域内部滚动。弹窗统一基础样式，宽屏分栏，标题／底栏固定而正文可滚动；原40px操作、分层关闭、保存取消、网站导航及同源业务／账号／存档保持。此规则替代这六页上一轮自然文档滚动方案，不改小程序业务源码。
+
+web/shared-app/desktop-viewport.css负责公共视口、任务／便签与共享弹窗；desktop-domains-habits.css和desktop-focus-statistics.css分别补充专属布局。ResizeObserver按实际页面区域更新--app-page-height，fixed浮层仍使用真实viewport，避免滚动区高度影响浮窗定位。
+
+新增npm run test:desktop-layout，主要尺寸1366×768／1440×900／1920×1080／1024×768／1280×600。最终35组全部通过，统计分析／历史及长列表可真实滚动到末项；既有test:tool-workspace四套回归全部通过。本轮生产构建、TypeScript和差异检查通过，改动文件ESLint无错误；更新后的3000网页在1366×768／1280×600通过六页只读检查，日志与截图见[网页验收](web-parity.md)最新记录。
+
+## 网页功能对齐（2026-10-22，用户明确授权）
+
+用户后续明确要求将功能融入原网页，以电脑宽屏为主并自适应，删除「吃什么」和「餐单与游戏」的独立展示与入口。当前生产浏览器适配位于web/shared-app：build-tool-app.mjs将小程序真实页面／表单／模型及作用域CSS构建为JS／CSS，由原Next页面中的custom element创建独立React root直接挂载DOM。原OptionsHome首页保留，今日工具在/today；工具入口融入原网站导航，移除原独立工作区侧栏与iframe。宽屏展示由浏览器适配层调整，不复制业务状态与保存逻辑。
+
+原网页缓存键、账号API和CSRF／owner守卫继续使用；阅读、账号、选境保持。/eat与/eat/legacy仅重定向/meals，饮食记录、常用餐单和营养统计仍沿共用页面；旧dining／meals存档和后端接口不删除或迁移。已清除退役专属界面、问答／游戏算法、样式、失效任务捕获及纯退役测试。依赖搜索、相关脚本语法与餐食／营养、dining备份只读往返／合并检查通过；未操作业务数据。
+
+dev／build自动先构建工具源码，修改共用代码后可单独build:tools重建。本轮DOM挂载、入口及宽屏调整的完整构建与浏览器复验须以[网页对齐记录](web-parity.md)中的最新实测为准，不能沿用前次iframe回归结果。
+
+前次工作区版本的历史验证：test:tool-workspace四套检查曾通过375／1440九页、实际编辑保存取消、四列提醒／所有时长、目标历史／习惯留言、六类统计、长按跨象限、图片压缩预览、配额失败同ID重试、九个API键和合成账号双向同步、断网重试及账号切换。测试使用独立5239端口Sqlite数据和3100网页；未对日常数据运行写入测试。该版本生产构建及TypeScript通过，定向ESLint无错误，产物不含测试fixture；这些结果不代表本轮直接DOM挂载已重新通过。微信提醒需小程序授权，Chromium触摸模拟不代表手机硬件实测。
+
+## 微信模拟器滚轮验收（2026-10-22）
+
+实际使用微信开发者工具 Stable 2.02.2608080、基础库3.17.2的模拟器，通过鼠标拖动原生PickerView检查。使用device-build的--preview-records隔离访客存档，未清Storage或修改普通账号数据；结束恢复普通build:device。以下是模拟器结果，不代表手机触摸惯性及真机验收。
+
+- 提醒月／日／时／分正常显示，小时09→10后完整提醒即时更新，中行清晰、上下渐变对称；缺任务时刻提示保留。
+- 任务时分09:00→09:01，子窗取消未应用，确认与最终保存后编辑关闭，重开09:01。自定义重复1→2天保存重开一致，2→3天取消后仍为每2天。
+- 专注节奏四个滚轮25／5／15／4分别改26／6／16／5，取消重开恢复原值，再修改保存重开四值一致。短屏滚动可完整查看第二行，固定保存栏可用。本次专注26→27分钟取消仍26，确认重开27；短休息6→7、长休息16→17分钟确认后计时面板同步。
+- 格言四列分别从00天00时00分15秒改为01天01时01分16秒，实时总值依次16／76／3676／90076秒；取消重开仍15秒，保存16秒后重开一致。四列可独立拖动，边缘淡出且选中行清晰。
+- 餐单韩式拌饭准备时间00:20→01:21，取消重开恢复00:20；再次修改保存关闭，卡片显示81分钟，重开滚轮为01:21。表单滚动后两列完整可见，渐变及底部保存正常。
+
+格言入口曾在工具会话中无响应；重开项目并正常编译后恢复，实际定位查询返回完整有效几何，后续多次打开、保存及关闭正常，未据此修改浮窗算法。排查日志已移除。工具仍报告ohtautau.com的ERR_NAME_NOT_RESOLVED，隔离数据的滚轮与持久化检查不依赖该公网请求；未将此轮检查当作公网API连通通过。
+
+收尾typecheck、check-wheel-time-data及git diff --check通过；普通build:device通过，主包1,392,936字节、16页（5主包／11分包）、95源码／19产物样式守卫通过，日志miniprogram/test-results/wechat-wheel-restore-normal-build.log。微信工具Ctrl+R重新编译后首页正常显示，控制台确认11分包及普通会话请求；未保留临时诊断输出。
+
+## 提醒四列与时长共用滚轮（2026-10-22）
+
+共用WheelPicker是唯一原生PickerView、行高／五行高度、字号／指示线和遮罩来源；time-wheel-picker.css统一渐变，业务适配组件只组合选项。提醒DateTimeWheelPicker含月／日／时／分与显式年份切换，monthDays／wheelDate联动月底与闰年，reminderLeadLabel按绝对提醒与任务本地时刻的真实时间差计算，缺任务时刻明确提示。保存继续保留重复小时原始reminderAt；不存在的夏令时时刻不替换已生效草稿。原任务时分子窗分层确认、提醒与重复的日期窗口草稿、最终任务保存和独立授权保持。
+
+NumberWheelPicker接入重复1–365、专注1–120／短休息1–60／长休息1–120／间隔1–12及本次时长；DurationWheelPicker将餐食1–1440分钟显示为时分，将格言1–2147483秒显示为天时分秒并限制组合总值，原单位／ID／版本不变。保存和关闭守卫包含滑动状态，底座卸载清理状态，原持久化失败目标与账号守卫保持。日历浏览／日期筛选不作为时长输入改写，未扩展其他端。
+
+新增npm run test:time-wheels，纯逻辑覆盖1900／2000闰年、月底／年份边界、提前／准时／晚于、缺任务时间和纽约夏令时真实差值；浏览器隔离数据覆盖四种尺寸360×844／375×667／430×844／768×1024、34px安全区，逐个滚轮滚入视窗检查触控命中，提醒四列范围／实时反馈、跨年／月底／夏令时间隙与重复小时、分层取消／同ID保存重开、各时长原上限／下限和格言失败锁定重试。相关原任务日程、格言和餐食流程同步新控件定位，旧数字无效文本UI检查改为有界选项；纯业务校验保留。浏览器模型只验证数据、布局及流程，微信原生触摸惯性仍需真机检查。
+
+实际通过typecheck、check-todo-schedule、check-wheel-time-data、git diff --check；--unified-time-wheels、--schedule-time及完整--pomodoro／--mottos／--meals均四尺寸通过，覆盖原保存失败与账号流程；--todo-save-close-regression也四尺寸通过，包含原任务保存关闭、绝对提醒、订阅授权、取消及失败重试。正常模式build:device通过，主包1,392,936字节，16页启动、95源码／19产物WXSS守卫与主包预算通过。日志test-results/unified-time-wheels-ui.log、unified-task-time-ui.log、unified-duration-focus-ui.log、unified-duration-mottos-ui.log、unified-duration-meals-ui.log、unified-task-regression-ui.log及unified-time-wheels-build.log。截图ui-preview-unified-time-wheels中375px提醒／格言中行清晰、上下对称，短屏专注及餐食独立滚动验证可达。未使用真实账号或业务库，未将浏览器结果视为微信真机手势验收。
+
+## 滚轮行高缩短与渐变核对（2026-10-21）
+
+用户要求滚轮行上下更短、重新检查渐变。共用TimeWheelPicker指示行与数字行由40px改32px，五行由200px改160px，16px数字与原取值保持。原生mask改透明，time-wheel-stage中的独立绝对定位遮罩拥有对称上下淡出，40%–60%完全透明，正好覆盖中间32px选中行；pointer-events:none保留滑动命中，避免依赖原生蒙层对整幅深／透明／深渐变的分段应用。未改确认、关闭、忙碌或存档逻辑。
+
+浏览器PickerView模型改为围绕当前值展示五行、透明列表框保留可访问取值，并支持鼠标滚轮更新；共享的实际渐变CSS直接叠在预览行上，便于检查选中项与遮罩对齐，仍不模拟原生触摸惯性。既有任务测试同步160px列高并核对遮罩不拦截事件，没有新增低影响样式专用套件。--schedule-time／--reminder-settings四尺寸360×844／375×667／430×844／768×1024通过，原两列范围、分层确认取消、保存重开、清除、跨午夜／月末／夏令时和模拟34px安全区检查保留。375px任务滚轮已目视中行清晰与对称淡出。
+
+typecheck、相关脚本语法、git diff --check与build:device通过；主包1,394,899字节，16页启动、95源码／19产物WXSS守卫及原预算通过，产物包含共享渐变。日志test-results/time-wheel-compact-task-ui.log／time-wheel-compact-reminder-ui.log／time-wheel-compact-build.log，截图ui-preview-time-wheel-compact-fade。未使用真实数据；微信原生蒙层／真实触摸与惯性及真机效果尚未实测。
+
+## 任务与提醒时间双列滚轮（2026-10-21）
+
+按用户要求，两处 clockFields 改用共用 TimeWheelPicker：原生 PickerView／两个 PickerViewColumn，固定24小时／60分钟，00–23／00–59两位显示，40px行／200px五行视窗。当前已应用时分初始化原子窗草稿；onChange只更新时分，完成仍经 clockTime／makeLocalReminder 校验与原日期／绝对提醒计算。immediateChange 在松手时更新，onPickStart／onPickEnd期间阻断完成与关闭守卫；busy禁用交互并拦截回调。保留其他 NumericInputRow 年月／重复等数字设置，未改存档、队列或微信授权。
+
+浏览器适配器新增 PickerView 取值模型，以两个列表框验证受控列值；原生滑动惯性与手感不由浏览器模型模拟。原数字输入的无效文本UI用例替换为精确24／60项范围、00:00／23:59边界、两列独立变化、无文本框／键盘、取消继续编辑、提示内保存、清除及保存重开；原年月／单位菜单、日程分层保存、同ID与既有提醒保留断言继续运行，clockTime无效值仍由纯逻辑测试覆盖。提醒两列沿完整快捷／六日期／跨午夜／月末／纽约夏令时重复小时、缺任务时间与同ID重开流程验证。
+
+typecheck、check-todo-schedule、相关脚本语法、git diff --check通过。--schedule-time 与 --reminder-settings均在360×844／375×667／430×844／768×1024通过，保留模拟34px安全区。最终build:device正常模式、16页启动、95源码／19产物WXSS守卫及原包体预算通过；产物核对原生picker-view、picker-view-column和immediate-change绑定。日志test-results/time-wheels-task-ui.log／time-wheels-reminder-ui.log／time-wheels-build.log，截图ui-preview-time-wheels。浏览器仅验证列值／布局和业务流程，微信滚轮的真实手势与惯性、冷启动和真机尚未实测；未操作真实账号或日常数据库。
+
+## 便签／领域符号与日程下拉（2026-10-21）
+
+仅小程序。memoIconId 对未选／无效图标只读回退现有 notes 图库，MemoIconPreview 与便签列表共用；选中图标和缺省 iconId 存档保持，删除原纸张占位专用样式。领域详情历史入口改40px图标 ActionButton／共享 CompletedGoalsSymbol，保留原 ariaLabel、同一历史窗口和账号守卫。
+
+提醒时间五个快捷项和自定义合为满宽 SingleChoiceField，纵向菜单保留实际时刻和完整文字，原六日期／实际提醒／缺任务时间提示／数字子窗／绝对 reminderAt 与显式微信订阅保持。重复单位展开异常来自 SingleChoiceField 内联浮层嵌套在父面板 ScrollView 中；共享选框增加可选受控 open／onOpenChange 与 triggerId／anchorId／renderLayer 出口，提醒和单位均在父面板之外同级渲染，继续由 ChoicePopover 拥有定位和最上层关闭。其他宿主默认内联行为保持，未改全局 z-index、存档或后端。
+
+实际通过：typecheck、check-todo-schedule、check-icon-library-data、相关脚本语法与 git diff --check。完整 --memos 四尺寸通过，补查列表／阅读的无选择默认 notes 图标且沿原显式选择、保存／失败和账号流程；--reminder-settings 四尺寸含375×667／模拟34px安全区通过，覆盖全部快捷／六日期、子层实际可点、完整时刻、缺任务时间、跨午夜／月末／夏令时重复小时、数字输入／分层关闭及重开保持；--schedule-time 含重复单位五项逐项点选、所有按钮 hit-test／40px／视口界限、Escape／遮罩只关子层、间隔保持及原日程编辑／绝对提醒检查，四尺寸通过。--domain-detail-scroll 四尺寸通过，补查符号无文字／40px、已完成历史数量和原存档不变，保留独立习惯／正负记录滚动与安全区。375px便签列表／创建、提醒菜单、重复单位及领域符号截图已目视。
+
+--domain-preview 在历史按钮检查通过后，被原 check-domain-preview-ui.cjs:143 的记录栏 overflowY 断言阻断（旧预期 visible，当前为 hidden），未修改该断言，不报告该完整套件通过。其余测试只更新本轮已变更的控件定位与选中检查，原时间／存档断言保留。
+
+最终 build:device 正常模式通过，主包1,392,268字节，便签34,215／领域详情25,409字节；16页启动、94源码／19产物WXSS守卫与原预算通过。日志test-results/memo-default-icon-ui.log、reminder-dropdown-verified-ui.log、repeat-unit-final-ui.log、domain-goal-final-ui.log及controls-dropdown-icons-build.log；输出ui-preview-memo-goal-icons／ui-preview-reminder-dropdown-verified／ui-preview-repeat-goal-final。未操作真实账号或日常数据库；微信冷启动和真机尚未实测。
+
+## 待办编辑保存成功关闭（2026-10-21）
+
+用户反馈底部保存无反应，期望持久化后关闭。源码中 save 按 reminderAt 分支：带提醒任务保存后重新填充 draft，底部又直接调用 save，导致只有无提醒任务关闭。现合为 saveAndClose，由底部与未保存提示共用；成功核对 owner／任务 ID／operationGeneration 和原 volatile 状态后，关闭日期层并清空编辑草稿。输入校验、失败保留原 ID／草稿、原提醒时间／独立订阅授权和旧提醒取消队列保持。只改小程序页面及相关验证，不改存档格式或 API。
+
+新增 check-todo-save-close：四尺寸覆盖普通／带提醒任务未修改与修改后保存关闭、同 ID 字段保留、写失败不关闭且持久存档不变、同 ID 重试、未保存提示保存和重载读取。专项 360×844／375×667／430×844／768×1024 通过；375 保存后列表截图已目视。原日程／工作流测试中「保存后手动关闭」调整为断言自动关闭，需要继续编辑则重开；原重复／日期／绝对提醒断言保留。
+
+typecheck、check-todos、相关脚本语法与 git diff --check 通过；build:device 正常模式通过，主包 1,390,776 字节，16 页启动、94 源码／19 产物 WXSS 守卫和原包体预算通过。完整 --todos 到 check-todo-editor.cjs:87 被未改动的优先度 flagInset <=13 旧断言阻断（实际17px），未调整该断言，不报告全套通过。另用 --todo-save-close-regression 在上述四尺寸跑完保存专项、原 check-todo-schedule-editor／check-todo-workflow／check-todo-notification-workflow，通过原绝对提醒／重复／日期、任务链与筛选、完成与取消旧提醒、显式授权与拒绝订阅检查。日志 test-results/todo-save-close-ui.log、todo-save-close-related-ui.log、todo-save-close-regression-final-ui.log、todo-save-close-build.log。未操作真实账号／日常数据库，微信冷启动和真机尚未实测。
+
+## 仓库文件整理与微信调试配置（2026-10-21）
+
+目录与文件职责见[目录与文件管理](repository-layout.md)。六份根目录备份文件移动前后 SHA256 一致；八份迁移的素材／示例数据与原 Git blob 一致。原业务、备份和 local-state 数据保留；删除生成日志／示例图，移出闲置 tab 素材与脚本 fixture，清理对应复制排除项。补全 Git／Docker 本机文件排除，README 同步已移除食选及当前开发入口。
+
+微信公共配置只维护 miniprogram 原文件，local-project-config 同步三个入口的私有设置并生成根入口；本地／真机脚本共用，local-debug 插件在每次成功编译后恢复 dist 私有配置（包括 watch）。webview-scroll-view 插件经 Taro CLI modifyBuildAssets 钩子移除自动输出的原生 ScrollView padding 属性；不改页面 JSX／CSS、node_modules 或业务数据。新产物守卫防止警告来源重新进入 base.wxml。
+
+实际通过：typecheck、相关脚本语法、git diff --check、设备配置逻辑检查、雷达示例重新生成、三个入口版本／开关一致性、迁移文件校验；build:weapp 和最终 build:device 正常模式通过，16 页（5 主包／11 分包）启动、原首页产物／WXSS 守卫及预算通过，最终主包 1,391,381 字节。18 份 WXML 均不含 ScrollView padding，最终 base.wxml 与原模板逐字比较，仅该属性被移除；Textarea 属性和 CSS 内距保留。初次构建由新增守卫捕获配置回调未生效，最终改为 CLI 插件注册后通过，未降低守卫。
+
+日志在 miniprogram/test-results/config-cleanup-plugin-final-build.log 与 config-cleanup-device-build.log；线上 health 在沙箱外 curl 仍返回无法解析主机（退出 6），未取得 HTTP 响应。未操作真实账号或日常数据库；微信冷启动／手机联网尚未实测，本轮没有运行无关业务全量回归或原生 WXSS 编译。
 
 ## 六类统计图表与自动分析（C299）
 

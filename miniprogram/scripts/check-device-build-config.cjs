@@ -1,5 +1,10 @@
 const assert = require('node:assert/strict');
 const { deviceBuildEnvironment } = require('./device-build-config.cjs');
+const { apiOrigin } = require('../config/api-endpoint.cjs');
+assert.equal(apiOrigin({}), 'https://api.ohtautau.com', 'Unconfigured builds must reach the server directly');
+assert.equal(apiOrigin({ TARO_APP_API_BASE_URL: '  ' }), 'https://api.ohtautau.com');
+assert.equal(apiOrigin({ TARO_APP_API_BASE_URL: ' http://192.168.1.2:5229 ' }), 'http://192.168.1.2:5229');
+assert.equal(apiOrigin(deviceBuildEnvironment({})), apiOrigin({}), 'Device and ordinary builds use the same default');
 for (const base of ['http://127.0.0.1:5229', 'http://127.1', 'http://2130706433', 'http://localhost:5229', 'http://LOCALHOST.:5229', 'http://api.localhost', 'http://[::1]:5229']) {
   assert.throws(() => deviceBuildEnvironment({ TARO_APP_API_BASE_URL: base }), /loopback/, base);
 }

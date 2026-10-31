@@ -1,1 +1,1 @@
-export default definePageConfig({ disableScroll: true, navigationBarTitleText: '我的' });
+export default definePageConfig({ disableScroll: true, navigationBarTitleText: '收藏' });

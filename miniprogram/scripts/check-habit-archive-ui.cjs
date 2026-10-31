@@ -21,7 +21,7 @@ module.exports = async function checkArchive({ page, origin, out, width, expect,
   }, host);
   const detail = page.locator(host === 'daily' ? '.daily-detail-sheet' : '.domain-sheet-habit-detail');
   const editor = page.getByRole('dialog', { name: '编辑习惯', exact: true });
-  const target = page.locator(host === 'daily' ? '.swipe-panel-current .daily-habit-scroll' : '.domain-habit-scroll').getByRole('button', { name: '查看习惯：恢复原有习惯', exact: true });
+  const target = page.locator(host === 'daily' ? '.daily-habit-pages > .daily-habit-scroll' : '.domain-habit-scroll').getByRole('button', { name: '查看习惯：恢复原有习惯', exact: true });
   const category = name => page.locator('.daily-core-filter-scroll').getByRole('button', { name, exact: true });
   const read = () => page.evaluate(() => JSON.parse(localStorage.getItem('ottlog-mini-tool-v1:guest:reminders')).data);
   const changed = (state, enabled) => ({ ...state, items: state.items.map(item => item.id === 'target' ? { ...item, enabled } : item) });
@@ -30,8 +30,8 @@ module.exports = async function checkArchive({ page, origin, out, width, expect,
     await habitFilter.assertNoStatusRow();
     await expect(page.getByRole('button', { name: /^(查看已归档习惯|返回启用习惯)$/ })).toHaveCount(0);
     await expect(page.locator('.daily-page-toolbar .page-toolbar-summary-count')).toHaveText('今日完成 1');
-    await expect(page.locator('.swipe-panel-current .daily-time-period-section')).toHaveCount(2);
-    await expect(page.locator('.swipe-panel-current .daily-time-period-empty')).toHaveText(['暂无自由习惯', '暂无该时段习惯']);
+    await expect(page.locator('.daily-habit-pages .daily-time-period-section')).toHaveCount(2);
+    await expect(page.locator('.daily-habit-pages .daily-time-period-empty')).toHaveText(['暂无该时段习惯', '暂无自由习惯']);
     await expect(page.locator('.daily-neglected-empty')).toHaveText('暂无提醒');
     await expect(page.locator('.daily-core-empty')).toHaveCount(0);
     await page.screenshot({ path: path.join(out, `habit-archive-no-row-${width}.png`) });

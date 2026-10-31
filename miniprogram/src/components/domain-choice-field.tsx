@@ -2,6 +2,7 @@ import type { Domain } from '../lib/domain-data';
 import { domainIcon } from '../lib/domain-data';
 import { SingleChoiceField } from './form-options';
 import LibraryIcon from './library-icon';
+import { OTHER_DOMAIN_NAME, domainDisplayName, findFallbackDomain } from '../lib/domain-fallback';
 
 type DomainChoice = Pick<Domain, 'id' | 'name' | 'iconId'>;
 
@@ -10,10 +11,10 @@ export default function DomainChoiceField({ domains, value, onChange, readOnly =
   domains: readonly DomainChoice[]; value: string;
   ariaLabel: string; disabled?: boolean; optionPrefix?: string;
 } & ({ readOnly: true; onChange?: never } | { readOnly?: false; onChange: (id: string) => void })) {
-  const choices: readonly DomainChoice[] = domains.some(domain => domain.name.trim() === '未分类')
-    ? domains : [...domains, { id: '', name: '未分类', iconId: 'notes' }];
-  const selectedId = value || choices.find(domain => domain.name.trim() === '未分类')?.id || '';
+  const choices: readonly DomainChoice[] = findFallbackDomain(domains)
+    ? domains : [...domains, { id: '', name: OTHER_DOMAIN_NAME, iconId: 'notes' }];
+  const selectedId = value || findFallbackDomain(choices)?.id || '';
   return <SingleChoiceField ariaLabel={ariaLabel} size='regular' width='fill' value={selectedId}
-    options={choices.map(domain => ({ value: domain.id, label: domain.name, icon: <LibraryIcon name={domainIcon(domain)} />, ariaLabel: `${optionPrefix}${domain.name}` }))}
+    options={choices.map(domain => ({ value: domain.id, label: domainDisplayName(domain.name), icon: <LibraryIcon name={domainIcon(domain)} />, ariaLabel: `${optionPrefix}${domainDisplayName(domain.name)}` }))}
     disabled={disabled} {...(readOnly ? { readOnly: true as const } : { onChange: onChange! })} />;
 }

@@ -1,6 +1,6 @@
 export const statisticsPanels = [
   { id: 'todos', label: '待办' }, { id: 'focus', label: '专注' },
-  { id: 'habits', label: '习惯' }, { id: 'meals', label: '饮食' },
+  { id: 'habits', label: '习惯' },
   { id: 'domains', label: '领域' }, { id: 'growth', label: '成长' },
 ] as const;
 export type StatisticsPanel = typeof statisticsPanels[number]['id'];

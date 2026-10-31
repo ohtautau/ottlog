@@ -13,7 +13,7 @@ const edits = load('../src/lib/domain-record-edit.ts');
 const clone = value => JSON.parse(JSON.stringify(value));
 const image = { id: 'photo', dataUrl: 'data:image/png;base64,AAAA' };
 const original = { id: 'record-original', content: '原记录', createdAt: '2026-10-02T01:00:00.000Z', images: [image] };
-const state = clone(data.initialDomainState);
+const state = require('./fixtures/starter-data.cjs').domainState(data);
 state.domains.find(row => row.id === 'work').positiveRecords = [original];
 const draft = { version: 1, domainId: 'work', kind: 'positive', original, record: { ...original, content: '  **已编辑**  ' } };
 const records = state => state.domains.find(row => row.id === 'work').positiveRecords;

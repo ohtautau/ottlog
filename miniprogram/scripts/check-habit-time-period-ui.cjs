@@ -20,7 +20,7 @@ module.exports = async function checkHabitTimePeriods({ page, origin, out, width
     return reminders;
   });
   const filter = createHabitFilters({ page, expect });
-  const grid = () => page.locator('.swipe-panel-current .daily-habit-scroll');
+  const grid = () => page.locator('.daily-habit-pages > .daily-habit-scroll');
   const section = period => grid().locator(`.daily-time-period-section[data-time-period="${period}"]`);
   const sections = () => grid().locator('.daily-time-period-section').evaluateAll(nodes => nodes.map(node => node.dataset.timePeriod));
   const periodLabels = { morning: '上午', noon: '中午', afternoon: '下午', night: '晚上' };
@@ -61,13 +61,13 @@ module.exports = async function checkHabitTimePeriods({ page, origin, out, width
     await page.clock.runFor(450);
   }
   await filter.selected('进行中'); await expect(row('全部')).toHaveAttribute('aria-pressed', 'true');
-  expect(await sections()).toEqual(['free', 'noon']);
+  expect(await sections()).toEqual(['noon', 'free']);
   for (const [time, period] of [['00:00:00', 'morning'], ['10:59:59', 'morning'], ['11:00:00', 'noon'], ['12:59:59', 'noon'], ['13:00:00', 'afternoon'], ['17:59:59', 'afternoon'], ['18:00:00', 'night'], ['23:59:59', 'night']]) {
     await go('#/pages/posts/index'); await expect(grid()).toHaveCount(0);
     await page.clock.setSystemTime(new Date(`2026-10-08T${time}`));
     await go('#/pages/daily/index');
     await expect(category(period)).toHaveAttribute('aria-pressed', 'true');
-    expect(await sections(), `${time}: free remains independent and the default period matches local time`).toEqual(['free', period]);
+    expect(await sections(), `${time}: free remains independent and the default period matches local time`).toEqual([period, 'free']);
     expect(await read(), 'Changing the browsing default never writes habits or history').toEqual(original);
     if (['00:00:00', '11:00:00', '13:00:00', '18:00:00'].includes(time)) await page.screenshot({ path: path.join(out, `habit-current-default-${period}-${width}.png`) });
   }
@@ -157,10 +157,10 @@ module.exports = async function checkHabitTimePeriods({ page, origin, out, width
     const cards = [...node.querySelectorAll('.daily-suggestion')].slice(0, 2).map(card => card.getBoundingClientRect());
     return { toolbarWidth: toolbar.width, width: grid.width, left: grid.left, toolbarLeft: toolbar.left, cardWidth: cards[0].width, gap: cards[1].left - cards[0].right };
   });
-  expect(cardWidths.width).toBeCloseTo(cardWidths.toolbarWidth + 4, 0);
-  expect(cardWidths.left).toBeCloseTo(cardWidths.toolbarLeft - 2, 0);
-  expect(cardWidths.gap).toBe(4);
-  expect(cardWidths.cardWidth).toBeCloseTo((cardWidths.width - 4) / 2, 0);
+  expect(cardWidths.width).toBeCloseTo(cardWidths.toolbarWidth - 16, 0);
+  expect(cardWidths.left).toBeCloseTo(cardWidths.toolbarLeft + 8, 0);
+  expect(cardWidths.gap).toBe(8);
+  expect(cardWidths.cardWidth).toBeCloseTo((cardWidths.width - 8) / 2, 0);
   await page.screenshot({ path: path.join(out, `habit-time-period-groups-${width}.png`) });
   await selectPeriod('noon');
   await expect(section('morning')).toHaveCount(0);
@@ -189,17 +189,12 @@ module.exports = async function checkHabitTimePeriods({ page, origin, out, width
   await filter.selected('进行中'); await expect(page.locator('.swipe-panel-adjacent')).toHaveCount(0);
   await expect(category('morning')).toHaveAttribute('aria-pressed', 'true');
   const outerPosition = await backgroundPosition(page);
-  await touchGesture(grid(), { dx: -20, during: async () => {
-    await expect(page.locator('.swipe-panel-adjacent .daily-time-period-section')).toHaveCount(2);
-    await expect(page.locator('#daily-habit-free-scroll')).toHaveCount(1);
-    await expect(page.locator('#daily-habit-period-scroll')).toHaveCount(1);
-    for (const button of await page.locator('.swipe-panel-adjacent .daily-time-period-categories button').all()) await expect(button).toBeDisabled();
-    await expect(page.locator('.swipe-panel-adjacent .daily-suggestion-title')).toHaveText(['时段习惯done-m']);
-  } });
-  await filter.selected('进行中'); expect(await backgroundPosition(page)).toEqual(outerPosition);
-  await page.clock.runFor(450);
-  await touchGesture(grid()); await filter.selected('已完成');
-  expect(await sections()).toEqual(['free', 'morning']); expect(await groupIds('morning')).toEqual(['done-m']);
+  await touchGesture(grid(), { dx: -80 });
+  await filter.selected('进行中');
+  await expect(page.locator('.daily-habit-pages .swipe-panels')).toHaveCount(0);
+  expect(await backgroundPosition(page)).toEqual(outerPosition);
+  await filter.select('已完成');
+  expect(await sections()).toEqual(['morning', 'free']); expect(await groupIds('morning')).toEqual(['done-m']);
   await filter.select('已归档'); expect(await groupIds('morning')).toEqual(['archived-m']);
   await filter.select('全部'); await row('工作').click();
   await expect(grid().locator('.daily-time-period-section')).toHaveCount(0);
@@ -338,7 +333,7 @@ module.exports = async function checkHabitTimePeriods({ page, origin, out, width
   await go('#/pages/domain-detail/index?id=work');
   await expect(page.locator('.domain-habit-grid .daily-suggestion-title')).toHaveText(['早上刷牙', '整理今日计划', '午饭后记录', '摄影练习', '每日阅读', '留一点时间', '早上练习']);
   const domainGap = await page.locator('.domain-habit-grid').first().evaluate(node => getComputedStyle(node).columnGap);
-  expect(domainGap).toBe('4px');
+  expect(domainGap).toBe('8px');
   expect(await read()).toEqual(autoState);
   await page.evaluate(() => localStorage.clear());
   await require('./check-habit-split-layout.cjs')({ page, origin, out, width, expect });

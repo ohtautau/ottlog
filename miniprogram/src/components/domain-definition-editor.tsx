@@ -32,6 +32,6 @@ export default function DomainDefinitionEditor({ controller }: { controller: Dom
       </View>
     </View>}
     {editor && iconOpen && <IconLibrarySheet selectedId={editor.iconId} onClose={controller.closeIcons} onSelect={id => { if (id) controller.setIcon(id); else controller.closeIcons(); }} />}
-    {deleting && <AppDialog title='删除领域' closeLabel='关闭删除确认' onClose={controller.closeDelete} busy={blocked} error={error} panelClassName='domain-delete-sheet' actions={<ActionButton appearance='danger' size='large' width='fill' disabled={blocked} loading={busy} onClick={() => { void controller.confirmDelete(); }}>删除</ActionButton>}><Text>删除「{deleting.name}」及其目标和进展记录？共享习惯保留为未分类。</Text></AppDialog>}
+    {deleting && <AppDialog title='删除领域' closeLabel='关闭删除确认' onClose={controller.closeDelete} busy={blocked} error={error} panelClassName='domain-delete-sheet' actions={<ActionButton appearance='danger' size='large' width='fill' disabled={blocked} loading={busy} onClick={() => { void controller.confirmDelete(); }}>删除</ActionButton>}><Text>删除「{deleting.name}」及其目标和进展记录？共享习惯保留到其它。</Text></AppDialog>}
   </>;
 }

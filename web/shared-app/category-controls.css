@@ -1,0 +1,13 @@
+.tool-app-root .page-category-bar[data-browser-categories] { gap:6px; }
+.tool-app-root .page-category-bar[data-browser-categories] .page-category-row { display:flex!important;width:max-content;gap:6px;padding-right:0; }
+.tool-app-root .page-category-bar[data-browser-categories] .ui-category {
+  flex:0 0 var(--browser-category-width)!important;
+  width:var(--browser-category-width)!important;
+  min-width:var(--browser-category-width)!important;
+  max-width:var(--browser-category-width)!important;
+  height:var(--browser-category-height)!important;
+  min-height:var(--browser-category-height)!important;
+  margin:0;white-space:normal!important;overflow-wrap:anywhere;
+}
+.tool-app-root .page-category-bar[data-browser-categories] .page-category-fixed { flex:none; }
+.tool-app-root input.entity-title-input:not([type=checkbox]):not([type=radio]):not([type=file]) { padding-inline:12px!important; }

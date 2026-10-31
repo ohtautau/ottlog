@@ -13,7 +13,8 @@ function load(file) {
 }
 const { prepareHabitEdit, saveHabitEdit, removeHabit, patchHabitDetails } = load(path.join(__dirname, '../src/lib/habit-edit.ts'));
 const { cleanState, toggleReminderDone, isReminderState, splitDefaultExerciseHabit } = load(path.join(__dirname, '../src/lib/reminder-data.ts'));
-const { initialDomainState, isDomainState, saveDomainHabit, toggleDomainHabit } = load(path.join(__dirname, '../src/lib/domain-data.ts'));
+const { legacyHabitDomains, isDomainState, saveDomainHabit, toggleDomainHabit } = load(path.join(__dirname, '../src/lib/domain-data.ts'));
+const initialDomainState = require('./fixtures/starter-data.cjs').domainState({ legacyHabitDomains });
 const { currentHabitTimePeriod, habitTimePeriod, habitTimePeriods, habitTimePeriodLabels, isHabitTimePeriod } = load(path.join(__dirname, '../src/lib/habit-metadata.ts'));
 const domains = initialDomainState.domains;
 const original = { id: 'shared', title: 'Original', note: '', group: '工作', domainId: 'work', kind: 'plant', minutes: 0, enabled: true, priority: 'none', createdAt: 123 };
@@ -45,7 +46,7 @@ assert.equal(prepareHabitEdit(original, renamed).group, '事业', 'Renaming reta
 assert.throws(() => prepareHabitEdit(original, domains.filter(domain => domain.id !== 'work')), /重新选择/);
 const uncategorized = prepareHabitEdit({ ...original, group: '未分类', domainId: undefined }, domains);
 assert.equal(uncategorized.domainId, undefined);
-assert.equal(saveHabitEdit(state, uncategorized, domains).items[0].group, '未分类');
+assert.equal(saveHabitEdit(state, uncategorized, domains).items[0].group, '其它');
 const added = saveHabitEdit(state, { ...original, id: 'new' }, domains, true);
 assert.equal(added.items.length, 2);
 assert.throws(() => saveHabitEdit(state, original, domains, true), /已经存在/);
@@ -144,7 +145,7 @@ assert.deepEqual(inline.items[1], inlineSource.items[1], 'Inline edits never rea
 for (const field of Object.keys(inlineSource).filter(key => key !== 'items')) assert.deepEqual(inline[field], inlineSource[field], `Inline edits preserve ${field}`);
 assert.equal(Object.hasOwn(inline.items[0], 'timePeriod'), false, 'Inline edits do not materialize inferred time periods');
 assert.equal(patchHabitDetails(inline, original.id, { field: 'priority', value: 'high' }, domains), inline, 'Selecting the saved priority is a no-op');
-assert.deepEqual(patchHabitDetails(inline, original.id, { field: 'domain', value: '' }, domains).items[0], { ...inline.items[0], domainId: undefined, group: '未分类' });
+assert.deepEqual(patchHabitDetails(inline, original.id, { field: 'domain', value: '' }, domains).items[0], { ...inline.items[0], domainId: undefined, group: '其它' });
 assert.throws(() => patchHabitDetails(inline, original.id, { field: 'domain', value: 'deleted' }, domains), /领域/);
 assert.throws(() => patchHabitDetails(inline, 'deleted', { field: 'priority', value: 'high' }, domains), /移除/);
 assert.deepEqual(JSON.parse(JSON.stringify(inlineSource)), inlineSnapshot, 'Inline changes never mutate input');

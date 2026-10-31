@@ -19,6 +19,7 @@
 
 # production
 /build
+/public/tool-app/
 
 # misc
 .DS_Store

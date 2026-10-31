@@ -176,6 +176,8 @@ try
     settings.NoteField = "thing3";
     assertions += await PomodoroChecks.RunAsync(provider, settings, handler);
     assertions += await SupabaseChecks.RunAsync();
+    await Db(db => MottoIsolationChecks.Run(db, Check));
+    await Db(db => ArticleIsolationChecks.Run(db, Check));
     Console.WriteLine($"PASS: {assertions} checks; isolated SQLite migration, account isolation, scheduling, cancellation, Unicode/timezone payload, fake WeChat delivery and timeout recovery.");
 }
 finally

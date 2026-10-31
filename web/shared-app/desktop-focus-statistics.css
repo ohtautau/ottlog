@@ -1,0 +1,357 @@
+/* Browser-only presentation. Data, timer sizing and form actions stay shared. */
+@media (min-width: 900px) {
+  /* A measured, flexible clock uses the remaining stage rather than a fixed
+     590px card. Its neighbouring controls retain their full desktop targets. */
+  .tool-app-root .tool-page.focus-page.core-page {
+    height: 100%;
+    min-height: 0;
+    max-width: 1280px;
+    margin-inline: auto;
+    overflow: hidden;
+  }
+  .tool-app-root .focus-page .focus-core {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    min-height: 0;
+  }
+  .tool-app-root .focus-page .focus-core.core-screen > .core-content {
+    display: grid;
+    grid-template-rows: 40px 40px minmax(0, 1fr) auto;
+    flex: 1;
+    gap: 10px;
+    height: 0;
+    min-height: 0;
+  }
+  .tool-app-root .focus-page-toolbar,
+  .tool-app-root .focus-toolbar { margin: 0; }
+  .tool-app-root .focus-page-toolbar { min-height: 40px; }
+  .tool-app-root .focus-modes { gap: 6px; }
+  .tool-app-root .focus-page .focus-core .focus-clock-card {
+    display: grid;
+    grid-template-columns: minmax(0, 1.1fr) minmax(280px, .9fr);
+    grid-template-rows: auto minmax(0, 1fr) 52px auto minmax(0, 1fr);
+    align-items: center;
+    gap: 12px 32px;
+    height: 100%;
+    min-height: 0;
+    padding: 18px 24px;
+    overflow: visible;
+  }
+  .tool-app-root .focus-page .focus-core .focus-clock-top {
+    grid-column: 1 / -1;
+    grid-row: 1;
+  }
+  .tool-app-root .focus-page .focus-core .focus-live,
+  .tool-app-root .focus-page .focus-core .focus-rounds { font-size: 14px; }
+  .tool-app-root .focus-page .focus-domain-row {
+    grid-column: 2;
+    grid-row: 2;
+    align-self: end;
+    margin: 0;
+  }
+  .tool-app-root .focus-page .focus-timer-stage {
+    grid-column: 1;
+    grid-row: 2 / 6;
+    align-self: stretch;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    height: 100%;
+    min-height: 0;
+    max-height: none;
+    margin: 0;
+  }
+  .tool-app-root .focus-page .focus-tomato-scene .focus-dial-kind {
+    font-size: 14px !important;
+  }
+  .tool-app-root .focus-page .focus-purpose-slot {
+    grid-column: 2;
+    grid-row: 3;
+    width: 100%;
+    max-width: none;
+    margin: 0;
+  }
+  .tool-app-root .focus-page .focus-action-area {
+    grid-column: 2;
+    grid-row: 4;
+    display: flex;
+    align-items: stretch;
+    gap: 8px;
+    width: 100%;
+    max-width: none;
+    margin: 0;
+  }
+  .tool-app-root .focus-page .focus-primary-actions,
+  .tool-app-root .focus-page .focus-end-slot {
+    flex: 1;
+    min-width: 0;
+    height: auto;
+    margin: 0;
+  }
+  .tool-app-root .focus-page .focus-end-slot:has(> .focus-end-space) { display: none; }
+  .tool-app-root .focus-page .focus-feedback-slot {
+    height: auto;
+    max-height: 40px;
+    min-height: 0;
+    margin: 0;
+    overflow-y: auto;
+  }
+
+  /* The four duration wheels have one shared body and a permanently reachable
+     action bar. Short screens scroll the body without moving the save action. */
+  .tool-app-root .focus-settings-overlay,
+  .tool-app-root .focus-selection-overlay {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+  }
+  .tool-app-root .focus-settings {
+    display: flex;
+    flex-direction: column;
+    width: min(720px, calc(100vw - 48px));
+    max-width: 720px;
+    height: auto;
+    max-height: calc(100dvh - 48px);
+    min-height: 0;
+  }
+  .tool-app-root .focus-settings-heading,
+  .tool-app-root .focus-settings-actions { flex: none; }
+  .tool-app-root .focus-settings-scroll {
+    flex: 0 1 auto;
+    min-height: 0;
+    height: auto;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+  }
+  .tool-app-root .focus-settings-fields { padding: 8px 20px 12px; }
+  .tool-app-root .focus-settings-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 0;
+  }
+  .tool-app-root .focus-settings-grid > div { min-width: 0; }
+  .tool-app-root .focus-transition-picker { margin-top: 4px; }
+  .tool-app-root .focus-settings-actions { padding-inline: 20px; }
+  .tool-app-root .focus-quick-window {
+    width: min(360px, calc(100vw - 48px));
+    max-width: 360px;
+    max-height: calc(100dvh - 48px);
+    border-color: var(--desktop-panel-border);
+    border-radius: var(--desktop-panel-radius);
+  }
+  .tool-app-root .focus-selection-sheet {
+    position: relative;
+    inset: auto;
+    width: min(880px, calc(100vw - 48px));
+    max-width: 880px;
+    height: min(700px, calc(100dvh - 48px));
+    max-height: calc(100dvh - 48px);
+    margin: 0;
+    border: 1px solid #4c6179;
+    border-radius: 18px;
+    box-shadow: 0 24px 90px #04091188;
+  }
+  .tool-app-root .focus-selection-tools,
+  .tool-app-root .focus-selection-footer { flex: none; }
+  .tool-app-root .focus-selection-scroll { min-height: 0; overflow-y: auto; }
+  .tool-app-root .focus-selection-content { padding: 16px 20px; }
+  .tool-app-root .focus-selection-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 10px;
+  }
+  .tool-app-root .focus-selection-option { min-height: 76px; }
+
+  /* Six categories stay above an independently sized dashboard. Each analysis
+     or history card owns its overflow; neither the document nor the complete
+     statistics page becomes a long mobile column. */
+  .tool-app-root .statistics-page {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    height: 100%;
+    min-height: 0;
+    overflow: hidden;
+    padding: 0;
+  }
+  .tool-app-root .statistics-header { display: none; }
+  .tool-app-root .statistics-tabs-scroll {
+    flex: none;
+    width: 100%;
+    min-height: 40px;
+    margin: 0;
+    overflow: visible !important;
+  }
+  .tool-app-root .statistics-tabs {
+    display: grid;
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+    width: 100%;
+    min-width: 0;
+    gap: 6px;
+    padding: 0;
+  }
+  .tool-app-root .statistics-tabs > button {
+    min-width: 0;
+    min-height: 40px;
+    font-size: 14px;
+  }
+  .tool-app-root .statistics-state { min-height: 0; overflow-y: auto; }
+  .tool-app-root .statistics-content {
+    display: grid;
+    grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr);
+    grid-template-rows: minmax(0, 1fr) auto;
+    gap: 12px 16px;
+    flex: 1;
+    min-width: 0;
+    min-height: 0;
+    overflow: hidden;
+  }
+  .tool-app-root .statistics-content > .statistics-insights {
+    grid-column: 1;
+    grid-row: 1;
+  }
+  .tool-app-root .statistics-content > :is(.activity-analysis,.statistics-habits,.statistics-domains,.statistics-growth) {
+    grid-column: 2;
+    grid-row: 1;
+  }
+  .tool-app-root .statistics-content > :is(.statistics-insights,.activity-analysis,.statistics-habits,.statistics-domains,.statistics-growth,.focus-history-card,.focus-reminders) {
+    min-width: 0;
+    min-height: 0;
+    max-height: 100%;
+    margin: 0;
+    padding: 16px;
+    border: 1px solid #354c5b;
+    border-radius: 14px;
+    background: #192b36;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    scrollbar-gutter: stable;
+  }
+  .tool-app-root .statistics-content > .statistics-source-note {
+    grid-column: 1 / -1;
+    grid-row: 2;
+    margin: 0;
+    max-height: 40px;
+    overflow-y: auto;
+    font-size: 12px;
+    line-height: 1.5;
+  }
+  .tool-app-root .statistics-content > .statistics-insights {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    align-content: start;
+    align-items: start;
+    gap: 14px;
+  }
+  .tool-app-root .statistics-insight-heading { min-height: 40px; }
+  .tool-app-root .statistics-insight-metrics {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 12px;
+    margin: 0;
+  }
+  .tool-app-root .statistics-insight-metric-value { font-size: 24px; }
+  .tool-app-root .statistics-insight-metric-label { font-size: 14px; }
+  .tool-app-root .statistics-insight-chart { margin: 0; }
+  .tool-app-root .statistics-insight-chart-heading .section-title { font-size: 14px; }
+  .tool-app-root .statistics-insight-day-track { height: 88px; }
+  .tool-app-root .statistics-insight-distribution { max-height: 228px; overflow-y: auto; }
+  .tool-app-root .statistics-insight-findings { margin: 0; }
+  .tool-app-root .statistics-insight-findings > span:not(.section-title) { font-size: 14px; line-height: 1.6; }
+  .tool-app-root .statistics-insight-point { padding: 8px; }
+  .tool-app-root .statistics-page .activity-analysis { padding: 16px; }
+  .tool-app-root .statistics-page .analysis-kpis { margin: 12px 0 16px; }
+  .tool-app-root .statistics-page .analysis-chart-title { margin: 12px 0 6px; }
+  .tool-app-root .statistics-page .analysis-track { height: 84px; }
+  .tool-app-root .statistics-page .analysis-column { min-width: 40px; }
+  .tool-app-root .statistics-page .analysis-bar { min-height: 40px; padding: 8px; margin: 0 0 4px; }
+  .tool-app-root .statistics-page .analysis-detail-scroll { height: 180px; max-height: 180px; }
+  .tool-app-root .statistics-page :is(.analysis-findings,.analysis-details) { padding: 10px; margin: 12px 0; }
+
+  /* Focus retains both the original analysis and complete record/notification
+     controls. On medium desktops these are three bounded right-hand panels. */
+  .tool-app-root .statistics-content:has(> .focus-history-card) {
+    grid-template-rows: minmax(0, 1fr) minmax(0, 1fr) minmax(90px, .55fr) auto;
+  }
+  .tool-app-root .statistics-content:has(> .focus-history-card) > .statistics-insights { grid-row: 1 / 4; }
+  .tool-app-root .statistics-content:has(> .focus-history-card) > .activity-analysis { grid-row: 1; }
+  .tool-app-root .statistics-content > .focus-history-card { grid-column: 2; grid-row: 2; }
+  .tool-app-root .statistics-content > .focus-reminders { grid-column: 2; grid-row: 3; }
+  .tool-app-root .statistics-content:has(> .focus-history-card) > .statistics-source-note { grid-row: 4; }
+  .tool-app-root .focus-history-card { display: flex; flex-direction: column; gap: 6px; }
+  .tool-app-root .focus-history-card > :not(.focus-record-list) { flex: none; }
+  .tool-app-root .focus-history-card :is(.focus-history-day-scroll,.focus-history-heading,.focus-record-filters) { margin: 0; }
+  .tool-app-root .focus-history-card .focus-record-list {
+    flex: 1;
+    min-height: 100px;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+  }
+  .tool-app-root .focus-history-card .focus-record { flex: none; }
+  .tool-app-root .focus-history-card .focus-background-hint { margin: 0; }
+
+  /* Secondary statistics retain all historical content in their own panels. */
+  .tool-app-root .statistics-habit-summary { margin: 0 0 12px; padding: 10px 12px; }
+  .tool-app-root .statistics-habit-summary > .section-title { margin: 0 0 4px; }
+  .tool-app-root .statistics-habits > .statistics-section-title { margin: 8px 0; }
+  .tool-app-root .statistics-habit-choices { padding: 0 0 6px; gap: 6px; }
+  .tool-app-root .statistics-habit-choice { max-width: 240px; padding: 6px 10px; }
+  .tool-app-root .statistics-selected-name { margin: 8px 0; font-size: 16px; }
+  .tool-app-root .statistics-page .habit-calendar { max-width: none; margin-top: 0; }
+  .tool-app-root .statistics-page .habit-calendar-stats { padding: 8px 4px; }
+  .tool-app-root .statistics-page .habit-calendar-stats > div { gap: 3px; }
+  .tool-app-root .statistics-page .habit-calendar-panel { padding: 4px 8px; }
+  .tool-app-root .statistics-page .habit-calendar-day { min-height: 40px; }
+  .tool-app-root .statistics-page .habit-calendar-log { padding-top: 12px; }
+  .tool-app-root .statistics-domain-choices {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 8px;
+    margin: 8px 0 12px;
+    max-height: 40%;
+    overflow-y: auto;
+  }
+  .tool-app-root .statistics-domain-choice {
+    min-height: 88px;
+    gap: 4px;
+    padding: 10px;
+    font-size: 14px;
+  }
+  .tool-app-root .statistics-domain-history { margin: 0; padding: 12px; }
+  .tool-app-root .statistics-domain-history > .statistics-section-title { margin: 0 0 8px; }
+  .tool-app-root .statistics-growth .statistics-growth-domains {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+  }
+  .tool-app-root .statistics-growth .growth-domain-card { padding: 12px; }
+  .tool-app-root .statistics-growth .growth-domain-name { font-size: 16px; }
+  .tool-app-root .statistics-growth .growth-legend { margin: 12px 0; gap: 8px 12px; }
+  .tool-app-root .statistics-growth .statistics-growth-total { font-size: 13px; }
+  .tool-app-root .statistics-diet-date { margin: 16px 0; }
+}
+
+@media (min-width: 1400px) {
+  .tool-app-root .statistics-content { grid-template-columns: minmax(0, 1.35fr) minmax(0, 1fr); }
+  .tool-app-root .statistics-insight-metrics { grid-template-columns: repeat(6, minmax(0, 1fr)); }
+  .tool-app-root .statistics-content:has(> .focus-history-card) {
+    grid-template-columns: minmax(0, 1.6fr) minmax(0, 1fr) minmax(0, 1fr);
+    grid-template-rows: minmax(0, 1fr) minmax(100px, .35fr) auto;
+  }
+  .tool-app-root .statistics-content:has(> .focus-history-card) > .statistics-insights { grid-column: 1; grid-row: 1 / 3; }
+  .tool-app-root .statistics-content:has(> .focus-history-card) > .activity-analysis { grid-column: 2; grid-row: 1 / 3; }
+  .tool-app-root .statistics-content:has(> .focus-history-card) > .focus-history-card { grid-column: 3; grid-row: 1; }
+  .tool-app-root .statistics-content:has(> .focus-history-card) > .focus-reminders { grid-column: 3; grid-row: 2; }
+  .tool-app-root .statistics-content:has(> .focus-history-card) > .statistics-source-note { grid-row: 3; }
+  .tool-app-root .statistics-content:has(> .focus-history-card) .statistics-insight-metrics { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .tool-app-root .statistics-content:has(> .focus-history-card) .statistics-insight-chart { grid-column: 1 / -1; }
+}
+
+@media (min-width: 900px) and (max-height: 700px) {
+  .tool-app-root .focus-page .focus-core.core-screen > .core-content { gap: 6px; }
+  .tool-app-root .focus-page .focus-core .focus-clock-card { padding: 10px 16px; gap: 8px 20px; }
+  .tool-app-root .focus-page .focus-feedback-slot { max-height: 24px; }
+  .tool-app-root .focus-settings-overlay { padding: 12px; }
+  .tool-app-root .focus-settings { height: auto; max-height: calc(100dvh - 24px); }
+  .tool-app-root .focus-settings-grid { gap: 8px 20px; }
+  .tool-app-root .statistics-content { gap: 8px 12px; }
+  .tool-app-root .statistics-content > :is(.statistics-insights,.activity-analysis,.statistics-habits,.statistics-domains,.statistics-growth,.focus-history-card,.focus-reminders) { padding: 12px; }
+}

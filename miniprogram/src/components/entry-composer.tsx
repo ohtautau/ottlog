@@ -50,6 +50,10 @@ export default function EntryComposer({ initialMode, preferLastCreatedMode = fal
   const domains = usePersonalToolState('domains', initialDomainState);
   const catalog = useEntryTags();
   const [draft, setDraft] = useState<EntryDraft | null>(null);
+  const [pendingDraft] = useState(() => {
+    const value = applyEntryQuadrant(newEntryDraft(initialMode, initialTask, initialDomainId), initialQuadrantId);
+    return initialText ? { ...value, task: { ...value.task, title: initialText }, memo: { ...value.memo, title: initialText } } : value;
+  });
   const [busy, setBusy] = useState(false), [imageBusy, setImageBusy] = useState(false);
   const [scheduleOpen, setScheduleOpen] = useState(false), [error, setError] = useState('');
   const [info, setInfo] = useState('');
@@ -60,9 +64,13 @@ export default function EntryComposer({ initialMode, preferLastCreatedMode = fal
   const draftOwner = useRef(''), mounted = useRef(true), operating = useRef(false), completed = useRef(false), processing = useRef(false);
   const latest = useRef(draft), close = useRef(onClose), initialDraft = useRef('');
   latest.current = draft; close.current = onClose;
-  const owner = todos.owner && todos.owner === memos.owner && todos.owner === domains.owner ? todos.owner : '';
-  const readable = !!owner && todos.ready && memos.ready && domains.ready;
-  const writable = readable && isTodoState(todos.value) && isMemoState(memos.value) && isDomainState(domains.value);
+  const mode = draft?.mode || initialMode;
+  const sources = { task: todos, memo: memos, progress: domains };
+  const validSources = { task: isTodoState(todos.value), memo: isMemoState(memos.value), progress: isDomainState(domains.value) };
+  const owner = sources[mode].owner;
+  const readable = !!owner && sources[mode].ready;
+  const writable = readable && validSources[mode] && !Object.values(sources).some(source => source.owner && source.owner !== owner);
+  const modeReady = (kind: EntryMode) => sources[kind].ready && sources[kind].owner === owner && validSources[kind];
   const current = useRef({ owner, writable, owners: [todos.owner, memos.owner, domains.owner] });
   current.current = { owner, writable, owners: [todos.owner, memos.owner, domains.owner] };
   const locked = busy || imageBusy || !writable || owner !== draftOwner.current;
@@ -97,7 +105,6 @@ export default function EntryComposer({ initialMode, preferLastCreatedMode = fal
       close.current('account'); return;
     }
     if (!writable || draftOwner.current) return;
-    draftOwner.current = owner;
     try {
       let requestedMode = initialMode;
       if (preferLastCreatedMode) {
@@ -107,12 +114,16 @@ export default function EntryComposer({ initialMode, preferLastCreatedMode = fal
         } catch { /* A missing local preference does not block creation or draft recovery. */ }
       }
       const saved = Taro.getStorageSync(entryDraftKey(owner));
+      // Recover a saved type only after its own data is ready. New tasks do
+      // not wait for unrelated memo/domain requests.
+      if (isEntryDraft(saved) && !modeReady(saved.mode)) return;
       const alreadySaved = isEntryDraft(saved) && (saved.mode === 'task' ? todos.value.tasks.some(task => task.id === saved.task.id) : saved.mode === 'memo' ? memos.value.notes.some(note => note.id === saved.memo.id)
         : progressAlreadySaved(saved, domains.value))
         && !(saved.pendingSave === saved.mode && hasVolatilePersonalTool(entryTool(saved.mode), owner));
       const remaining = alreadySaved && saved.mode === 'progress' && saved.progress ? remainingProgressDraft(saved.progress) : undefined;
       const restoring = isEntryDraft(saved) && (!alreadySaved || !!remaining);
       const source = remaining ? { ...saved, progress: remaining, pendingSave: undefined, task: { ...saved.task, title: remaining.positive.content }, memo: { ...saved.memo, title: remaining.positive.content } } : saved;
+      if (!modeReady(restoring && source.pendingSave ? source.pendingSave : requestedMode)) return;
       let next = applyEntryQuadrant(restoring ? switchEntryMode(source, source.pendingSave || requestedMode) : newEntryDraft(requestedMode, initialTask, initialDomainId), initialQuadrantId);
       if (initialDomainId !== undefined && next.progress && !next.pendingSave) next = { ...next, progress: { ...next.progress, domainId: initialDomainId } };
       if (next.pendingSave) setRetryMode(next.pendingSave);
@@ -130,9 +141,10 @@ export default function EntryComposer({ initialMode, preferLastCreatedMode = fal
         if (appendedToDraft) setInfo('已恢复草稿，新输入已追加到内容');
         next = { ...next, captureText: initialText };
       }
+      draftOwner.current = owner;
       initialDraft.current = editableEntrySignature(next); setDraft(next);
     } catch { draftOwner.current = ''; setError('草稿读取失败，请重试'); }
-  }, [owner, writable, todos.owner, memos.owner, domains.owner]);
+  }, [owner, writable, todos.owner, memos.owner, domains.owner, todos.ready, memos.ready, domains.ready]);
   useEffect(() => {
     if (!draft || !draftOwner.current || completed.current) return;
     try { storeDraft(draft, draftOwner.current); }
@@ -153,7 +165,7 @@ export default function EntryComposer({ initialMode, preferLastCreatedMode = fal
   }
   function changeMode(kind: EntryMode) {
     swipe.current = null;
-    if (!canSwitchMode()) return;
+    if (!canSwitchMode() || !modeReady(kind)) return;
     setSlide(null); setFocusReady(false); setFocusRequested(false);
     void Taro.hideKeyboard().catch(() => {});
     if (latest.current!.mode === kind) return;
@@ -174,7 +186,7 @@ export default function EntryComposer({ initialMode, preferLastCreatedMode = fal
     if (!Number.isFinite(movement.dx) || !Number.isFinite(movement.dy) || Math.abs(movement.dy) >= 8 && Math.abs(movement.dy) >= Math.abs(movement.dx)) { swipe.current = null; setSlide(null); return; }
     if (!movement.horizontal && (Math.abs(movement.dx) < 8 || Math.abs(movement.dx) < Math.abs(movement.dy) * 1.5)) return;
     const kind = entryModes[entryModes.indexOf(movement.mode) + (movement.dx < 0 ? 1 : -1)];
-    if (!kind) { setSlide(null); return; }
+    if (!kind || !modeReady(kind)) { setSlide(null); return; }
     if (!movement.horizontal) { movement.horizontal = true; setFocusReady(false); setFocusRequested(false); void Taro.hideKeyboard().catch(() => {}); }
     const width = Taro.getWindowInfo().windowWidth;
     setSlide({ offset: Math.max(-width, Math.min(width, movement.dx)), mode: kind });
@@ -264,14 +276,18 @@ export default function EntryComposer({ initialMode, preferLastCreatedMode = fal
     }
     finally { operating.current = false; if (mounted.current) setBusy(false); }
   }
-  const today = localToolDay(), mode = draft?.mode || initialMode, autoFocus = focusRequested && focusReady;
+  const today = localToolDay(), autoFocus = focusRequested && focusReady;
   const previewDraft = draft && slide ? switchEntryMode(draft, slide.mode) : null;
   return <>
     <View className='todo-overlay entry-overlay' catchMove><View className='todo-backdrop' onClick={closeGuard.requestClose} /><View className={`entry-composer todo-sheet${mode === 'memo' ? ' memo-sheet' : ''}`} role='dialog' ariaLabel='创建任务、备忘或记录进展' data-entry-swipe='true' onTouchStart={swipeStart} onTouchMove={swipeMove} onTouchEnd={swipeEnd} onTouchCancel={() => { swipe.current = null; setSlide(null); }}>
-      <EditorHeading className='todo-sheet-heading entry-heading' title={null} titleContent={<View className='entry-modes' data-entry-swipe='true'>{entryModes.map(kind => <ChoiceButton key={kind} className={`button-label entry-mode${mode === kind ? ' is-active' : ''}`} ariaLabel={`创建类型：${modeLabel(kind)}`} aria-pressed={mode === kind} disabled={locked || !!retryMode && retryMode !== kind} onClick={() => changeMode(kind)}>{modeLabel(kind)}</ChoiceButton>)}</View>} actions={<ActionButton appearance='icon' className='button-label todo-sheet-close' ariaLabel='关闭编辑' disabled={busy || imageBusy} onClick={closeGuard.requestClose}>×</ActionButton>} />
+      <EditorHeading className='todo-sheet-heading entry-heading' title={null} titleContent={<View className='entry-modes' data-entry-swipe='true'>{entryModes.map(kind => <ChoiceButton key={kind} className={`button-label entry-mode${mode === kind ? ' is-active' : ''}`} ariaLabel={`创建类型：${modeLabel(kind)}`} aria-pressed={mode === kind} disabled={locked || !modeReady(kind) || !!retryMode && retryMode !== kind} onClick={() => changeMode(kind)}>{modeLabel(kind)}</ChoiceButton>)}</View>} actions={<ActionButton appearance='icon' className='button-label todo-sheet-close' ariaLabel='关闭编辑' disabled={busy || imageBusy} onClick={closeGuard.requestClose}>×</ActionButton>} />
       <ScrollView scrollY className='todo-sheet-scroll entry-scroll' data-entry-swipe='true' enhanced bounces={false} showScrollbar={false}><SwipePanels offset={slide?.offset} direction={slide && entryModes.indexOf(slide.mode) < entryModes.indexOf(mode) ? 'previous' : 'next'} adjacent={previewDraft && isDomainState(domains.value) ? <View className='todo-sheet-fields'><EntryPreview draft={previewDraft} domains={domains.value} /></View> : undefined}><View key={mode} className={`todo-sheet-fields${mode === 'memo' ? ' memo-sheet-body' : ''}`} data-entry-swipe='true'>
         {!!info && <View className='entry-info' role='status'>{info}</View>}
-        {!draft && <View className='entry-load'><Text>{error || (readable && !writable ? '数据格式暂不兼容' : '正在读取…')}</Text><ActionButton className='button-label tool-secondary' onClick={() => { setError(''); todos.retry(); memos.retry(); domains.retry(); }}>重试</ActionButton></View>}
+        {!draft && <><View className='entry-load' role='status'><Text>{error || (readable && !writable ? '当前类型的数据格式暂不兼容' : '正在确认账号与草稿…')}</Text><ActionButton className='button-label tool-secondary' onClick={() => { setError(''); sources[mode].retry(); }}>重试</ActionButton></View>
+          {mode === 'task' && <TodoEditorFields draft={pendingDraft.task} onChange={() => {}} tagsText={pendingDraft.tagsText} onTagsChange={() => {}} tagOptions={[]} disabled owner='' onBusyChange={() => {}} today={today} scheduleOpen={false} onSchedule={() => {}} />}
+          {mode === 'memo' && <MemoEditorFields draft={pendingDraft.memo} onChange={() => {}} tagsText={pendingDraft.tagsText} onTagsChange={() => {}} tagOptions={[]} disabled owner='' onBusyChange={() => {}} />}
+          {mode === 'progress' && pendingDraft.progress && <ProgressEditorFields draft={pendingDraft.progress} state={initialDomainState} owner='' disabled onBusyChange={() => {}} onChange={() => {}} />}
+        </>}
         {draft && slide && isDomainState(domains.value) && <EntryPreview draft={draft} domains={domains.value} />}
         {draft && !slide && mode === 'task' && <TodoEditorFields key={draft.task.id} autoFocus={autoFocus && !retryMode && !scheduleOpen} draft={draft.task} onChange={task => { if (!busy && current.current.writable && current.current.owner === draftOwner.current) { setError(''); setDraft({ ...draft, task }); } }} tagsText={draft.tagsText} onTagsChange={tagsText => update({ ...draft, tagsText })} tagOptions={catalog.owner === owner ? catalog.tags : []} disabled={locked} owner={draftOwner.current} onBusyChange={imagesBusy} today={today} scheduleOpen={scheduleOpen} onSchedule={() => { setFocusReady(false); void Taro.hideKeyboard().catch(() => {}); setScheduleOpen(true); }} />}
         {draft && !slide && mode === 'memo' && <MemoEditorFields key={draft.memo.id} autoFocus={autoFocus && !retryMode} draft={draft.memo} onChange={memo => { if (!busy && current.current.writable && current.current.owner === draftOwner.current) { setError(''); setDraft({ ...draft, memo }); } }} tagsText={draft.tagsText} onTagsChange={tagsText => update({ ...draft, tagsText })} tagOptions={catalog.owner === owner ? catalog.tags : []} disabled={locked} owner={draftOwner.current} onBusyChange={imagesBusy} />}

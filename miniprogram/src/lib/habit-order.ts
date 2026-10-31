@@ -55,6 +55,8 @@ export function applyHabitOrder(items: Reminder[], ids: string[]): Reminder[] {
   return items.map(item => included.has(item.id) ? ordered[index++] : item);
 }
 
+/** All enabled, unfinished habits; never checked first, then longest local-day gap.
+ * The list viewport owns capacity, so suggestions must not be truncated here. */
 export function longestUncheckedHabits(state: ReminderState, now = Date.now()): Reminder[] {
   return state.items.filter(item => item.enabled)
     .map((item, index) => ({ item, index, gap: habitCompletionStats(state, item.id, now).daysSinceLast }))
@@ -64,5 +66,5 @@ export function longestUncheckedHabits(state: ReminderState, now = Date.now()): 
       if (a.gap === null) return -1;
       if (b.gap === null) return 1;
       return b.gap - a.gap;
-    }).slice(0, 2).map(row => row.item);
+    }).map(row => row.item);
 }

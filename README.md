@@ -2,13 +2,29 @@
 
 Next.js + TypeScript 响应式博客、ASP.NET Core Web API、SQLite 和 Taro 微信小程序。通过 Visual Studio 统一管理三个项目。
 
+正式网页：[ohtautau.com](https://ohtautau.com)；小程序API：[api.ohtautau.com](https://api.ohtautau.com/health)。服务位于新加坡，小程序默认HTTPS直连，不依赖电脑3300隧道；小程序暂未发布，开发者工具验收状态及部署方式见[直连与正式网页](docs/api-direct-access.md)。
+
+## 目录与入口
+
+| 目录 | 用途 |
+| --- | --- |
+| `miniprogram/` | Taro 小程序源码、构建配置和验证脚本；当前主要开发入口 |
+| `web/` | Next.js 网站，独立依赖与构建 |
+| `backend/Ottlog.Api/` | 共用 .NET API、解决方案与数据库迁移 |
+| `deploy/`、`supabase/` | 容器部署配置与 Supabase 迁移 |
+| `docs/` | 使用、开发、调试和决策文档 |
+| `scripts/` | 仓库级备份、导出和健康检查工具 |
+| `content/`、`logos/` | 内容来源和品牌设计素材 |
+
+本机依赖放在 `.tools/`，验证输出放在 `artifacts/` 或各项目 `test-results/`，备份放在 `backups/`，本地状态保留在 `local-state/`；这些内容不提交、不进入 Docker 构建上下文。详见[目录与文件管理](docs/repository-layout.md)。
+
 ## 开发文档
 
 开发前阅读 [AGENTS.md](AGENTS.md)、[Design.md](Design.md) 和 [开发说明](docs/development.md)。2026-10-04 已确认后续功能开发仅修改小程序；12 项正式规则、当前实现缺口及已知工程问题集中在 [决策记录](docs/decisions.md)，完整索引见 [文档目录](docs/README.md)。
 
 ## 本地启动
 
-网页首页现为选境风格的常用功能入口。「吃什么」支持 Tau 餐单双选淘汰、116 条中英文食物的问题推荐及选择记录；「创建任务」写完后直接选入四象限。详见 [日常 options 网页](docs/options-web.md)。新增餐单使用 Tau 的管理员账号；已运行的后端须重启以加载 `dining` 数据接口。
+网页根地址直接进入今日`/today`，原选项页保留在`/options`；日常工具整合进原网站导航，包含今日、任务、便签、领域、习惯、专注、统计和格言。共用小程序业务代码直接挂载到原网页，以电脑宽屏为主并自适应小屏；保存沿原账号与共用API。「吃什么」及「餐单与游戏」已退役，饮食功能也已在两端退役，`/eat`、`/eat/legacy`和`/meals`转到`/today`，旧存档保留兼容。详见[网页功能对齐](docs/web-parity.md)及[选境与网页入口](docs/options-web.md)。
 
 1. 安装 .NET 10 SDK、Node.js 24，以及 VS 的 ASP.NET/Web 开发、JavaScript/TypeScript 项目组件。
 2. 打开 `backend/Ottlog.Api/Ottlog.slnx`，将 `Ottlog.Api` 设为启动项目。
@@ -80,13 +96,13 @@ npm.cmd run build:weapp
 
 ## 小程序与部署状态
 
-小程序已迁入吃什么、四象限待办、习惯打卡、番茄钟、备忘录、九步选境及饮食记录，并提供领域目标与记录。底部导航为「今日、待办、领域、习惯、我的」，登录同一账号可复用已有双端工具数据；未登录记录保存在本机。录入使用底部编辑器，文章收藏/分享/留言保持在底部可达位置。完整迁移范围、预览与真机检查见 [小程序使用说明](docs/miniprogram.md)。
+小程序包含四象限待办、习惯打卡、番茄钟、备忘录、九步选境、领域目标与统计；今日食选已按 C266 从小程序移除。底部导航为「今日、待办、领域、习惯、我的」。完整范围、预览与真机检查见 [小程序使用说明](docs/miniprogram.md)。
 
 待办支持红黄蓝绿四象限、循环任务、顺序下一步和每区已完成折叠，见 [任务使用说明](docs/todo-miniprogram.md)。微信订阅提醒已完成代码接入，当前默认关闭；模板和服务端凭据配置见 [微信提醒配置](docs/wechat-reminders.md)。
 
 首页「开始番茄钟」点击即开始，默认 25 分钟专注、5 分钟休息、每四轮后 15 分钟长休息，支持自定义和三种节点通知。见 [番茄钟使用说明](docs/pomodoro-miniprogram.md)；微信通知需按 [番茄钟通知配置](docs/wechat-pomodoro.md) 开通。
 
-小程序源码在 `miniprogram/`，生成内容在 `miniprogram/dist/`。微信开发者工具导入 `miniprogram`，本地模拟器运行 `npm.cmd run build:local`（在 miniprogram 目录）或 `dev:weapp` 自动编译，连接 `http://127.0.0.1:5229`。本地脚本仅在忽略的 project.private.config.json 中关闭域名校验。正式构建仍用 `build:weapp`，默认连接 `https://ohtautau.com`，需真实 AppID 和合法 HTTPS 请求域名。`TARO_APP_API_BASE_URL` 可覆盖接口地址，更改后重新构建。详见 [小程序使用说明](docs/miniprogram.md)。
+小程序源码在 `miniprogram/`，产物在 `miniprogram/dist/`。在 miniprogram 目录运行 `npm.cmd run debug:config` 可同步三个开发者工具入口的本地配置；推荐导入 `miniprogram/dist`。模拟器用 `build:local` 或 `dev:weapp`，默认连接 `http://127.0.0.1:5229`。真机用 `build:device` 并显式提供手机可达接口；正式构建用 `build:weapp`，默认 `https://ohtautau.com`，需有效 HTTPS 接口和后台合法域名。`TARO_APP_API_BASE_URL` 可覆盖接口，更改后重新构建。详见[真机调试](docs/device-debugging.md)。
 
 `deploy/compose.yml`、`deploy/Caddyfile` 与前后端 Dockerfile 已准备，生产配置指向 ohtautau.com。服务器、HTTPS 域名配置、真实小程序 AppID 和微信上线审核尚未完成；编译成功不代表真机验收或正式上线。Taro 依赖仍有审计告警，不能宣称依赖安全审计全部通过。
 

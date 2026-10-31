@@ -1,0 +1,30 @@
+# Private preview: compose.preview.yml only publishes to server loopback.
+# The external transport is the authenticated SSH tunnel. Never expose this
+# listener publicly; use the regular HTTPS Caddyfile after filing is complete.
+:80 {
+    encode zstd gzip
+    header {
+        X-Content-Type-Options nosniff
+        X-Frame-Options DENY
+        Referrer-Policy strict-origin-when-cross-origin
+        X-Robots-Tag "noindex, nofollow"
+    }
+    @api path /api/* /images/* /health /health/ready
+    handle @api {
+        reverse_proxy api:8080 {
+            header_up X-Forwarded-Proto https
+        }
+    }
+    handle /feed.xml {
+        rewrite * /api/feed
+        reverse_proxy api:8080 {
+            header_up X-Forwarded-Proto https
+        }
+    }
+    handle {
+        reverse_proxy web:3000 {
+            header_up X-Forwarded-Proto https
+        }
+    }
+    log
+}

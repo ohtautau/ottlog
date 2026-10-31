@@ -54,8 +54,8 @@ module.exports = async function checkPomodoroWorkflow({ page: parentPage, origin
     await page.locator('#page-core .focus-settings-toggle').click();
     await expect(page.locator('.page-scroll .focus-settings')).toHaveCount(0);
     expect(await page.locator('.page-scroll').evaluate(node => node.scrollTop)).toBe(scrollBefore);
-    const inputs = page.locator('.focus-settings-input input');
-    for (let index = 0; index < values.length; index++) await inputs.nth(index).fill(String(values[index]));
+    const inputs = page.locator('.focus-settings .time-wheel select');
+    for (let index = 0; index < values.length; index++) await inputs.nth(index).selectOption(String(values[index]));
     const bounds = await page.locator('.focus-settings').evaluate(sheet => {
       const box = node => { const rect = node.getBoundingClientRect(); return { top: rect.top, bottom: rect.bottom, left: rect.left, right: rect.right }; };
       return { sheet: box(sheet), footer: box(sheet.querySelector('.focus-settings-actions')), viewport: box(document.querySelector('.preview-content')), overflow: sheet.scrollWidth - sheet.clientWidth };
@@ -79,11 +79,12 @@ module.exports = async function checkPomodoroWorkflow({ page: parentPage, origin
     expect(await page.locator('.page-scroll').evaluate(node => node.scrollTop)).toBe(scrollBefore);
   }
   async function loginScenario(name, resultByTemplate) {
-    await page.goto(`${origin}/?pomodoro-${name}-${width}#/pages/favorites/index`);
+    await page.goto(`${origin}/?pomodoro-${name}-${width}#/pages/index/index`);
+    await page.getByRole('button', { name: /^打开账号窗口/ }).click();
     await page.getByPlaceholder('输入博客账号').fill('preview-reader');
     await page.getByPlaceholder('输入密码', { exact: true }).fill('fixture-only-password');
     await page.getByRole('button', { name: '登录并同步', exact: true }).click();
-    await expect(page.locator('.account-user-name')).toHaveText('preview-reader');
+    await expect(page.locator('.account-window-name')).toHaveText('preview-reader');
     await page.evaluate(results => {
       window.__miniFixture.pomodoroConfig = { enabled: true, requiresSubscription: true, templates: [
         { event: 'focus_start', templateId: 'preview-focus-start' },
@@ -93,11 +94,11 @@ module.exports = async function checkPomodoroWorkflow({ page: parentPage, origin
       window.__miniFixture.subscriptionResults = results;
       location.hash = '#/pages/index/index';
     }, resultByTemplate || {});
-    await expect(page.getByRole('button', { name: '开始番茄钟', exact: true })).toBeVisible();
+    await expect(page.getByRole('button', { name: '专注', exact: true })).toBeVisible();
     await expect.poll(() => page.evaluate(() => window.__miniRequests.some(request => request.path === '/wechat/pomodoro/config'))).toBe(true);
     // The home page preloads consent configuration; complete the adapter's 15 ms requests.
     await page.clock.runFor(100);
-    await page.getByRole('button', { name: '开始番茄钟', exact: true }).click();
+    await page.getByRole('button', { name: '专注', exact: true }).click();
     await expect(page.locator('.focus-live')).toContainText('正在计时');
   }
 
@@ -270,14 +271,9 @@ module.exports = async function checkPomodoroWorkflow({ page: parentPage, origin
     await expectSummary(0);
     await page.getByRole('button', { name: '修改当前计时时长', exact: true }).click();
     const minutes = page.getByLabel('本次计时分钟', { exact: true });
-    await expect(minutes).toBeFocused();
-    expect(await minutes.evaluate(node => [node.selectionStart, node.selectionEnd])).toEqual([0, 2]);
-    // Type without clicking/filling the field: the original 25 must be replaced.
-    await page.keyboard.type('0');
-    await expect(minutes).toHaveValue('0');
-    await page.getByRole('button', { name: '确认', exact: true }).click();
-    await expect(page.locator('.focus-settings-error')).toContainText('1 至 120');
-    await page.getByLabel('本次计时分钟', { exact: true }).fill('7');
+    await expect(minutes).not.toBeFocused();
+    await expect(minutes.locator('option')).toHaveText(Array.from({ length: 120 }, (_, i) => String(i + 1)));
+    await minutes.selectOption('7');
     const quickFooterPadding = await page.locator('.focus-quick-window .sheet-actions').evaluate(node => parseFloat(getComputedStyle(node).paddingBottom));
     expect(quickFooterPadding).toBe(8);
     await page.locator('.focus-quick-overlay .sheet-backdrop').click({ position: { x: 4, y: 4 } });
@@ -286,16 +282,15 @@ module.exports = async function checkPomodoroWorkflow({ page: parentPage, origin
     await page.getByRole('button', { name: '关闭时长设置', exact: true }).click(); await discard();
     await expect(page.locator('.focus-time')).toHaveText('25:00');
     await page.getByRole('button', { name: '修改当前计时时长', exact: true }).click();
-    await expect(minutes).toBeFocused();
-    expect(await minutes.evaluate(node => [node.selectionStart, node.selectionEnd])).toEqual([0, 2]);
-    await page.keyboard.type('7');
+    await expect(minutes).not.toBeFocused();
+    await minutes.selectOption('7');
     await expect(minutes).toHaveValue('7');
-    await page.keyboard.type('2');
+    await minutes.selectOption('72');
     await expect(minutes).toHaveValue('72');
-    await minutes.press('Backspace');
+    await minutes.selectOption('7');
     await expect(minutes).toHaveValue('7');
     await page.screenshot({ path: path.join(out, `pomodoro-quick-duration-${width}.png`) });
-    await minutes.press('Enter');
+    await page.getByRole('button', { name: '确认', exact: true }).click();
     await expect(page.locator('.focus-time')).toHaveText('07:00');
     await assertStable();
     await page.locator('.focus-settings-toggle').click();
@@ -453,7 +448,7 @@ module.exports = async function checkPomodoroWorkflow({ page: parentPage, origin
     await require('./check-pomodoro-todo-workflow.cjs')({ page, origin, out, width, expect });
     await require('./check-pomodoro-habit-workflow.cjs')({ page, origin, out, width, expect });
     await page.goto(`${origin}/?pomodoro-unconfigured-${width}#/pages/index/index`);
-    await page.getByRole('button', { name: '开始番茄钟', exact: true }).click();
+    await page.getByRole('button', { name: '专注', exact: true }).click();
     await expect(page.locator('.focus-live')).toContainText('正在计时');
     await expect.poll(async () => (await state())?.active?.totalSeconds).toBe(1500);
     const defaultRun = await state();
@@ -472,7 +467,7 @@ module.exports = async function checkPomodoroWorkflow({ page: parentPage, origin
     const rhythmButton = await page.locator('.focus-settings-toggle').boundingBox();
     expect(rhythmButton.y + rhythmButton.height).toBeLessThanOrEqual((await page.locator('.preview-content').boundingBox()).y + (await page.locator('.preview-content').boundingBox()).height);
     await page.locator('.focus-settings-toggle').click();
-    await page.getByLabel('专注时长', { exact: true }).fill('35');
+    await page.getByLabel('专注时长', { exact: true }).selectOption('35');
     await page.getByRole('button', { name: '关闭节奏设置', exact: true }).click();
     await expect(prompt()).toBeVisible(); await prompt().getByRole('button', { name: '继续编辑', exact: true }).click();
     await expect(page.getByLabel('专注时长', { exact: true })).toHaveValue('35');
@@ -480,14 +475,13 @@ module.exports = async function checkPomodoroWorkflow({ page: parentPage, origin
     expect(await state()).toEqual(defaultRun);
     await page.locator('.focus-settings-toggle').click();
     await expect(page.getByLabel('专注时长', { exact: true })).toHaveValue('25');
-    await page.getByLabel('专注时长', { exact: true }).fill('0');
-    await page.getByRole('button', { name: '保存节奏', exact: true }).click();
-    await expect(page.locator('.focus-settings-error')).toContainText('1 至 120');
+    await expect(page.getByLabel('专注时长', { exact: true }).locator('option')).toHaveText(Array.from({ length: 120 }, (_, i) => String(i + 1)));
+    await page.getByLabel('专注时长', { exact: true }).selectOption('1');
     expect(await state()).toEqual(defaultRun);
     await page.locator('.focus-settings-backdrop').click({ position: { x: 12, y: 12 } });
-    await expect(prompt()).toBeVisible(); await prompt().getByRole('button', { name: '保存', exact: true }).click();
-    await expect(prompt()).toHaveCount(0); await expect(page.locator('.focus-settings-error')).toContainText('1 至 120');
-    await expect(page.getByLabel('专注时长', { exact: true })).toHaveValue('0');
+    await expect(prompt()).toBeVisible(); await prompt().getByRole('button', { name: '继续编辑', exact: true }).click();
+    await expect(prompt()).toHaveCount(0); await expect(page.locator('.focus-settings-error')).toHaveCount(0);
+    await expect(page.getByLabel('专注时长', { exact: true })).toHaveValue('1');
     await page.getByRole('button', { name: '关闭节奏设置', exact: true }).click(); await discard();
     await expect(page.locator('.focus-settings')).toHaveCount(0);
     await settings([1, 1, 2, 2]);

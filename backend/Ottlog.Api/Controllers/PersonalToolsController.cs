@@ -19,7 +19,7 @@ public sealed class PersonalToolsController(BlogDb db, WeChatReminderGate remind
     private readonly IPersonalToolStore tools = toolStore ?? new SqlitePersonalToolStore(db);
     private const int MaximumDataBytes = 1024 * 1024;
     private string Owner => (User.IsInRole("admin") ? "admin:" : "reader:") + User.FindFirstValue(ClaimTypes.NameIdentifier);
-    private static bool IsKnownKey(string key) => key is "meals" or "reminders" or "todos" or "pomodoro" or "memos" or "dining" or "mottos" or "growth" or "domains";
+    private static bool IsKnownKey(string key) => key is "meals" or "reminders" or "todos" or "pomodoro" or "memos" or "dining" or "mottos" or "growth" or "domains" or "articles";
 
     [HttpGet("{key}")]
     public async Task<IActionResult> Get(string key, CancellationToken cancellationToken)

@@ -21,7 +21,7 @@ module.exports = async function checkHabitDeleteUI({ page, origin, out, width, e
   const route = host === 'daily' ? '#/pages/daily/index' : '#/pages/domain-detail/index?id=work';
   await page.evaluate(route => { location.hash = route; }, route);
   if (host === 'daily') { await habitFilter.assertNoStatusRow(); await habitFilter.select('全部'); }
-  const cards = () => page.locator(host === 'daily' ? '.swipe-panel-current .daily-habit-scroll' : '.domain-habit-scroll');
+  const cards = () => page.locator(host === 'daily' ? '.daily-habit-pages > .daily-habit-scroll' : '.domain-habit-scroll');
   await cards().getByRole('button', { name: '查看习惯：待删除习惯', exact: true }).click();
   await page.getByRole('button', { name: '编辑习惯', exact: true }).click();
   const editor = page.getByRole('dialog', { name: '编辑习惯', exact: true });

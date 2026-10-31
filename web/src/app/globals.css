@@ -67,6 +67,9 @@ nav > a:hover { border-bottom-color: var(--accent); }
 .account-menu { position: relative; }
 .account-menu summary { cursor: pointer; max-width: 160px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .account-menu > div { position: absolute; top: 34px; right: 0; z-index: 20; display: grid; gap: 16px; min-width: 180px; background: var(--paper); border: 3px solid var(--line); padding: 20px; box-shadow: 6px 6px 0 var(--shadow); }
+.account-menu-action { display: flex; align-items: center; min-height: 40px; width: 100%; padding: 8px 12px; border: 0; background: transparent; color: inherit; text-align: left; font: inherit; white-space: nowrap; }
+.account-menu-action:not(:disabled):hover { background: var(--soft); color: var(--accent); }
+.account-menu-error { margin: 0; max-width: 22em; color: var(--muted); font-size: 13px; line-height: 1.6; }
 .tools-menu { position: relative; }
 .tools-menu summary { cursor: pointer; list-style: none; padding: 10px 0; white-space: nowrap; }
 .tools-menu summary::-webkit-details-marker { display: none; }
@@ -133,7 +136,7 @@ nav > a:hover { border-bottom-color: var(--accent); }
 .footer-brand { display: inline-flex; gap: 10px; align-items: center; color: var(--ink); font-size: 22px; font-weight: 900; }
 .footer-brand img { display: block; }
 .footer > span:last-child { margin-left: auto; }
-.archive { padding: 50px 0 80px; min-height: 70vh; }
+.archive { padding: 32px 0 48px; min-height: 55vh; }
 .archive h1 { font-size: clamp(40px, 5vw, 64px); line-height: 1.2; font-weight: 900; letter-spacing: -2px; margin: 20px 0; }
 .intro { font-size: 15px; color: var(--muted); line-height: 1.9; }
 .archive-list { max-width: 940px; margin-top: 32px; border-top: 4px solid var(--line); }
@@ -142,7 +145,7 @@ nav > a:hover { border-bottom-color: var(--accent); }
 .search-form label { display: block; font-size: 13px; font-weight: 700; margin-bottom: 8px; }
 .search-form .button { margin: 0; min-height: 48px; }
 .clear-search { font-size: 13px; padding: 14px 0; }
-.empty-state { padding: 32px 0; }
+.empty-state { padding: 24px 16px; color: var(--muted); line-height: 1.7; }
 input:not([type=checkbox]):not([type=radio]):not([type=file]), textarea, select { width: 100%; min-width: 0; padding: 12px; border: 2px solid var(--line); border-radius: 0; background: var(--paper); color: var(--ink); font-size: 16px; }
 input:disabled, textarea:disabled { background: var(--soft); color: var(--muted); }
 input::placeholder, textarea::placeholder { color: var(--muted); opacity: 1; }
@@ -205,7 +208,7 @@ input[type=checkbox] { accent-color: var(--accent); }
 .hint { color: var(--muted); font-size: 12px; line-height: 1.8; }
 .check-label { display: flex!important; gap: 10px; align-items: center; }
 .check-label input { width: 18px; height: 18px; flex: none; }
-.admin-login { max-width: 500px; margin: 50px auto; min-height: 65vh; padding: 28px; border: 3px solid var(--line); background: var(--paper); box-shadow: 7px 7px 0 var(--shadow); }
+.admin-login { max-width: 500px; margin: 32px auto; min-height: 0; padding: 28px; border: 3px solid var(--line); background: var(--paper); box-shadow: 7px 7px 0 var(--shadow); }
 .admin-login h1 { font-size: 36px; font-weight: 900; }
 .admin-login button:not(.button) { margin-top: 14px; }
 .password-form { max-width: 500px; margin-bottom: 24px; }
@@ -484,6 +487,16 @@ nav > a, .brand-wordmark { transition: color 180ms ease, border-color 180ms ease
 .article-sort-controls > label { flex: 1; min-width: 0; margin: 0; }
 .article-sort-controls select { margin-top: 8px; }
 .archive-filters > .article-sort-controls { flex: 1.5 1 270px; }
+@media (max-width: 540px) {
+  .archive { padding-top: 20px; }
+  .archive h1 { margin: 12px 0; font-size: 32px; }
+  .archive .intro { margin: 10px 0; }
+  .archive-filters { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 12px; padding: 16px; }
+  .archive-filters > div { width: auto; }
+  .archive-filters > div:first-child,.archive-filters > .article-sort-controls { grid-column: 1 / -1; }
+  .archive-filters > .button { min-height: 44px; }
+  .archive-filters :is(input,select) { min-height: 44px; padding: 8px; }
+}
 .search-form .article-sort-controls > label { margin-bottom: 0; }
 .category-create { padding: 12px; margin-top: 12px; border: 2px solid var(--line); background: var(--soft); }
 .category-create label { margin-top: 0; }
@@ -687,48 +700,5 @@ body:has([data-home-pages]) > .footer { display: none; }
 body:has([data-tool-page]) > #main { width: 100%; max-width: 2360px; padding-inline: clamp(20px, 4vw, 100px); }
 body:has([data-tool-page]) > .footer { max-width: 2360px; }
 
-/* Single-screen tool workspaces. Document scrolling remains normal on blog pages. */
-body:has([data-tool-workspace]) { height:100dvh; overflow:hidden; display:flex; flex-direction:column; }
-body:has([data-tool-workspace]) > .header { flex:none; }
-body:has([data-tool-workspace]) > #main { flex:1; min-height:0; max-width:none; padding:0 clamp(16px,2.4vw,64px) 16px; overflow:hidden; }
-body:has([data-tool-workspace]) > .footer { display:none; }
-main > [data-tool-workspace] { max-width:none; height:100%; min-height:0; padding:0; display:flex; flex-direction:column; position:relative; gap:10px; overflow:hidden; }
-[data-tool-workspace] > * { flex-shrink:0; min-width:0; }
-[data-tool-workspace] > p:first-child { margin:0; font-size:11px; }
-[data-tool-workspace] > [data-tool-header] { min-height:0; padding:0; margin:0; gap:16px; }
-[data-tool-workspace] [data-tool-header] h1 { font-size:clamp(30px,3vw,48px); line-height:1.15; }
-[data-tool-workspace] [data-tool-header] [data-tool-kicker], [data-tool-workspace] [data-tool-art] { display:none; }
-[data-tool-workspace] [data-tool-header] [data-tool-description] { margin:6px 0 0; font-size:13px; }
-.tool-panel-tabs { display:flex; gap:6px; flex-wrap:wrap; padding:4px 0; }
-.tool-panel-tabs button { padding:9px 18px; border:1px solid #45627f; background:#17283b; color:#b9cce0; font:600 13px/1.4 var(--body-font); cursor:pointer; }
-.tool-panel-tabs button[aria-pressed=true] { background:#8aafff; color:#14243a; border-color:#8aafff; }
-.tool-panel-tabs button:focus-visible { outline:2px solid #e1c699; outline-offset:2px; }
-[data-tool-workspace] .tool-workspace-panel { flex:1; min-height:0; overflow:auto; overscroll-behavior:contain; scrollbar-width:thin; margin:0; }
+/* Tools share the website document, header and footer. */
 [data-tool-workspace] [hidden] { display:none!important; }
-@media(max-width:700px) {
-  body:has([data-tool-workspace]) > #main { padding-inline:12px; padding-bottom:8px; }
-  main > [data-tool-workspace] { gap:6px; }
-  [data-tool-workspace] > [data-tool-header] { flex-wrap:nowrap; }
-  [data-tool-workspace] [data-tool-header] > div:first-child { flex-basis:auto; }
-  [data-tool-workspace] [data-tool-header] h1 { font-size:30px; }
-  [data-tool-workspace] [data-tool-header] [data-tool-description] { display:none; }
-}
-
-body main > [data-tool-workspace] > [data-tool-header] { min-height:0!important; height:auto; margin:0!important; padding:0!important; }
-body main > [data-tool-workspace] > [data-tool-header] > div { padding-block:0; }
-
-.tool-mobile-tabs { display:none; }
-@media(max-width:760px) { .tool-mobile-tabs { display:flex; } }
-
-/* Shared proportions for the fixed-height tool workspaces. */
-body:has([data-tool-workspace]) > .header { height:0; min-height:0; margin:0; padding:0; border:0; background:transparent; }
-body:has([data-tool-workspace]) > #main { padding-top:16px; padding-right:max(64px,2.4vw); }
-@media(max-width:760px) { body:has([data-tool-workspace]) > #main { padding-top:12px; padding-right:44px; } }
-[data-tool-workspace] > [data-tool-transfer], [data-tool-workspace="eat"] > [aria-label="开饭指南数据管理"] { position:absolute; right:0; top:0; margin:0; padding:0; background:transparent; border:0; z-index:3; }
-[data-tool-workspace] [data-tool-transfer] { margin:0; }
-main > [data-tool-workspace] { gap:12px; }
-[data-tool-workspace] > p:first-child { min-height:28px; padding-right:150px; display:flex; align-items:center; }
-body main > [data-tool-workspace] > [data-tool-header] { padding-bottom:4px!important; }
-[data-tool-workspace] [data-tool-header] h1 { font-size:clamp(34px,2.7vw,48px); }
-@media(max-height:800px) { main > [data-tool-workspace] { gap:8px; } }
-@media(max-width:760px) { main > [data-tool-workspace] { gap:6px; } [data-tool-workspace] [data-tool-header] h1 { font-size:30px; } }

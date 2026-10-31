@@ -785,11 +785,12 @@ module.exports = async function checkDomainWorkflow({ page, origin, out, width, 
   // Login has an independent state and can sync; logout restores the guest.
   await createHabit().click();
   await habitEditor().getByRole('textbox', { name: '习惯名称', exact: true }).fill('不能串到账号的创建草稿');
-  await page.evaluate(() => { location.hash = '#/pages/favorites/index'; });
+  await page.evaluate(() => { location.hash = '#/pages/index/index'; });
+  await page.getByRole('button', { name: /^打开账号窗口/ }).click();
   await page.getByPlaceholder('输入博客账号').fill('preview-reader');
   await page.getByPlaceholder('输入密码', { exact: true }).fill('fixture-only-password');
   await click('登录并同步');
-  await expect(page.locator('.account-user-name')).toHaveText('preview-reader');
+  await expect(page.locator('.account-window-name')).toHaveText('preview-reader');
   await page.evaluate(() => { location.hash = '#/pages/domains/index'; });
   await openDomain();
   await checkCount(0);
@@ -820,8 +821,9 @@ module.exports = async function checkDomainWorkflow({ page, origin, out, width, 
   await page.evaluate(() => { window.__miniFixture.failDomainSync = true; });
   await editGoal('短期', '网络恢复后同步这个目标', true);
   await expect(screen()).toContainText('已在本机暂存');
-  await page.evaluate(() => { location.hash = '#/pages/favorites/index'; });
-  await click('退出');
+  await page.evaluate(() => { location.hash = '#/pages/index/index'; });
+  await page.getByRole('button', { name: /^打开账号窗口/ }).click();
+  await click('退出登录');
   await page.evaluate(() => { location.hash = '#/pages/domains/index'; });
   await openDomain();
   await checkCount(2);

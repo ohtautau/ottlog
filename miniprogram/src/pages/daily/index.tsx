@@ -1,3 +1,7 @@
+import { OTHER_DOMAIN_NAME, domainDisplayName } from '../../lib/domain-fallback';
+import CardGroupContent from '../../components/card-group-content';
+import EmptyState from '../../components/empty-state';
+import { openAccount } from '../../lib/account-navigation';
 import { trimTextEnd } from '../../lib/text-whitespace';
 import { showAppMessage } from '../../lib/app-dialog';
 import SectionTitle from '../../components/section-title';
@@ -9,7 +13,7 @@ import ActionButton, { ChoiceButton } from '../../components/ui-button';
 import PageScroll from '../../components/page-scroll';
 import { hasVolatilePersonalTool, usePersonalToolState } from '../../lib/use-personal-tool-state';
 import useHabitCalendarEdit from '../../lib/use-habit-calendar-edit';
-import { cleanState, initialReminders, isReminderState, localDate, toggleReminderDone, type Reminder } from '../../lib/reminder-data';
+import { cleanState, emptyReminderState, isReminderState, localDate, toggleReminderDone, type Reminder } from '../../lib/reminder-data';
 import { cleanHabitOpenLog, emptyHabitOpenLog, habitOpenKey, recordHabitOpening, type HabitOpenLog } from '../../lib/habit-recommendations';
 import HabitIcon from '../../components/habit-icon';
 import HabitEditor from '../../components/habit-editor';
@@ -27,13 +31,12 @@ import { habitIconId } from '../../lib/icon-library';
 import PageToolbar, { CategoryButton, CategoryRow, PageToolbarSummary, ToolbarResetButton } from '../../components/page-toolbar';
 import FilterPopover, { FilterFields, FilterField, FilterOptionGrid, FilterSearch } from '../../components/filter-popover';
 import useHabitGridSort from '../../components/habit-grid-sorter';
-import SwipePanels from '../../components/swipe-panels';
 import { SortDirection, SortOptions, SortPopover } from '../../components/sort-options';
 import { orderedHabits, saveHabitOrder, longestUncheckedHabits } from '../../lib/habit-order';
 import { chooseHabitReflection, habitCompletionStats, markHabitReflectionShown, saveHabitReflection } from '../../lib/habit-reflections';
 import HabitCard from '../../components/habit-card';
 import HabitGrid from '../../components/habit-grid';
-import HabitListSection, { HabitListHeading } from '../../components/habit-list-section';
+import HabitListSection from '../../components/habit-list-section';
 import HabitCalendar, { HabitDetailNote, HabitDetailHeader, habitDetailSheetClass } from '../../components/habit-calendar';
 import { takeHomeCreation, type HomeCreationRequest } from '../../lib/home-creation-navigation';
 import { initialDomainState, isDomainState } from '../../lib/domain-data';
@@ -52,12 +55,13 @@ const timedHabitPeriods = ['morning', 'noon', 'afternoon', 'night'] as const;
 type TimedHabitPeriod = typeof timedHabitPeriods[number];
 
 export default function Daily() {
-  const { value, setValue, ready, status, retry, owner } = usePersonalToolState('reminders', initialReminders);
+  const { value, setValue, ready, status, retry, owner } = usePersonalToolState('reminders', emptyReminderState);
   const domainTool = usePersonalToolState('domains', initialDomainState);
-  const domains = domainTool.ready && domainTool.owner === owner && isDomainState(domainTool.value) ? domainTool.value.domains : [];
-  const groups = [...new Set([...domains.map(domain => domain.name), '未分类'])];
+  const domains = domainTool.ready && domainTool.owner === owner && isDomainState(domainTool.value) ? domainTool.value.domains.map(domain => ({ ...domain, name: domainDisplayName(domain.name) })) : [];
+  const groups = [...new Set([...domains.map(domain => domain.name), OTHER_DOMAIN_NAME])];
   const categories = ['全部', ...groups];
   const valid = isReminderState(value);
+  const writable = ready && valid && !!owner && owner !== 'guest';
   const state = useMemo(() => {
     const cleaned = cleanState(value);
     if (!domainTool.ready || domainTool.owner !== owner || !isDomainState(domainTool.value)) return cleaned;
@@ -110,7 +114,7 @@ export default function Daily() {
     setChecking(false); checkingRef.current = false;
     setCoreGroup('全部'); setHabitStatus('pending'); setActivePeriod(currentHabitTimePeriod()); setSearch(''); setPeriodFilters([]); setPriorityFilters([]); setShowFilters(false); setShowSort(false); setSortChoice({ field: 'priority', direction: 'desc' }); sortPending.current = null; setSortSaving(false); sortSavingRef.current = false; setSortError('');
     let log = emptyHabitOpenLog();
-    if (owner) { try { log = cleanHabitOpenLog(Taro.getStorageSync(habitOpenKey(owner)), stateRef.current.items.map(item => item.id)); } catch { /* Opening history is optional; check-ins remain available. */ } }
+    if (owner && owner !== 'guest') { try { log = cleanHabitOpenLog(Taro.getStorageSync(habitOpenKey(owner)), stateRef.current.items.map(item => item.id)); } catch { /* Opening history is optional; check-ins remain available. */ } }
     setOpenings({ owner, log });
   }, [owner]);
 
@@ -120,7 +124,6 @@ export default function Daily() {
   const completed = completedItems.length;
   const recentId = todayDone.filter(id => completedItems.some(item => item.id === id)).reduce<string | undefined>((latest, id) => !latest || (state.checkInTimes?.[today]?.[id] ?? 0) >= (state.checkInTimes?.[today]?.[latest] ?? 0) ? id : latest, undefined);
   const recentCompletion = completedItems.find(item => item.id === recentId);
-  const statusIndex = habitStatuses.findIndex(status => status.id === habitStatus);
   function itemsForStatus(status: HabitStatus) {
     return orderedHabits(state, now).filter(item => {
       if (coreGroup !== '全部' && item.group !== coreGroup) return false;
@@ -137,21 +140,20 @@ export default function Daily() {
   const orderedItems = itemsForStatus(habitStatus);
   const sortableItems = grouped ? [...orderedItems.filter(item => habitTimePeriod(item) === 'free'), ...orderedItems.filter(item => habitTimePeriod(item) === activePeriod)] : orderedItems;
   const neglected = useMemo(() => longestUncheckedHabits(state, now), [state, now]);
-  const sorter = useHabitGridSort(sortableItems.map(item => item.id), ready && valid && !!owner && !sortSaving && visible && !showSort && !showFilters && !editor && !selected && !reflection && !checking, ids => { void persistSort({ owner, ids }); }, `${owner}:${today}:${coreGroup}:${habitStatus}:${search}:${periodFilters.join(",")}:${priorityFilters.join(",")}:${groups.join('\n')}:${activePeriod}:${orderedItems.map(item => `${item.id}:${habitTimePeriod(item)}`).join(',')}`, direction => { if (!checkingRef.current && !sortSavingRef.current) setHabitStatus(previous => habitStatuses[habitStatuses.findIndex(status => status.id === previous) + direction]?.id ?? previous); }, direction => !!habitStatuses[statusIndex + direction] && !checkingRef.current && !sortSavingRef.current, grouped ? id => habitTimePeriod(state.items.find(item => item.id === id) ?? {}) : undefined, grouped ? id => habitTimePeriod(state.items.find(item => item.id === id) ?? {}) === 'free' ? 'daily-habit-free-scroll' : 'daily-habit-period-scroll' : undefined);
-  const previewStatus = sorter.swipeOffset ? habitStatuses[statusIndex + (sorter.swipeOffset < 0 ? 1 : -1)]?.id : undefined;
+  const sorter = useHabitGridSort(sortableItems.map(item => item.id), writable && !sortSaving && visible && !showSort && !showFilters && !editor && !selected && !reflection && !checking, ids => { void persistSort({ owner, ids }); }, `${owner}:${today}:${coreGroup}:${habitStatus}:${search}:${periodFilters.join(",")}:${priorityFilters.join(",")}:${groups.join('\n')}:${activePeriod}:${orderedItems.map(item => `${item.id}:${habitTimePeriod(item)}`).join(',')}`, grouped ? id => habitTimePeriod(state.items.find(item => item.id === id) ?? {}) : undefined, grouped ? id => habitTimePeriod(state.items.find(item => item.id === id) ?? {}) === 'free' ? 'daily-habit-free-scroll' : 'daily-habit-period-scroll' : undefined);
   const current = state.items.find(item => item.id === selected);
-  const habitArchive = useHabitArchive({ state, id: editor?.id || '', owner, writable: ready && valid && !!editor && !saving && !checking, setValue, onSaved: enabled => { setEditor(previous => previous && previous.id === editor?.id ? { ...previous, enabled } : previous); if (enabled) viewStatus('pending'); } });
-  const calendarEdit = useHabitCalendarEdit({ state, habitId: current?.id || '', owner, writable: ready && valid && !saving && !checking && !reflection, setValue });
+  const habitArchive = useHabitArchive({ state, id: editor?.id || '', owner, writable: writable && !!editor && !saving && !checking, setValue, onSaved: enabled => { setEditor(previous => previous && previous.id === editor?.id ? { ...previous, enabled } : previous); if (enabled) viewStatus('pending'); } });
+  const calendarEdit = useHabitCalendarEdit({ state, habitId: current?.id || '', owner, writable: writable && !saving && !checking && !reflection, setValue });
   const detailEdit = useHabitDetailEdit({ state: value, habitId: current?.id || '', owner, domains,
-    writable: ready && valid && domainTool.ready && domainTool.owner === owner && isDomainState(domainTool.value) && visible && !saving && !checking && !reflection && !editor && !calendarEdit.busy, setValue });
+    writable: writable && domainTool.ready && domainTool.owner === owner && isDomainState(domainTool.value) && visible && !saving && !checking && !reflection && !editor && !calendarEdit.busy, setValue });
   function closeHabitDetail() { if (!checkingRef.current && !savingRef.current && !calendarEdit.busy && !detailEdit.isLocked()) setSelected(null); }
-  async function update(transform: (previous: typeof initialReminders) => typeof initialReminders, onError?: (reason: string) => void) {
-    if (!ready || !valid) return false;
+  async function update(transform: (previous: typeof emptyReminderState) => typeof emptyReminderState, onError?: (reason: string) => void) {
+    if (!writable) return false;
     try { await setValue(previous => { if (!isReminderState(previous)) throw new Error('习惯数据格式暂不兼容'); return transform(previous); }); return true; }
     catch (error) { if (ownerRef.current === owner) { setMessage('暂时未能保存，请重试。'); onError?.(error instanceof Error ? error.message : '暂时未能保存，请重试。'); } return false; }
   }
   async function checkIn(item: Reminder, day = today) {
-    if (!ready || !valid || !item.enabled || checkingRef.current || reflection) return;
+    if (!writable || !item.enabled || checkingRef.current || reflection) return;
     checkingRef.current = true; setChecking(true);
     let wasDone = false, quote = '';
     const saved = await update(previous => {
@@ -193,7 +195,7 @@ export default function Daily() {
     return () => document.removeEventListener('keydown', dismiss);
   }, [reflection, reflectionCloseGuard.requestClose]);
   async function persistSort(operation: NonNullable<typeof sortPending.current>) {
-    if (!ready || !valid || !owner || operation.owner !== owner || sortSavingRef.current) return;
+    if (!writable || !owner || operation.owner !== owner || sortSavingRef.current) return;
     sortPending.current = operation;
     sortSavingRef.current = true; setSortSaving(true); setSortError('');
     try {
@@ -211,22 +213,23 @@ export default function Daily() {
     }
   }
   function openHabit(item: Reminder) {
-    if (!ready || !valid || !owner) return;
+    if (!writable || !owner) return;
     setSelected(item.id); setMessage('');
     const previous = openingRef.current.owner === owner ? openingRef.current.log : emptyHabitOpenLog();
     const next = recordHabitOpening(cleanHabitOpenLog(previous, state.items.map(row => row.id)), item.id, Date.now());
     const scoped = { owner, log: next }; openingRef.current = scoped; setOpenings(scoped);
     try { Taro.setStorageSync(habitOpenKey(owner), next); } catch { setMessage('打开时间暂未保存，仍可正常打卡。'); }
   }
-  function openEditor(item = { ...freshReminder(), group: coreGroup === '全部' ? (domains.find(domain => domain.id === 'mind')?.name || groups[0]) : coreGroup }) { setSelected(null); setEditor({ ...item }); setMessage(''); }
+  function openEditor(item = { ...freshReminder(), group: coreGroup === '全部' ? (domains.find(domain => domain.id === 'mind')?.name || groups[0]) : coreGroup }) { if (!writable) { if (ready && owner === 'guest') void openAccount(); return; } setSelected(null); setEditor({ ...item }); setMessage(''); }
   useEffect(() => {
     if (!homeCreation || !ready || !domainTool.ready) return;
     setHomeCreation(null);
     if (homeCreation.owner && homeCreation.owner !== owner) { setMessage('账号已变化，请重新创建。'); return; }
+    if (owner === 'guest') { void openAccount(); return; }
     if (valid && owner && isDomainState(domainTool.value) && owner === domainTool.owner && (!homeCreation.owner || homeCreation.owner === owner)) openEditor();
   }, [homeCreation, ready, valid, owner, domainTool.ready, domainTool.owner, domainTool.value]);
   async function save() {
-    if (!editor || !ready || savingRef.current || habitArchive.busy || habitArchive.retrying) return;
+    if (!editor || !writable || savingRef.current || habitArchive.busy || habitArchive.retrying) return;
     if (!domainTool.ready || domainTool.owner !== owner || !isDomainState(domainTool.value)) { setMessage('领域数据尚未就绪，请重新读取后保存。'); return; }
     let item: Reminder;
     try {
@@ -245,7 +248,7 @@ export default function Daily() {
     setEditor(null); setMessage('');
   }
   async function remove(item: Reminder) {
-    if (!ready || !valid || savingRef.current) return;
+    if (!writable || savingRef.current) return;
     const draft = editorRef.current, fromEditor = draft?.id === item.id;
     const context = deleteContext.current, operation = {};
     const isCurrent = () => ownerRef.current === owner && deleteContext.current === context && (!fromEditor || editorRef.current === draft);
@@ -264,7 +267,7 @@ export default function Daily() {
   function viewStatus(status: HabitStatus) { setHabitStatus(status); setShowFilters(false); setShowSort(false); }
   function resetFilters() { setSearch(''); setPeriodFilters([]); setPriorityFilters([]); setCoreGroup('全部'); setHabitStatus('pending'); }
   function restoreDefaults() {
-    if (!ready || !valid || !owner || sortSavingRef.current || sortPending.current || sorter.active || saving || checking || editor || selected || reflection) return;
+    if (!writable || !owner || sortSavingRef.current || sortPending.current || sorter.active || saving || checking || editor || selected || reflection) return;
     resetFilters(); setActivePeriod(currentHabitTimePeriod()); setShowSort(false); setShowFilters(false);
     const choice: HabitSort = { field: 'priority', direction: 'desc' }; setSortChoice(choice);
     if (state.sort && (state.sort.field !== choice.field || state.sort.direction !== choice.direction)) void persistSort({ owner, choice });
@@ -282,36 +285,36 @@ export default function Daily() {
       const free = items.filter(item => habitTimePeriod(item) === 'free');
       const timed = items.filter(item => habitTimePeriod(item) === activePeriod);
       return <View className='daily-time-period-layout'>
-        <HabitListSection className='daily-time-period-section' timePeriod='free' contentClassName='daily-habit-content' scrollKey={`${owner}:${status}`} edgeFade={free.length > 0} heading={<SectionTitle size='compact' inRow>自由</SectionTitle>}
-          scrollProps={{ id: sortable ? 'daily-habit-free-scroll' : undefined, className: 'daily-time-period-scroll', scrollY: sortable, scrollTop: sortable ? sorter.scrollTopFor('daily-habit-free-scroll') : undefined, onScroll: sortable ? event => sorter.onScrollFor('daily-habit-free-scroll', event) : undefined }}>
-          {free.length ? suggestionCards(free, sortable, !sortable) : <View className='daily-time-period-empty'>暂无自由习惯</View>}
-        </HabitListSection>
         <HabitListSection className='daily-time-period-section' timePeriod={activePeriod} contentClassName='daily-habit-content' scrollKey={`${owner}:${status}:${activePeriod}`} edgeFade={timed.length > 0} heading={<CategoryRow size='compact' className='daily-time-period-categories' contentClassName='daily-time-period-category-row' ariaLabel='习惯时段分类'>
           {timedHabitPeriods.map(period => <CategoryButton key={period} size='compact' width='fill' selected={activePeriod === period} ariaLabel={`习惯时段分类：${period === 'night' ? '晚上' : habitTimePeriodLabels[period]}`} disabled={!sortable || checking || sortSaving || sorter.active} onTouchStart={event => event.stopPropagation()} onClick={() => { if (!sorter.suppressClick() && !sortSavingRef.current && !checkingRef.current) setActivePeriod(period); }}>{period === 'night' ? '晚上' : habitTimePeriodLabels[period]}</CategoryButton>)}
         </CategoryRow>}
           scrollProps={{ id: sortable ? 'daily-habit-period-scroll' : undefined, className: 'daily-time-period-scroll', scrollY: sortable, scrollTop: sortable ? sorter.scrollTopFor('daily-habit-period-scroll') : undefined, onScroll: sortable ? event => sorter.onScrollFor('daily-habit-period-scroll', event) : undefined }}>
-          {timed.length ? suggestionCards(timed, sortable, !sortable) : <View className='daily-time-period-empty'>暂无该时段习惯</View>}
+          {timed.length ? suggestionCards(timed, sortable, !sortable) : !state.items.length && !search.trim() && !periodFilters.length && !priorityFilters.length && status === 'pending' ? <EmptyState kind='habits' compact /> : <View className='daily-time-period-empty'>暂无该时段习惯</View>}
+        </HabitListSection>
+        <HabitListSection className='daily-time-period-section' timePeriod='free' contentClassName='daily-habit-content' scrollKey={`${owner}:${status}`} edgeFade={free.length > 0} heading={<SectionTitle size='compact' inRow>自由</SectionTitle>}
+          scrollProps={{ id: sortable ? 'daily-habit-free-scroll' : undefined, className: 'daily-time-period-scroll', scrollY: sortable, scrollTop: sortable ? sorter.scrollTopFor('daily-habit-free-scroll') : undefined, onScroll: sortable ? event => sorter.onScrollFor('daily-habit-free-scroll', event) : undefined }}>
+          {free.length ? suggestionCards(free, sortable, !sortable) : <View className='daily-time-period-empty'>暂无自由习惯</View>}
         </HabitListSection>
       </View>;
     }
     if (!items.length) return <View className='daily-core-empty'><HabitIcon name='plant' /><View>{status === 'archived' ? '暂无已归档习惯' : status === 'completed' ? '今天还没有完成习惯' : status === 'pending' && enabled.length ? '暂无进行中的习惯' : '暂无习惯'}</View><CreateButton className='tool-secondary' label='创建习惯' disabled={!sortable} onClick={() => openEditor()} /></View>;
-    return <View className='daily-habit-content'>{suggestionCards(items, sortable, !sortable)}</View>;
+    return <CardGroupContent className='daily-habit-content'>{suggestionCards(items, sortable, !sortable)}</CardGroupContent>;
   }
   function statusViewport(status: HabitStatus, sortable = false) {
-    if (grouped) return <View className='daily-habit-scroll' {...(sortable ? sorter.swipeHandlers : {})}>{statusContent(status, sortable)}</View>;
-    return <ScrollView key={`${owner}-${coreGroup}-${status}`} id={sortable ? 'daily-habit-scroll' : undefined} className='daily-habit-scroll' scrollY={sortable} enhanced bounces={false} showScrollbar scrollTop={sortable ? sorter.scrollTop : undefined} scrollWithAnimation={false} onScroll={sortable ? sorter.onScroll : undefined} {...(sortable ? sorter.swipeHandlers : {})}>{statusContent(status, sortable)}</ScrollView>;
+    if (grouped) return <View className='daily-habit-scroll'>{statusContent(status, sortable)}</View>;
+    return <ScrollView key={`${owner}-${coreGroup}-${status}`} id={sortable ? 'daily-habit-scroll' : undefined} className='daily-habit-scroll' scrollY={sortable} enhanced bounces={false} scrollX={false} showScrollbar={false} scrollTop={sortable ? sorter.scrollTop : undefined} scrollWithAnimation={false} onScroll={sortable ? sorter.onScroll : undefined}>{statusContent(status, sortable)}</ScrollView>;
   }
 
   return <><PageScroll snapSections={[]}><View className='tool-page daily-page core-page'><CoreScreen className='daily-core'>
     <PageToolbar className='daily-page-toolbar'
-      leading={ready && valid && <PageToolbarSummary countLabel={`今日完成 ${completed}`} recentTitle={recentCompletion?.title} />}
-      reset={<ToolbarResetButton ariaLabel='恢复习惯默认方式' disabled={!ready || !valid || !owner || sortSaving || !!sortPending.current || sorter.active || saving || checking || !!editor || !!selected || !!reflection} onReset={restoreDefaults} />}
-      sort={<SortPopover ariaLabel='排序习惯' open={showSort} onOpenChange={open => { if (sortSavingRef.current) return; if (open) { setShowFilters(false); setSortChoice(sortInitialChoice); } setShowSort(open); }} disabled={!ready || !valid || sorter.active} selected={ready && valid && !!owner && !!state.sort && state.sort.field !== 'custom' && (state.sort.field !== 'priority' || state.sort.direction !== 'desc')} panelClassName='daily-sort-popover' contentKey={`${sortChoice.field}:${sortError}`} saving={sortSaving} hasChanges={!!sortPending.current && sortPending.current.owner === owner || JSON.stringify(sortChoice) !== JSON.stringify(sortInitialChoice)} onConfirm={() => persistSort({ owner, choice: sortChoice })}>
+      leading={writable && <PageToolbarSummary countLabel={`今日完成 ${completed}`} recentTitle={recentCompletion?.title} />}
+      reset={<ToolbarResetButton ariaLabel='恢复习惯默认方式' disabled={!writable || sortSaving || !!sortPending.current || sorter.active || saving || checking || !!editor || !!selected || !!reflection} onReset={restoreDefaults} />}
+      sort={<SortPopover ariaLabel='排序习惯' open={showSort} onOpenChange={open => { if (sortSavingRef.current) return; if (open) { setShowFilters(false); setSortChoice(sortInitialChoice); } setShowSort(open); }} disabled={!writable || sorter.active} selected={ready && valid && !!owner && !!state.sort && state.sort.field !== 'custom' && (state.sort.field !== 'priority' || state.sort.direction !== 'desc')} panelClassName='daily-sort-popover' contentKey={`${sortChoice.field}:${sortError}`} saving={sortSaving} hasChanges={!!sortPending.current && sortPending.current.owner === owner || JSON.stringify(sortChoice) !== JSON.stringify(sortInitialChoice)} onConfirm={() => persistSort({ owner, choice: sortChoice })}>
         <SortOptions options={habitSortFields.filter(field => field !== 'custom').map(field => ({ value: field, label: habitSortLabels[field] }))} value={sortChoice.field} disabled={sortSaving} onChange={field => setSortChoice({ field, direction: field === 'averageTime' ? 'asc' : 'desc' })} />
         <View className='daily-sort-direction'><SortDirection value={sortChoice.direction} disabled={sortSaving} onChange={direction => setSortChoice(previous => ({ ...previous, direction }))} /></View>
         {sortError && <Text className='daily-sort-error'>{sortError}</Text>}
       </SortPopover>}
-      filter={<FilterPopover ariaLabel='筛选习惯' title='筛选习惯' open={showFilters} onOpenChange={open => { if (open) setShowSort(false); setShowFilters(open); }} disabled={!ready || !valid || sortSaving || sorter.active} triggerSelected={habitStatus !== 'pending' || coreGroup !== '全部' || !!search.trim() || !!periodFilters.length || !!priorityFilters.length} panelClassName='habit-filter-popover' contentKey={`${search}:${habitStatus}:${coreGroup}:${periodFilters.join(',')}:${priorityFilters.join(',')}`}
+      filter={<FilterPopover ariaLabel='筛选习惯' title='筛选习惯' open={showFilters} onOpenChange={open => { if (open) setShowSort(false); setShowFilters(open); }} disabled={!writable || sortSaving || sorter.active} triggerSelected={habitStatus !== 'pending' || coreGroup !== '全部' || !!search.trim() || !!periodFilters.length || !!priorityFilters.length} panelClassName='habit-filter-popover' contentKey={`${search}:${habitStatus}:${coreGroup}:${periodFilters.join(',')}:${priorityFilters.join(',')}`}
         closeLabel='关闭习惯筛选' onClose={() => setShowFilters(false)} resetLabel='重置习惯筛选' applyLabel={`筛选 ${orderedItems.length} 个习惯`} onReset={resetFilters}>
         <FilterFields>
           <FilterField label='关键词'><FilterSearch ariaLabel='搜索习惯' placeholder='搜索名称、备注或领域' value={search} onInput={event => setSearch(event.detail.value)} clearLabel='清空习惯搜索' onClear={() => setSearch('')} onConfirm={() => setShowFilters(false)} /></FilterField>
@@ -321,19 +324,18 @@ export default function Daily() {
           <FilterField label='优先度'><FilterOptionGrid><ChoiceButton selected={!priorityFilters.length} ariaLabel='习惯优先度筛选：全部' onClick={() => setPriorityFilters([])}>全部</ChoiceButton>{habitPriorities.map(priority => <ChoiceButton key={priority} selected={priorityFilters.includes(priority)} ariaLabel={`习惯优先度筛选：${habitPriorityLabels[priority]}`} onClick={() => setPriorityFilters(previous => previous.includes(priority) ? previous.filter(value => value !== priority) : [...previous, priority])}>{habitPriorityLabels[priority]}优先度</ChoiceButton>)}</FilterOptionGrid></FilterField>
         </FilterFields>
       </FilterPopover>}
-      create={<CreateButton className='daily-create' label='创建习惯' disabled={!ready || !valid || sortSaving || sorter.active} onClick={() => openEditor()} />}
+      create={<CreateButton className='daily-create' label={owner === 'guest' ? '登录创建习惯' : '创建习惯'} disabled={!ready || !valid || sortSaving || sorter.active} onClick={() => openEditor()} />}
     />
     {!ready ? <View className='tool-empty'><Text>{status || '正在读取习惯…'}</Text><ActionButton className='button-label tool-secondary' onClick={retry}>重新读取</ActionButton></View> : !valid ? <View className='tool-empty'><Text>当前习惯数据格式暂不兼容，请到网页查看。原始数据已保留。</Text><ActionButton className='button-label tool-secondary' onClick={retry}>重新读取</ActionButton></View> : <View className='daily-habit-sections'>
       <CategoryRow className='daily-core-filter-scroll' contentClassName='daily-core-filters' ariaLabel='习惯领域分类' fixedLeading={<CategoryButton id='daily-category-0' className={`daily-core-filter${coreGroup === '全部' ? ' is-active' : ''}`} selected={coreGroup === '全部'} disabled={sortSaving || sorter.active} onClick={() => setCoreGroup('全部')}>全部</CategoryButton>} scrollIntoView={`daily-category-${categories.indexOf(coreGroup)}`} selectionOffset={1.5} contentKey={`${owner}:${categories.join('\n')}`} scrollWithAnimation>{categories.slice(1).map((name, index) => <CategoryButton id={`daily-category-${index + 1}`} className={`button-label daily-core-filter${coreGroup === name ? ' is-active' : ''}`} key={name} selected={coreGroup === name} aria-pressed={coreGroup === name} disabled={sortSaving || sorter.active} onClick={() => setCoreGroup(name)}>{name}</CategoryButton>)}</CategoryRow>
       {sortError && !showSort && <View className='daily-sort-retry'><Text className='daily-sort-error'>{sortError}</Text><ActionButton compact disabled={sortSaving} onClick={() => { if (sortPending.current) void persistSort(sortPending.current); }}>重试</ActionButton></View>}
-      <View className='daily-habit-pages'><SwipePanels offset={sorter.swipeOffset} direction={sorter.swipeOffset < 0 ? 'next' : 'previous'} adjacent={previewStatus && <View className='daily-habit-preview'>{statusViewport(previewStatus)}</View>}>{statusViewport(habitStatus, true)}</SwipePanels></View>
-      <View className='daily-neglected'>
-        <HabitListHeading className='daily-reminder-heading'><SectionTitle size='compact' inRow>提醒</SectionTitle></HabitListHeading>
+      <View className='daily-habit-pages'>{statusViewport(habitStatus, true)}</View>
+      <HabitListSection className='daily-neglected' contentClassName='daily-habit-content' scrollKey={`${owner}:reminders`} edgeFade={neglected.length > 2} heading={<><View className='daily-reminder-title'><SectionTitle size='compact' inRow>提醒</SectionTitle></View><Text className='daily-reminder-count'>{neglected.length} 项</Text></>} scrollProps={{ id: 'daily-reminder-scroll', ariaLabel: '提醒习惯' }}>
         {neglected.length ? suggestionCards(neglected) : <View className='daily-neglected-empty'>暂无提醒</View>}
-      </View>
+      </HabitListSection>
     </View>}
   {message && /未|失败|不可|暂|无法|变化|请/.test(message) && <View className='daily-message'>{message}</View>}
-    {ready && !!status && <View className='tool-status'><Text>{status}</Text><ActionButton className='button-label' onClick={retry}>重新同步</ActionButton></View>}
+    {ready && !!status && <View className='tool-status'><Text>{status}</Text><ActionButton className='button-label' onClick={owner === 'guest' ? () => { void openAccount(); } : retry}>{owner === 'guest' ? '登录账号' : '重新同步'}</ActionButton></View>}
   </CoreScreen></View></PageScroll>
     {current && valid && !editor && <View className='daily-editor-overlay'><SheetBackdrop disabled={checking || saving || calendarEdit.busy || detailEdit.locked} onClose={closeHabitDetail} /><View className={`daily-detail-sheet ${habitDetailSheetClass(current)} ${habitTone(current)}`}>
       <EditorHeading title='习惯详情' className='daily-detail-heading' actions={<ActionButton appearance='icon' size='compact' className='habit-detail-close' ariaLabel='关闭习惯详情' disabled={checking || saving || calendarEdit.busy || detailEdit.locked} onClick={closeHabitDetail}>×</ActionButton>} />

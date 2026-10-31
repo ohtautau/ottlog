@@ -26,7 +26,7 @@ function freeze(value) {
 const ids = rows => rows.map(row => row.record.id);
 const image = { id: 'image-only-photo', dataUrl: 'data:image/png;base64,AAAA' };
 function emptyState() {
-  const state = clone(data.initialDomainState);
+  const state = require('./fixtures/starter-data.cjs').domainState(data);
   state.domains = ['mind', 'work', 'life'].map(id => state.domains.find(domain => domain.id === id));
   return state;
 }

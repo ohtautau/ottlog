@@ -1,3 +1,6 @@
+import { GoalHistoryCard } from '../../components/data-card-views';
+import EmptyState from '../../components/empty-state';
+import CardGroupContent from '../../components/card-group-content';
 import { trimTextEnd } from '../../lib/text-whitespace';
 import { showAppMessage } from '../../lib/app-dialog';
 import SectionTitle from '../../components/section-title';
@@ -7,7 +10,7 @@ import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import Taro, { useDidHide, useDidShow, useRouter } from '@tarojs/taro';
 import { Button, ScrollView, Text, Textarea, View } from '@tarojs/components';
 import ActionButton from '../../components/ui-button';
-import { EditSymbol, DeleteSymbol } from '../../components/manage-symbol';
+import { EditSymbol, DeleteSymbol, CompletedGoalsSymbol } from '../../components/manage-symbol';
 import PageToolbar from '../../components/page-toolbar';
 import DomainDefinitionEditor from '../../components/domain-definition-editor';
 import useDomainDefinition from '../../lib/use-domain-definition';
@@ -36,7 +39,7 @@ import { alignHabitDisplayDomain } from '../../lib/habit-domains';
 import { toolId } from '../../lib/tool-records';
 import { habitCompletionStats } from '../../lib/habit-reflections';
 import useHabitArchive from '../../lib/use-habit-archive';
-import { cleanState, initialReminders, isReminderState, toggleReminderDone, type Reminder } from '../../lib/reminder-data';
+import { cleanState, emptyReminderState, isReminderState, toggleReminderDone, type Reminder } from '../../lib/reminder-data';
 import {
   initialDomainState, isDomainState, localDateKey, completedGoalCount, domainIcon,
   saveDomainGoal, completeDomainGoal, displayedDomainGoal, undoDomainGoalCompletion,
@@ -72,13 +75,13 @@ export default function Domains() {
   const domainTool = usePersonalToolState('domains', initialDomainState);
   const { value, setValue, ready, owner, status, retry } = domainTool;
   const valid = isDomainState(value), sourceState = valid ? value : initialDomainState;
-  const state = uncategorizedRoute ? domainDisplayState(sourceState) : sourceState;
+  const state = domainDisplayState(sourceState);
   const domainId = uncategorizedRoute ? uncategorizedDomain(sourceState).id : route.params.id;
   const writable = ready && valid && !!owner;
   const domainSource = useRef({ owner, writable, state: sourceState });
   domainSource.current = { owner, writable, state: sourceState };
-  const habitTool = usePersonalToolState('reminders', initialReminders);
-  const habitsWritable = writable && habitTool.ready && habitTool.owner === owner && isReminderState(habitTool.value);
+  const habitTool = usePersonalToolState('reminders', emptyReminderState);
+  const habitsWritable = writable && owner !== 'guest' && habitTool.ready && habitTool.owner === owner && isReminderState(habitTool.value);
   const habitState = useMemo(() => {
     const cleaned = cleanState(habitTool.value);
     return valid ? { ...cleaned, items: cleaned.items.map(item => alignHabitDisplayDomain(item, state.domains)) } : cleaned;
@@ -257,15 +260,15 @@ export default function Domains() {
   return <>
     <PageScroll><View className='tool-page domains-page domain-detail-page'>
       <PageToolbar className='domain-detail-toolbar' leading={<BackButton ariaLabel='返回领域列表' disabled={blocked || habitBusy || habitArchive.busy} onClick={() => void Taro.switchTab({ url: '/pages/domains/index' })} />} manage={writable && selectedDomain && <View className='domain-detail-actions'>
-        <ActionButton appearance='icon' size='compact' width='content' ariaLabel={`编辑${selectedDomain.name}领域`} disabled={blocked || habitBusy || habitArchive.busy || selectedDomain.name === '未分类'} onClick={() => definition.openEdit(selectedDomain.id)}><EditSymbol /></ActionButton>
-        <ActionButton appearance='icon' size='compact' width='content' intent='danger' ariaLabel={`删除${selectedDomain.name}领域`} disabled={blocked || habitBusy || habitArchive.busy || selectedDomain.name === '未分类'} onClick={() => definition.openDelete(selectedDomain.id)}><DeleteSymbol /></ActionButton>
+        <ActionButton appearance='icon' size='compact' width='content' ariaLabel={`编辑${selectedDomain.name}领域`} disabled={blocked || habitBusy || habitArchive.busy || selectedDomain.id === uncategorizedDomain(sourceState).id} onClick={() => definition.openEdit(selectedDomain.id)}><EditSymbol /></ActionButton>
+        <ActionButton appearance='icon' size='compact' width='content' intent='danger' ariaLabel={`删除${selectedDomain.name}领域`} disabled={blocked || habitBusy || habitArchive.busy || selectedDomain.id === uncategorizedDomain(sourceState).id} onClick={() => definition.openDelete(selectedDomain.id)}><DeleteSymbol /></ActionButton>
       </View>} create={writable && selectedDomain && <CreateButton size='compact' width='content' label='创建记录' disabled={blocked || habitBusy || habitArchive.busy} onClick={() => createRecord(selectedDomain)} />} />
       {!ready && <View className='tool-status'>{status}<ActionButton className='tool-secondary button-label' onClick={retry}>重新读取</ActionButton></View>}
       {ready && !valid && <View className='notice'>暂时无法读取这份领域数据，已有内容已保留。<ActionButton className='tool-secondary button-label' onClick={retry}>重新读取</ActionButton></View>}
       {ready && valid && !selectedDomain && <View className='tool-empty'>领域不存在或已删除</View>}
       {ready && valid && <View className='domain-detail-grid'>{state.domains.filter(domain => domain.id === domainId).map(domain => <View className='tool-card domain-card' key={domain.id}>
         <View className='domain-heading'><View className='domain-heading-name'><LibraryIcon name={domainIcon(domain)} className='domain-detail-icon' /><Text className='domain-name'>{trimTextEnd(domain.name)}</Text></View>
-          <ActionButton appearance='secondary' size='compact' width='content' className='domain-count' ariaLabel={`查看${domain.name}已完成目标`} onClick={() => open({ type: 'history', owner, domainId: domain.id, content: '' })}><Text className='domain-count-label'>已完成目标</Text></ActionButton>
+          <ActionButton appearance='icon' size='compact' className='domain-count' ariaLabel={`查看${domain.name}已完成目标`} onClick={() => open({ type: 'history', owner, domainId: domain.id, content: '' })}><CompletedGoalsSymbol /></ActionButton>
         </View>
         <View className='domain-goals'>{(['longTerm', 'shortTerm'] as const).map(kind => {
           const goal = displayedDomainGoal(state, domain.id, kind), completed = goal?.status === 'completed';
@@ -277,8 +280,8 @@ export default function Domains() {
             {activeGoal ? <ActionButton appearance='icon' size='compact' className='domain-goal-edit button-label' disabled={busy || !writable} ariaLabel={`编辑${domain.name}${goalLabel(kind)}`} onClick={() => open({ type: 'goal', owner, domainId: domain.id, kind, originalId: activeGoal.id, content: activeGoal.content })}><EditSymbol /></ActionButton> : <CreateButton iconOnly className='domain-goal-create' label='创建目标' disabled={busy || !writable} ariaLabel={`创建${domain.name}${goalLabel(kind)}`} onClick={() => open({ type: 'goal', owner, domainId: domain.id, kind, originalId: null, content: '' })} />}
           </View>;
         })}</View>
-        <View className='domain-habits-heading'><SectionTitle inRow className='domain-label'>每日习惯</SectionTitle></View>
-        {!habitTool.ready ? <View className='domain-habit-notice'>正在读取习惯…</View> : !habitsWritable ? <View className='domain-habit-notice'>习惯数据暂不可用<ActionButton appearance='quiet' className='domain-quiet button-label' onClick={habitTool.retry}>重新读取习惯</ActionButton></View> : <ScrollView key={`habits:${owner}:${domainId}`} className={`domain-habit-scroll${habitEntries.length <= 2 ? ' is-single-row' : ''}`} scrollY enhanced bounces={false} showScrollbar={false} ariaLabel='每日习惯'><HabitGrid className='domain-habit-grid'>
+        <View className='domain-habits-heading card-group-heading'><SectionTitle inRow className='domain-label'>每日习惯</SectionTitle></View>
+        {!habitTool.ready ? <View className='domain-habit-notice'>正在读取习惯…</View> : habitTool.owner === 'guest' ? <CardGroupContent><EmptyState kind='habits' compact /></CardGroupContent> : !habitsWritable ? <View className='domain-habit-notice'>习惯数据暂不可用<ActionButton appearance='quiet' className='domain-quiet button-label' onClick={habitTool.retry}>重新读取习惯</ActionButton></View> : <ScrollView key={`habits:${owner}:${domainId}`} className={`domain-habit-scroll${habitEntries.length <= 2 ? ' is-single-row' : ''}`} scrollY enhanced bounces={false} showScrollbar={false} ariaLabel='每日习惯'><HabitGrid inset className='domain-habit-grid'>
           {habitEntries.map(item => {
             if (!item) return <View className='daily-suggestion domain-habit-create-card' key='habit-create-card'><CardCreateButton ariaLabel={`创建${domain.name}习惯`} disabled={!habitsWritable || habitBusy || habitArchive.busy} onClick={() => createHabit(domain)} /></View>;
             const done = !!habitState.done[today]?.includes(item.id);
@@ -290,6 +293,7 @@ export default function Domains() {
           const recent = [...records].reverse().sort((a, b) => Date.parse(b.createdAt) - Date.parse(a.createdAt));
           const add = () => createRecord(domain);
           return <DomainRecordColumn key={kind} kind={kind} showHeading={false} scrollable variant='create' disabled={busy} createLabel={`添加${domain.name}${recordLabel(kind)}`} onCreate={add}>
+            {!records.length && <EmptyState kind={kind === 'positive' ? 'positive' : 'negative'} compact />}
             {recent.map(record => <DomainRecordCard key={record.id} kind={kind} record={record} disabled={busy} onClick={() => { if (writable && !saving.current) setRecordEditor({ owner, domainId: domain.id, kind, record, title: `${domain.name} · 编辑${recordLabel(kind)}` }); }} />)}
           </DomainRecordColumn>;
         })}</DomainRecordColumns>
@@ -306,8 +310,8 @@ export default function Domains() {
         </>}
         {currentEditor.type === 'history' && <>
           
-          {state.completedGoals.filter(goal => goal.domainId === editingDomain.id).slice().reverse().map(goal => <View className='domain-history-item' key={goal.id}><View className='domain-history-meta'><Text>{goalLabel(goal.kind)}</Text><Text>{goal.completedAt ? formatDate(goal.completedAt) : ''}</Text></View><Text>{trimTextEnd(goal.content)}</Text></View>)}
-          {!completedGoalCount(state, editingDomain.id) && <View className='domain-history-empty'>暂无已完成目标</View>}
+          {state.completedGoals.filter(goal => goal.domainId === editingDomain.id).slice().reverse().map(goal => <GoalHistoryCard key={goal.id} kind={goalLabel(goal.kind)} date={goal.completedAt ? formatDate(goal.completedAt) : ''} text={trimTextEnd(goal.content)} />)}
+          {!completedGoalCount(state, editingDomain.id) && <EmptyState kind='goals' />}
         </>}
         {error && <View className='domain-error' role='alert'>{error}</View>}
       </EditorFieldsLayout></ScrollView>

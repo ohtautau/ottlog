@@ -1,8 +1,10 @@
+import CardGroupContent from '../../components/card-group-content';
+import DomainEntryCard from '../../components/domain-entry-card';
 import { useEffect, useRef, useState } from 'react';
 import Taro, { useDidHide, useDidShow } from '@tarojs/taro';
 import { takeHomeCreation, type HomeCreationRequest } from '../../lib/home-creation-navigation';
 import { moveAdjacentItem } from '../../lib/card-order';
-import { Button, ScrollView, Text, View } from '@tarojs/components';
+import { ScrollView, Text, View } from '@tarojs/components';
 import ActionButton, { ChoiceButton } from '../../components/ui-button';
 import PageScroll from '../../components/page-scroll';
 import DomainDefinitionEditor from '../../components/domain-definition-editor';
@@ -21,8 +23,8 @@ import usePageNow from '../../lib/use-page-now';
 import { domainProgressScale } from '../../lib/domain-progress';
 import { hasVolatilePersonalTool, usePersonalToolState } from '../../lib/use-personal-tool-state';
 import { initialDomainState, isDomainState, MAX_DOMAIN_COUNT, reorderDomains, type DomainState, type RecentDomainRecord } from '../../lib/domain-data';
-import { initialReminders, isReminderState } from '../../lib/reminder-data';
-import { domainDisplayState, isUncategorizedDomain, uncategorizedDomain } from '../../lib/domain-display';
+import { emptyReminderState, isReminderState } from '../../lib/reminder-data';
+import { domainDisplayState, uncategorizedDomain } from '../../lib/domain-display';
 import './index.css';
 
 function recordDate(stamp: string) {
@@ -33,11 +35,12 @@ export default function Domains() {
   const now = new Date(usePageNow());
   const domainTool = usePersonalToolState('domains', initialDomainState);
   const { value, setValue, ready, owner, status, retry } = domainTool;
-  const habitTool = usePersonalToolState('reminders', initialReminders);
+  const habitTool = usePersonalToolState('reminders', emptyReminderState);
   const valid = isDomainState(value), writable = ready && valid && !!owner;
   const state = valid ? value : initialDomainState;
   const displayState = domainDisplayState(state);
-  const ordinaryDomains = state.domains.filter(domain => !isUncategorizedDomain(domain));
+  const fallbackDomain = uncategorizedDomain(state);
+  const ordinaryDomains = state.domains.filter(domain => domain.id !== fallbackDomain.id);
   const progressReady = writable && habitTool.ready && habitTool.owner === owner && isReminderState(habitTool.value);
   const progressCounts = progressReady ? domainCompletionCounts(displayState, habitTool.value, now) : [];
   const toolbarSummary = writable ? domainToolbarSummary(state, now) : undefined;
@@ -89,7 +92,8 @@ export default function Domains() {
   async function move(id: string, direction: -1 | 1) {
     if (moveRetry) return;
     const moved = await change(previous => {
-      const ids = previous.domains.filter(domain => !isUncategorizedDomain(domain)).map(domain => domain.id);
+      const fallbackId = uncategorizedDomain(previous).id;
+      const ids = previous.domains.filter(domain => domain.id !== fallbackId).map(domain => domain.id);
       const moved = moveAdjacentItem(ids, id, direction);
       return moved === ids ? previous : reorderDomains(previous, moved);
     });
@@ -97,19 +101,15 @@ export default function Domains() {
   }
   async function retryMove() { await change(previous => previous); }
   const entryCard = (domain: typeof state.domains[number], index?: number) => {
-    const system = isUncategorizedDomain(domain), moving = sorting && !system;
+    const system = domain.id === fallbackDomain.id, moving = sorting && !system;
     const counts = progressReady ? progressCounts.find(item => item.domainId === domain.id) ?? null : null;
     const url = system ? '/pages/domain-detail/index?uncategorized=1' : `/pages/domain-detail/index?id=${encodeURIComponent(domain.id)}`;
     const summary = <DomainProgressSummary domain={domain} state={displayState} counts={moving ? null : counts} scale={progressScale} showGoals={false} showShortTermGoal showProgress={!moving} />;
-    return <View id={`domain-entry-${domain.id}`} className={`domain-entry-shell${system ? ' domain-uncategorized-shell' : moving ? ' is-sorting' : ''}`} key={domain.id}>
-      {moving ? <View className='domain-entry'>{summary}</View> : <Button className='domain-entry' disabled={blocked} ariaLabel={`打开${domain.name}领域`} onClick={() => void Taro.navigateTo({ url })}>{summary}</Button>}
-      {moving && <CardMoveActions className='domain-entry-actions' objectLabel={`${domain.name}领域`} disabled={blocked || !!moveRetry} upDisabled={index === 0} downDisabled={index === ordinaryDomains.length - 1} onMoveUp={() => void move(domain.id, -1)} onMoveDown={() => void move(domain.id, 1)} />}
-    </View>;
+    return <DomainEntryCard id={`domain-entry-${domain.id}`} className={system ? 'domain-uncategorized-shell' : moving ? 'is-sorting' : ''} key={domain.id} disabled={blocked} label={`打开${domain.name}领域`} onOpen={moving ? undefined : () => { void Taro.navigateTo({ url }); }} actions={moving && <CardMoveActions className='domain-entry-actions' objectLabel={`${domain.name}领域`} disabled={blocked || !!moveRetry} upDisabled={index === 0} downDisabled={index === ordinaryDomains.length - 1} onMoveUp={() => void move(domain.id, -1)} onMoveDown={() => void move(domain.id, 1)} />}>{summary}</DomainEntryCard>;
   };
-  const cards = ordinaryDomains.map(entryCard);
-  const systemCard = entryCard(uncategorizedDomain(state));
+  const cards = [...ordinaryDomains.map(entryCard), entryCard(fallbackDomain)];
   const createDisabled = sorting || blocked || state.domains.length >= MAX_DOMAIN_COUNT;
-  const createCard = <View className='domain-entry-shell domain-create-shell'><CardCreateButton className='domain-create-card' ariaLabel='创建领域' disabled={createDisabled} onClick={definition.openCreate} /></View>;
+  const createCard = <DomainEntryCard create className='domain-create-shell'><CardCreateButton className='domain-create-card' ariaLabel='创建领域' disabled={createDisabled} onClick={definition.openCreate} /></DomainEntryCard>;
   return <>
     <PageScroll snapSections={[]} scrollY={false}><View className='tool-page domains-page domains-list'><View className='domains-index'>
       <PageToolbar className='domains-page-toolbar' leading={writable && toolbarSummary && <PageToolbarSummary countLabel={`今日记录 ${toolbarSummary.createdToday}`} recentTitle={toolbarSummary.recentShortTermGoal?.content} recentLabel='最近完成短期目标' />} reset={<ToolbarResetButton ariaLabel='恢复领域默认方式' disabled={!writable || blocked || !!moveRetry} onReset={() => { if (writable && !blocked && !saving.current && !moveRetry) setSorting(false); }} />} sort={<ChoiceButton iconOnly size='compact' disabled={!writable || blocked} ariaLabel='排序领域' selected={sorting} onClick={() => setSorting(!sorting)}><SortSymbol /></ChoiceButton>} create={<CreateButton className='domain-record-trigger' label='记录进展' disabled={!writable || blocked} onClick={() => setQuick(true)} />} />
@@ -117,8 +117,8 @@ export default function Domains() {
       {ready && !valid && <View className='notice'>领域数据暂不可用<ActionButton className='tool-secondary button-label' onClick={retry}>重新读取</ActionButton></View>}
       {writable && <DomainRecentRecords key={owner} state={state} disabled={blocked} onEdit={item => { if (!saving.current && !definition.busy) setRecordEditor({ ...item, owner }); }} />}
       {writable && <ScrollView key={`cards:${owner}`} id='domain-entry-scroll' className='domain-entry-scroll' scrollY enhanced bounces={false} showScrollbar={false} ariaLabel='领域卡片'>
-        <View className='domain-entry-grid domain-first-grid'>{cards.slice(0, 8)}{cards.length < 8 && createCard}</View>
-        <View className='domain-entry-grid domain-continuation-grid'>{cards.slice(8)}{systemCard}{cards.length >= 8 && createCard}</View>
+        <CardGroupContent className='domain-card-groups'><View className='domain-entry-grid domain-first-grid'>{cards.slice(0, 8)}{cards.length < 8 && createCard}</View>
+        <View className='domain-entry-grid domain-continuation-grid'>{cards.slice(8)}{cards.length >= 8 && createCard}</View></CardGroupContent>
       </ScrollView>}
       {!!(error || moveRetry || status || progressStatus) && <ScrollView className='domains-feedback-scroll' scrollY showScrollbar={false} enhanced bounces={false} ariaLabel='领域保存反馈'>
         {(error || moveRetry) && <View className='domain-error domain-move-retry' role='alert'><Text>{error || '正在保存…'}</Text>{moveRetry && <ActionButton size='compact' disabled={blocked} ariaLabel='重试领域排序' onClick={() => { void retryMove(); }}>重试</ActionButton>}</View>}

@@ -1,12 +1,11 @@
 import { isTodoState, isMemoState, localToolDay } from './tool-records';
 import { isReminderState, cleanState, habitDayIndex } from './reminder-data';
 import { isPomodoroState, normalizePomodoroState, advanceTimer } from './pomodoro-data';
-import { isMealLibrary } from './meal-data';
 import { isDomainState } from './domain-data';
 
 export type ActivitySource = { owner: string; ready: boolean; value: unknown };
-export type ActivitySources = Record<'todos' | 'memos' | 'pomodoro' | 'reminders' | 'meals' | 'domains', ActivitySource>;
-export type ActivityTarget = 'task' | 'memos' | 'pomodoro' | 'daily' | 'meals' | 'domain';
+export type ActivitySources = Record<'todos' | 'memos' | 'pomodoro' | 'reminders' | 'domains', ActivitySource>;
+export type ActivityTarget = 'task' | 'memos' | 'pomodoro' | 'daily' | 'domain';
 export type RecentActivity = {
   id: string; title: string; label: string; icon: string; day: string;
   /** Day-only source records deliberately have no invented clock time. */
@@ -67,8 +66,6 @@ export function recentActivity(now: Date, sources: ActivitySources): RecentActiv
       for (const day of days) add({ id: `habit:${habit.id}:${day}`, title: habit.title, label: '习惯', icon: habit.iconId || habit.kind, target: 'daily', action: '查看' }, day, true);
     }
   }
-  const mealState = sources.meals.value;
-  if (isMealLibrary(mealState)) for (const meal of mealState.nutrition || []) add({ id: `meal:${meal.id}`, title: meal.name, label: '饮食记录', icon: 'food', target: 'meals', action: '查看' }, meal.date, true);
   const domainState = sources.domains.value;
   if (isDomainState(domainState)) {
     for (const domain of domainState.domains) {

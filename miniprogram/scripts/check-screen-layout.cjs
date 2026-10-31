@@ -5,9 +5,8 @@ module.exports = async function checkScreenLayout({ page, origin, out, width, ex
   async function checkCurrent(route) {
     await page.waitForTimeout(250);
     if (route === 'favorites') {
-      await expect(page.locator('.account-data-notice')).toContainText('数据保存与同步');
-      await expect(page.locator('.account-data-notice')).toContainText('保存在本机');
-      await expect(page.locator('.account-data-notice')).toContainText('不会自动合并');
+      await expect(page.locator('.account-page .more-section')).toHaveCount(0);
+      await expect(page.locator('.account-data-notice,.account-links')).toHaveCount(0);
     } else expect(await page.locator('body').innerText(), `${route}: routine local-save notice belongs on My`).not.toContain('保存在本机');
     if (route === 'statistics') {
       await expect(page.locator('.statistics-page')).toBeVisible();

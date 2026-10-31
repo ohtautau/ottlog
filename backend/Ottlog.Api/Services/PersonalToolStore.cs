@@ -51,7 +51,7 @@ public sealed class SupabasePersonalToolStore : IPersonalToolStore
     private static void Validate(string owner, string key)
     {
         if (!Regex.IsMatch(owner, @"\A(admin|reader):[A-Za-z0-9_-]{1,80}\z") ||
-            key is not ("meals" or "reminders" or "todos" or "pomodoro" or "memos" or "dining" or "mottos" or "growth" or "domains"))
+            key is not ("meals" or "reminders" or "todos" or "pomodoro" or "memos" or "dining" or "mottos" or "growth" or "domains" or "articles"))
             throw new ArgumentException("Invalid tool storage identity.");
     }
 

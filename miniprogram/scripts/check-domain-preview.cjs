@@ -101,10 +101,10 @@ function fixture(mode, storage = new Map()) {
 }
 
 function checkSamples() {
-  const f = fixture(false), { isDomainState, initialDomainState } = f.load('src/lib/domain-data.ts');
+  const f = fixture(false), { isDomainState, initialDomainState, legacyHabitDomains } = f.load('src/lib/domain-data.ts');
   const before = copy(initialDomainState), samples = createDomainPreviewRecords(FIXED_NOW);
   assert.ok(isDomainState(samples), 'Preview samples must satisfy the actual domain-state validator');
-  assert.deepEqual(samples.domains.map(domain => domain.id), copy(initialDomainState.domains.map(domain => domain.id)), 'Preview domains use the existing stable domain IDs');
+  assert.deepEqual(samples.domains.map(domain => domain.id), copy(legacyHabitDomains.map(domain => domain.id)), 'Preview domains use the existing stable domain IDs');
   assert.equal(samples.domains.length, 8);
   assert.equal(samples.completedGoals.length, 36);
   const completedCounts = samples.domains.map(domain => ['longTerm', 'shortTerm'].map(kind => samples.completedGoals.filter(goal => goal.domainId === domain.id && goal.kind === kind).length));
@@ -112,7 +112,7 @@ function checkSamples() {
   const ids = samples.domains.flatMap(domain => [domain.longTermGoal.id, domain.shortTermGoal.id, ...domain.positiveRecords.map(record => record.id), ...domain.negativeRecords.map(record => record.id)]).concat(samples.completedGoals.map(goal => goal.id));
   assert.equal(new Set(ids).size, ids.length, 'Sample goals and records have globally unique IDs');
   for (const domain of samples.domains) {
-    const original = initialDomainState.domains.find(item => item.id === domain.id);
+    const original = legacyHabitDomains.find(item => item.id === domain.id);
     assert.equal(domain.name, original.name);
     assert.equal(domain.iconId, original.iconId);
     assert.deepEqual(domain.habits, [], 'Preview domains do not duplicate the shared reminders habits');

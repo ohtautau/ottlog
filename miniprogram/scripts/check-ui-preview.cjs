@@ -33,6 +33,7 @@ const onlyDomainPreview = process.argv.includes('--domain-preview') || onlyEnter
 const onlyCalendarLabels = process.argv.includes('--calendar-labels');
 const onlyScheduleTime = process.argv.includes('--schedule-time');
 const onlyReminderSettings = process.argv.includes('--reminder-settings');
+const onlyUnifiedTimeWheels = process.argv.includes('--unified-time-wheels');
 const onlyToolbarSummaries = process.argv.includes('--toolbar-summaries');
 const onlyDomainRecentRecords = process.argv.includes('--domain-recent-records');
 const onlyTextWhitespace = process.argv.includes('--text-whitespace');
@@ -43,7 +44,7 @@ const onlyHabitDetailEdit = process.argv.includes('--habit-detail-edit');
 const onlyStatisticsInsights = process.argv.includes('--statistics-insights');
 fs.mkdirSync(out, { recursive: true });
 const fixture = {
-  persistEntryTools: onlyHomeDirectory || onlyWindowClose || process.argv.includes('--mottos') || onlyEntryCreation || onlyHomeEntryMode || onlyProgressCreation || process.argv.includes('--entry-clear-focus') || process.argv.includes('--record-edit') || process.argv.includes('--next-step') || onlyDomainPreview || onlyCalendarLabels || onlyScheduleTime || onlyReminderSettings || onlyToolbarSummaries || onlyDomainRecentRecords || onlyDomainHabitCreation || onlyHabitDetailEdit,
+  persistEntryTools: onlyUnifiedTimeWheels || onlyHomeDirectory || onlyWindowClose || process.argv.includes('--mottos') || onlyEntryCreation || onlyHomeEntryMode || onlyProgressCreation || process.argv.includes('--entry-clear-focus') || process.argv.includes('--record-edit') || process.argv.includes('--next-step') || onlyDomainPreview || onlyCalendarLabels || onlyScheduleTime || onlyReminderSettings || onlyToolbarSummaries || onlyDomainRecentRecords || onlyDomainHabitCreation || onlyHabitDetailEdit,
   domainPreview: onlyDomainPreview,
   mottos: ['别评判自己，别审判自己。', '记得分享观察和感受。', '不休息怎么工作！'],
   comments: [{ id: 'preview-comment', name: '来访者', text: '把好奇心继续写下来。', createdAt: '2026-09-10T10:00:00Z' }],
@@ -55,8 +56,8 @@ const fixture = {
     coverUrl: '/__preview-cover.svg', content: '# 让记录有一个自己的地方\n\n这里是用于界面验证的文章，不会写入真实博客。\n\n## 一点观察\n\n- 记录生活\n- 保持好奇\n\n**这是重点**，也可以保留 `一段代码`。\n\n```ts\nconst message = "hello, Ottlog";\n```\n\n| 主题 | 内容 |\n| --- | --- |\n| 日常 | 散步 |\n\n![示例图片](/__preview-cover.svg)\n\n[网页链接](https://ohtautau.com)',
   })),
 };
-const routes = ['index', 'todos', 'posts', 'categories', 'detail', 'favorites', 'journal', 'daily', 'pomodoro', 'memos', 'choose', 'meals', 'mottos', 'domains', 'domain-detail', 'statistics', ...(onlyDomainPreview ? ['preview-data'] : [])].filter(page => fs.existsSync(path.join(root, 'src', 'pages', page, 'index.tsx')));
-if (process.argv.includes('--toolbar-defaults')) fixture.persistEntryTools = true;
+const routes = ['index', 'todos', 'posts', 'categories', 'detail', 'favorites', 'journal', 'daily', 'pomodoro', 'memos', 'mottos', 'domains', 'domain-detail', 'statistics', ...(onlyDomainPreview ? ['preview-data'] : [])].filter(page => fs.existsSync(path.join(root, 'src', 'pages', page, 'index.tsx')));
+if (process.argv.includes('--todo-undo') || process.argv.includes('--toolbar-defaults') || process.argv.includes('--empty-state') || process.argv.includes('--habit-spacing') || process.argv.includes('--account-habits')) fixture.persistEntryTools = true;
 const imports = routes.map((p, i) => `import Page${i} from ${JSON.stringify(path.join(root, 'src', 'pages', p, 'index.tsx'))};`).join('\n');
 const source = `import React, {useState,useEffect} from 'react'; import {createRoot} from 'react-dom/client'; import ${JSON.stringify(path.join(root, 'src/app.css'))};
 ${imports}
@@ -65,7 +66,7 @@ ${onlyWindowClose ? `import CloseGuardFixture from ${JSON.stringify(path.join(__
 ${onlyTagRowSpacing ? `import TagRowFixture from ${JSON.stringify(path.join(__dirname, 'ui-preview-tag-row.tsx'))};` : ''}
 ${onlyToolbars ? `import ButtonContextFixture from ${JSON.stringify(path.join(__dirname, 'ui-preview-button-context.tsx'))};` : ''}
 const pages={${routes.map((p, i) => `${JSON.stringify(`pages/${p}/index`)}:Page${i}`).join(',')}${onlyTagRowSpacing ? ",'pages/tag-row-fixture/index':TagRowFixture" : ''}${onlyToolbars ? ",'pages/button-context-fixture/index':ButtonContextFixture" : ''}${onlyWindowClose ? ",'pages/close-guard-fixture/index':CloseGuardFixture" : ''}};
-const tabs=[['index','今日','⌂'],['todos','待办','☑'],['domains','领域','◇'],['daily','习惯','✿'],['favorites','我的','○']];
+const tabs=[['index','今日','⌂'],['todos','待办','☑'],['pomodoro','专注','◷'],['domains','领域','◇'],['daily','习惯','✿']];
 function Preview(){ const [route,setRoute]=useState(location.hash || '#/pages/index/index'); useEffect(()=>{const cb=()=>{setRoute(location.hash);window.scrollTo(0,0)};addEventListener('hashchange',cb);return()=>removeEventListener('hashchange',cb)},[]);const routePath=route.replace(/^#\\/?/,'').split('?')[0];const Component=pages[routePath] || Page0;const tab=tabs.find(t=>routePath==='pages/'+t[0]+'/index');return <div className={'preview-device '+(tab?'preview-with-tabs':'')}><header className='preview-native-header'>{!tab&&<button onClick={()=>history.back()}>‹</button>}<span>{tab?tab[1]:routePath==='pages/statistics/index'?'统计':'Ottlog'}</span><span className='preview-capsule'>•••　◉</span></header><main className='preview-content'><Component key={route}/></main>{tab&&<nav className='preview-native-tabs'>{tabs.map(t=><a key={t[0]} href={'#/pages/'+t[0]+'/index'} className={t===tab?'active':''}><span>{t[2]}</span>{t[1]}</a>)}</nav>}</div>; } createRoot(document.getElementById('root')).render(<Preview/>);`;
 const cover = '<svg xmlns="http://www.w3.org/2000/svg" width="750" height="480" viewBox="0 0 750 480"><rect width="750" height="480" fill="#14263d"/><circle cx="540" cy="130" r="70" fill="#d69a85"/><path d="M0 360L240 160L440 360L620 210L750 380V480H0Z" fill="#396988"/><path d="M0 420L210 260L410 430L600 330L750 450V480H0Z" fill="#83b9a4"/></svg>';
 function previewCss(source) {
@@ -192,6 +193,31 @@ async function main() {
       page.setDefaultTimeout(10000);
       page.on('pageerror', error => failures.push(`${width}: ${error.message}`));
       await page.route('https://preview.invalid/**', route => route.fulfill({ status: 200, contentType: 'image/svg+xml', body: cover }));
+      if (process.argv.includes('--empty-state')) {
+        await require('./check-empty-state-ui.cjs')({ page, origin, out, width, expect });
+        await page.close(); continue;
+      }
+      if (process.argv.includes('--todo-undo')) {
+        await require('./check-todo-undo-ui.cjs')({page,origin,out,width,expect});
+        await page.close(); continue;
+      }
+      if (process.argv.includes('--account-mottos')) {
+        await require('./check-account-mottos-ui.cjs')({ page, origin, out, width, expect });
+        await page.close(); continue;
+      }
+      if (process.argv.includes('--account-habits')) {
+        await require('./check-account-habits-ui.cjs')({ page, origin, out, width, expect });
+        await page.close(); continue;
+      }
+      if (process.argv.includes('--account-single-screen')) {
+        await require('./check-account-single-screen-ui.cjs')({ page, origin, out, width, expect });
+        await page.close(); continue;
+      }
+      if (process.argv.includes('--habit-spacing')) {
+        try { await require('./check-habit-spacing-ui.cjs')({ page, origin, out, width, expect }); }
+        catch (error) { await page.screenshot({ path: path.join(out, `habit-spacing-failed-${width}.png`) }); fs.writeFileSync(path.join(out, `habit-spacing-failed-${width}.html`), await page.content()); throw error; }
+        await page.close(); continue;
+      }
       if (onlyTextWhitespace) {
         try { await require('./check-text-whitespace-ui.cjs')({ page, origin, out, width, expect }); }
         catch (error) { await page.screenshot({ path: path.join(out, `text-whitespace-failed-${width}.png`) }); throw error; }
@@ -233,6 +259,10 @@ async function main() {
         catch (error) { await page.screenshot({ path: path.join(out, `domain-recent-records-failed-${width}.png`) }); throw error; }
         await page.close(); continue;
       }
+      if (process.argv.includes('--domain-detail-scroll')) {
+        await require('./check-domain-detail-scroll-ui.cjs')({ page, origin, out, width, expect });
+        await page.close(); continue;
+      }
       if (onlyToolbarSummaries) {
         try { await require('./check-toolbar-summaries-ui.cjs')({ page, origin, out, width, expect }); }
         catch (error) { await page.screenshot({ path: path.join(out, `toolbar-summaries-failed-${width}.png`) }); throw error; }
@@ -258,7 +288,8 @@ async function main() {
         await page.close(); continue;
       }
       if (onlyEntryCreation) {
-        await require('./check-entry-clear-focus.cjs')({ page, origin, out, width, expect });
+        try { await require('./check-entry-clear-focus.cjs')({ page, origin, out, width, expect }); }
+        catch (error) { await page.screenshot({ path: path.join(out, `entry-focus-failed-${width}.png`) }); fs.writeFileSync(path.join(out, `entry-focus-failed-${width}.html`), await page.content()); console.error(failures); throw error; }
         try { await require('./check-entry-creation.cjs')({ page, origin, out, width, expect, checkButtonAppearance });
         await require('./check-progress-creation.cjs')({ page, origin, out, width, expect, checkButtonAppearance });
         await require('./check-next-step-entry.cjs')({ page, origin, out, width, expect });
@@ -306,10 +337,7 @@ async function main() {
         }
         await page.close(); continue;
       }
-      if (process.argv.includes('--choose')) {
-        await require('./check-choose-layout.cjs')({ page, origin, out, width, expect });
-        await page.close(); continue;
-      }
+
       if (onlyHabitDetailEdit) {
         for (const host of ['daily', 'domain']) await require('./check-habit-detail-edit-ui.cjs')({ page, origin, out, width, expect, host });
         for (const host of ['daily', 'domain']) await require('./check-habit-calendar-edit-ui.cjs')({ page, origin, out, width, expect, host });
@@ -338,6 +366,11 @@ async function main() {
       if (process.argv.includes('--habit-recovery')) {
         await require('./check-habit-archive-ui.cjs')({ page, origin, out, width, expect });
         await require('./check-habit-archive-ui.cjs')({ page, origin, out, width, expect, host: 'domain' });
+        await page.close(); continue;
+      }
+      if (onlyUnifiedTimeWheels) {
+        try { await require('./check-unified-time-wheels-ui.cjs')({ page, origin, out, width, expect }); }
+        catch (error) { await page.screenshot({ path: path.join(out, `unified-wheels-failed-${width}.png`) }); throw error; }
         await page.close(); continue;
       }
       if (onlyReminderSettings) {
@@ -455,7 +488,17 @@ async function main() {
         await require('./check-todo-note-editor.cjs')({ page, origin, out, width, expect });
         await page.close(); continue;
       }
+      if (process.argv.includes('--todo-save-close') || process.argv.includes('--todo-save-close-regression')) {
+        await require('./check-todo-save-close.cjs')({ page, origin, out, width, expect });
+        if (process.argv.includes('--todo-save-close-regression')) {
+          await require('./check-todo-schedule-editor.cjs')({ page, origin, out, width, expect });
+          await require('./check-todo-workflow.cjs')({ page, origin, out, width, expect });
+          await require('./check-todo-notification-workflow.cjs')({ page, origin, out, width, expect });
+        }
+        await page.close(); continue;
+      }
       if (onlyTodos) {
+        await require('./check-todo-save-close.cjs')({ page, origin, out, width, expect });
         await require('./check-todo-sorting.cjs')({ page, origin, out, width, expect });
         await require('./check-todo-note-editor.cjs')({ page, origin, out, width, expect });
         await require('./check-todo-schedule-editor.cjs')({ page, origin, out, width, expect });
@@ -590,20 +633,7 @@ async function main() {
         await expect(page.locator('.daily-day.is-selected')).toHaveCount(1);
         await page.screenshot({ path: path.join(out, `daily-calendar-${width}.png`), fullPage: true });
       }
-      if (routes.includes('choose')) {
-        await page.evaluate(() => { location.hash = '#/pages/choose/index'; });
-        for (let step = 0; step < 9; step++) {
-          await expect(page.locator('.choice-aligned-option').first()).toBeEnabled();
-          const point = await page.locator('.choice-aligned-option').first().evaluate(element => { const box = element.getBoundingClientRect(); return { x: box.x + box.width / 2, y: box.y + box.height / 2 }; });
-          await page.mouse.click(point.x, point.y);
-          await page.waitForTimeout(200);
-        }
-        await expect(page.locator('.choice-result-title')).toBeVisible();
-        await expect(page.locator('.choice-trail-button')).toHaveCount(9);
-        await page.screenshot({ path: path.join(out, `choose-result-${width}.png`), fullPage: true });
-        await page.locator('.choice-trail-button').first().click();
-        await expect(page.getByRole('button', { name: '下一步', exact: true })).toBeEnabled();
-      }
+
       await page.goto(`${origin}/#/pages/journal/index`);
       await expect(page.locator('.home-greeting')).toContainText('Tau');
       await expect(page.locator('.home-mark img')).toBeVisible();
@@ -627,11 +657,11 @@ async function main() {
       await expect(page.locator('.posts-active-filters')).toContainText('Markdown');
       await page.goto(`${origin}/#/pages/detail/index?slug=preview-0`);
       await page.getByRole('button', { name: '☆ 收藏文章', exact: true }).click();
-      await expect(page).toHaveURL(/pages\/favorites\/index/);
+      await expect(page).toHaveURL(/pages\/index\/index/);
       await page.getByPlaceholder('输入博客账号').fill('preview-reader');
       await page.getByPlaceholder('输入密码', { exact: true }).fill('fixture-only-password');
       await page.getByRole('button', { name: '登录并同步', exact: true }).click();
-      await expect(page.locator('.account-user-name')).toHaveText('preview-reader');
+      await expect(page.locator('.account-window-name')).toHaveText('preview-reader');
       await page.evaluate(() => { location.hash = '#/pages/todos/index'; });
       await expect(page.locator('.todo-task')).toHaveCount(0);
       await page.locator('.todo-quadrant-later .todo-quadrant-add').click();
@@ -666,8 +696,10 @@ async function main() {
       await page.screenshot({ path: path.join(out, `favorites-saved-${width}.png`), fullPage: true });
       await page.getByRole('button', { name: '移除收藏', exact: true }).click();
       await expect(page.locator('.account-saved-card')).toHaveCount(0);
-      await page.getByRole('button', { name: '退出', exact: true }).click();
-      await expect(page.locator('.account-auth')).toBeVisible();
+      await page.evaluate(() => { location.hash = '#/pages/index/index'; });
+      await page.getByRole('button', { name: /^打开账号窗口/ }).click();
+      await page.getByRole('button', { name: '退出登录', exact: true }).click();
+      await expect(page.getByLabel('账号名称')).toBeVisible();
       await page.evaluate(() => { location.hash = '#/pages/todos/index'; });
       await page.getByRole('button', { name: '已完成', exact: true }).click();
       await expect(page.locator('.todo-task-title')).toHaveText('手机上记录的小事');
@@ -707,8 +739,31 @@ async function main() {
       return;
     }
     if (process.argv.includes('--todo-note-editor')) { console.log(`PASS task Markdown creation and existing-task default preview at four sizes: rendered full text/images, explicit writing, reopen reset, preserved ID/data, save retries and account guards. Browser adapter only. ${out}`); return; }
+    if (process.argv.includes('--account-mottos')) {
+      if (failures.length) throw new Error(failures.join('\n'));
+      console.log(`PASS account-only mottos: hidden for guest, real A/B isolation, logout hidden, no global defaults/API, four widths. ${out}`); return;
+    }
+    if (process.argv.includes('--account-habits')) {
+      if (failures.length) throw new Error(failures.join('\n'));
+      console.log(`PASS account-only habits: guest archives hidden and preserved, read-only previews, new account empty, A/B/logout isolation and login entry, four widths. ${out}`); return;
+    }
+    if (process.argv.includes('--account-single-screen')) {
+      if (failures.length) throw new Error(failures.join('\n'));
+      console.log(`PASS home account window login/logout/info, cancel and owner guards, no My second screen, focus tab navigation/start/pause/resume/end, 360/375/430/768px. Browser adapter only. ${out}`); return;
+    }
+    if (process.argv.includes('--habit-spacing')) {
+      if (failures.length) throw new Error(failures.join('\n'));
+      console.log(`PASS habit spacing/reminder scroll and delayed creation at 360/375/430/768px. ${out}`); return;
+    }
+    if (process.argv.includes('--todo-undo')) { if (failures.length) throw new Error(failures.join('\n')); console.log(`PASS shared task undo at360/375/430/768: create/edit/complete/delete/sort, durable undo retry,5s expiry and account isolation. ${out}`); return; }
+    if (process.argv.includes('--empty-state')) {
+      console.log(`PASS real empty states at 360/375/430/768px: no invented cards, no badges, no initial business writes, empty tasks and real creation. ${out}`); return;
+    }
+    if (onlyUnifiedTimeWheels) {
+      console.log(`PASS shared time/reminder/duration wheels at 360/375/430/768px: month/day linkage, live lead, bounded values, save/cancel/reload and original limits. Browser adapter; native touch physics not certified. ${out}`); return;
+    }
     if (onlyScheduleTime) {
-      console.log(`PASS compact time window at 360/375/430/768px (includes 375x667): centered native fields, right completion, complete strict time validation, retained invalid input, stable actions, staged completion/cancellation, unset time and existing schedule/reminder preservation. Browser adapter only. Screenshots: ${out}`);
+      console.log(`PASS two-column time picker at 360/375/430/768px (includes 375x667): 24 hours / 60 minutes, independent bounded selections, no text inputs, staged completion/cancellation, unset time and existing schedule/reminder preservation. Browser model checks values; native wheel physics need WeChat QA. Screenshots: ${out}`);
       return;
     }
     if (onlyCalendarLabels) {
@@ -722,7 +777,7 @@ async function main() {
       return;
     }
     if (onlyReminderSettings) {
-      console.log(`PASS reminder settings: five quick offsets and explicit custom time, six inline dates, complete actual reminder preview, direct task-time setup, month-end/midnight/DST preservation, nested clock validation, stable touch/layout, draft-only clear/cancel and same-ID persistence at 360/375/430/768px including 375x667 and simulated 34px safe area. Browser adapter only. ${out}`); return;
+      console.log(`PASS reminder month/day/hour/minute wheels: linked leap/month-end dates, live advance/same/late lead, explicit year, DST gap/repeated-hour preservation, no invented lead without task time, cancel and same-ID persistence at four sizes including 375x667 and 34px safe area. Browser adapter only. ${out}`); return;
     }
     if (process.argv.includes('--todo-sorting')) {
       console.log(`PASS browser-adapted React preview: task sorting icons, anchored options, schedule/creation order, stable ties, retained filters and records, persistence, write retry and account isolation at 360/375/430/768px (includes 375x667). Not a WeChat runtime test. Screenshots: ${out}`);
@@ -737,7 +792,7 @@ async function main() {
     if (onlyStatisticsInsights) { console.log(`PASS six automatic statistics panels at 360/375/430/768px: independent expected metrics, charts/legend/scale/point selection, shared 7/30-day scope, missing versus real zero, local chart scrolling, empty states, 40px controls and unchanged archives. Browser adapter only. ${out}`); return; }
     if (process.argv.includes('--mottos')) { console.log(`PASS mottos at four sizes: compact home text/count with a 40px pencil entry, no manual switching or playback controls, automatic default/custom rotation and touch/visibility guards, aligned interval popup, strict seconds/dismissal, stable error actions, guest persistence/retry, account reads/writes/isolation and unlimited collection editing. Browser adapter only. ${out}`); return; }
     if (process.argv.includes('--next-step')) { console.log(`PASS next-step continuous entry at four sizes: creation/editing, add/row/keyboard focus, one trailing prompt, same-task duplicate and image guards, 40px arrow controls, original IDs/order, blank filtering and reload. Browser adapter only. ${out}`); return; }
-    if (process.argv.includes('--habit-category-swipe')) { console.log(`PASS habit category swipes at four sizes: both directions, boundaries, empty lists, visible selection, vertical scrolling, long-press, click suppression, overlays, filters, persistence, account isolation. Browser adapter only. ${out}`); return; }
+    if (process.argv.includes('--habit-category-swipe')) { console.log(`PASS habit horizontal-gesture lock at four sizes: no adjacent panels/status changes, explicit status and domain filters preserved, business records unchanged. Browser adapter only. ${out}`); return; }
     if (process.argv.includes('--habit-sorting')) { console.log(`PASS habit sorting at four sizes: anchored icons, modes, long-press, persistence, retries, account isolation. Browser adapter only. ${out}`); return; }
     if (onlyHomeCreationScroll) { console.log('PASS home creation scroll at 360/375/430/768px (includes 375x667): keyboard avoidance does not snap, repeated memo/progress saves and close restore the origin, directory origin and bidirectional swipes stay intact, task creation still opens the todo list. Browser adapter only; no WeChat runtime test.'); return; }
     if (onlyHomeEntryMode) { console.log(`PASS home successful creation type memory at 360/375/430/768px (includes 375x667): capture and keyboard entrances, explicit entrance types, persisted reloads, progress text, failures, same-ID retries, invalid values and ${homeEntryModePreview ? 'real preview namespace isolation' : 'account separation'}. Browser adapter only. Screenshots: ${out}`); return; }
@@ -745,7 +800,7 @@ async function main() {
       console.log(`PASS browser-adapted React preview: shared action order, complete text controls, standalone category rows, last-category access and preserved entry/filter interactions on ten pages; contextual button levels, independent sizes, dynamic containers, complete long labels, wrapper forwarding and image-overlay feedback at 360/375/430/768px (includes 375x667). Not a WeChat runtime test. Screenshots: ${out}`);
       return;
     }
-    console.log(`PASS browser-adapted React preview: ${onlyDomainHabitCreation ? 'shared domain/habit add cards, full-card touch targets, empty/single-row and vertically scrolling habit grids, domain preselection, failed-save retry, preserved check-ins and reload persistence' : onlyHabitTimePeriods ? 'independent free/time-period lists, fixed equal-width headers, period selection, local scrolling and drag retries, shared editing and account separation' : onlyHabitCommentLogs ? 'comment-only monthly logs, immediate full text, ten-entry pagination, resets, three calendar hosts and preserved completion statistics' : onlyProgressCreation ? 'two progress editors, independent sign choices, one atomic save, shared top title text, legacy recovery, batch rejection, stable retry targets, images and account isolation' : onlyEntryCreation ? 'home inline capture, shared task/memo/progress creation, two Markdown record boxes, one atomic signed save, retained fields, shared labels and priorities, local draft recovery, save validation and account isolation' : onlyTagRowSpacing ? 'tag-row arrow spacing, empty and long labels, count states, dynamic options and shared multiselect' : onlySheetFooters ? 'sheet footer spacing, simulated 34px safe area, tabBar and detail hosts, divider-free single-row actions and reachable controls' : process.argv.includes('--statistics') ? 'six statistics panels, preserved calculations, source-page migration, entry/back navigation, read-only analyses, focus history operations and reminders, invalid data and account isolation' : process.argv.includes('--domains') ? 'domain management, detail navigation, goals, habits, quick records, persistence and account isolation' : process.argv.includes('--growth') ? 'preserved growth archives, period calculations, read-only statistics and account isolation' : onlyHomeNavigation ? 'two-screen home navigation, removed overview and preserved domain shortcuts' : process.argv.includes('--choose') ? 'symmetric choice layouts and touch targets' : process.argv.includes('--daily') ? 'habit grid, filters, drag order, neglected habits, check-ins and history' : process.argv.includes('--improvements') ? 'task dragging, filters, analytics and fixed habit icons' : process.argv.includes('--memos') ? 'memo creation, tags, image persistence, preview and removal' : onlyMeals ? 'meal creation and editing, common values, custom numbers, tags and persistence' : onlyPomodoro ? 'pomodoro controls, full-width stable actions, early finish, cancellation and reminders' : onlyTodos ? 'compact task editor, tags, recurrence, next steps and notifications' : onlyHomeShortcuts ? 'home shortcut customization, sorting, persistence and navigation' : routes.join(', ')} at 360/375/430/768px (includes 375x667), no render errors or horizontal overflow. Not a WeChat runtime test. Screenshots: ${out}`);
+    console.log(`PASS browser-adapted React preview: ${onlyDomainHabitCreation ? 'shared domain/habit add cards, full-card touch targets, empty/single-row and vertically scrolling habit grids, domain preselection, failed-save retry, preserved check-ins and reload persistence' : onlyHabitTimePeriods ? 'independent free/time-period lists, fixed equal-width headers, period selection, local scrolling and drag retries, shared editing and account separation' : onlyHabitCommentLogs ? 'comment-only monthly logs, immediate full text, ten-entry pagination, resets, three calendar hosts and preserved completion statistics' : onlyProgressCreation ? 'two progress editors, independent sign choices, one atomic save, shared top title text, legacy recovery, batch rejection, stable retry targets, images and account isolation' : onlyEntryCreation ? 'home inline capture, shared task/memo/progress creation, two Markdown record boxes, one atomic signed save, retained fields, shared labels and priorities, local draft recovery, save validation and account isolation' : onlyTagRowSpacing ? 'tag-row arrow spacing, empty and long labels, count states, dynamic options and shared multiselect' : onlySheetFooters ? 'sheet footer spacing, simulated 34px safe area, tabBar and detail hosts, divider-free single-row actions and reachable controls' : process.argv.includes('--statistics') ? 'six statistics panels, preserved calculations, source-page migration, entry/back navigation, read-only analyses, focus history operations and reminders, invalid data and account isolation' : process.argv.includes('--domains') ? 'domain management, detail navigation, goals, habits, quick records, persistence and account isolation' : process.argv.includes('--growth') ? 'preserved growth archives, period calculations, read-only statistics and account isolation' : onlyHomeNavigation ? 'two-screen home navigation, removed overview and preserved domain shortcuts' : process.argv.includes('--daily') ? 'habit grid, filters, drag order, neglected habits, check-ins and history' : process.argv.includes('--improvements') ? 'task dragging, filters, analytics and fixed habit icons' : process.argv.includes('--memos') ? 'memo creation, tags, image persistence, preview and removal' : onlyMeals ? 'meal creation and editing, common values, custom numbers, tags and persistence' : onlyPomodoro ? 'pomodoro controls, full-width stable actions, early finish, cancellation and reminders' : onlyTodos ? 'compact task editor, tags, recurrence, next steps and notifications' : onlyHomeShortcuts ? 'home shortcut customization, sorting, persistence and navigation' : routes.join(', ')} at 360/375/430/768px (includes 375x667), no render errors or horizontal overflow. Not a WeChat runtime test. Screenshots: ${out}`);
   } finally { if (browser) await browser.close(); server.closeAllConnections(); await new Promise(resolve => server.close(resolve)); esbuild.stop(); }
 }
 main().catch(error => { console.error(error); process.exitCode = 1; });

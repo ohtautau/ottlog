@@ -15,7 +15,7 @@ module.exports = async function checkHabitDetailEditUI({ page, origin, out, widt
   await page.evaluate(host => { location.hash = host === 'daily' ? '#/pages/daily/index' : '#/pages/domain-detail/index?id=work'; }, host);
   if (host === 'daily') await createHabitFilter({ page, expect }).select('全部');
   const sheet = () => page.locator(host === 'daily' ? '.daily-detail-sheet' : '.domain-sheet-habit-detail');
-  const open = () => page.locator(host === 'daily' ? '.swipe-panel-current .daily-habit-scroll' : '.domain-habit-scroll').getByRole('button', { name: '查看习惯：详情中修改习惯', exact: true }).click();
+  const open = () => page.locator(host === 'daily' ? '.daily-habit-pages > .daily-habit-scroll' : '.domain-habit-scroll').getByRole('button', { name: '查看习惯：详情中修改习惯', exact: true }).click();
   const read = tool => page.evaluate(tool => window.__miniPreviewControl.readStorage(`ottlog-mini-tool-v1:guest:${tool}`).data, tool);
   await open(); await expect(sheet()).toBeVisible();
   await require('./check-habit-detail-layout.cjs')({ page, sheetSelector: host === 'daily' ? '.daily-detail-sheet' : '.domain-sheet-habit-detail', footerSelector: host === 'daily' ? '.daily-detail-actions' : '.domain-sheet-actions', phase: 'inline choices initial layout', width, expect });

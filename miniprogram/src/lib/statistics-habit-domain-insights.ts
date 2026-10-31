@@ -143,6 +143,6 @@ export function domainStatisticsInsight(state: DomainState, now: Date, period: S
         caption: '按本期记录总数排列，正负记录分别呈现。' },
     ],
     findings,
-    note: '仅统计现存领域保留的记录与目标历史，未分类按原领域身份计入；已删除领域与未来时间不计入。目标按完成日期归属，正负记录不换算为评分。',
+    note: '仅统计现存领域保留的记录与目标历史，其它按原领域身份计入；已删除领域与未来时间不计入。目标按完成日期归属，正负记录不换算为评分。',
   };
 }

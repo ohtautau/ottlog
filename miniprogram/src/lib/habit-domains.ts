@@ -1,5 +1,6 @@
 import type { Domain } from './domain-data';
 import type { Reminder } from './reminder-data';
+import { OTHER_DOMAIN_NAME, domainDisplayName, findFallbackDomain, isFallbackDomainName } from './domain-fallback';
 
 const legacyDomain = (item: Reminder): string => {
   if (item.group === '健康' || item.group === '饮食') return 'life';
@@ -12,14 +13,14 @@ const legacyDomain = (item: Reminder): string => {
 export function alignHabitDomain(item: Reminder, domains: readonly Domain[]): Reminder {
   const domain = item.domainId !== undefined
     ? domains.find(domain => domain.id === item.domainId)
-    : domains.find(domain => domain.name === item.group) || domains.find(domain => domain.id === legacyDomain(item));
-  return { ...item, group: domain?.name || '未分类', domainId: domain?.id || item.domainId };
+    : domains.find(domain => domain.name === item.group) || (isFallbackDomainName(item.group) ? findFallbackDomain(domains) : undefined) || domains.find(domain => domain.id === legacyDomain(item));
+  return { ...item, group: domain ? domainDisplayName(domain.name) : OTHER_DOMAIN_NAME, domainId: domain?.id || item.domainId };
 }
 
 /** Display orphaned and unset associations in the system card without rewriting stored IDs. */
 export function alignHabitDisplayDomain(item: Reminder, domains: readonly Domain[]): Reminder {
   const aligned = alignHabitDomain(item, domains);
-  const fallback = aligned.group === '未分类' ? domains.find(domain => domain.name.trim() === '未分类') : undefined;
+  const fallback = !domains.some(domain => domain.id === aligned.domainId) && isFallbackDomainName(aligned.group) ? findFallbackDomain(domains) : undefined;
   return fallback ? { ...aligned, domainId: fallback.id } : aligned;
 }
 

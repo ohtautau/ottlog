@@ -1,0 +1,84 @@
+.account-motto-widget .tool-app-root { padding: 0; }
+/* Standalone home cards share the list inset in the browser at every width.
+   Keep the mini-program's card content padding and input behavior unchanged. */
+.tool-app-root :is(.today-quote, .today-capture) {
+  margin-left: var(--card-group-inset);
+  margin-right: var(--card-group-inset);
+}
+
+/* Viewport-sized desktop workspaces. Shared controls keep their native sizes. */
+@media (min-width: 900px) {
+  [data-tool-layout=viewport] .tool-app-root .today-page { height:100%;min-height:0;align-items:stretch;overflow:hidden; }
+  [data-tool-layout=viewport] .tool-app-root .today-page>.core-screen { height:100%;min-height:0; }
+  [data-tool-layout=viewport] .tool-app-root .today-page>.more-section { height:100%;min-height:0;overflow-y:auto;overscroll-behavior:contain;scrollbar-width:none; }
+  [data-tool-layout=viewport] .tool-app-root .today-page>.more-section::-webkit-scrollbar { display:none; }
+  [data-tool-layout=viewport] .tool-app-root .today-shortcut-scroll { flex:1;height:0;min-height:0;overflow-y:auto!important;overflow-x:hidden!important;overscroll-behavior:contain; }
+  [data-tool-layout=viewport] .tool-app-root .page-scroll { height:100%;min-height:0;overflow:hidden!important; }
+  [data-tool-layout=viewport] .tool-app-root :is(.tool-page.core-page,.todo-stages,.todo-core,.memo-core) { height:100%;min-height:0;padding:0; }
+  [data-tool-layout=viewport] .tool-app-root :is(.todo-stages,.todo-core,.memo-core) { display:flex;flex-direction:column; }
+  [data-tool-layout=viewport] .tool-app-root .core-screen>.core-content { flex:1;height:0;min-height:0; }
+  [data-tool-layout=viewport] .tool-app-root .todo-stages .todo-page { flex:1;height:0;min-height:0;overflow:hidden; }
+  [data-tool-layout=viewport] .tool-app-root .todo-quadrants { flex:1;height:0;min-height:0;gap:12px; }
+  [data-tool-layout=viewport] .tool-app-root .todo-quadrant-heading { min-height:56px;padding:8px 6px 8px 12px; }
+  [data-tool-layout=viewport] .tool-app-root .todo-quadrant-scroll { flex:1;height:0;min-height:0;overflow-y:auto!important;overscroll-behavior:contain; }
+  [data-tool-layout=viewport] .tool-app-root .todo-quadrant-empty { padding:16px 8px; }
+  [data-tool-layout=viewport] .tool-app-root .memo-list-scroll { flex:1;height:0;min-height:0;overflow-y:auto!important;overscroll-behavior:contain; }
+  [data-tool-layout=viewport] .tool-app-root .memo-list { grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;align-content:start; }
+  [data-tool-layout=viewport] .tool-app-root .memo-note { min-height:140px; }
+  [data-tool-layout=viewport] .tool-app-root .memo-list-empty { min-height:100%; }
+  .tool-app-root { --desktop-panel-radius:14px;--desktop-panel-border:#4c6179;--desktop-dialog-inset:16px; }
+  .tool-app-root :is(.todo-overlay,.memo-overlay,.daily-editor-overlay,.domain-overlay,.domain-definition-overlay,.home-editor-overlay,.meal-sheet-mask,.focus-settings-overlay,.mottos-editor-overlay,.todo-schedule-overlay,.icon-library-overlay) { padding:var(--desktop-dialog-inset);display:flex;align-items:center;justify-content:center; }
+  .tool-app-root :is(.todo-sheet,.memo-sheet,.daily-editor-sheet,.daily-detail-sheet,.daily-reflection-sheet,.daily-history-sheet,.domain-sheet,.domain-definition-panel,.home-editor-sheet,.meal-sheet,.focus-settings,.mottos-editor-sheet,.todo-schedule-sheet,.icon-library-sheet) { --popup-actions-bottom-space:var(--floating-window-bottom-space);border-radius:var(--desktop-panel-radius);border:1px solid var(--desktop-panel-border);max-height:calc(100dvh - 32px);box-shadow:0 24px 90px #04091188; }
+  .tool-app-root :is(.todo-sheet,.memo-sheet) { width:min(900px,100%);max-width:900px;height:min(700px,calc(100dvh - 32px)); }
+  .tool-app-root :is(.todo-sheet-scroll,.memo-sheet-scroll) { flex:1;height:0;min-height:0;overscroll-behavior:contain; }
+  .tool-app-root :is(.todo-sheet-fields,.memo-sheet-fields) { padding:0 20px 16px; }
+  .tool-app-root .todo-editor-fields { display:grid;grid-template-columns:minmax(0,1.25fr) minmax(0,1fr);column-gap:24px;align-items:start; }
+  .tool-app-root .todo-editor-fields>.todo-date-row { grid-column:1/-1; }
+  .tool-app-root .todo-editor-fields>.todo-title-row { grid-column:1/-1; }
+  .tool-app-root .todo-editor-fields>.todo-note-editor { grid-column:1;grid-row:3/5; }
+  .tool-app-root .todo-editor-fields>.todo-next-list { grid-column:2;grid-row:3; }
+  .tool-app-root .todo-editor-fields>.todo-tags-row { grid-column:2;grid-row:4; }
+  .tool-app-root .todo-editor-fields .memo-body-input { min-height:180px; }
+  .tool-app-root .todo-editor-fields .todo-note-editor textarea.memo-body-input { height:180px;min-height:180px; }
+  .tool-app-root input:not([type=checkbox]):not([type=radio]):not([type=file]) { padding:0;border:0;border-radius:0;background:transparent; }
+  .tool-app-root .todo-next-list { max-height:240px;overflow:auto;overscroll-behavior:contain; }
+  .tool-app-root :is(.todo-sheet-heading,.memo-sheet-heading,.sheet-actions,.form-popover-heading,.form-popover-footer,.icon-library-tools,.icon-library-footer) { flex-shrink:0; }
+  .tool-app-root .sheet-actions { padding-bottom:max(12px,var(--popup-actions-bottom-space,8px)); }
+  .tool-app-root .form-popover-panel { border-radius:var(--desktop-panel-radius);border-color:var(--desktop-panel-border); }
+  .tool-app-root .form-popover-scroll { overscroll-behavior:contain; }
+  .tool-app-root .memo-reader .form-popover-scroll { max-height:none; }
+  .tool-app-root .icon-library-sheet { position:relative;inset:auto;width:min(900px,100%);height:min(720px,calc(100dvh - 32px));max-width:900px; }
+  .tool-app-root .icon-library-grid { grid-template-columns:repeat(8,minmax(0,1fr));gap:10px; }
+  .tool-app-root .icon-library-option { min-height:80px; }
+  .tool-app-root .icon-library-search input { min-height:44px;height:44px; }
+  .tool-app-root .icon-library-scroll { overflow-y:auto!important; }
+  .tool-app-root .todo-schedule-sheet { width:min(900px,100%);max-width:900px;height:min(660px,calc(100dvh - 32px)); }
+  .tool-app-root .todo-schedule-sheet.is-overview .todo-schedule-body { display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,1fr);grid-template-rows:44px 44px 24px minmax(240px,1fr);gap:6px 24px;padding:0 20px 12px; }
+  .tool-app-root .todo-schedule-quick { grid-column:1;grid-row:1;margin:0;gap:6px; }
+  .tool-app-root .todo-schedule-month { grid-column:1;grid-row:2;margin:0; }
+  .tool-app-root .todo-schedule-weekdays { grid-column:1;grid-row:3;padding:0; }
+  .tool-app-root .todo-schedule-sheet.is-overview .todo-schedule-calendar { grid-column:1;grid-row:4;min-height:240px;max-height:none;grid-template-rows:repeat(6,minmax(40px,1fr)); }
+  .tool-app-root .todo-schedule-sheet.is-overview .todo-schedule-day { max-height:none;min-height:40px; }
+  .tool-app-root .todo-schedule-options { grid-column:2;grid-row:1/5;margin:0!important;border:0;padding-left:20px;border-left:1px solid #344650;align-self:center; }
+  .tool-app-root .app-dialog-panel { max-height:calc(100dvh - 32px); }
+  .tool-app-root .app-dialog-scroll { max-height:calc(100dvh - 180px); }
+  .tool-app-root [role=dialog]:focus,
+  .tool-app-root :is(.todo-sheet,.memo-sheet,.focus-settings):focus { outline:none; }
+}
+@media(min-width:1400px) {
+  [data-tool-layout=viewport] .tool-app-root .memo-list { grid-template-columns:repeat(4,minmax(0,1fr)); }
+}
+.tool-app-root .todo-task.has-no-date { align-items: center; }
+.tool-app-root .todo-task.has-no-date .todo-task-content { display: flex; align-items: center; min-height: 44px; }
+.tool-app-root .todo-task.has-no-date .todo-complete { display: flex; align-items: center; justify-content: center; padding-top: 0; }
+.tool-app-root .todo-task { cursor: grab; }
+.tool-app-root .todo-task.is-drag-source { cursor: grabbing; }
+.tool-app-root .form-tag-custom.is-inline { margin-top: var(--editor-field-gap); }
+.tool-app-root .todo-drag-delete-zone { position: fixed; z-index: 120; height: 56px; display: flex; align-items: center; justify-content: center; gap: 10px; border: 1px dashed #c99792; border-radius: 12px; background: #432e37; color: #ffd8cd; font-size: 14px; box-shadow: 0 6px 24px #07101b55; pointer-events: none; }
+.tool-app-root .todo-drag-delete-zone.is-over { border-style: solid; background: #82484a; }
+.tool-app-root .todo-drag-ghost { z-index: 125; }
+.tool-app-root .mottos-page { display: flex; flex-direction: column; height: var(--app-page-height); min-height: 0; overflow: hidden; }
+.tool-app-root .mottos-heading { flex: none; margin-bottom: 8px; }
+.tool-app-root .mottos-list-scroll { flex: 1; height: 0; min-height: 0; overflow-y: auto !important; overflow-x: hidden !important; overscroll-behavior: contain; }
+.tool-app-root .mottos-row { min-height: 64px; align-items: center; }
+.tool-app-root { --operation-toast-bottom: 16px; }

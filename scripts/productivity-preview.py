@@ -41,6 +41,7 @@ def main():
     with tooltest.server(fixture) as api, (fixture / "web.log").open("w", encoding="utf-8") as output:
         environment = dict(os.environ, API_BASE_URL=api, OTTLOG_NEXT_DIST_DIR=DIST)
         environment.pop("NODE_ENV", None)
+        subprocess.run([node, "scripts/build-tool-app.mjs"], cwd=WEB, env=environment, check=True)
         process = subprocess.Popen([node, "node_modules/next/dist/bin/next", "dev", "--hostname", "127.0.0.1", "--port", str(port)],
             cwd=WEB, env=environment, stdout=output, stderr=subprocess.STDOUT,
             creationflags=subprocess.CREATE_NO_WINDOW if os.name == "nt" else 0)
@@ -60,10 +61,8 @@ def main():
             (RESULTS / "productivity-runtime.json").write_text(json.dumps(info), encoding="utf-8")
             print(json.dumps(info), flush=True)
             if "--check" in sys.argv:
-                for script in ["check-todos.cjs", "check-productivity.cjs", "check-memo-transitions.cjs", "check-tool-cache-races.cjs", "check-daily-tools.cjs", "check-tool-backups.cjs", "check-quick-note.cjs"]:
-                    if not (WEB / "scripts" / script).exists():
-                        continue
-                    result = subprocess.run([node, f"scripts/{script}"], cwd=WEB, env=dict(os.environ, TEST_ORIGIN=origin))
+                for script in ["check-tool-workspace.mjs", "check-tool-workflows.mjs", "check-tool-data.mjs", "check-tool-touch.mjs"]:
+                    result = subprocess.run([node, f"scripts/{script}"], cwd=WEB, env=dict(os.environ, OTTLOG_PARITY_ORIGIN=origin))
                     if result.returncode:
                         raise SystemExit(result.returncode)
             else:

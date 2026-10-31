@@ -103,7 +103,9 @@ module.exports = async function checkEntryClearFocus({ page, origin, out, width,
   await clear().click(); await expect(title()).toBeFocused(); await expect(composer().locator('.memo-image')).toHaveCount(0); await close();
   await go('domains'); await page.getByRole('button', { name: '记录进展', exact: true }).click(); await expect(positive()).toBeFocused(); await close();
   await page.getByRole('button', { name: '打开工作领域', exact: true }).click();
-  await page.locator('.domain-record-column.is-positive').dispatchEvent('click'); await expect(positive()).toBeFocused();
+  // Wait for the detail host; the previous page can contain read-only preview columns.
+  await expect(page.getByRole('button', { name: '创建记录', exact: true })).toBeEnabled();
+  await page.locator('.domain-records.is-scrollable > .domain-record-column.is-positive').dispatchEvent('click'); await expect(positive()).toBeFocused();
   await positive().fill('领域内进展'); await clear().click(); await expect(positive()).toBeFocused(); expect((await draft()).progress.domainId).toBe('work'); await close();
   if (width === 360) {
     await go('index'); await page.getByRole('button', { name: '创建任务', exact: true }).click();

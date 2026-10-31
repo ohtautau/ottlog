@@ -1,0 +1,54 @@
+const path = require('node:path');
+const { touchGesture } = require('./entry-swipe-test-helpers.cjs');
+module.exports = async ({ page, origin, out, width, expect }) => {
+  await page.goto(`${origin}/?habit-spacing=${width}#/pages/posts/index`);
+  await page.locator('.posts-page').waitFor();
+  await page.evaluate(() => {
+    localStorage.clear();
+    window.__miniFixture.guestToolStates = { reminders: { version: 1, done: {}, items: Array.from({ length: 20 }, (_, index) => ({ id: `spacing-${index}`, title: `留白检查习惯${index}`, group: '未分类', kind: 'plant', note: '', minutes: 0, enabled: true, timePeriod: index < 10 ? 'free' : 'morning' })) } };
+    location.hash = '#/pages/daily/index';
+  });
+  const free = page.locator('.daily-time-period-section[data-time-period=free]');
+  await expect(free.locator('.daily-suggestion')).toHaveCount(10);
+  const heading = await free.locator('.section-title').boundingBox(), card = await free.locator('.daily-suggestion').first().boundingBox(), section = await free.boundingBox();
+  expect(card.x - section.x).toBeGreaterThanOrEqual(7.9);
+  expect(Math.abs(heading.x - card.x)).toBeLessThanOrEqual(1);
+  const list = page.locator('.daily-habit-pages > .daily-habit-scroll');
+  await touchGesture(list, { dx: -100 });
+  await expect(page.locator('.daily-habit-pages .swipe-panels')).toHaveCount(0);
+  await expect(free.locator('.daily-suggestion')).toHaveCount(10);
+  expect(Math.abs((await free.locator('.daily-suggestion').first().boundingBox()).x - card.x)).toBeLessThan(1);
+  expect(await free.locator('.habit-list-section-scroll').evaluate(node => node.scrollWidth - node.clientWidth)).toBeLessThanOrEqual(1);
+  const gap = await free.locator('.habit-card-grid').evaluate(node => parseFloat(getComputedStyle(node).columnGap));
+  expect(gap).toBeGreaterThanOrEqual(8);
+  const reminders = page.locator('.daily-neglected');
+  await expect(reminders.locator('.daily-suggestion')).toHaveCount(20);
+  await expect(reminders.locator('.habit-list-scroll-hint')).toHaveCount(0);
+  const scroll = reminders.locator('.habit-list-section-scroll');
+  expect(await scroll.evaluate(node => node.scrollHeight > node.clientHeight + 8)).toBe(true);
+  const headingBefore = await reminders.locator('.habit-list-section-heading').boundingBox();
+  await scroll.evaluate(node => { node.scrollTop = node.scrollHeight; });
+  await expect(reminders.locator('.daily-suggestion').last()).toBeInViewport();
+  await expect(reminders.locator('.habit-list-scroll-hint')).toHaveCount(0);
+  expect((await reminders.locator('.habit-list-section-heading').boundingBox()).y).toBe(headingBefore.y);
+  await page.screenshot({ path: path.join(out, `habit-spacing-reminders-${width}.png`) });
+
+  await page.evaluate(() => {
+    localStorage.clear();
+    const fixture = window.__miniFixture;
+    fixture.sessionProfile = { authenticated: true, userName: 'creation-delay', isAdmin: false };
+    fixture.accountToolStates = { 'creation-delay': { todos: { version: 1, tasks: [], categories: [] }, memos: { version: 1, notes: [] }, domains: { version: 1, domains: [], completedGoals: [] } } };
+    fixture.toolRequestDelays = { '/personal-tools/todos': 400, '/personal-tools/memos': 2000, '/personal-tools/domains': 2500 };
+    location.hash = '#/pages/todos/index';
+  });
+  await page.locator('.todo-quadrant-add').first().click();
+  const input = page.getByLabel('任务名称', { exact: true });
+  await expect(input).toBeVisible();
+  await expect(input).toBeEnabled({ timeout: 1500 });
+  await expect(page.getByRole('button', { name: '创建类型：备忘', exact: true })).toBeDisabled();
+  await input.fill('不等待便签和领域的任务');
+  await page.getByRole('button', { name: '创建任务', exact: true }).last().click();
+  await expect(page.locator('.entry-composer')).toHaveCount(0);
+  await expect(page.getByRole('button', { name: '编辑任务：不等待便签和领域的任务', exact: true })).toBeVisible();
+  await expect.poll(() => page.evaluate(() => window.__miniFixture.accountToolStates['creation-delay'].todos.tasks.length)).toBe(1);
+};

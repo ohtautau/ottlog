@@ -1,3 +1,4 @@
+import EmptyState from '../../components/empty-state';
 import { CoreScreen, MoreSection } from '../../components/page-sections';
 import PageScroll from '../../components/page-scroll';
 import { useMemo, useRef, useState } from 'react';
@@ -83,10 +84,10 @@ export default function PostsPage() {
     <View className='posts-results-count'><Text>{filter.q || filter.category || filter.tag ? '找到' : '共'} {results.length} 篇记录</Text><Text>{sorts.find(sort => sort.value === filter.sort)?.name} · {filter.direction === 'desc' ? '降序' : '升序'}</Text></View>
     {busy && !posts.length && <View className='posts-loading'>正在翻开记录…</View>}
     {message && <View className='notice'><Text>{message}</Text><ActionButton className='button-label' onClick={load}>重新连接</ActionButton></View>}
-    {!busy && !message && !results.length && <View className='posts-empty'><Text className='posts-empty-symbol'>∅</Text><View>暂时没有找到文章</View>{posts.length > 0 && <ActionButton className='button-label' onClick={clear}>查看所有文章</ActionButton>}</View>}
+    {!busy && !message && !results.length && (!posts.length && !filter.q && !filter.category && !filter.tag ? <EmptyState kind='articles' /> : <View className='posts-empty'><Text className='posts-empty-symbol'>∅</Text><View>暂时没有找到文章</View>{posts.length > 0 && <ActionButton className='button-label' onClick={clear}>查看所有文章</ActionButton>}</View>)}
     {results[0] && <View className='posts-featured'><ArticleCard post={results[0]} onCategory={category => update({ category })} onTag={tag => update({ tag })} /></View>}
     </CoreScreen><MoreSection title='继续阅读'>
-    <View className='posts-entry-links'><ActionButton className='button-label' onClick={() => void Taro.navigateTo({ url: '/pages/categories/index' })}>分类与标签 ↗</ActionButton><ActionButton className='button-label' onClick={() => void Taro.navigateTo({ url: '/pages/journal/index' })}>Tau 的空间 ↗</ActionButton></View>
+    <View className='posts-entry-links'><ActionButton className='button-label' onClick={() => void Taro.navigateTo({ url: '/pages/categories/index' })}>分类与标签 ↗</ActionButton></View>
     <View className='posts-list'>{results.slice(1, visible).map(post => <ArticleCard key={post.slug} post={post} onCategory={category => { update({ category }); }} onTag={tag => { update({ tag }); }} />)}</View>
     {results.length > 0 && <View className='posts-pagination'><Text>已显示 {Math.min(visible, results.length)} / {results.length} 篇</Text>{visible < results.length ? <ActionButton className='button-label' onClick={() => setVisible(previous => previous + pageSize)}>加载更多</ActionButton> : <Text className='posts-end'>记录到这里，待续。</Text>}</View>}
   </MoreSection></View></PageScroll>;

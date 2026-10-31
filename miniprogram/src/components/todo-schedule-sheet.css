@@ -20,8 +20,7 @@
 .todo-schedule-choices { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 10rpx; }
 .todo-schedule-choices button { min-width: 0; min-height: 76rpx; margin: 0; padding: 12rpx 8rpx; border: 1rpx solid #405662; border-radius: 12rpx; background: #20313c; color: #b8cdd3; font-size: min(24rpx,16PX); font-weight: 400; line-height: 1.4; }
 .todo-schedule-choices .is-active { color: #d3efdf; border-color: #a4cfbc; background: #304c42; }
-.todo-schedule-choices.is-reminders,.todo-schedule-choices.is-repeats { grid-template-columns: repeat(3,minmax(0,1fr)); }
-.todo-schedule-clock-input,.todo-schedule-repeat-input { margin-top: 16rpx; color: #afc3ca; font-size: min(25rpx,16PX); }
+.todo-schedule-choices.is-repeats { grid-template-columns: repeat(3,minmax(0,1fr)); }
 .todo-schedule-reminder-status { display: flex; align-items: center; gap: 12rpx; justify-content: space-between; margin-top: 18rpx; color: #9cb5ba; font-size: min(22rpx,14PX); line-height: 1.5; }
 .todo-schedule-hint,.todo-schedule-error { display: block; margin-top: 16rpx; color: #9fb4bb; font-size: min(22rpx,14PX); line-height: 1.6; }
 .todo-schedule-error { flex: none; margin: 0; padding: 12rpx 28rpx; color: #edbeaa; }
@@ -49,7 +48,6 @@
 /* Option windows own their content and never stretch the overview calendar. */
 .todo-schedule-popover { border-radius: 12PX; }
 .todo-schedule-popover-actions button { min-width: 96PX; }
-.todo-schedule-popover.todo-schedule-time-popover .todo-schedule-clock-input { margin-top: 0; }
 .todo-schedule-popover-actions .todo-schedule-time-error { flex: 1; min-width: 0; margin: 0; color: #efb7a2; font-size: 12PX; line-height: 18PX; text-align: left; }
 .todo-schedule-clearable-row { position: relative; display: flex; align-items: center; }
 .todo-schedule-clearable-row::after { content: ''; position: absolute; left: 0; right: 0; bottom: 0; border-bottom: 1PX solid #2c3e49; pointer-events: none; }
@@ -57,17 +55,16 @@
 .todo-schedule-clearable-row > .todo-schedule-row { flex: 1; min-width: 0; width: 0; }
 .todo-schedule-clearable-row .todo-schedule-row { border-bottom: 0; }
 .todo-schedule-setting-clear { flex: none; width: 40PX; height: 40PX; margin: 0; }
-.todo-reminder-time-choice { flex-direction: column; gap: 2PX; }
-.todo-reminder-time-caption { font-size: 12PX; line-height: 1.4; opacity: .8; }
 .todo-schedule-reminder-preview { border-top: 1PX solid #344650; padding-top: var(--editor-section-inset); }
-.todo-schedule-reminder-preview-value { display: block; color: #e6eee4; font-size: 16PX; line-height: 1.5; }
+.todo-schedule-reminder-preview-value { display: block; color: #e6eee4; font-size: 16PX; line-height: 24PX; font-variant-numeric: tabular-nums; }
+.todo-schedule-reminder-description { display: flex; align-items: baseline; flex-wrap: wrap; gap: 4PX 8PX; margin-top: 6PX; }
+.todo-schedule-reminder-relative { flex: none; color: #d0e8dc; font-size: 14PX; font-weight: 600; line-height: 22PX; }
+.todo-schedule-reminder-lead { display: block; min-width: 0; color: #a8bdc6; font-size: 14PX; line-height: 22PX; }
 .todo-reminder-set-time { margin-top: var(--editor-field-gap); }
 .todo-schedule-reminder-popover > .form-popover-footer .todo-schedule-reminder-status { margin: 0; padding: 6PX 12PX; }
 .todo-schedule-popover .todo-schedule-choices { gap: 6PX; grid-template-columns: repeat(2,minmax(0,1fr)); }
-.todo-schedule-popover .todo-schedule-choices.is-reminders,.todo-schedule-popover .todo-schedule-choices.is-repeats { grid-template-columns: repeat(3,minmax(0,1fr)); }
-.todo-schedule-popover .todo-schedule-reminder-days-inline { grid-template-columns: repeat(3,minmax(0,1fr)); }
+.todo-schedule-popover .todo-schedule-choices.is-repeats { grid-template-columns: repeat(3,minmax(0,1fr)); }
 .todo-schedule-popover .todo-schedule-choices button { min-height: 40PX; padding: 8PX 4PX; }
-.todo-schedule-popover .todo-schedule-clock-input,.todo-schedule-popover .todo-schedule-repeat-input { margin-top: 8PX; font-size: 14PX; }
 .todo-schedule-popover .todo-schedule-reminder-status { gap: 8PX; margin-top: 12PX; font-size: 12PX; }
 .todo-schedule-popover .todo-schedule-reminder-status > text { flex: 1; min-width: 0; }
 .todo-schedule-popover .todo-schedule-reminder-status button { flex: none; }

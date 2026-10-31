@@ -1,4 +1,4 @@
-import styles from '@/app/choose/choice.module.css';
+import styles from './option-scene.module.css';
 
 export const surfaces = ['#254d62', '#79503e', '#435741', '#454466', '#235c5b', '#713b4b', '#354e6b', '#6a5831', '#554c44'];
 

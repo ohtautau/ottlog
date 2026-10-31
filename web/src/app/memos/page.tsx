@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import MemoExperience from "./memo-experience";
+import ToolWorkspace from '@/components/tool-workspace';
 
 export const metadata: Metadata = {
   title: "备忘录",
@@ -7,5 +7,5 @@ export const metadata: Metadata = {
 };
 
 export default function MemosPage() {
-  return <MemoExperience />;
+  return <ToolWorkspace page='memos' />;
 }

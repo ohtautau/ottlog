@@ -28,16 +28,16 @@ function collect(directory) {
 }
 collect(output);
 
-assert.ok(subpackages.some(pkg => pkg.root === 'pages/pomodoro'), 'Timer artwork requires its existing pomodoro subpackage');
+assert.ok(manifest.pages.includes('pages/pomodoro/index'), 'Focus is a native tab in the main package');
 assert.ok(!fs.existsSync(path.join(output, 'assets', 'pomodoro')), 'Timer artwork must not be duplicated in the main package');
 for (const [name, locations] of timerArtwork) {
   const source = path.join(root, 'src', 'assets', 'pomodoro', name);
   const emitted = path.join(output, 'pages', 'pomodoro', 'assets', name);
-  assert.ok(fs.existsSync(emitted), `${name} must be emitted inside the pomodoro subpackage`);
-  assert.deepEqual(locations, [`pages/pomodoro/assets/${name}`], `${name} must appear exactly once, only in the pomodoro subpackage`);
+  assert.ok(fs.existsSync(emitted), `${name} must be emitted alongside the focus page`);
+  assert.deepEqual(locations, [`pages/pomodoro/assets/${name}`], `${name} must appear exactly once, alongside the focus page`);
   assert.ok(fs.readFileSync(source).equals(fs.readFileSync(emitted)), `${name} must retain its original image bytes`);
 }
-console.log('PASS pomodoro artwork: two byte-identical subpackage PNGs without a main copy.');
+console.log('PASS pomodoro artwork: two byte-identical focus PNGs, no duplicate asset copy.');
 
 const report = {
   measurement: 'Uncompressed local dist files before WeChat packaging; includes project config and licenses.',

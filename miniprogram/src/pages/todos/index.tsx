@@ -1,3 +1,4 @@
+import CardGroupContent from '../../components/card-group-content';
 import { trimTextEnd } from '../../lib/text-whitespace';
 import PageScroll from '../../components/page-scroll';
 import { CoreScreen } from '../../components/page-sections';
@@ -10,7 +11,7 @@ import ActionButton, { ChoiceButton } from '../../components/ui-button';
 import { hasVolatilePersonalTool, usePersonalToolState } from '../../lib/use-personal-tool-state';
 import { createTodo, saveTodo, toggleTodo, mergeTodoCategories, moveTodo, retryTodoMove, orderTodos, getTodoSortMode, applyTodoSort, todoToolbarSummary, type TodoSortMode, parseTodoTags as parseTags } from '../../lib/todo-data';
 import { cancelTodoReminder, getReminderConfig, getTodoReminders, requestTodoReminder } from '../../lib/todo-reminders';
-import { demoTodos, initialTodoState, isTodoState, localToolDay, todoQuadrant, todoQuadrants, type Todo, type TodoState } from '../../lib/tool-records';
+import { initialTodoState, isTodoState, localToolDay, todoQuadrant, todoQuadrants, type Todo, type TodoState } from '../../lib/tool-records';
 import { useTodoDrag } from '../../components/todo-drag';
 import { SelectChevron } from '../../components/select-trigger';
 import FilterPopover, { FilterFields, FilterField, FilterOptionGrid, FilterSearch } from '../../components/filter-popover';
@@ -32,6 +33,10 @@ import AppDialog from '../../components/app-dialog';
 import { showAppMessage } from '../../lib/app-dialog';
 import useEditorCloseGuard from '../../lib/use-editor-close-guard';
 import './index.css';
+import { isWebTool } from '../../lib/tool-platform';
+import useTodoUndo, { type TodoUndoEdit } from '../../lib/use-todo-undo';
+import { undoTodoOperation } from '../../lib/todo-undo';
+import OperationToast from '../../components/operation-toast';
 
 const notify = (error: unknown) => { void showAppMessage({ title: error instanceof Error ? error.message : '操作失败，请重试', icon: 'none' }); };
 type ReminderConfig = Awaited<ReturnType<typeof getReminderConfig>>;
@@ -65,7 +70,7 @@ export default function Todos() {
   const [scheduleOpen, setScheduleOpen] = useState(false);
   const [busy, setBusy] = useState(false);
   const [imageBusy, setImageBusy] = useState(false);
-  const [deletion, setDeletion] = useState<{ owner: string; task: Todo; pending?: boolean } | null>(null);
+  const [deletion, setDeletion] = useState<{ owner: string; task: Todo; pending?: boolean; fromDrag?: boolean } | null>(null);
   const [deleteError, setDeleteError] = useState('');
   const deletionRef = useRef(deletion); deletionRef.current = deletion;
   const [config, setConfig] = useState<ReminderConfig | null>(null);
@@ -130,10 +135,11 @@ export default function Todos() {
   const matchingCount = filtered.filter(task => completion === 'all' || (completion === 'done' ? !!task.completedAt : !task.completedAt)).length;
   const moveBlocked = movePending.current?.owner === owner;
   const sortBlocked = sortPending.current?.owner === owner;
+  const taskUndo = useTodoUndo(owner, !writable || busy || imageBusy || !!draft || !!creation || moveBlocked || sortBlocked, restoreOperation);
   const sorter = useTodoDrag(state.tasks, writable && !busy && !moveBlocked && !draft && !creation && !showFilters && !showSort, owner, (id, quadrant, before) => {
-    const visibleIds = filtered.filter(task => (completion !== 'done' || !!task.completedAt) && (completion !== 'open' || !task.completedAt) && (!task.completedAt || expanded[todoQuadrant(task).id] !== false)).map(task => task.id);
+    const visibleIds = filtered.filter(task => (completion !== 'done' || !!task.completedAt) && (completion !== 'open' || !task.completedAt) && (!task.completedAt || (expanded[todoQuadrant(task).id] ?? !isWebTool))).map(task => task.id);
     void persistMove(id, quadrant, before, visibleIds);
-  });
+  }, { onDelete: task => { if (isWebTool && writable && !operating.current) void performDelete({ owner, task: cloneTask(task), fromDrag: true }); } });
   const savedDraft = editing && draft ? state.tasks.find(item => item.id === draft.id) : undefined;
   const existingTags = catalog.owner === owner ? catalog.tags : [];
   const draftChanged = !!(draft && savedDraft && (JSON.stringify(cloneTask(savedDraft)) !== JSON.stringify(cloneTask(draft)) || tagsText !== (savedDraft.tags || []).join('，')));
@@ -231,7 +237,23 @@ export default function Todos() {
     try { await cancelTodoReminder(taskId, expectedOwner, expectedRemindAt); }
     catch { if (currentOwner.current === expectedOwner) notify(new Error('任务已本地保存，提醒取消失败，联网后请重试同步')); }
   }
-  async function save(): Promise<boolean> {
+  async function restoreOperation(edit: TodoUndoEdit) {
+    if (!writable || busy || operating.current || currentOwner.current !== edit.owner) throw new Error('账号或任务状态已变化，无法撤销');
+    const generation = startOperation();
+    let restored: TodoState | null = null;
+    try {
+      await change(previous => { restored = undoTodoOperation(previous, edit.before, edit.after); return restored; }, edit.owner);
+      if (currentOwner.current !== edit.owner || operationGeneration.current !== generation) throw new Error('账号已变化，无法继续撤销');
+      if (hasVolatilePersonalTool('todos', edit.owner)) throw new Error('撤销尚未保存，请重试');
+      const state = restored as TodoState | null;
+      for (const task of edit.after.tasks) {
+        if (!task.reminderAt || JSON.stringify(task) === JSON.stringify(edit.before.tasks.find(item => item.id === task.id))) continue;
+        const next = state?.tasks.find(item => item.id === task.id);
+        if (!next || next.completedAt || next.reminderAt !== task.reminderAt) await cancelReminder(task.id, edit.owner, task.reminderAt);
+      }
+    } finally { finishOperation(generation); }
+  }
+  async function saveAndClose(): Promise<boolean> {
     if (!draft || busy || imageBusy || operating.current || !writable) return false;
     if (!draft.title.trim()) { notify(new Error('先写下任务名称')); return false; }
     const captured: Todo = { ...draft, tags: parseTags(tagsText) };
@@ -240,28 +262,20 @@ export default function Todos() {
     const previousReminder = savedDraft?.reminderAt;
     const generation = startOperation();
     try {
-      let saved = captured;
       await change(previous => {
         if (editing && !previous.tasks.some(task => task.id === captured.id)) throw new Error('这件任务已删除，请重新添加');
-        const updated = saveTodo(previous, captured);
-        saved = updated.tasks.find(task => task.id === captured.id)!;
-        return updated;
+        return saveTodo(previous, captured);
       }, expectedOwner);
-      if (currentOwner.current !== expectedOwner) return false;
+      if (currentOwner.current !== expectedOwner || currentTask.current !== captured.id || operationGeneration.current !== generation) return false;
       if (hasVolatilePersonalTool('todos', expectedOwner)) throw new Error('本机存储不可用，内容已保留，请重试保存');
       if (!editing) { setCompletion('all'); setSearch(''); setTagFilter(null); }
-      if (captured.reminderAt) { setEditing(true); setDraft(cloneTask(saved)); setTagsText((saved.tags || []).join('，')); }
-      else setDraft(null);
+      setScheduleOpen(false); setDraft(null);
       dismissedEditors.current.delete(captured.id);
       if (captured.reminderAt && previousReminder !== captured.reminderAt) void showAppMessage({ title: '请开启微信提醒', icon: 'none' });
       if (previousReminder && previousReminder !== captured.reminderAt) { setReminder(null); await cancelReminder(captured.id, expectedOwner, previousReminder); }
       return true;
     } catch (error) { if (currentOwner.current === expectedOwner) notify(error); return false; }
     finally { finishOperation(generation); }
-  }
-  async function saveAndClose() {
-    const expectedOwner = draftOwner.current, expectedTask = draft?.id, generation = operationGeneration.current + 1;
-    if (await save() && currentOwner.current === expectedOwner && currentTask.current === expectedTask && operationGeneration.current === generation) { setScheduleOpen(false); setDraft(null); }
   }
   async function toggle(task: Todo) {
     if (operating.current) return;
@@ -280,8 +294,11 @@ export default function Todos() {
   function closeDelete() { if (!operating.current && !deletionRef.current?.pending) { setDeletion(null); setDeleteError(''); } }
   async function remove() {
     if (!deletion || busy || imageBusy || operating.current) return;
-    const target = deletion, task = target.task, expectedOwner = target.owner;
-    if (currentOwner.current !== expectedOwner || currentTask.current !== task.id) return;
+    await performDelete(deletion);
+  }
+  async function performDelete(target: NonNullable<typeof deletion>) {
+    const task = target.task, expectedOwner = target.owner;
+    if (!writable || busy || imageBusy || operating.current || currentOwner.current !== expectedOwner || (!target.fromDrag && currentTask.current !== task.id)) return;
     const generation = startOperation();
     try {
       await change(previous => ({ ...previous, tasks: previous.tasks.filter(item => item.id !== task.id) }), expectedOwner);
@@ -289,7 +306,7 @@ export default function Todos() {
       if (hasVolatilePersonalTool('todos', expectedOwner)) { setDeletion({ ...target, pending: true }); throw new Error('本机存储不可用，删除尚未保存，请重试'); }
       dismissedEditors.current.delete(task.id); setDeletion(null); setDeleteError(''); setDraft(null);
       if (task.reminderAt) await cancelReminder(task.id, expectedOwner, task.reminderAt);
-    } catch (error) { if (currentOwner.current === expectedOwner && operationGeneration.current === generation) setDeleteError(error instanceof Error ? error.message : '删除失败，请重试'); }
+    } catch (error) { if (currentOwner.current === expectedOwner && operationGeneration.current === generation) { setDeletion({ ...target, pending: true }); setDeleteError(error instanceof Error ? error.message : '删除失败，请重试'); } }
     finally { finishOperation(generation); }
   }
   function closeEditor() {
@@ -348,20 +365,22 @@ export default function Todos() {
         const tasks = filtered.filter(task => todoQuadrant(task).id === q.id);
         const pending = tasks.filter(task => !task.completedAt);
         const completed = tasks.filter(task => !!task.completedAt);
-        const showCompleted = expanded[q.id] !== false;
+        const showCompleted = expanded[q.id] ?? !isWebTool;
         return <View id={`todo-zone-${q.id}`} key={q.id} className={`todo-quadrant todo-quadrant-${q.id}${sorter.drag?.target === q.id ? ' is-drop-zone' : ''}`}>
           <View className='todo-quadrant-heading'><View className='todo-quadrant-label'><View className='todo-quadrant-title-row'><Text className='todo-quadrant-icon' aria-hidden style={{ color: q.color }}>{q.id === 'later' ? '⚐' : '⚑'}</Text><View className='todo-quadrant-title' style={{ color: q.color }}>{trimTextEnd(q.title)}</View></View><Text className='todo-quadrant-caption'>{q.caption}</Text></View><ActionButton appearance='icon' className='todo-quadrant-add' ariaLabel={`创建${q.title}任务`} disabled={!writable || busy || moveBlocked} onClick={() => setCreation({ task: createTodo(q.id), quadrantId: q.id })}><AddSymbol /></ActionButton></View>
-          <ScrollView id={`todo-scroll-${q.id}`} scrollY scrollTop={sorter.scrollTop[q.id]} onScroll={event => sorter.onScroll(q.id, event.detail.scrollTop)} enhanced bounces={false} className='todo-quadrant-scroll'><View className='todo-quadrant-items'>
+          <ScrollView id={`todo-scroll-${q.id}`} scrollY scrollTop={sorter.scrollTop[q.id]} onScroll={event => sorter.onScroll(q.id, event.detail.scrollTop)} enhanced bounces={false} className='todo-quadrant-scroll'><CardGroupContent className='todo-quadrant-items'>
             {completion !== 'done' && pending.map(renderTask)}
-            {completion !== 'done' && !pending.length && (completion === 'open' || !completed.length) && <View className={`todo-quadrant-empty ${completed.length ? 'is-clear' : ''}`}>{search || tagFilter !== null ? '没有匹配的待办' : completed.length ? '待办已清空' : '暂时没有任务'}{!state.tasks.length && q.id === 'do' && <ActionButton className='button-label tool-secondary' disabled={busy} onClick={() => { void change(previous => previous.tasks.length ? previous : { ...previous, tasks: demoTodos() }).catch(notify); }}>生成示例待办</ActionButton>}</View>}
-            {completion !== 'open' && !!completed.length && <><ActionButton className='button-label todo-completed-toggle' aria-expanded={showCompleted} onClick={() => setExpanded(previous => ({ ...previous, [q.id]: previous[q.id] === false }))}><SelectChevron expanded={showCompleted} /><Text>已完成 · {completed.length}</Text></ActionButton>{showCompleted && completed.map(renderTask)}</>}
+            {completion !== 'done' && !pending.length && (completion === 'open' || !completed.length) && <View className={`todo-quadrant-empty ${completed.length ? 'is-clear' : ''}`}>{search || tagFilter !== null ? '没有匹配的待办' : completed.length ? '待办已清空' : '暂时没有任务'}</View>}
+            {completion !== 'open' && !!completed.length && <><ActionButton className='button-label todo-completed-toggle' aria-expanded={showCompleted} onClick={() => setExpanded(previous => ({ ...previous, [q.id]: !(previous[q.id] ?? !isWebTool) }))}><SelectChevron expanded={showCompleted} /><Text>已完成 · {completed.length}</Text></ActionButton>{showCompleted && completed.map(renderTask)}</>}
             {completion === 'done' && !completed.length && <View className='todo-quadrant-empty'>还没有已完成任务</View>}
-          </View></ScrollView>
+          </CardGroupContent></ScrollView>
         </View>;
       })}</View>}
       {ready && /不可用|失败|暂存|离线|无法|等待/.test(status) && <View className='tool-status todo-sync-error'><Text>{status}</Text><ActionButton className='button-label' onClick={retry}>重试同步</ActionButton></View>}
     </View></CoreScreen></View></PageScroll>
     {sorter.ghost}
+    {sorter.deleteZone}
+    {taskUndo.notice && <OperationToast message={taskUndo.notice.message} busy={taskUndo.busy} onUndo={taskUndo.notice.undo ? () => { void taskUndo.undo(); } : undefined} />}
     {creation && <EntryComposer initialMode='task' initialTask={creation.task} initialQuadrantId={creation.quadrantId} onClose={() => setCreation(null)} onCreated={kind => { if (kind === 'task') { setCompletion('all'); setSearch(''); setTagFilter(null); } }} />}
     {draft && <View className='todo-overlay'><View className='todo-backdrop' onClick={closeGuard.requestClose} /><View className='todo-sheet'>
       <EditorHeading className='todo-sheet-heading' titleClassName='todo-sheet-title' title={editing ? '编辑任务' : '创建任务'} actions={<ActionButton appearance='icon' size='compact' className='button-label' aria-label='关闭编辑' disabled={busy || imageBusy} onClick={closeGuard.requestClose}>×</ActionButton>} />
@@ -369,7 +388,7 @@ export default function Todos() {
         <TodoEditorFields defaultPreview={editing} draft={draft} onChange={setDraft} tagsText={tagsText} onTagsChange={setTagsText} tagOptions={existingTags} disabled={busy || !writable} owner={owner} onBusyChange={setImageBusy} today={today} scheduleOpen={scheduleOpen} onSchedule={() => setScheduleOpen(true)} />
         {editing && <View className='todo-editor-actions'><ActionButton className='button-label tool-secondary' disabled={busy || imageBusy} onClick={() => { void openPomodoro({ task: draft.id, event: draft.title, minutes: '25' }); }}>◷ 为任务专注</ActionButton></View>}
       </View></ScrollView>
-      <SheetActions className='todo-sheet-footer' leading={editing ? <SheetDeleteButton ariaLabel='删除任务' disabled={busy || imageBusy} onClick={requestDelete} /> : undefined}><ActionButton appearance='primary' className='button-label tool-primary' loading={busy} disabled={busy || imageBusy || !writable || !draft.title.trim()} onClick={() => { void save(); }}>{editing ? '保存' : '创建任务'}</ActionButton></SheetActions>
+      <SheetActions className='todo-sheet-footer' leading={editing ? <SheetDeleteButton ariaLabel='删除任务' disabled={busy || imageBusy} onClick={requestDelete} /> : undefined}><ActionButton appearance='primary' className='button-label tool-primary' loading={busy} disabled={busy || imageBusy || !writable || !draft.title.trim()} onClick={() => { void saveAndClose(); }}>{editing ? '保存' : '创建任务'}</ActionButton></SheetActions>
     </View></View>}
     {draft && scheduleOpen && writable && draftOwner.current === owner && <TodoScheduleSheet key={`${owner}:${draft.id}`} value={draft} today={today} busy={busy} reminderLabel={reminderLabel} canAuthorize={canAuthorize} reminderLocked={reminderLocked} onAuthorize={() => { void authorizeReminder(); }} onConfirm={applySchedule} onClose={() => { if (!busy) setScheduleOpen(false); }} />}
     {closeGuard.dialog}
