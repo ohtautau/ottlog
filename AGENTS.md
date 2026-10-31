@@ -15,7 +15,7 @@
 
 ## 实现规则
 
-- 2026-10-31精简与上线后续：两端删除选境流程，网页删除分类城市及独占3D实现和three依赖；旧/choose转/today、/city转/posts，小程序移除choose分包和专用资源。原文章分类／标签及存档保持；历史choose快捷卡只读过滤，保留其他卡的自定义外观／顺序，不在浏览时写回。移除已退役饮食界面的闲置模型／检查脚本，服务端历史meals／dining键与备份仍保留。组件开启lazyCodeLoading=requiredComponents，markdown-it纳入Taro依赖转译，所有产物JS以ES2019语法检查防止预览上传失败。用户明确要求完成后提交并推送GitHub历史；不上传凭据、密钥、业务数据或生成物。
+- 2026-10-31精简与上线后续：两端删除选境流程，网页删除分类城市及独占3D实现和three依赖；旧/choose转/today、/city转/posts，小程序移除choose分包和专用资源。原文章分类／标签及存档保持；历史choose快捷卡只读过滤，保留其他卡的自定义外观／顺序，不在浏览时写回。移除已退役饮食界面的闲置模型／检查脚本，服务端历史meals／dining键与备份仍保留。组件开启lazyCodeLoading=requiredComponents，markdown-it纳入Taro依赖转译，所有产物JS以ES2019语法检查防止预览上传失败；配置同步默认开启域名检查，仅显式OTTLOG_SKIP_DOMAIN_CHECK=1可跳过。用户明确要求完成后提交并推送GitHub历史；不上传凭据、密钥、业务数据或生成物。
 
 - 2026-10-31主页与登录后续要求：网页根地址/由服务端直接跳转/today，复用同一今日页面与选中导航，不复制业务；原选项页仍可由/options访问。本条替代原选项首页规则。网页登录页、管理员登录表单及今日账号窗口共用RememberLogin可选项，默认不勾选；显式选择才通过Credentials.RememberMe及LoginSession产生30天HttpOnly持久Cookie，原普通／小程序8小时会话、Secure／SameSite／CSRF／owner与安全戳保持。网页窗口沿浏览器适配替换LoginPreference，小程序底座不显示选项也不发送true。退出清除当前登录、改密沿原安全戳使旧Cookie失效；不将密码或登录票据保存到JS存储。API更新必须基于当前含Bot授权版本的源／镜像，仅更新本功能，先备份并可回滚。
 

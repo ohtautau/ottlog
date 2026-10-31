@@ -19,8 +19,8 @@
 - [首页快捷方式](home-shortcuts.md)、[小程序交互](miniprogram-interactions.md)。
 - [任务](todo-miniprogram.md)、[任务订阅提醒](wechat-reminders.md)。
 - [番茄钟](pomodoro-miniprogram.md)、[番茄钟通知](wechat-pomodoro.md)。
-- [统计](statistics-miniprogram.md)：待办、专注、习惯、饮食、领域与成长的集中分析，原记录与账号隔离边界。
-- [网页选境与食选](options-web.md)、[网页日常工具](daily-tools.md)、[效率工具](productivity-tools.md)。
+- [统计](statistics-miniprogram.md)：待办、专注、习惯、领域与成长的集中分析，原记录与账号隔离边界。
+- [网页入口与历史变更](options-web.md)、[网页日常工具](daily-tools.md)、[效率工具](productivity-tools.md)。选境、分类城市及饮食功能已退役。
 - [工具数据备份](tool-backups.md)、[测试说明](testing.md)、[原设计建议](design-system.md)。
 
 后续功能开发只修改小程序，其他端范围以用户新的明确要求为准。用户已回答全部 P01–P12，后续开发遵循确认规则；习惯持久自定义排序、内部滚动提示、系统未分类、草稿恢复、账号个性设置同步和多设备合并等尚未完整实现，文档中的已确认要求不能当作已上线功能。

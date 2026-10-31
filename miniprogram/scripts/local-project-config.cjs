@@ -18,11 +18,11 @@ function syncLocalProjectConfig() {
     write(file, {
       ...current,
       ...(local.libVersion ? { libVersion: local.libVersion } : {}),
-      setting: { ...current.setting, urlCheck: false, compileHotReLoad: false,
+      setting: { ...current.setting, urlCheck: process.env.OTTLOG_SKIP_DOMAIN_CHECK !== '1', compileHotReLoad: false,
         es6: false, enhance: false, uploadWithSourceMap: false, minified: true },
     });
   }
-  console.log('Local WeChat settings synchronized: root, miniprogram and existing dist; URL checks and hot reload disabled.');
+  console.log('Local WeChat settings synchronized: URL checks enabled unless OTTLOG_SKIP_DOMAIN_CHECK=1; hot reload disabled.');
 }
 module.exports = { syncLocalProjectConfig };
 if (require.main === module) syncLocalProjectConfig();
