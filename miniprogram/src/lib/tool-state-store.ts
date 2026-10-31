@@ -25,6 +25,7 @@ const offlineStatus = (owner: string) => owner === 'guest' ? '保存在本机 ·
 export function createPersonalToolStore(adapter: Adapter) {
   const volatile = new Map<string, ToolCache<unknown>>();
   const writes = new Map<string, Promise<void>>();
+  const refreshes = new Map<string, Promise<ToolLoad<unknown>>>();
   const listeners = new Set<(cacheKey: string, status: string) => void>();
   const editListeners = new Set<(edit: PersonalToolEdit) => void>();
   let knownIdentity: Identity | null = null;
@@ -110,7 +111,7 @@ export function createPersonalToolStore(adapter: Adapter) {
       return { ...identity, value: initialArticleState as T, cloud: false, status: '登录后创建和同步文章' };
     const cacheKey = toolCacheKey(identity.owner, key);
     const confirmedCache = cache<T>(cacheKey);
-    if (confirmedCache) onCached?.({ ...identity, value: confirmedCache.data, cloud: online && identity.owner !== 'guest', status: online && identity.owner !== 'guest' ? '正在刷新账号数据…' : offlineStatus(identity.owner) });
+    if (confirmedCache) onCached?.({ ...identity, value: confirmedCache.data, cloud: online && identity.owner !== 'guest', status: online && identity.owner !== 'guest' ? confirmedCache.pending ? '本机修改等待同步' : '已连接账号 · 修改自动保存' : offlineStatus(identity.owner) });
     await writes.get(cacheKey);
     let current = cache<T>(cacheKey);
     if (current && volatile.has(cacheKey)) {
@@ -134,7 +135,10 @@ export function createPersonalToolStore(adapter: Adapter) {
         value = current && (current.pending || changed) ? current.data : remote.data ?? value;
         cloud = true;
         status = current?.pending ? '本机修改等待同步' : '已连接账号 · 修改自动保存';
-        if (!current?.pending && !changed) save(cacheKey, value, false);
+        // An unchanged poll must not bump storage revisions. Besides avoiding
+        // needless writes, this prevents two browser tabs refreshing each other
+        // indefinitely through their localStorage events.
+        if (!current?.pending && !changed && (!current || JSON.stringify(current.data) !== JSON.stringify(value))) save(cacheKey, value, false);
       } catch (error) {
         if (knownIdentity?.owner !== identity.owner || adapter.fingerprint() !== identity.fingerprint) throw new Error('账号状态已变化 · 请重新读取');
         status = offlineStatus(identity.owner);
@@ -167,7 +171,19 @@ export function createPersonalToolStore(adapter: Adapter) {
     editListeners.forEach(listener => listener({ key, owner: context.owner, before: previous, after: value, durable }));
     return value;
   }
-  return { load, edit, flush, cache, isVolatile: (cacheKey: string) => volatile.has(cacheKey),
+  // Pages may mount several consumers of the same tool. A foreground poll shares
+  // one owner-bound GET without changing the original load/write race guards.
+  function refresh<T>(key: PersonalToolKey, initial: T, identity: Identity): Promise<ToolLoad<T>> {
+    const id = `${toolCacheKey(identity.owner, key)}:${identity.fingerprint}`;
+    const active = refreshes.get(id);
+    if (active) return active as Promise<ToolLoad<T>>;
+    const task = load(key, initial);
+    refreshes.set(id, task);
+    const clear = () => { if (refreshes.get(id) === task) refreshes.delete(id); };
+    void task.then(clear, clear);
+    return task;
+  }
+  return { load, refresh, edit, flush, cache, isVolatile: (cacheKey: string) => volatile.has(cacheKey),
     subscribeEdits: (listener: (edit: PersonalToolEdit) => void) => { editListeners.add(listener); return () => { editListeners.delete(listener); }; },
     subscribe: (listener: (cacheKey: string, status: string) => void) => { listeners.add(listener); return () => { listeners.delete(listener); }; } };
 }

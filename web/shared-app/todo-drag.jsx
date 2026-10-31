@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { DeleteSymbol } from '../../miniprogram/src/components/manage-symbol';
+import TodoDragCard from '../../miniprogram/src/components/todo-drag-card';
 
 /** Browser input only. Task mutations remain in the shared page/model/owner queue. */
 export function useTodoDrag(tasks, enabled, owner, commit, options = {}) {
@@ -67,7 +68,8 @@ export function useTodoDrag(tasks, enabled, owner, commit, options = {}) {
   function start(event, task) {
     if (!latest.current.enabled || event.button !== 0 || event.isPrimary === false || event.target.closest('.todo-complete')) return;
     cancel();
-    const item = {task, owner: latest.current.owner, pointer: event.pointerId, mouse: event.pointerType === 'mouse', node: event.currentTarget, host: event.currentTarget.closest('.tool-app-root'), x: event.clientX, y: event.clientY, startX: event.clientX, startY: event.clientY, active: false, moved: false, target: '', before: null};
+    const rect = event.currentTarget.getBoundingClientRect();
+    const item = {task, owner: latest.current.owner, pointer: event.pointerId, mouse: event.pointerType === 'mouse', node: event.currentTarget, host: event.currentTarget.closest('.tool-app-root'), x: event.clientX, y: event.clientY, startX: event.clientX, startY: event.clientY, width: rect.width, height: rect.height, offsetX: event.clientX - rect.left, offsetY: event.clientY - rect.top, active: false, moved: false, target: '', before: null};
     if (!item.host) return;
     current.current = item;
     const move = e => {
@@ -93,16 +95,24 @@ export function useTodoDrag(tasks, enabled, owner, commit, options = {}) {
       else if (valid && item.target) latest.current.commit(item.task.id, item.target, item.before);
     };
     const up = e => finish(e, true), abort = e => finish(e, false);
+    // PointerEvent.preventDefault does not stop a touch pan. Keep ordinary
+    // scrolling until the hold activates; after that preserve the captured drag.
+    const touchMove = e => {
+      if (current.current !== item || !item.active) return;
+      if (e.touches.length !== 1) { cancel(); return; }
+      e.preventDefault();
+    };
     document.addEventListener('pointermove', move, {capture: true, passive: false});
     document.addEventListener('pointerup', up, true);
     document.addEventListener('pointercancel', abort, true);
-    cleanups.current.push(() => { document.removeEventListener('pointermove', move, true); document.removeEventListener('pointerup', up, true); document.removeEventListener('pointercancel', abort, true); });
+    if (!item.mouse) document.addEventListener('touchmove', touchMove, {capture: true, passive: false});
+    cleanups.current.push(() => { document.removeEventListener('pointermove', move, true); document.removeEventListener('pointerup', up, true); document.removeEventListener('pointercancel', abort, true); document.removeEventListener('touchmove', touchMove, true); });
     if (!item.mouse) hold.current = setTimeout(() => activate(item), 400);
   }
   return {
     bind: task => ({onPointerDownCapture: event => start(event, task), onLostPointerCapture: () => { if (current.current?.task.id === task.id && current.current.active) cancel(); }}),
     drag, scrollTop: {}, onScroll: () => {}, suppressClick: () => !!current.current?.active || Date.now() < blocked.current,
     deleteZone: drag ? <div className={`todo-drag-delete-zone${drag.overTrash ? ' is-over' : ''}`} role='region' aria-label='拖到这里删除任务' style={{left: drag.trash.left, top: drag.trash.top, width: drag.trash.width}}><DeleteSymbol />{drag.overTrash ? '松开删除任务' : '拖到这里删除'}</div> : null,
-    ghost: drag?.moved ? <div className='todo-drag-ghost' style={{left:drag.x,top:drag.y}}><span>{drag.task.title.trimEnd()}</span><span>{drag.overTrash ? '松开删除任务' : drag.target ? '松手放置' : '移入一个象限'}</span></div> : null,
+    ghost: drag ? <TodoDragCard task={drag.task} x={drag.x} y={drag.y} width={drag.width} height={drag.height} offsetX={drag.offsetX} offsetY={drag.offsetY} overTrash={drag.overTrash} /> : null,
   };
 }

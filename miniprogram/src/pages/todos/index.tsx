@@ -139,7 +139,7 @@ export default function Todos() {
   const sorter = useTodoDrag(state.tasks, writable && !busy && !moveBlocked && !draft && !creation && !showFilters && !showSort, owner, (id, quadrant, before) => {
     const visibleIds = filtered.filter(task => (completion !== 'done' || !!task.completedAt) && (completion !== 'open' || !task.completedAt) && (!task.completedAt || (expanded[todoQuadrant(task).id] ?? !isWebTool))).map(task => task.id);
     void persistMove(id, quadrant, before, visibleIds);
-  }, { onDelete: task => { if (isWebTool && writable && !operating.current) void performDelete({ owner, task: cloneTask(task), fromDrag: true }); } });
+    }, { onDelete: task => { if (writable && !operating.current) void performDelete({ owner, task: cloneTask(task), fromDrag: true }); } });
   const savedDraft = editing && draft ? state.tasks.find(item => item.id === draft.id) : undefined;
   const existingTags = catalog.owner === owner ? catalog.tags : [];
   const draftChanged = !!(draft && savedDraft && (JSON.stringify(cloneTask(savedDraft)) !== JSON.stringify(cloneTask(draft)) || tagsText !== (savedDraft.tags || []).join('，')));

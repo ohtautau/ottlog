@@ -74,9 +74,6 @@
 .tool-app-root .todo-task { cursor: grab; }
 .tool-app-root .todo-task.is-drag-source { cursor: grabbing; }
 .tool-app-root .form-tag-custom.is-inline { margin-top: var(--editor-field-gap); }
-.tool-app-root .todo-drag-delete-zone { position: fixed; z-index: 120; height: 56px; display: flex; align-items: center; justify-content: center; gap: 10px; border: 1px dashed #c99792; border-radius: 12px; background: #432e37; color: #ffd8cd; font-size: 14px; box-shadow: 0 6px 24px #07101b55; pointer-events: none; }
-.tool-app-root .todo-drag-delete-zone.is-over { border-style: solid; background: #82484a; }
-.tool-app-root .todo-drag-ghost { z-index: 125; }
 .tool-app-root .mottos-page { display: flex; flex-direction: column; height: var(--app-page-height); min-height: 0; overflow: hidden; }
 .tool-app-root .mottos-heading { flex: none; margin-bottom: 8px; }
 .tool-app-root .mottos-list-scroll { flex: 1; height: 0; min-height: 0; overflow-y: auto !important; overflow-x: hidden !important; overscroll-behavior: contain; }

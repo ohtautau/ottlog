@@ -1,0 +1,5 @@
+.login-preference { display: flex; justify-content: flex-start; gap: 10PX; padding: 0; text-align: left; }
+.login-preference > text { flex: 1; min-width: 0; font-size: 14PX; }
+.login-preference-check { position: relative; flex: none; width: 20PX; height: 20PX; box-sizing: border-box; border: 1.5PX solid #779297; border-radius: 4PX; }
+.login-preference-check.is-checked { border-color: #b9dbca; background: #b9dbca; }
+.login-preference-check.is-checked::after { content: ''; position: absolute; top: 3PX; left: 6PX; width: 5PX; height: 9PX; border-right: 2PX solid #19352d; border-bottom: 2PX solid #19352d; transform: rotate(40deg); }

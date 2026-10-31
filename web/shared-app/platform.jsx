@@ -24,7 +24,7 @@ function useCallbackEffect(callback, args = []) {
 export const useLoad = callback => useCallbackEffect(callback, [params()]);
 export const useDidShow = callback => {
   const ref = useLatest(callback);
-  useEffect(() => { ref.current(); const show = () => { if (!document.hidden) ref.current(); }; document.addEventListener('visibilitychange', show); return () => document.removeEventListener('visibilitychange', show); }, []);
+  useEffect(() => { if (!document.hidden) ref.current(); const show = () => { if (!document.hidden) ref.current(); }; document.addEventListener('visibilitychange', show); window.addEventListener('focus', show); return () => { document.removeEventListener('visibilitychange', show); window.removeEventListener('focus', show); }; }, []);
 };
 export const useReady = callback => useCallbackEffect(callback);
 export const useDidHide = callback => { const ref = useLatest(callback); useEffect(() => { const hide = () => { if (document.hidden) ref.current(); }; document.addEventListener('visibilitychange', hide); return () => { document.removeEventListener('visibilitychange', hide); ref.current(); }; }, [ref]); };
@@ -86,6 +86,7 @@ export const Taro = {
   getWindowInfo: () => ({ windowWidth: innerWidth, windowHeight: innerHeight, safeArea: { bottom: innerHeight }, statusBarHeight: 0 }),
   getSystemInfoSync: () => ({ windowWidth: innerWidth, windowHeight: innerHeight, platform: 'web' }),
   onWindowResize: fn => events.on('resize', fn), offWindowResize: fn => events.off('resize', fn),
+  onNetworkStatusChange: fn => events.on('network', fn), offNetworkStatusChange: fn => events.off('network', fn),
   setNavigationBarTitle: ({ title }) => { document.title = `${title} · Ottlog`; events.trigger('title', title); return Promise.resolve(); },
   hideKeyboard: () => { if (document.activeElement?.matches('input,textarea')) document.activeElement.blur(); return Promise.resolve(); },
   showToast: ({ title }) => { events.trigger('notice', title); return Promise.resolve(); },
@@ -104,6 +105,7 @@ export const Taro = {
   requestSubscribeMessage: () => Promise.reject(new Error('微信通知请在小程序中授权。')),
 };
 window.addEventListener('resize', () => events.trigger('resize', { size: Taro.getWindowInfo() }));
-window.addEventListener('storage', event => { if (event.key?.startsWith('ottlog-tool-v1:')) events.trigger('ottlog-session'); });
-window.addEventListener('online', () => events.trigger('ottlog-session'));
+window.addEventListener('storage', event => { if (event.key?.startsWith('ottlog-tool-v1:')) events.trigger('ottlog-tools-refresh'); });
+window.addEventListener('online', () => events.trigger('network', { isConnected: true }));
+window.addEventListener('offline', () => events.trigger('network', { isConnected: false }));
 export default Taro;

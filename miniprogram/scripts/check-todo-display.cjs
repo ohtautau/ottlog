@@ -48,6 +48,13 @@ module.exports = async function checkTodoDisplay({ page, origin, out, width, exp
   await expect(high.locator('.todo-task:not(.is-done)')).toHaveCount(20);
   await expect(page.locator('.todo-sheet')).toHaveCount(0);
   await expect(high.locator('.todo-task.is-done')).toHaveCount(1);
+  const undated = page.locator('.todo-task.has-no-date').filter({ hasText: '周末整理相册' });
+  const centers = await undated.evaluate(node => {
+    const midpoint = element => { const r = element.getBoundingClientRect(); return r.top + r.height / 2; };
+    return [midpoint(node), midpoint(node.querySelector('.todo-task-title')), midpoint(node.querySelector('.todo-check'))];
+  });
+  expect(Math.abs(centers[0] - centers[1]), 'An undated single-line title is vertically centered in its task card').toBeLessThanOrEqual(1);
+  expect(Math.abs(centers[0] - centers[2]), 'The checkbox stays centered beside a single-line title').toBeLessThanOrEqual(1);
   await expect(page.locator('.todo-quadrant-count')).toHaveCount(0);
 
   const quadrantBoxes = async () => page.locator('.todo-quadrant').evaluateAll(nodes => nodes.map(node => {
@@ -60,8 +67,8 @@ module.exports = async function checkTodoDisplay({ page, origin, out, width, exp
     expect(toolbar.y - viewport.y, `${context}: the toolbar retains 12px above it`).toBeGreaterThanOrEqual(11);
     expect(Math.abs(toolbar.y - viewport.y - 12), `${context}: the top gap stays fixed across screen sizes`).toBeLessThanOrEqual(1);
     const controls = page.locator('.todo-page-toolbar button');
-    await expect(controls, `${context}: sorting and filtering remain available`).toHaveCount(2);
-    expect(await controls.evaluateAll(nodes => nodes.map(node => node.getAttribute('aria-label')))).toEqual(['排序', '筛选']);
+    await expect(controls, `${context}: defaults, sorting and filtering remain available`).toHaveCount(3);
+    expect(await controls.evaluateAll(nodes => nodes.map(node => node.getAttribute('aria-label')))).toEqual(['恢复任务默认方式', '排序', '筛选']);
     await expect(page.locator('.todo-toolbar .page-category-scroll')).toHaveCount(0);
     for (const control of await controls.all()) {
       await expect(control, `${context}: every toolbar action is completely visible`).toBeInViewport({ ratio: 1 });

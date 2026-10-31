@@ -16,7 +16,7 @@ import CreateButton from '../../components/create-button';
 import CardCreateButton from '../../components/card-create-button';
 import SortSymbol from '../../components/sort-symbol';
 import { CardMoveActions } from '../../components/card-corner-actions';
-import PageToolbar, { PageToolbarSummary, ToolbarResetButton } from '../../components/page-toolbar';
+import PageToolbar, { PageToolbarSummary } from '../../components/page-toolbar';
 import { DomainProgressSummary } from '../../components/domain-progress';
 import { domainCompletionCounts, domainToolbarSummary } from '../../lib/domain-completion';
 import usePageNow from '../../lib/use-page-now';
@@ -112,7 +112,7 @@ export default function Domains() {
   const createCard = <DomainEntryCard create className='domain-create-shell'><CardCreateButton className='domain-create-card' ariaLabel='创建领域' disabled={createDisabled} onClick={definition.openCreate} /></DomainEntryCard>;
   return <>
     <PageScroll snapSections={[]} scrollY={false}><View className='tool-page domains-page domains-list'><View className='domains-index'>
-      <PageToolbar className='domains-page-toolbar' leading={writable && toolbarSummary && <PageToolbarSummary countLabel={`今日记录 ${toolbarSummary.createdToday}`} recentTitle={toolbarSummary.recentShortTermGoal?.content} recentLabel='最近完成短期目标' />} reset={<ToolbarResetButton ariaLabel='恢复领域默认方式' disabled={!writable || blocked || !!moveRetry} onReset={() => { if (writable && !blocked && !saving.current && !moveRetry) setSorting(false); }} />} sort={<ChoiceButton iconOnly size='compact' disabled={!writable || blocked} ariaLabel='排序领域' selected={sorting} onClick={() => setSorting(!sorting)}><SortSymbol /></ChoiceButton>} create={<CreateButton className='domain-record-trigger' label='记录进展' disabled={!writable || blocked} onClick={() => setQuick(true)} />} />
+      <PageToolbar className='domains-page-toolbar' leading={writable && toolbarSummary && <PageToolbarSummary countLabel={`今日记录 ${toolbarSummary.createdToday}`} recentTitle={toolbarSummary.recentShortTermGoal?.content} recentLabel='最近完成短期目标' />} sort={<ChoiceButton iconOnly size='compact' disabled={!writable || blocked} ariaLabel='排序领域' selected={sorting} onClick={() => setSorting(!sorting)}><SortSymbol /></ChoiceButton>} create={<CreateButton className='domain-record-trigger' label='记录进展' disabled={!writable || blocked} onClick={() => setQuick(true)} />} />
       {!ready && <View className='tool-status'>{status}<ActionButton className='tool-secondary button-label' onClick={retry}>重新读取</ActionButton></View>}
       {ready && !valid && <View className='notice'>领域数据暂不可用<ActionButton className='tool-secondary button-label' onClick={retry}>重新读取</ActionButton></View>}
       {writable && <DomainRecentRecords key={owner} state={state} disabled={blocked} onEdit={item => { if (!saving.current && !definition.busy) setRecordEditor({ ...item, owner }); }} />}

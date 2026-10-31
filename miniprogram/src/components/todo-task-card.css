@@ -12,3 +12,6 @@
 .todo-task-date { display: block; max-width: 100%; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; font-variant-numeric: tabular-nums; }
 .todo-task-date.is-today { color: #eed895; }
 .todo-task-date.is-overdue { color: #ffb4a9; font-weight: 600; }
+.todo-task.has-no-date { align-items: center; }
+.todo-task.has-no-date .todo-task-content { display: flex; align-items: center; }
+.todo-task.has-no-date .todo-complete { align-items: center; padding-top: 0; }

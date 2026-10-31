@@ -72,9 +72,13 @@ export function normalizeHomeShortcuts(value: unknown): HomeShortcuts {
   }
   // Upgrade only the untouched six-card default, including its assigned ranks.
   const previousColors: Partial<Record<ShortcutKey, ShortcutColor>> = { pomodoro: 'mint', journal: 'rose' };
-  if (!hasSelectedBackground && items.length === defaultShortcutOrder.length && items.every((item, index) => {
+  // The shipped personal-space default used a home outline before it became
+  // articles. Match that complete historical preset, not arbitrary home icons.
+  const previousDefaultIcons: Partial<Record<ShortcutKey, ShortcutIconKey>> = { journal: 'library:home' };
+  const defaultRanks = items.every((item, index) => item.rank === index + 1) || items.every(item => item.rank === undefined);
+  if (!hasSelectedBackground && defaultRanks && items.length === defaultShortcutOrder.length && items.every((item, index) => {
     const original = makeShortcut(defaultShortcutOrder[index]);
-    return item.key === original.key && item.name === original.name && item.color === (previousColors[item.key as ShortcutKey] || original.color) && item.kind === 'card' && item.rank === index + 1 && (!item.icon || item.icon === original.icon);
+    return item.key === original.key && item.name === original.name && item.color === (previousColors[item.key as ShortcutKey] || original.color) && item.kind === 'card' && (!item.icon || item.icon === original.icon || item.icon === previousDefaultIcons[item.key as ShortcutKey]);
   })) return defaultHomeShortcuts();
   if (!hasSelectedBackground && items.length === previousSixDefaultOrder.length && items.every((item, index) => {
     const original = isRetiredShortcut(item.key) ? retiredShortcuts[item.key] : makeShortcut(item.key);

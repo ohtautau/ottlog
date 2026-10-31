@@ -18,8 +18,13 @@ module.exports = async ({ page, origin, out, width, expect }) => {
   await expect(dialog.getByRole('button', { name: '注册并登录', exact: true })).toBeDisabled();
   await dialog.getByRole('button', { name: '登录', exact: true }).click();
   await dialog.getByLabel('账号密码').fill('fixture-only-password');
+  const remember = dialog.getByRole('button', { name: '记住登录状态（30 天）', exact: true });
+  await expect(remember).toHaveAttribute('aria-pressed', 'false');
+  await remember.click(); await expect(remember).toHaveAttribute('aria-pressed', 'true');
+  await expect(dialog.getByRole('button', { name: '登录并同步', exact: true })).toBeInViewport();
   await dialog.getByRole('button', { name: '登录并同步', exact: true }).click();
   await expect(dialog.locator('.account-window-name')).toHaveText('preview-reader');
+  expect(await page.evaluate(() => window.__miniRequests.filter(request => request.path === '/account/login').at(-1)?.data.rememberMe)).toBe(true);
   await expect(dialog).toContainText('读者账号');
   await expect(open).toHaveAttribute('aria-label', /已登录：preview-reader/);
   await expect(open.locator('.account-symbol')).toHaveClass(/is-authenticated/);
@@ -28,6 +33,7 @@ module.exports = async ({ page, origin, out, width, expect }) => {
   await page.screenshot({ path: path.join(out, `account-window-signed-${width}.png`) });
   await dialog.getByRole('button', { name: '退出登录', exact: true }).click();
   await expect(dialog.getByLabel('账号密码')).toHaveValue('');
+  await expect(remember).toHaveAttribute('aria-pressed', 'false');
   await expect(open).toHaveAttribute('aria-label', /未登录/);
   await expect(open.locator('.account-symbol')).not.toHaveClass(/is-authenticated/);
   await expect(dialog.getByRole('button', { name: '登录并同步', exact: true })).toBeDisabled();

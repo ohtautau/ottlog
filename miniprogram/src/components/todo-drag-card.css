@@ -1,0 +1,11 @@
+.todo-drag-ghost { position: fixed; z-index: 125; box-sizing: border-box; pointer-events: none; border-radius: 8PX; outline: 1PX solid #abc7bb; background: #22322e; box-shadow: 0 6PX 20PX #0005; }
+.todo-drag-ghost.todo-drag-do { background: #30282d; }
+.todo-drag-ghost.todo-drag-plan { background: #2e2c25; }
+.todo-drag-ghost.todo-drag-delegate { background: #202d3e; }
+.todo-drag-ghost.todo-drag-later { background: #22322e; }
+.todo-drag-ghost.is-over-trash { z-index: 119; }
+.todo-drag-ghost > .todo-task { width: 100%; height: 100%; margin: 0; }
+.todo-drag-ghost .todo-task-content[disabled] { opacity: 1; }
+.todo-drag-ghost .todo-drag-complete { display: flex; }
+.todo-drag-delete-zone { position: fixed; z-index: 120; box-sizing: border-box; height: 56PX; display: flex; align-items: center; justify-content: center; gap: 10PX; border: 1PX dashed #c99792; border-radius: 12PX; background: #432e37; color: #ffd8cd; font-size: 14PX; box-shadow: 0 6PX 24PX #07101b55; pointer-events: none; }
+.todo-drag-delete-zone.is-over { border-style: solid; background: #82484a; }

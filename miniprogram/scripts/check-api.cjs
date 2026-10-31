@@ -126,6 +126,19 @@ async function main() {
   await assert.rejects(() => disconnected.api('/posts'), error => /VS 后端/.test(error.message) && /局域网/.test(error.message));
   disconnected.done();
 
+  const remembered = fixture([
+    ok({ authenticated: false, csrfToken: 'remember-csrf' }),
+    ok({ userName: 'remembered-reader' }, ['ottlog.admin=persistent-test-ticket; Expires=Mon, 30 Nov 2026 00:00:00 GMT; Path=/; Secure; HttpOnly; SameSite=Strict']),
+  ]);
+  await remembered.api('/account/login', 'POST', { userName: 'remembered-reader', password: 'fixture-only-password', rememberMe: true }, 'guest');
+  assert.equal(remembered.requests[1].data.rememberMe, true, 'Mini login forwards the explicit thirty-day choice');
+  assert.ok(!JSON.stringify(remembered.cookies()).includes('fixture-only-password'), 'Only the issued ticket persists, never the password');
+  remembered.done();
+  const reopened = fixture([ok({ authenticated: true, userName: 'remembered-reader', csrfToken: 'reopened-csrf' })], remembered.cookies());
+  assert.equal((await reopened.api('/account/session')).authenticated, true);
+  assert.equal(reopened.requests[0].header.Cookie, 'ottlog.admin=persistent-test-ticket', 'A new mini runtime restores its stored ticket without resubmitting a password');
+  reopened.done();
+
   const logout = fixture([
     ok({ authenticated: true, csrfToken: 'logout-token' }),
     { statusCode: 204, data: '', cookies: ['session=; Path=/; Expires=Thu, 01 Jan 1970 00:00:00 GMT', 'reader=expired; Max-Age=0; Path=/', 'theme=dark; Path=/'] },

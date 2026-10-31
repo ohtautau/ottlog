@@ -1,5 +1,19 @@
 # 开发说明
 
+## 完整任务卡拖动、默认入口与静默同步（2026-10-31，后续）
+
+TodoTaskCard将无日期行的正文和勾选框垂直居中，两端及拖动卡同源。PageToolbar和筛选恢复沿新的RestoreDefaultsSymbol橡皮擦，保留原40px触控；撤销和清除日期仍沿原ResetSymbol，领域列表删除恢复默认入口。默认快捷卡原本同源，遗漏的是56b00bb完整旧六卡中个人空间／rose／library:home的兼容识别；现只读升级完整旧默认（包括无rank形式），保留自定义名称／颜色／图标／背景／顺序、删卡和空布局。
+
+TodoDragCard复用完整TodoTaskCard，保持测量尺寸和抓点，原位置占位；两端顶部提供拖删区，overTrash让卡片位于删除条下确保文字可读。小程序删除沿原performDelete及提醒取消／持久化／失败重试和5秒撤销。网页鼠标仍5px激活、触摸／笔长按；真实Chrome触摸验收发现pointermove→touchmove→pointercancel，由浏览器滚动抢走手势，修复为仅已激活拖动期间的非passive touchmove阻止，取消／完成／失焦／卸载均清理，普通滑动保持。
+
+共用store新增按owner／fingerprint合并的静默刷新，hook前台每5秒检查，后台暂停，回前台、网页focus和网络恢复立即检查。已有缓存保留ready、owner和内容，无“正在刷新账号数据”提示；首次无缓存、离线、失败及待同步仍可见。同内容不增加缓存revision且保留value引用，避免每5秒取消拖动或浏览器storage事件循环；原pending、volatile、晚到GET和账号队列守卫保持，纯刷新不写远端也不产生撤销提示。后端仍整份存档PUT无ETag，不改变跨端同时／离线交错编辑的后写规则，不宣称自动冲突合并。
+
+小程序LoginPreference不再为空底座，原AccountWindow可发送rememberMe=true取得30天票据；未勾选沿原8小时策略。小程序Cookie jar在重启后带票据确认身份，无需保存或重发密码；退出清票据、改密失效沿原服务器逻辑。网页仍使用原共用RememberLogin适配，不改后端授权或账号数据。
+
+验证：两端TypeScript、快捷方式／API与test:sync通过；双独立VM客户端共享隔离remote验证双向轮询、前后台、联网恢复、pending／晚到GET／owner／GET合并及无额外PUT。真实浏览器双context验证双向操作与定时刷新，显式focus／online约113／108ms读取；headless bringToFront无焦点事件，5秒轮询使用7.5秒观察容差。小程序适配器四尺寸的账号记住选项、任务居中、恢复入口、完整卡片拖动／拖删／撤销／取消／失败重试与旧排序回归通过；仅浏览器适配器，不等同真机验收。正常构建15页、21个JS上传语法、99源码／17产物样式通过，媒体138,608字节，主包1,278,893字节。
+
+最终网页镜像ottlog-web:20261031T150528Z-a564bd6d0e1a已部署。发布前用独立loopback容器验收实际Docker产物（关闭本地资源替换、全部API拦截），1440／390px完整卡片拖动与390px CDP触摸滚动／长按／撤销通过；双向同步真实浏览器检查通过。发布后20个1440／390px真实视图、八类同账号数据一致性及权限通过，未写入业务数据，原API镜像remember-login-20261031132436-e7c03929保留。部署配置备份api-edge-20261031T150946Z；临时验收容器与连接用后停止，元数据见服务器shared/public-deployment.json。主要报告：todo-card-drag-docker-final.log、task-refinements-{account,display,defaults}.log及test:sync；原生微信和手机手势／重启登录由用户重新编译后验收。
+
 ## 图片与音频总量低于200KB（2026-10-31，后续）
 
 针对微信代码质量剩余媒体总量提示，小程序64个彩色图标直接打包原有SVG，LibraryIcon以tool-platform维持网页原PNG；源PNG不删除，copy排除重复彩色位图，分别从原habit-icons和icon-library目录复制64份SVG。图标身份、排序、原图形／颜色／192px尺寸、透明度、离线显示保持；线稿图集、底栏、标志、统计标记和两张番茄PNG不变，无新网络请求或账号数据修改。

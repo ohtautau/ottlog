@@ -3,7 +3,7 @@ import { useEffect, useState, type ComponentProps, type ReactNode } from 'react'
 import { ScrollView, Text, View } from '@tarojs/components';
 import Taro from '@tarojs/taro';
 import ActionButton, { ChoiceButton } from './ui-button';
-import { ResetSymbol } from './manage-symbol';
+import { RestoreDefaultsSymbol } from './manage-symbol';
 import './page-toolbar.css';
 
 /** Slots preserve the same visual and reading order while pages provide existing actions. */
@@ -20,7 +20,7 @@ export default function PageToolbar({ reset, sort, filter, manage, create, leadi
 
 /** Restore the caller's defaults without duplicating symbol or control styling. */
 export function ToolbarResetButton({ ariaLabel, onReset, disabled = false }: { ariaLabel: string; onReset: () => void; disabled?: boolean }) {
-  return <ActionButton appearance='icon' size='compact' className='page-toolbar-reset-button' ariaLabel={ariaLabel} disabled={disabled} onClick={onReset}><ResetSymbol /></ActionButton>;
+  return <ActionButton appearance='icon' size='compact' className='page-toolbar-reset-button' ariaLabel={ariaLabel} disabled={disabled} onClick={onReset}><RestoreDefaultsSymbol /></ActionButton>;
 }
 
 /** Read-only completion feedback shares the toolbar's left slot. */

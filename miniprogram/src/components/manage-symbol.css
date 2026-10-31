@@ -20,6 +20,10 @@
 .reset-symbol { position: relative; display: block; flex: none; width: 20PX; height: 20PX; color: inherit; }
 .reset-symbol > view:first-child { position: absolute; left: 2PX; top: 2PX; box-sizing: border-box; width: 16PX; height: 16PX; border: 1.5PX solid currentColor; border-left-color: transparent; border-radius: 50%; }
 .reset-symbol > view:last-child { position: absolute; left: 1PX; top: 2PX; box-sizing: border-box; width: 7PX; height: 7PX; border-left: 1.5PX solid currentColor; border-bottom: 1.5PX solid currentColor; }
+.restore-defaults-symbol { position: relative; display: block; flex: none; width: 20PX; height: 20PX; color: inherit; }
+.restore-defaults-symbol > view:first-child { position: absolute; left: 6PX; top: 1PX; width: 10PX; height: 15PX; box-sizing: border-box; border: 1.5PX solid currentColor; border-radius: 2PX; transform: rotate(40deg); }
+.restore-defaults-symbol > view:first-child::after { content: ''; position: absolute; left: 0; right: 0; bottom: 4PX; border-top: 1.5PX solid currentColor; }
+.restore-defaults-symbol > view:last-child { position: absolute; left: 2PX; right: 2PX; bottom: 1PX; height: 1.5PX; border-radius: 1PX; background: currentColor; }
 .pin-symbol { position: relative; display: block; flex: none; width: 20PX; height: 20PX; color: inherit; }
 .pin-symbol > view { position: absolute; inset: 0; transform: rotate(35deg); }
 .pin-symbol > view > view { position: absolute; box-sizing: border-box; }

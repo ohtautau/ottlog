@@ -380,7 +380,7 @@ module.exports = async function checkPageToolbars({ page, origin, out, width, ex
       await page.screenshot({ path: path.join(out, `toolbar-todos-filter-selected-${width}.png`) });
       await filterButton.click();
       const reset = page.getByRole('button', { name: '重置任务筛选', exact: true });
-      await expect(reset).toHaveText(''); await expect(reset.locator('.reset-symbol')).toHaveCount(1);
+      await expect(reset).toHaveText(''); await expect(reset.locator('.restore-defaults-symbol')).toHaveCount(1);
       const resetBox = await reset.boundingBox(), resultBox = await page.getByRole('button', { name: /^查看 \d+ 件任务$/ }).boundingBox();
       expect(resetBox.width).toBe(40); expect(resetBox.height).toBe(40);
       expect(resultBox.x - resetBox.x - resetBox.width, 'Reset is immediately left of the task results button').toBe(6);

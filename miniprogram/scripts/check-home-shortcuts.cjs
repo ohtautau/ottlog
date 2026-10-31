@@ -29,10 +29,41 @@ const legacyShortcut = (key, kind = 'card') => { if (['eat', 'choose'].includes(
 const selectedShortcut = (key, kind = 'card') => ['eat', 'choose'].includes(key) ? { ...legacyShortcut(key, kind), icon: key === 'eat' ? 'library:cook' : 'library:explore' } : makeShortcut(key, kind);
 const legacyRanks = value => withBackgrounds({ ...value, items: [...value.items.filter(item => !['eat', 'choose'].includes(item.key) && item.kind !== 'link'), ...value.items.filter(item => !['eat', 'choose'].includes(item.key) && item.kind === 'link')].map((item, index) => ({ ...item, kind: 'card', rank: index + 1 })) });
 const defaults = defaultHomeShortcuts();
+assert.deepEqual(defaults.items.map(({ key, name, color, icon, rank }) => ({ key, name, color, icon, rank })), [
+  { key: 'memo-list', name: '便签', color: 'lilac', icon: 'library:notes', rank: 1 },
+  { key: 'pomodoro', name: '专注', color: 'peach', icon: 'library:focus', rank: 2 },
+  { key: 'daily', name: '习惯', color: 'yellow', icon: 'library:plant', rank: 3 },
+  { key: 'statistics', name: '统计', color: 'blue', icon: 'library:measure', rank: 4 },
+  { key: 'growth', name: '领域', color: 'rose', icon: 'library:goal', rank: 5 },
+  { key: 'journal', name: '文章', color: 'mint', icon: 'library:book', rank: 6 },
+], 'Both clients share the six defaults shown on the website');
 assert.equal(new Set(defaults.items.map(item => item.color)).size, defaults.items.length, 'Each default shortcut has its own color');
 assert.equal(defaults.items.find(item => item.key === 'pomodoro').color, 'peach');
 const previousCurrentDefault = { version: 1, items: defaults.items.map(item => ({ ...item, ...(item.key === 'pomodoro' ? { name: '开始番茄钟', color: 'mint' } : item.key === 'journal' ? { color: 'rose' } : {}) })) };
 assert.deepEqual(normalizeHomeShortcuts(previousCurrentDefault), defaults, 'Untouched prior defaults receive the focus name and distinct palette');
+const shippedSpaceDefaults = { version: 1, items: previousCurrentDefault.items.map(item => item.key === 'journal' ? { ...item, name: '个人空间', icon: 'library:home' } : item) };
+for (const ranked of [true, false]) {
+  const snapshot = structuredClone(shippedSpaceDefaults);
+  if (!ranked) snapshot.items = snapshot.items.map(({ rank, ...item }) => item);
+  const before = JSON.stringify(snapshot), upgraded = normalizeHomeShortcuts(snapshot);
+  assert.deepEqual(upgraded, defaults, 'The actual shipped home-icon preset upgrades with or without legacy ranks');
+  assert.equal(JSON.stringify(snapshot), before, 'Recognizing the old preset never mutates the saved archive');
+  assert.deepEqual(normalizeHomeShortcuts(upgraded), upgraded, 'Default normalization is stable on the next read');
+}
+for (const patch of [{ name: '我的空间' }, { color: 'blue' }, { icon: 'library:camera' }, { background: 'fold' }]) {
+  const custom = structuredClone(shippedSpaceDefaults);
+  Object.assign(custom.items[5], patch);
+  const before = JSON.stringify(custom), result = normalizeHomeShortcuts(custom);
+  const article = result.items.find(item => item.key === 'journal');
+  for (const [key, value] of Object.entries(patch)) assert.equal(article[key], value, `Custom ${key} is retained`);
+  assert.equal(article.color, patch.color || 'rose', 'A custom old preset is not replaced by the new palette');
+  assert.equal(JSON.stringify(custom), before);
+}
+const reorderedSpaceDefaults = structuredClone(shippedSpaceDefaults);
+[reorderedSpaceDefaults.items[0].rank, reorderedSpaceDefaults.items[1].rank] = [2, 1];
+assert.equal(normalizeHomeShortcuts(reorderedSpaceDefaults).items[0].key, 'pomodoro', 'A custom old order is retained');
+const incompleteSpaceDefaults = { version: 1, items: shippedSpaceDefaults.items.slice(0, 5) };
+assert.equal(normalizeHomeShortcuts(incompleteSpaceDefaults).items.length, 5, 'A removed card is never re-added while reading');
 const customFocus = { ...makeShortcut('pomodoro'), name: '我的专注', color: 'blue', rank: 1 };
 assert.deepEqual(normalizeHomeShortcuts({ version: 1, items: [customFocus] }).items[0], customFocus, 'Custom focus names and colors are preserved');
 assert.deepEqual(defaults.items.map(item => item.key), defaultKeys);

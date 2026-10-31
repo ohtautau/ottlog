@@ -133,7 +133,7 @@ module.exports = async function checkHabitTimePeriods({ page, origin, out, width
   expect(Math.abs(resetBox.y - applyBox.y)).toBeLessThanOrEqual(1);
   expect(applyBox.x - resetBox.x - resetBox.width).toBeCloseTo(6, 1);
   await expect(resetFilter()).toHaveText('');
-  await expect(resetFilter().locator('.reset-symbol')).toHaveCount(1);
+  await expect(resetFilter().locator('.restore-defaults-symbol')).toHaveCount(1);
   await page.screenshot({ path: path.join(out, `habit-filter-${width}.png`) });
   await applyFilter().click();
   expect(await read(), 'Filtering never changes habits, sorting or check-in history').toEqual(initial);

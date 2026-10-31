@@ -2,22 +2,24 @@ const path = require('node:path');
 
 module.exports = async function checkToolbarDefaults({ page, origin, out, width, expect }) {
   const button = name => page.getByRole('button', { name, exact: true });
-  const read = key => page.evaluate(key => window.__miniPreviewControl.readStorage(`ottlog-mini-tool-v1:guest:${key}`).data, key);
+  const read = key => page.evaluate(key => window.__miniPreviewControl.readStorage(`ottlog-mini-tool-v1:reader:toolbar-reader:${key}`).data, key);
   async function fresh(route, states) {
+    states = { domains: { version: 1, domains: [{ id: 'work', name: '工作', longTermGoal: null, shortTermGoal: null, habits: [], positiveRecords: [], negativeRecords: [] }], completedGoals: [] }, ...states };
     await page.goto(`${origin}/?toolbar-defaults-${route}-${width}#/pages/posts/index`);
     await page.evaluate(states => {
-      for (const [key, data] of Object.entries(states)) localStorage.setItem(`ottlog-mini-tool-v1:guest:${key}`, JSON.stringify({ data, pending: false, revision: 0 }));
+      for (const [key, data] of Object.entries(states)) localStorage.setItem(`ottlog-mini-tool-v1:reader:toolbar-reader:${key}`, JSON.stringify({ data, pending: false, revision: 0 }));
     }, states);
     await page.reload();
     await page.evaluate(({ route, states }) => {
       window.__miniFixture.sessionProfile = { authenticated: false, userName: null, isAdmin: false };
-      window.__miniFixture.guestToolStates = states;
+      window.__miniFixture.sessionProfile = { authenticated: true, userName: 'toolbar-reader', isAdmin: false };
+      window.__miniFixture.accountToolStates = { 'toolbar-reader': states };
       location.hash = `#/pages/${route}/index`;
     }, { route, states });
   }
   async function reset(label) {
     const control = button(label); await expect(control).toBeInViewport({ ratio: 1 });
-    await expect(control).toHaveText(''); await expect(control.locator('.reset-symbol')).toHaveCount(1);
+    await expect(control).toHaveText(''); await expect(control.locator('.restore-defaults-symbol')).toHaveCount(1);
     const box = await control.boundingBox(); expect(box.width).toBe(40); expect(box.height).toBe(40);
     const next = await control.evaluate(node => {
       const slot = node.closest('.page-toolbar-slot'), next = slot ? slot.nextElementSibling : node.nextElementSibling;
@@ -81,7 +83,9 @@ module.exports = async function checkToolbarDefaults({ page, origin, out, width,
   await button('筛选文章').click(); await expect(button('文章显示数量')).toContainText('10 篇'); await page.keyboard.press('Escape');
   const domain = (id, name) => ({ id, name, longTermGoal: null, shortTermGoal: null, habits: [], positiveRecords: [], negativeRecords: [] });
   const domains = { version: 1, domains: [domain('work', '工作'), domain('growth', '成长')], completedGoals: [] };
-  await fresh('domains', { domains, reminders }); await button('排序领域').click(); await reset('恢复领域默认方式');
+  await fresh('domains', { domains, reminders });
+  await expect(button('恢复领域默认方式')).toHaveCount(0);
+  await button('排序领域').click(); await button('排序领域').click();
   await expect(button('排序领域')).toHaveAttribute('aria-pressed', 'false'); expect(await read('domains')).toEqual(domains);
   const cardIds = await page.locator('.domain-entry-shell:not(.domain-create-shell)').evaluateAll(nodes => nodes.map(node => node.id)); expect(cardIds.slice(0, 2)).toEqual(['domain-entry-work', 'domain-entry-growth']);
   await fresh('index', {});

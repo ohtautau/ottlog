@@ -194,7 +194,13 @@ const Taro = {
             const node = document.querySelector(selector.value);
             return node ? { scrollTop: node.scrollTop, scrollLeft: node.scrollLeft } : null;
           }
-          const rects = [...document.querySelectorAll(selector.value)].map(node => ({ id: node.id, ...node.getBoundingClientRect().toJSON() }));
+          // WeChat query/touch coordinates exclude its native navigation bar.
+          // Opt in together with page-local synthetic touches; older fixtures use DOM coordinates.
+          const origin = fixture().nativePageCoordinates ? document.querySelector('.preview-content')?.getBoundingClientRect() : undefined;
+          const rects = [...document.querySelectorAll(selector.value)].map(node => {
+            const rect = node.getBoundingClientRect();
+            return { id: node.id, ...rect.toJSON(), ...(origin ? { left: rect.left - origin.left, right: rect.right - origin.left, top: rect.top - origin.top, bottom: rect.bottom - origin.top, x: rect.x - origin.left, y: rect.y - origin.top } : {}) };
+          });
           return selector.all ? rects : rects[0] || null;
         });
         const delay = selectors.some(selector => selector.node) ? fixture().scrollNodeQueryDelay || 0 : 0;

@@ -25,6 +25,11 @@ export function ResetSymbol() {
   return <View className='reset-symbol' aria-hidden><View /><View /></View>;
 }
 
+/** Clear view adjustments; deliberately distinct from refresh and undo. */
+export function RestoreDefaultsSymbol() {
+  return <View className='restore-defaults-symbol' aria-hidden><View /><View /></View>;
+}
+
 export function PinSymbol() {
   return <View className='pin-symbol' aria-hidden><View><View /><View /><View /></View></View>;
 }

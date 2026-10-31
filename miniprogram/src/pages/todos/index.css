@@ -28,12 +28,9 @@
 .todo-page .tool-status > text { overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
 .todo-page .tool-status button { margin: 0; padding: 0 6rpx; min-width: 100rpx; height: 48rpx; min-height: 48rpx; flex-shrink: 0; background: transparent; color: #9eafb9; border: 0; font-size: 20rpx; line-height: 1.4; }
 .todo-filter-summary { font-size: 20rpx; color: #c8ddcd; padding: 0 8rpx 12rpx; }
-.todo-task.is-drag-source { opacity: .4; }
+.todo-task.is-drag-source { opacity: 0; }
 .todo-task.is-insert-before { border-top: 4rpx solid #cae4cc; }
 .todo-quadrant.is-drop-zone { outline: 3rpx solid #cae4cc; outline-offset: -4rpx; }
-.todo-drag-ghost { position: fixed; transform: translate(-50%, -110%); z-index: 100; width: 280rpx; pointer-events: none; padding: 20rpx; background: #c5e3d0; color: #233c32; border: 2rpx solid #f1f7e9; border-radius: 16rpx; box-shadow: 0 12rpx 40rpx #0005; }
-.todo-drag-ghost text { display: block; font-size: 24rpx; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.todo-drag-ghost text + text { margin-top: 10rpx; font-size: 20rpx; }
 .todo-page .todo-toolbar { display: block; padding: 0; }
 
 .todo-sort-error { color: #e7a097; font-size: 14PX; line-height: 1.4; }

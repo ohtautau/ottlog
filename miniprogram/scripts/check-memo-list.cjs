@@ -54,7 +54,7 @@ module.exports = async function checkMemoList({ page, origin, out, width, expect
     expect(layout.actions[1].right).toBeCloseTo(footer.right - 12, 0);
     const reset = filters().getByRole('button', { name: '重置便签筛选', exact: true });
     await expect(reset).toHaveText('');
-    await expect(reset.locator('.reset-symbol')).toHaveCount(1);
+    await expect(reset.locator('.restore-defaults-symbol')).toHaveCount(1);
     for (const action of layout.actions) {
       expect(action.top).toBeGreaterThanOrEqual(footer.top - 1);
       expect(action.bottom).toBeLessThanOrEqual(panel.bottom + 1);
@@ -150,7 +150,7 @@ module.exports = async function checkMemoList({ page, origin, out, width, expect
   await expect(page.locator('.memo-active-filters')).toContainText('河边');
   const summaryReset = page.locator('.memo-active-filters').getByRole('button', { name: '重置便签筛选', exact: true });
   await expect(summaryReset).toHaveText('');
-  await expect(summaryReset.locator('.reset-symbol')).toHaveCount(1);
+  await expect(summaryReset.locator('.restore-defaults-symbol')).toHaveCount(1);
   const summaryResetBox = await summaryReset.boundingBox();
   expect(summaryResetBox.width).toBe(40); expect(summaryResetBox.height).toBe(40);
   await summaryReset.click();

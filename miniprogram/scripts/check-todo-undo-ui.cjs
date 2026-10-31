@@ -4,10 +4,11 @@ module.exports = async ({page,origin,out,width,expect}) => {
   await page.goto(`${origin}/?todo-undo=${width}#/pages/posts/index`);
   await page.evaluate(task=>{
     window.__miniFixture.sessionProfile={authenticated:true,userName:'undo-a',isAdmin:false};
+    window.__miniFixture.nativePageCoordinates=true;
     window.__miniFixture.accountToolStates={'undo-a':{todos:{version:1,tasks:[task],categories:[]}},'undo-b':{todos:{version:1,tasks:[{...task,id:'undo-other',title:'另一个账号任务'}],categories:[]}}};
     location.hash='#/pages/todos/index';
   },task);
-  const row=()=>page.locator('.todo-task').filter({hasText:'原任务'}),toast=page.locator('.operation-toast');
+  const row=()=>page.locator('.todo-quadrant .todo-task').filter({hasText:'原任务'}),toast=page.locator('.operation-toast');
   const data=()=>page.evaluate(()=>JSON.parse(localStorage.getItem('ottlog-mini-tool-v1:reader:undo-a:todos')).data);
   const undo=()=>toast.getByRole('button',{name:'撤销最近一次操作',exact:true}).click();
   await expect(row()).toHaveCount(1);await expect(toast).toHaveCount(0);
@@ -19,6 +20,30 @@ module.exports = async ({page,origin,out,width,expect}) => {
   await expect(toast).toContainText('已创建任务');await undo();expect((await data()).tasks.map(item=>item.id)).toEqual(['undo-original']);
   await row().locator('.todo-task-content').click();await page.getByRole('button',{name:'删除任务',exact:true}).click();await page.getByRole('dialog',{name:'删除这件任务？',exact:true}).getByRole('button',{name:'删除',exact:true}).click();
   await expect(toast).toContainText('已删除任务');await expect(row()).toHaveCount(0);await undo();expect((await data()).tasks[0]).toEqual(task);
+  async function dragCard(target, {cancel=false,failOnDrop=false}={}) {
+    const source=await row().boundingBox(),viewport=await page.locator('.preview-content').boundingBox(),start={identifier:1,clientX:source.x+source.width/2-viewport.x,clientY:source.y+source.height/2-viewport.y};
+    await row().dispatchEvent('touchstart',{touches:[start]});await page.waitForTimeout(430);
+    const ghost=page.locator('.todo-drag-ghost'),trash=page.getByRole('region',{name:'拖到这里删除任务',exact:true});
+    await expect(ghost.locator('.todo-task-title')).toHaveText('原任务');await expect(ghost.locator('.todo-check')).toHaveCount(1);
+    await expect(row()).toHaveCSS('opacity','0');await expect(trash).toBeVisible();
+    const lifted=await ghost.boundingBox();expect(lifted.width).toBeCloseTo(source.width,1);expect(lifted.height).toBeCloseTo(source.height,1);
+    expect(lifted.x).toBeCloseTo(source.x,1);expect(lifted.y).toBeCloseTo(source.y,1);
+    const destination=await (target==='trash'?trash:page.locator('#todo-zone-'+target)).boundingBox();
+    const end={...start,clientX:destination.x+destination.width/2-viewport.x,clientY:destination.y+destination.height/2-viewport.y};
+    await row().dispatchEvent('touchmove',{touches:[end]});
+    await expect.poll(async()=>Math.abs((await ghost.boundingBox()).x-(end.clientX+viewport.x-source.width/2))).toBeLessThan(1);
+    if(target==='trash')await expect(trash).toHaveClass(/is-over/);
+    await page.screenshot({path:path.join(out,`task-card-drag-${target}-${cancel?'cancel-':''}${width}.png`)});
+    if(failOnDrop)await page.evaluate(()=>{window.__miniFixture.failToolWrites=['todos'];});
+    await row().dispatchEvent(cancel?'touchcancel':'touchend',{touches:[],changedTouches:[end]});
+    await expect(ghost).toHaveCount(0);await expect(trash).toHaveCount(0);await page.waitForTimeout(430);
+  }
+  await dragCard('plan');await expect(toast).toContainText('已移动任务');expect((await data()).tasks[0]).toMatchObject({important:true,urgent:false});await undo();expect((await data()).tasks[0]).toEqual(task);
+  await dragCard('trash',{cancel:true});expect((await data()).tasks[0]).toEqual(task);
+  await dragCard('trash');await expect(toast).toContainText('已删除任务');await expect(row()).toHaveCount(0);await undo();expect((await data()).tasks[0]).toEqual(task);
+  await dragCard('trash',{failOnDrop:true});
+  const failedDelete=page.getByRole('dialog',{name:'删除这件任务？',exact:true});await expect(failedDelete).toContainText('删除尚未保存');expect((await data()).tasks[0]).toEqual(task);
+  await page.evaluate(()=>{window.__miniFixture.failToolWrites=[];});await failedDelete.getByRole('button',{name:'重试删除',exact:true}).click();await expect(failedDelete).toHaveCount(0);await expect(row()).toHaveCount(0);await undo();expect((await data()).tasks[0]).toEqual(task);
   await page.locator('.todo-sort-toggle').click();await page.getByRole('button',{name:'创建时间最近',exact:true}).click();await page.locator('.todo-sort-popover').getByRole('button',{name:'排序',exact:true}).click();
   await expect(toast).toContainText('已调整排序');expect((await data()).sort).toBe('created');await undo();expect((await data()).sort).toBeUndefined();
   await row().locator('.todo-complete').click();await expect(toast).toContainText('已完成任务');

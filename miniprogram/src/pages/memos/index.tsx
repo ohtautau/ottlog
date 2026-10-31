@@ -17,7 +17,7 @@ import AppDialog from '../../components/app-dialog';
 import { getLibraryIcon } from '../../lib/icon-library';
 import MemoEditorFields from '../../components/memo-editor-fields';
 import MemoReader from '../../components/memo-reader';
-import { DeleteSymbol, PinSymbol, ResetSymbol } from '../../components/manage-symbol';
+import { DeleteSymbol, PinSymbol, RestoreDefaultsSymbol } from '../../components/manage-symbol';
 import EntryComposer from '../../components/entry-composer';
 import CreateButton from '../../components/create-button';
 import PageToolbar, { CategoryButton, CategoryRow, ToolbarResetButton } from '../../components/page-toolbar';
@@ -245,7 +245,7 @@ export default function Memos() {
         </FilterPopover>} manage={<ChoiceButton id='memo-settings' iconOnly size='compact' ariaLabel='管理便签删除' selected={managing} disabled={!writable || busy || imageBusy || !!currentDeletion || creating} onClick={() => { setShowSort(false); setShowFilters(false); setManaging(previous => !previous); }}><DeleteSymbol /></ChoiceButton>} create={<CreateButton className='memo-create' label='创建便签' disabled={!writable || busy} onClick={create} />} />
       <CategoryRow ariaLabel='便签分类' className='memo-category-row' fixedLeading={<CategoryButton id='memo-category-all' ariaLabel='便签分类：全部' selected={tagFilters.length === 0} onClick={() => setTagFilters([])}>全部</CategoryButton>} scrollIntoView={categoryTarget} selectionOffset={1.5} contentKey={JSON.stringify([owner, filterTags])} scrollWithAnimation>{filterTags.map((tag, index) => <CategoryButton id={`memo-category-${index}`} key={tag} ariaLabel={`便签分类：${tag}`} selected={tagFilters.includes(tag)} onClick={() => setTagFilters(tagFilters.length === 1 && tagFilters.includes(tag) ? [] : [tag])}>{tagLabel(tag)}</CategoryButton>)}</CategoryRow>
       <View className='memo-list-heading card-group-heading'><View><SectionTitle inRow className='memo-list-label'>{filterCount ? '筛选结果' : '全部便签'}</SectionTitle><Text className='memo-list-count'>{filtered.length}</Text></View><Text>{sortLabels[sort]}{filtered.some(note => note.pinned) ? ' · 置顶优先' : ''}</Text></View>
-      {!!filterCount && <View className='memo-active-filters'><Text>{[search.trim() && `“${search.trim()}”`, ...tagFilters.map(tagLabel), ...colorFilters.map(color => memoColors[color].label)].filter(Boolean).join(' · ')}</Text><ActionButton appearance='icon' size='compact' ariaLabel='重置便签筛选' onClick={clearFilters}><ResetSymbol /></ActionButton></View>}
+      {!!filterCount && <View className='memo-active-filters'><Text>{[search.trim() && `“${search.trim()}”`, ...tagFilters.map(tagLabel), ...colorFilters.map(color => memoColors[color].label)].filter(Boolean).join(' · ')}</Text><ActionButton appearance='icon' size='compact' ariaLabel='重置便签筛选' onClick={clearFilters}><RestoreDefaultsSymbol /></ActionButton></View>}
       <ScrollView id='memo-list' key={JSON.stringify([owner, search, colorFilters, sort, tagFilters])} className='memo-list-scroll' scrollY enhanced bounces={false} showScrollbar={false}>
         <CardGroupContent>{!ready ? <View className='memo-list-empty'><View className='memo-empty-paper' aria-hidden /><Text className='memo-empty-title'>正在读取便签…</Text></View> : !valid ? <View className='memo-list-empty'><Text className='memo-empty-title'>暂时无法显示便签</Text><Text>当前数据格式暂不兼容，原始数据已保留。</Text><ActionButton className='button-label tool-secondary' onClick={retry}>重新读取</ActionButton></View> : filtered.length ? <View className='memo-list'>{filtered.map(note => {
           const photos = note.images?.filter(isMemoImage) ?? [];

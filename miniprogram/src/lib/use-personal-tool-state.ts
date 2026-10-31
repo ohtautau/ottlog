@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState, type SetStateAction } from 'react';
-import Taro, { useDidShow } from '@tarojs/taro';
+import Taro, { useDidHide, useDidShow } from '@tarojs/taro';
 import { api, Session } from '../api';
 import { createPersonalToolStore, toolCacheKey, type PersonalToolKey, type ToolLoad } from './tool-state-store';
 import { toolPageStatus } from './tool-status-display';
@@ -45,29 +45,36 @@ export function usePersonalToolState<T>(key: PersonalToolKey, initial: T): {
   const context = useRef<ToolLoad<T> | null>(null);
   const generation = useRef(0);
   const mounted = useRef(true);
+  const active = useRef(false), loading = useRef(false);
   const [value, update] = useState(initial);
   const [ready, setReady] = useState(false);
   const [owner, setOwner] = useState('');
   const [status, setStatus] = useState('正在读取…');
-  const load = useCallback(async () => {
+  const load = useCallback(async (silent = false) => {
+    if (silent && loading.current) return;
+    if (silent && !context.current) silent = false;
     const current = ++generation.current;
-    context.current = null;
-    setReady(false); setOwner(''); setStatus('正在读取…'); update(defaults.current);
+    loading.current = true;
+    if (!silent) {
+      context.current = null;
+      setReady(false); setOwner(''); setStatus('正在读取…'); update(defaults.current);
+    }
     try {
-      const result = await store.load(key, defaults.current, cached => {
+      const result = silent && context.current ? await store.refresh(key, defaults.current, context.current) : await store.load(key, defaults.current, cached => {
         if (!mounted.current || generation.current !== current) return;
         context.current = cached;
         update(cached.value); setOwner(cached.owner); setStatus(cached.status); setReady(true);
       });
       if (!mounted.current || generation.current !== current) return;
       context.current = result;
-      update(result.value); setOwner(result.owner); setStatus(result.status); setReady(true);
+      update(previous => JSON.stringify(previous) === JSON.stringify(result.value) ? previous : result.value); setOwner(result.owner); setStatus(result.status); setReady(true);
       if (result.cloud) void store.flush(key, result.owner);
     } catch (error) {
       if (mounted.current && generation.current === current) setStatus(error instanceof Error ? error.message : '读取失败，请重试');
-    }
+    } finally { if (generation.current === current) loading.current = false; }
   }, [key]);
-  useDidShow(() => { void load(); });
+  useDidShow(() => { active.current = true; void load(!!context.current); });
+  useDidHide(() => { active.current = false; });
   useEffect(() => {
     mounted.current = true;
     const unsubscribe = store.subscribe((cacheKey, message) => {
@@ -78,8 +85,13 @@ export function usePersonalToolState<T>(key: PersonalToolKey, initial: T): {
       setStatus(message);
     });
     const reload = () => { void load(); };
+    const refresh = () => { if (active.current && context.current?.owner !== 'guest') void load(true); };
+    const network = (result: { isConnected: boolean }) => { if (result.isConnected) refresh(); };
+    const timer = setInterval(refresh, 5000);
+    Taro.onNetworkStatusChange?.(network);
     Taro.eventCenter.on('ottlog-session', reload);
-    return () => { mounted.current = false; ++generation.current; context.current = null; unsubscribe(); Taro.eventCenter.off('ottlog-session', reload); };
+    Taro.eventCenter.on('ottlog-tools-refresh', refresh);
+    return () => { mounted.current = false; active.current = false; ++generation.current; context.current = null; clearInterval(timer); Taro.offNetworkStatusChange?.(network); unsubscribe(); Taro.eventCenter.off('ottlog-session', reload); Taro.eventCenter.off('ottlog-tools-refresh', refresh); };
   }, [key, load]);
   const setValue: PersonalToolSetter<T> = useCallback(async next => {
     const current = context.current;
