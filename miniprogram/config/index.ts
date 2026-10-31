@@ -9,7 +9,12 @@ export default defineConfig({
   // Only active native tabs enter the package.
   // Timer artwork stays alongside the focus tab, without a duplicate assets copy.
   copy: { patterns: [
-    { from: 'src/assets', to: 'dist/assets', ignore: ['**/pomodoro/**'] },
+    // Native image supports SVG: reuse the original vector artwork rather than
+    // package a second raster copy. Keep PNGs in source for the browser build.
+    { from: 'src/assets', to: 'dist/assets', ignore: ['**/pomodoro/**', '**/habits/**', '**/icons/**'] },
+    { from: '../web/public/habit-icons', to: 'dist/assets/habits' },
+    { from: 'icon-library', to: 'dist/assets/icons' },
+    { from: 'src/assets/icons/outline-sheet.png', to: 'dist/assets/icons/outline-sheet.png' },
     { from: 'src/assets/pomodoro', to: 'dist/pages/pomodoro/assets' },
   ], options: {} },
   framework: 'react', compiler: 'webpack5', plugins: [

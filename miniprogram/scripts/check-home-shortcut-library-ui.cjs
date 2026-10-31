@@ -63,7 +63,7 @@ module.exports = async function checkHomeShortcutLibrary({ page, origin, out, wi
   expect(titleLayout.separator).toBe(0);
   expect(titleLayout.colors.top).toBeGreaterThanOrEqual(titleLayout.row.bottom);
   expect(titleLayout.row.top).toBeGreaterThanOrEqual(titleLayout.preview.bottom);
-  expect(titleLayout.image).toBe('/assets/habits/notes.png');
+  expect(titleLayout.image).toBe('/assets/habits/notes.svg');
   for (const button of titleLayout.buttons) expect(button.height).toBeGreaterThanOrEqual(40);
   await expect(editor().locator('.home-editor-footer')).toHaveCount(1);
   await expect(editor().getByRole('button', { name: '取消', exact: true })).toHaveCount(0);
@@ -93,6 +93,7 @@ module.exports = async function checkHomeShortcutLibrary({ page, origin, out, wi
   await expect(picker().locator('.icon-library-option')).toHaveCount(64);
   await expect(picker().locator('.icon-library-option[aria-pressed="true"]')).toHaveCount(1);
   await expect(picker().getByRole('button', { name: '选择背景图标：笔记', exact: true })).toHaveAttribute('aria-pressed', 'true');
+  await expect.poll(() => picker().locator('.icon-library-option .library-icon').evaluateAll(images => images.length === 64 && images.every(image => image.complete && image.naturalWidth === 192 && image.naturalHeight === 192)), { message: 'All 64 original local SVG icons decode at their original dimensions' }).toBe(true);
   const cells = await picker().locator('.icon-library-option').evaluateAll(nodes => nodes.map(node => {
     const rect = node.getBoundingClientRect();
     return { width: rect.width, height: rect.height, src: node.querySelector('.library-icon').getAttribute('src') };
@@ -100,19 +101,19 @@ module.exports = async function checkHomeShortcutLibrary({ page, origin, out, wi
   expect(new Set(cells.map(cell => cell.src)).size).toBe(64);
   for (const cell of cells) {
     expect(cell.width).toBeGreaterThanOrEqual(40); expect(cell.height).toBeGreaterThanOrEqual(40);
-    expect(cell.src).toMatch(/\/assets\/(?:habits|icons)\/[a-z]+\.png$/);
+    expect(cell.src).toMatch(/\/assets\/(?:habits|icons)\/[a-z]+\.svg$/);
     expect(cell.src).not.toContain('outline-sheet');
   }
   await expect(editor().locator('input')).toBeDisabled();
   const search = picker().getByRole('textbox', { name: '搜索图标', exact: true });
   await search.fill('摄影');
   await expect(picker().locator('.icon-library-option')).toHaveCount(1);
-  await expect(picker().getByRole('button', { name: '选择背景图标：摄影', exact: true }).locator('.library-icon')).toHaveAttribute('src', '/assets/habits/camera.png');
+  await expect(picker().getByRole('button', { name: '选择背景图标：摄影', exact: true }).locator('.library-icon')).toHaveAttribute('src', '/assets/habits/camera.svg');
   for (const query of ['镜头', '  PHOTOGRAPHY  ']) {
     await search.fill(query);
     await expect(picker().locator('.icon-library-option')).toHaveCount(1);
     await expect(picker().locator('.icon-library-option')).toHaveText('摄影');
-    await expect(picker().getByRole('button', { name: '选择背景图标：摄影', exact: true }).locator('.library-icon')).toHaveAttribute('src', '/assets/habits/camera.png');
+    await expect(picker().getByRole('button', { name: '选择背景图标：摄影', exact: true }).locator('.library-icon')).toHaveAttribute('src', '/assets/habits/camera.svg');
   }
   await picker().getByRole('button', { name: '清空图标搜索', exact: true }).click();
   await picker().getByRole('button', { name: '图标分类：运动健康', exact: true }).click();
@@ -284,7 +285,8 @@ module.exports = async function checkHomeShortcutLibrary({ page, origin, out, wi
   await expect(selection()).toHaveCount(0);
   expect(await read()).toBe(beforeAdd);
   await add().click();
-  for (const name of ['创建任务', '饮食记录', '文章分类', '收藏']) await selection().getByRole('button', { name: `添加快捷方式：${name}`, exact: true }).click();
+  await expect(selection().getByRole('button', { name: '添加快捷方式：饮食记录', exact: true })).toHaveCount(0);
+  for (const name of ['创建任务', '创建习惯', '文章分类', '收藏']) await selection().getByRole('button', { name: `添加快捷方式：${name}`, exact: true }).click();
   expect(await read(), 'Function selection remains a draft until saved').toBe(beforeAdd);
   if (width === 360) await page.evaluate(() => { window.__miniFixture.failHomeShortcutWrites = true; });
   await save();

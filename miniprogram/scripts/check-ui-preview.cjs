@@ -176,6 +176,9 @@ async function main() {
     if (pathname === '/preview.js' || pathname === '/preview.css') { res.setHeader('Content-Type', pathname.endsWith('.js') ? 'text/javascript' : 'text/css'); res.end(fs.readFileSync(path.join(out, pathname.slice(1)))); return; }
     const assetPath = /^\/pages\/pomodoro\/assets\/tomato-(?:focus|rest)\.png$/.test(pathname) ? pathname.replace('/pages/pomodoro/assets/', '/assets/pomodoro/') : pathname;
     if (assetPath.startsWith('/assets/')) {
+      // Exercise native SVGs from the emitted package rather than substituting PNGs.
+      const nativeSvg = path.join(root, 'dist', assetPath);
+      if (assetPath.endsWith('.svg') && nativeSvg.startsWith(path.join(root, 'dist', 'assets') + path.sep) && fs.existsSync(nativeSvg)) { res.setHeader('Content-Type', 'image/svg+xml'); res.end(fs.readFileSync(nativeSvg)); return; }
       const file = path.resolve(root, 'src', '.' + assetPath);
       if (file.startsWith(path.join(root, 'src', 'assets') + path.sep) && fs.existsSync(file)) { res.setHeader('Content-Type', file.endsWith('.svg') ? 'image/svg+xml' : file.endsWith('.png') ? 'image/png' : 'application/octet-stream'); res.end(fs.readFileSync(file)); return; }
     }

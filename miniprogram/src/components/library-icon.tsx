@@ -1,5 +1,6 @@
 import { Image, View } from '@tarojs/components';
 import { getLibraryIcon, iconLibrary } from '../lib/icon-library';
+import { isWebTool } from '../lib/tool-platform';
 import './library-icon.css';
 
 export default function LibraryIcon({ name, className = '', fallback = 'notes', variant = 'colored' }: { name?: string; className?: string; fallback?: string; variant?: 'colored' | 'outline' }) {
@@ -8,5 +9,6 @@ export default function LibraryIcon({ name, className = '', fallback = 'notes', 
     const index = iconLibrary.findIndex(candidate => candidate.id === icon.id);
     return <View className={`library-icon is-outline ${className}`} data-icon={icon.id} aria-hidden><Image className='library-icon-sheet' src='/assets/icons/outline-sheet.png' style={{ width: '800%', height: '800%', left: `${-(index % 8) * 100}%`, top: `${-Math.floor(index / 8) * 100}%` }} mode='scaleToFill' showMenuByLongpress={false} /></View>;
   }
-  return <Image className={`library-icon ${className}`} src={icon.src} mode='aspectFit' showMenuByLongpress={false} />;
+  const src = isWebTool ? icon.src : icon.src.replace(/\.png$/, '.svg');
+  return <Image className={`library-icon ${className}`} src={src} mode='aspectFit' showMenuByLongpress={false} />;
 }

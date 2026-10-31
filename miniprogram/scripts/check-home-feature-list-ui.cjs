@@ -14,14 +14,15 @@ module.exports = async function checkHomeFeatureList({ page, origin, out, width,
   })));
   const directory = page.locator('#page-more .home-feature-list');
   const definitions = await snapshot(directory);
-  expect(definitions).toHaveLength(16);
-  expect(definitions.find(item => item.key === 'pomodoro')).toMatchObject({ icon: 'library:focus', src: '/assets/habits/focus.png' });
+  expect(definitions).toHaveLength(14);
+  expect(definitions.some(item => ['choose', 'meals', 'eat'].includes(item.key))).toBe(false);
+  expect(definitions.find(item => item.key === 'pomodoro')).toMatchObject({ icon: 'library:focus', src: '/assets/habits/focus.svg' });
   expect(definitions.find(item => item.key === 'memo-list')).toMatchObject({ icon: 'library:notes' });
   await page.getByRole('button', { name: '设置快捷方式', exact: true }).click();
   await page.locator('#home-sort-pomodoro .home-shortcut-replace').click();
   const sheet = page.getByRole('dialog', { name: '替换快捷方式', exact: true });
   expect(await snapshot(sheet)).toEqual(definitions);
-  await expect(sheet.locator('.home-feature-heading')).toHaveText(['快捷操作', '功能界面', '阅读与空间']);
+  await expect(sheet.locator('.home-feature-heading')).toHaveText(['快捷操作', '功能界面', '阅读']);
   await expect(sheet.getByRole('button', { name: '替换为：便签', exact: true })).toBeDisabled();
   await expect(sheet.getByRole('button', { name: '替换为：便签', exact: true })).toHaveAttribute('aria-pressed', 'true');
   await expect(sheet.getByRole('button', { name: '替换为：便签', exact: true })).toHaveCSS('opacity', '1');
@@ -38,7 +39,7 @@ module.exports = async function checkHomeFeatureList({ page, origin, out, width,
   }
   await page.screenshot({ path: path.join(out, `shared-feature-replacement-${width}.png`) });
   await sheet.locator('.home-editor-scroll').evaluate(node => { node.scrollTop = node.scrollHeight; });
-  await expect(sheet.getByRole('button', { name: '替换为：个人空间', exact: true })).toBeInViewport();
+  await expect(sheet.getByRole('button', { name: '替换为：文章', exact: true })).toBeInViewport();
   await page.screenshot({ path: path.join(out, `shared-feature-replacement-bottom-${width}.png`) });
   await sheet.getByRole('button', { name: '替换为：番茄钟', exact: true }).click();
   await expect(sheet.getByRole('button', { name: '替换为：番茄钟', exact: true })).toHaveAttribute('aria-pressed', 'true');
