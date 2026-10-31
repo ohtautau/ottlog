@@ -17,6 +17,21 @@ namespace Ottlog.Api.Migrations
 #pragma warning disable 612, 618
             modelBuilder.HasAnnotation("ProductVersion", "10.0.11");
 
+            modelBuilder.Entity("Ottlog.Api.Services.BotGrant", b =>
+                {
+                    b.Property<string>("Id").HasColumnType("TEXT");
+                    b.Property<long>("CreatedAt").HasColumnType("INTEGER");
+                    b.Property<string>("Name").IsRequired().HasColumnType("TEXT");
+                    b.Property<string>("Owner").IsRequired().HasColumnType("TEXT");
+                    b.Property<long?>("RevokedAt").HasColumnType("INTEGER");
+                    b.Property<string>("SecurityStamp").IsRequired().HasColumnType("TEXT");
+                    b.Property<string>("TokenHash").IsRequired().HasColumnType("TEXT");
+                    b.HasKey("Id");
+                    b.HasIndex("Owner");
+                    b.HasIndex("TokenHash").IsUnique();
+                    b.ToTable("BotGrants");
+                });
+
             modelBuilder.Entity("Ottlog.Api.Data.Administrator", b =>
                 {
                     b.Property<int>("Id")
