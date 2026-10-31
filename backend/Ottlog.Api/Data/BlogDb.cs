@@ -11,6 +11,7 @@ public sealed class BlogDb(DbContextOptions<BlogDb> options) : DbContext(options
     public DbSet<Setting> Settings => Set<Setting>();
     public DbSet<Comment> Comments => Set<Comment>();
     public DbSet<Reader> Readers => Set<Reader>();
+    public DbSet<Ottlog.Api.Services.BotGrant> BotGrants => Set<Ottlog.Api.Services.BotGrant>();
     public DbSet<Favorite> Favorites => Set<Favorite>();
     public DbSet<PersonalToolState> PersonalToolStates => Set<PersonalToolState>();
     public DbSet<WeChatBinding> WeChatBindings => Set<WeChatBinding>();
@@ -18,6 +19,8 @@ public sealed class BlogDb(DbContextOptions<BlogDb> options) : DbContext(options
     public DbSet<WeChatPomodoroReminder> WeChatPomodoroReminders => Set<WeChatPomodoroReminder>();
     protected override void OnModelCreating(ModelBuilder model)
     {
+        model.Entity<Ottlog.Api.Services.BotGrant>().HasIndex(g => g.TokenHash).IsUnique();
+        model.Entity<Ottlog.Api.Services.BotGrant>().HasIndex(g => g.Owner);
         model.Entity<Article>().HasIndex(p => p.Slug).IsUnique();
         model.Entity<Reader>().HasIndex(p => p.UserName).IsUnique();
         model.Entity<Favorite>().HasKey(p => new { p.Owner, p.ArticleId });

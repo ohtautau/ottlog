@@ -9,6 +9,8 @@ using Microsoft.AspNetCore.HttpOverrides;
 using System.Net;
 
 var builder = WebApplication.CreateBuilder(args);
+builder.Services.AddScoped<BotGrantStore>();
+builder.Services.AddAuthentication().AddScheme<Microsoft.AspNetCore.Authentication.AuthenticationSchemeOptions, BotAuthenticationHandler>(BotAuthenticationHandler.SchemeName, _ => { });
 builder.Logging.ClearProviders();
 builder.Logging.AddConsole();
 builder.Logging.AddDebug();
