@@ -7,10 +7,10 @@ import { RestoreDefaultsSymbol } from './manage-symbol';
 import './page-toolbar.css';
 
 /** Slots preserve the same visual and reading order while pages provide existing actions. */
-export default function PageToolbar({ reset, sort, filter, manage, create, leading, className = '' }: {
-  reset?: ReactNode; sort?: ReactNode; filter?: ReactNode; manage?: ReactNode; create?: ReactNode; leading?: ReactNode; className?: string;
+export default function PageToolbar({ reset, sort, filter, manage, leading, className = '' }: {
+  reset?: ReactNode; sort?: ReactNode; filter?: ReactNode; manage?: ReactNode; leading?: ReactNode; className?: string;
 }) {
-  const actions = [['reset', reset], ['sort', sort], ['filter', filter], ['manage', manage], ['create', create]] as const;
+  const actions = [['reset', reset], ['sort', sort], ['filter', filter], ['manage', manage]] as const;
   if (!leading && !actions.some(([, action]) => !!action)) return null;
   return <View className={`page-toolbar ${className}`} role='group' ariaLabel='页面功能栏'>
     {!!leading && <View className='page-toolbar-leading'>{leading}</View>}

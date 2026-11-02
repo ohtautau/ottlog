@@ -2,26 +2,6 @@
    verifies layout/interactions only; it is not a WeChat device certification. */
 const path = require('node:path');
 
-async function checkQuadrantCreateFeedback(page, button, expect, disabled = false) {
-  const background = () => button.evaluate(node => getComputedStyle(node).backgroundColor);
-  const before = await button.boundingBox();
-  const feedback = disabled ? 'rgba(0, 0, 0, 0)' : 'rgba(199, 215, 223, 0.1)';
-  await page.mouse.move(0, 0);
-  expect(await background(), 'Quadrant add controls are transparent by default').toBe('rgba(0, 0, 0, 0)');
-  await button.hover({ force: disabled });
-  expect(await background(), 'Quadrant add controls use shared hover feedback').toBe(feedback);
-  await page.mouse.down();
-  expect(await background(), 'Quadrant add controls use shared press feedback').toBe(feedback);
-  await page.mouse.move(0, 0); await page.mouse.up();
-  expect(await background(), 'Leaving the control restores its transparent background').toBe('rgba(0, 0, 0, 0)');
-  // The adapter does not synthesize Taro hoverClass. Check native pressed-class
-  // CSS separately; this does not certify native WeChat touch behavior.
-  await button.evaluate(node => node.classList.add('ui-control-pressed'));
-  expect(await background(), 'The Taro pressed class uses the same feedback and respects disabled').toBe(feedback);
-  await button.evaluate(node => node.classList.remove('ui-control-pressed'));
-  expect(await button.boundingBox(), 'Feedback does not move or resize the creation control').toEqual(before);
-}
-
 module.exports = async function checkTodoDisplay({ page, origin, out, width, expect }) {
   await page.goto(`${origin}/?todo-display#/pages/index/index`);
   const titles = await page.evaluate(() => {
@@ -101,78 +81,53 @@ module.exports = async function checkTodoDisplay({ page, origin, out, width, exp
   expect(Math.abs(boxes[3].bottom - (viewport.y + viewport.height - 8)), 'Quadrants use the recovered footer space').toBeLessThan(2);
   for (const height of await page.locator('.todo-toolbar button').evaluateAll(nodes => nodes.map(node => node.getBoundingClientRect().height))) expect(height).toBeGreaterThanOrEqual(40);
   expect(await page.locator('.todo-page').evaluate(node => Math.max(node.scrollHeight - node.clientHeight, node.scrollWidth - node.clientWidth))).toBeLessThan(2);
-  const createButtons = page.locator('.todo-quadrant-add');
-  await expect(createButtons).toHaveCount(4);
+  const createButtons = page.locator('.floating-create-button');
+  await expect(createButtons).toHaveCount(1);
+  await expect(page.locator('.todo-quadrant-add')).toHaveCount(0);
   await expect(page.locator('.todo-toolbar .page-toolbar-create')).toHaveCount(0);
   await expect(page.locator('.todo-quadrant-footer'), 'Quadrant creation no longer occupies a footer').toHaveCount(0);
-  const quadrantAdds = page.locator('.todo-quadrant-add');
-  await expect(quadrantAdds).toHaveCount(4);
-  const labels = ['高', '中', '低', '无'].map(label => `创建${label}优先级任务`);
-  expect(await quadrantAdds.evaluateAll(nodes => nodes.map(node => node.getAttribute('aria-label'))), 'Every plus names its own quadrant for accessibility').toEqual(labels);
-  await expect(quadrantAdds.locator('.create-button-label,.select-chevron')).toHaveCount(0);
-  await expect(quadrantAdds, 'Only the plus symbol is visible in each quadrant').toHaveText(['', '', '', '']);
+  await expect(createButtons, 'The single floating plus names its action for accessibility').toHaveAttribute('aria-label', '创建任务');
+  await expect(createButtons.locator('.create-button-label,.select-chevron')).toHaveCount(0);
+  await expect(createButtons, 'Only the plus symbol is visible in the floating action').toHaveText('');
   const creationGeometry = await createButtons.evaluateAll(nodes => nodes.map(node => {
     const box = element => { const r = element.getBoundingClientRect(); return { left: r.left, right: r.right, top: r.top, bottom: r.bottom, height: r.height, width: r.width }; };
-    const label = node.querySelector('.create-button-label'), symbol = node.querySelector('.button-add-symbol');
-    const quadrant = node.classList.contains('todo-quadrant-add'), style = getComputedStyle(node);
-    return { shared: node.classList.contains(quadrant ? 'ui-button-icon' : 'create-button'), quadrant, button: box(node), symbol: box(symbol), hidden: symbol.getAttribute('aria-hidden'),
-      label: label && box(label), clipped: label ? label.scrollWidth - label.clientWidth : 0,
-      radius: parseFloat(style.borderTopLeftRadius), border: style.borderTopColor, foreground: style.color };
+    const symbol = node.querySelector('.button-add-symbol');
+    const style = getComputedStyle(node);
+    return { button: box(node), symbol: box(symbol), hidden: symbol.getAttribute('aria-hidden'), radius: parseFloat(style.borderTopLeftRadius), background: style.backgroundColor };
   }));
   for (const control of creationGeometry) {
-    expect(control.shared).toBe(true);
     expect(control.hidden).toBe('true');
-    expect(control.button.height, 'All task creation entries retain a 40px touch target').toBeGreaterThanOrEqual(40);
+    expect(control.button.height, 'The floating creation action has a comfortable touch target').toBeGreaterThanOrEqual(48);
+    expect(control.button.width).toBe(control.button.height);
+    expect(control.radius, 'The floating action is circular').toBeGreaterThanOrEqual(control.button.height / 2);
+    expect(control.background).not.toBe('rgba(0, 0, 0, 0)');
     expect(control.symbol.height).toBeGreaterThan(0);
-    if (control.quadrant) {
-      expect(control.button.width, 'Every quadrant plus retains a 40px-wide touch target').toBeGreaterThanOrEqual(40);
-      expect(control.radius, 'Quadrant plus controls retain the shared icon-button corners').toBe(10);
-      expect(control.border).toBe('rgba(0, 0, 0, 0)');
-      expect(control.foreground).toBe('rgb(199, 215, 223)');
-      expect(Math.abs(control.symbol.left + control.symbol.right - control.button.left - control.button.right), 'The plus is centered horizontally').toBeLessThanOrEqual(1);
-      expect(Math.abs(control.symbol.top + control.symbol.bottom - control.button.top - control.button.bottom), 'The plus is centered vertically').toBeLessThanOrEqual(1);
-    } else expect(control.symbol.right).toBeLessThanOrEqual(control.label.left);
-    expect(control.clipped).toBeLessThanOrEqual(1);
-    for (const part of [control.symbol, control.label].filter(Boolean)) {
-      expect(part.left).toBeGreaterThanOrEqual(control.button.left - 1);
-      expect(part.right).toBeLessThanOrEqual(control.button.right + 1);
-      expect(part.top).toBeGreaterThanOrEqual(control.button.top - 1);
-      expect(part.bottom).toBeLessThanOrEqual(control.button.bottom + 1);
-    }
+    expect(Math.abs(control.symbol.left + control.symbol.right - control.button.left - control.button.right), 'The plus is centered horizontally').toBeLessThanOrEqual(1);
+    expect(Math.abs(control.symbol.top + control.symbol.bottom - control.button.top - control.button.bottom), 'The plus is centered vertically').toBeLessThanOrEqual(1);
+    expect(control.button.right).toBeLessThanOrEqual(viewport.x + viewport.width - 8);
+    expect(control.button.bottom).toBeLessThanOrEqual(viewport.y + viewport.height - 8);
+    expect(control.button.right).toBeGreaterThan(viewport.x + viewport.width / 2);
+    expect(control.button.top).toBeGreaterThan(viewport.y + viewport.height / 2);
   }
   const quadrantContent = await page.locator('.todo-quadrant').evaluateAll(nodes => nodes.map(node => {
     const box = element => { const r = element.getBoundingClientRect(); return { left: r.left, right: r.right, top: r.top, bottom: r.bottom, height: r.height }; };
     const title = node.querySelector('.todo-quadrant-title');
     return { card: box(node), title: box(title), titleLine: parseFloat(getComputedStyle(title).lineHeight),
-      caption: box(node.querySelector('.todo-quadrant-caption')), add: box(node.querySelector('.todo-quadrant-add')),
+      caption: box(node.querySelector('.todo-quadrant-caption')),
       heading: box(node.querySelector('.todo-quadrant-heading')), scroll: box(node.querySelector('.todo-quadrant-scroll')) };
   }));
   for (const quadrant of quadrantContent) {
     expect(quadrant.title.height, 'Quadrant headings remain on one readable line').toBeLessThanOrEqual(quadrant.titleLine * 1.2);
-    expect(quadrant.title.right, 'The title does not overlap the plus touch target').toBeLessThanOrEqual(quadrant.add.left + 1);
-    expect(quadrant.caption.right, 'The caption does not overlap the plus touch target').toBeLessThanOrEqual(quadrant.add.left + 1);
-    expect(Math.abs(quadrant.add.top + quadrant.add.bottom - quadrant.heading.top - quadrant.heading.bottom), 'The plus is vertically centered in its quadrant heading').toBeLessThanOrEqual(1);
-    expect(Math.abs(quadrant.add.right - quadrant.heading.right), 'The plus is at the right edge of its quadrant heading').toBeLessThanOrEqual(1);
-    for (const part of [quadrant.title, quadrant.caption, quadrant.add]) {
+    expect(quadrant.title.right, 'The heading stays within its quadrant').toBeLessThanOrEqual(quadrant.heading.right + 1);
+    expect(quadrant.caption.right).toBeLessThanOrEqual(quadrant.heading.right + 1);
+    for (const part of [quadrant.title, quadrant.caption]) {
       expect(part.top).toBeGreaterThanOrEqual(quadrant.heading.top - 1);
       expect(part.bottom, 'Every heading control is fully above the task list').toBeLessThanOrEqual(quadrant.heading.bottom + 1);
     }
     expect(quadrant.heading.bottom).toBeLessThanOrEqual(quadrant.scroll.top + 1);
     expect(quadrant.scroll.bottom, 'The task list remains contained in its quadrant').toBeLessThanOrEqual(quadrant.card.bottom + 1);
   }
-  for (const add of await quadrantAdds.all()) {
-    await expect(add, 'Every quadrant plus is completely visible before scrolling').toBeInViewport({ ratio: 1 });
-    await checkQuadrantCreateFeedback(page, add, expect);
-    // The live page hides the whole quadrant grid when its source is not
-    // writable. Exercise the shared disabled CSS on the real mounted control
-    // separately, without claiming that source loading renders this state.
-    await add.evaluate(node => { node.disabled = true; });
-    await expect(add).toHaveCSS('opacity', '0.45');
-    await checkQuadrantCreateFeedback(page, add, expect, true);
-    await add.evaluate(node => node.click());
-    await expect(page.locator('.entry-composer')).toHaveCount(0);
-    await add.evaluate(node => { node.disabled = false; });
-  }
+  await expect(createButtons, 'The floating plus stays completely visible above the platform tab bar').toBeInViewport({ ratio: 1 });
 
   const cn = high.locator('.todo-task').filter({ has: page.getByText(titles.chinese, { exact: true }) });
   const en = high.locator('.todo-task').filter({ has: page.getByText(titles.english, { exact: true }) });
@@ -266,6 +221,7 @@ module.exports = async function checkTodoDisplay({ page, origin, out, width, exp
   await page.evaluate(invalid => { window.__miniFixture.guestToolStates = { todos: invalid }; location.hash = '#/pages/todos/index'; }, invalid);
   await expect(page.locator('.todo-page .tool-empty')).toContainText('当前数据格式暂不兼容');
   await expect(page.locator('.todo-quadrant-add'), 'Invalid source data offers no quadrant creation entry').toHaveCount(0);
+  await expect(page.locator('.floating-create-button'), 'Invalid source data disables the floating creation entry').toBeDisabled();
   await expect(page.locator('.todo-toolbar .page-toolbar-create')).toHaveCount(0);
   await expect(page.locator('.entry-composer')).toHaveCount(0);
   expect(await page.evaluate(() => window.__miniPreviewControl.readStorage('ottlog-mini-tool-v1:guest:todos').data), 'Disabled quadrant creation preserves incompatible source records').toEqual(invalid);

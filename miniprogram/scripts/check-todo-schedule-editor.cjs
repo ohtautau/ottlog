@@ -12,7 +12,7 @@ module.exports = async function checkTodoScheduleEditor({ page, origin, out, wid
       await quickPage.clock.setFixedTime(new Date(`${today}T12:00:00`));
       await quickPage.goto(`${origin}/?todo-weekday#/pages/posts/index`);
       await quickPage.evaluate(() => { window.__miniFixture.guestToolStates = { todos: { version: 1, tasks: [], categories: [] } }; location.hash = '#/pages/todos/index'; });
-      await quickPage.locator('.todo-quadrant-later .todo-quadrant-add').click();
+      await quickPage.locator('.floating-create-button').click();
       await schedule.openSchedule(quickPage, expect);
       await schedule.button(quickPage, '选择下周').click();
       await expect(schedule.button(quickPage, `选择日期${nextWeek}`)).toHaveAttribute('aria-pressed', 'true');

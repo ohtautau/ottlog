@@ -18,6 +18,7 @@ import { cleanHabitOpenLog, emptyHabitOpenLog, habitOpenKey, recordHabitOpening,
 import HabitIcon from '../../components/habit-icon';
 import HabitEditor from '../../components/habit-editor';
 import CreateButton from '../../components/create-button';
+import FloatingCreateButton from '../../components/floating-create-button';
 import SheetActions from '../../components/sheet-actions';
 import EditorHeading from '../../components/editor-heading';
 import EditorFieldsLayout from '../../components/editor-fields-layout';
@@ -285,20 +286,20 @@ export default function Daily() {
       const free = items.filter(item => habitTimePeriod(item) === 'free');
       const timed = items.filter(item => habitTimePeriod(item) === activePeriod);
       return <View className='daily-time-period-layout'>
-        <HabitListSection className='daily-time-period-section' timePeriod={activePeriod} contentClassName='daily-habit-content' scrollKey={`${owner}:${status}:${activePeriod}`} edgeFade={timed.length > 0} heading={<CategoryRow size='compact' className='daily-time-period-categories' contentClassName='daily-time-period-category-row' ariaLabel='习惯时段分类'>
+        <HabitListSection className='daily-time-period-section' timePeriod={activePeriod} contentClassName='daily-habit-content floating-create-content' scrollKey={`${owner}:${status}:${activePeriod}`} edgeFade={timed.length > 0} heading={<CategoryRow size='compact' className='daily-time-period-categories' contentClassName='daily-time-period-category-row' ariaLabel='习惯时段分类'>
           {timedHabitPeriods.map(period => <CategoryButton key={period} size='compact' width='fill' selected={activePeriod === period} ariaLabel={`习惯时段分类：${period === 'night' ? '晚上' : habitTimePeriodLabels[period]}`} disabled={!sortable || checking || sortSaving || sorter.active} onTouchStart={event => event.stopPropagation()} onClick={() => { if (!sorter.suppressClick() && !sortSavingRef.current && !checkingRef.current) setActivePeriod(period); }}>{period === 'night' ? '晚上' : habitTimePeriodLabels[period]}</CategoryButton>)}
         </CategoryRow>}
           scrollProps={{ id: sortable ? 'daily-habit-period-scroll' : undefined, className: 'daily-time-period-scroll', scrollY: sortable, scrollTop: sortable ? sorter.scrollTopFor('daily-habit-period-scroll') : undefined, onScroll: sortable ? event => sorter.onScrollFor('daily-habit-period-scroll', event) : undefined }}>
           {timed.length ? suggestionCards(timed, sortable, !sortable) : !state.items.length && !search.trim() && !periodFilters.length && !priorityFilters.length && status === 'pending' ? <EmptyState kind='habits' compact /> : <View className='daily-time-period-empty'>暂无该时段习惯</View>}
         </HabitListSection>
-        <HabitListSection className='daily-time-period-section' timePeriod='free' contentClassName='daily-habit-content' scrollKey={`${owner}:${status}`} edgeFade={free.length > 0} heading={<SectionTitle size='compact' inRow>自由</SectionTitle>}
+        <HabitListSection className='daily-time-period-section' timePeriod='free' contentClassName='daily-habit-content floating-create-content' scrollKey={`${owner}:${status}`} edgeFade={free.length > 0} heading={<SectionTitle size='compact' inRow>自由</SectionTitle>}
           scrollProps={{ id: sortable ? 'daily-habit-free-scroll' : undefined, className: 'daily-time-period-scroll', scrollY: sortable, scrollTop: sortable ? sorter.scrollTopFor('daily-habit-free-scroll') : undefined, onScroll: sortable ? event => sorter.onScrollFor('daily-habit-free-scroll', event) : undefined }}>
           {free.length ? suggestionCards(free, sortable, !sortable) : <View className='daily-time-period-empty'>暂无自由习惯</View>}
         </HabitListSection>
       </View>;
     }
     if (!items.length) return <View className='daily-core-empty'><HabitIcon name='plant' /><View>{status === 'archived' ? '暂无已归档习惯' : status === 'completed' ? '今天还没有完成习惯' : status === 'pending' && enabled.length ? '暂无进行中的习惯' : '暂无习惯'}</View><CreateButton className='tool-secondary' label='创建习惯' disabled={!sortable} onClick={() => openEditor()} /></View>;
-    return <CardGroupContent className='daily-habit-content'>{suggestionCards(items, sortable, !sortable)}</CardGroupContent>;
+    return <CardGroupContent className='daily-habit-content floating-create-content'>{suggestionCards(items, sortable, !sortable)}</CardGroupContent>;
   }
   function statusViewport(status: HabitStatus, sortable = false) {
     if (grouped) return <View className='daily-habit-scroll'>{statusContent(status, sortable)}</View>;
@@ -324,19 +325,20 @@ export default function Daily() {
           <FilterField label='优先度'><FilterOptionGrid><ChoiceButton selected={!priorityFilters.length} ariaLabel='习惯优先度筛选：全部' onClick={() => setPriorityFilters([])}>全部</ChoiceButton>{habitPriorities.map(priority => <ChoiceButton key={priority} selected={priorityFilters.includes(priority)} ariaLabel={`习惯优先度筛选：${habitPriorityLabels[priority]}`} onClick={() => setPriorityFilters(previous => previous.includes(priority) ? previous.filter(value => value !== priority) : [...previous, priority])}>{habitPriorityLabels[priority]}优先度</ChoiceButton>)}</FilterOptionGrid></FilterField>
         </FilterFields>
       </FilterPopover>}
-      create={<CreateButton className='daily-create' label={owner === 'guest' ? '登录创建习惯' : '创建习惯'} disabled={!ready || !valid || sortSaving || sorter.active} onClick={() => openEditor()} />}
+
     />
     {!ready ? <View className='tool-empty'><Text>{status || '正在读取习惯…'}</Text><ActionButton className='button-label tool-secondary' onClick={retry}>重新读取</ActionButton></View> : !valid ? <View className='tool-empty'><Text>当前习惯数据格式暂不兼容，请到网页查看。原始数据已保留。</Text><ActionButton className='button-label tool-secondary' onClick={retry}>重新读取</ActionButton></View> : <View className='daily-habit-sections'>
       <CategoryRow className='daily-core-filter-scroll' contentClassName='daily-core-filters' ariaLabel='习惯领域分类' fixedLeading={<CategoryButton id='daily-category-0' className={`daily-core-filter${coreGroup === '全部' ? ' is-active' : ''}`} selected={coreGroup === '全部'} disabled={sortSaving || sorter.active} onClick={() => setCoreGroup('全部')}>全部</CategoryButton>} scrollIntoView={`daily-category-${categories.indexOf(coreGroup)}`} selectionOffset={1.5} contentKey={`${owner}:${categories.join('\n')}`} scrollWithAnimation>{categories.slice(1).map((name, index) => <CategoryButton id={`daily-category-${index + 1}`} className={`button-label daily-core-filter${coreGroup === name ? ' is-active' : ''}`} key={name} selected={coreGroup === name} aria-pressed={coreGroup === name} disabled={sortSaving || sorter.active} onClick={() => setCoreGroup(name)}>{name}</CategoryButton>)}</CategoryRow>
       {sortError && !showSort && <View className='daily-sort-retry'><Text className='daily-sort-error'>{sortError}</Text><ActionButton compact disabled={sortSaving} onClick={() => { if (sortPending.current) void persistSort(sortPending.current); }}>重试</ActionButton></View>}
       <View className='daily-habit-pages'>{statusViewport(habitStatus, true)}</View>
-      <HabitListSection className='daily-neglected' contentClassName='daily-habit-content' scrollKey={`${owner}:reminders`} edgeFade={neglected.length > 2} heading={<><View className='daily-reminder-title'><SectionTitle size='compact' inRow>提醒</SectionTitle></View><Text className='daily-reminder-count'>{neglected.length} 项</Text></>} scrollProps={{ id: 'daily-reminder-scroll', ariaLabel: '提醒习惯' }}>
+      <HabitListSection className='daily-neglected' contentClassName='daily-habit-content floating-create-content' scrollKey={`${owner}:reminders`} edgeFade={neglected.length > 2} heading={<><View className='daily-reminder-title'><SectionTitle size='compact' inRow>提醒</SectionTitle></View><Text className='daily-reminder-count'>{neglected.length} 项</Text></>} scrollProps={{ id: 'daily-reminder-scroll', ariaLabel: '提醒习惯' }}>
         {neglected.length ? suggestionCards(neglected) : <View className='daily-neglected-empty'>暂无提醒</View>}
       </HabitListSection>
     </View>}
   {message && /未|失败|不可|暂|无法|变化|请/.test(message) && <View className='daily-message'>{message}</View>}
     {ready && !!status && <View className='tool-status'><Text>{status}</Text><ActionButton className='button-label' onClick={owner === 'guest' ? () => { void openAccount(); } : retry}>{owner === 'guest' ? '登录账号' : '重新同步'}</ActionButton></View>}
   </CoreScreen></View></PageScroll>
+    <FloatingCreateButton className='daily-create' label={owner === 'guest' ? '登录创建习惯' : '创建习惯'} disabled={!ready || !valid || sortSaving || sorter.active} onClick={() => openEditor()} />
     {current && valid && !editor && <View className='daily-editor-overlay'><SheetBackdrop disabled={checking || saving || calendarEdit.busy || detailEdit.locked} onClose={closeHabitDetail} /><View className={`daily-detail-sheet ${habitDetailSheetClass(current)} ${habitTone(current)}`}>
       <EditorHeading title='习惯详情' className='daily-detail-heading' actions={<ActionButton appearance='icon' size='compact' className='habit-detail-close' ariaLabel='关闭习惯详情' disabled={checking || saving || calendarEdit.busy || detailEdit.locked} onClick={closeHabitDetail}>×</ActionButton>} />
       <ScrollView scrollY className='daily-detail-scroll' enhanced bounces={false} showScrollbar={false}><View className='daily-detail-body habit-detail-body'><HabitDetailHeader key={`${owner}:${current.id}`} item={current} domains={domains} onChange={detailEdit.change} disabled={checking || saving || calendarEdit.busy || detailEdit.locked} /><HabitDetailNote key={`note:${current.id}`} note={current.note} /><HabitCalendar key={`${owner}:${current.id}`} state={state} habitId={current.id} now={now} layout='detail' onDayToggle={day => { if (!detailEdit.isLocked()) void calendarEdit.toggleDay(day); }} disabled={calendarEdit.busy || checking || saving || detailEdit.locked} error={calendarEdit.error} />{message && <View className='daily-message'>{message}</View>}</View></ScrollView>

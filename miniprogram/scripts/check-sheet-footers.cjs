@@ -87,7 +87,7 @@ module.exports = async function checkSheetFooters({ page, origin, out, width, ex
     await checkHabitCore(sheetSelector, footerSelector, 'with default recent history');
   }
 
-  await page.locator('.todo-quadrant-later .todo-quadrant-add').click();
+  await page.locator('.floating-create-button').click();
   await expect(page.locator('.entry-composer .entry-load')).toHaveCount(0);
   await expect(page.locator('.entry-composer .todo-editor-meta')).toBeVisible();
   const taskSpacing = await page.locator('.entry-composer').evaluate(node => {

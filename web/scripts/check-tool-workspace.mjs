@@ -77,7 +77,7 @@ try {
       await page.goBack(); await expect(page.locator('.memo-note').first()).toBeVisible();
       await page.goForward(); await expect(page.locator('.domain-first-grid')).toBeVisible();
       await nav.getByRole('link', { name: '任务', exact: true }).click();
-      await page.getByRole('button', { name: '创建高优先级任务', exact: true }).click();
+      await page.locator('.floating-create-button').click();
       await expect(page.locator('body > header')).toHaveAttribute('inert', '');
       await page.keyboard.press('Escape');
       await expect(page.locator('.entry-composer')).toHaveCount(0);

@@ -19,14 +19,13 @@ import TodoScheduleSheet from '../../components/todo-schedule-sheet';
 import type { TodoSchedule } from '../../lib/todo-schedule';
 import TodoEditorFields from '../../components/todo-editor-fields';
 import EntryComposer from '../../components/entry-composer';
-import { AddSymbol } from '../../components/create-button';
+import FloatingCreateButton from '../../components/floating-create-button';
 import PageToolbar, { PageToolbarSummary, ToolbarResetButton } from '../../components/page-toolbar';
 import { SortOptions, SortPopover } from '../../components/sort-options';
 import { useEntryTags } from '../../lib/use-entry-tags';
 import { tagLabel } from '../../lib/tag-label';
 import { openPomodoro } from '../../lib/pomodoro-navigation';
 import { resumeEditorInput } from '../../lib/resume-editor-input';
-import type { EntryQuadrantId } from '../../lib/entry-draft';
 import usePageNow from '../../lib/use-page-now';
 import TodoTaskCard from '../../components/todo-task-card';
 import AppDialog from '../../components/app-dialog';
@@ -65,7 +64,7 @@ export default function Todos() {
   const toolbarSummary = useMemo(() => todoToolbarSummary(state, new Date(now)), [state, now]);
   const [draft, setDraft] = useState<Todo | null>(null);
   const [editing, setEditing] = useState(false);
-  const [creation, setCreation] = useState<{ task: Todo; quadrantId?: EntryQuadrantId } | null>(null);
+  const [creation, setCreation] = useState<{ task: Todo } | null>(null);
   const [tagsText, setTagsText] = useState('');
   const [scheduleOpen, setScheduleOpen] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -367,8 +366,8 @@ export default function Todos() {
         const completed = tasks.filter(task => !!task.completedAt);
         const showCompleted = expanded[q.id] ?? !isWebTool;
         return <View id={`todo-zone-${q.id}`} key={q.id} className={`todo-quadrant todo-quadrant-${q.id}${sorter.drag?.target === q.id ? ' is-drop-zone' : ''}`}>
-          <View className='todo-quadrant-heading'><View className='todo-quadrant-label'><View className='todo-quadrant-title-row'><Text className='todo-quadrant-icon' aria-hidden style={{ color: q.color }}>{q.id === 'later' ? '⚐' : '⚑'}</Text><View className='todo-quadrant-title' style={{ color: q.color }}>{trimTextEnd(q.title)}</View></View><Text className='todo-quadrant-caption'>{q.caption}</Text></View><ActionButton appearance='icon' className='todo-quadrant-add' ariaLabel={`创建${q.title}任务`} disabled={!writable || busy || moveBlocked} onClick={() => setCreation({ task: createTodo(q.id), quadrantId: q.id })}><AddSymbol /></ActionButton></View>
-          <ScrollView id={`todo-scroll-${q.id}`} scrollY scrollTop={sorter.scrollTop[q.id]} onScroll={event => sorter.onScroll(q.id, event.detail.scrollTop)} enhanced bounces={false} className='todo-quadrant-scroll'><CardGroupContent className='todo-quadrant-items'>
+          <View className='todo-quadrant-heading'><View className='todo-quadrant-label'><View className='todo-quadrant-title-row'><Text className='todo-quadrant-icon' aria-hidden style={{ color: q.color }}>{q.id === 'later' ? '⚐' : '⚑'}</Text><View className='todo-quadrant-title' style={{ color: q.color }}>{trimTextEnd(q.title)}</View></View><Text className='todo-quadrant-caption'>{q.caption}</Text></View></View>
+          <ScrollView id={`todo-scroll-${q.id}`} scrollY scrollTop={sorter.scrollTop[q.id]} onScroll={event => sorter.onScroll(q.id, event.detail.scrollTop)} enhanced bounces={false} className='todo-quadrant-scroll'><CardGroupContent className='todo-quadrant-items floating-create-content'>
             {completion !== 'done' && pending.map(renderTask)}
             {completion !== 'done' && !pending.length && (completion === 'open' || !completed.length) && <View className={`todo-quadrant-empty ${completed.length ? 'is-clear' : ''}`}>{search || tagFilter !== null ? '没有匹配的待办' : completed.length ? '待办已清空' : '暂时没有任务'}</View>}
             {completion !== 'open' && !!completed.length && <><ActionButton className='button-label todo-completed-toggle' aria-expanded={showCompleted} onClick={() => setExpanded(previous => ({ ...previous, [q.id]: !(previous[q.id] ?? !isWebTool) }))}><SelectChevron expanded={showCompleted} /><Text>已完成 · {completed.length}</Text></ActionButton>{showCompleted && completed.map(renderTask)}</>}
@@ -378,10 +377,11 @@ export default function Todos() {
       })}</View>}
       {ready && /不可用|失败|暂存|离线|无法|等待/.test(status) && <View className='tool-status todo-sync-error'><Text>{status}</Text><ActionButton className='button-label' onClick={retry}>重试同步</ActionButton></View>}
     </View></CoreScreen></View></PageScroll>
+    <FloatingCreateButton label='创建任务' disabled={!writable || busy || moveBlocked || !!sorter.drag} onClick={() => setCreation({ task: createTodo() })} />
     {sorter.ghost}
     {sorter.deleteZone}
     {taskUndo.notice && <OperationToast message={taskUndo.notice.message} busy={taskUndo.busy} onUndo={taskUndo.notice.undo ? () => { void taskUndo.undo(); } : undefined} />}
-    {creation && <EntryComposer initialMode='task' initialTask={creation.task} initialQuadrantId={creation.quadrantId} onClose={() => setCreation(null)} onCreated={kind => { if (kind === 'task') { setCompletion('all'); setSearch(''); setTagFilter(null); } }} />}
+    {creation && <EntryComposer initialMode='task' initialTask={creation.task} onClose={() => setCreation(null)} onCreated={kind => { if (kind === 'task') { setCompletion('all'); setSearch(''); setTagFilter(null); } }} />}
     {draft && <View className='todo-overlay'><View className='todo-backdrop' onClick={closeGuard.requestClose} /><View className='todo-sheet'>
       <EditorHeading className='todo-sheet-heading' titleClassName='todo-sheet-title' title={editing ? '编辑任务' : '创建任务'} actions={<ActionButton appearance='icon' size='compact' className='button-label' aria-label='关闭编辑' disabled={busy || imageBusy} onClick={closeGuard.requestClose}>×</ActionButton>} />
       <ScrollView scrollY className='todo-sheet-scroll' enhanced bounces={false} showScrollbar={false}><View className='todo-sheet-fields'>

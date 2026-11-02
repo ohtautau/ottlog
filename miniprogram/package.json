@@ -25,6 +25,7 @@
     "test:sheet-footers": "node scripts/check-ui-preview.cjs --sheet-footers",
     "test:tag-row-spacing": "node scripts/check-ui-preview.cjs --tag-row-spacing",
     "test:toolbars": "node scripts/check-ui-preview.cjs --toolbars",
+    "test:floating-create": "node scripts/check-ui-preview.cjs --floating-create",
     "test:page-snap": "node scripts/check-ui-preview.cjs --snap",
     "test:home-shortcuts": "node scripts/check-home-shortcuts.cjs && node scripts/check-shortcut-icons.cjs && node scripts/check-ui-preview.cjs --home-shortcuts",
     "verify": "npm run typecheck && npm run test:logic && npm run test:ui && npm run test:screens && npm run test:sheet-footers && npm run test:tag-row-spacing && npm run test:entry-creation && npm run test:page-snap && npm run build:weapp",

@@ -25,7 +25,7 @@ module.exports = async function checkCalendarLabels({ page, origin, out, width, 
     window.__miniFixture.guestToolStates = { todos: { version: 1, tasks: [], categories: [] } };
     localStorage.removeItem('ottlog-mini-tool-v1:guest:todos'); location.hash = '#/pages/todos/index';
   });
-  await page.locator('.todo-quadrant-later .todo-quadrant-add').click();
+  await page.locator('.floating-create-button').click();
   await schedule.openSchedule(page, expect);
   const calendar = schedule.sheet(page).locator('.todo-schedule-calendar').first();
   await geometry(calendar, `${width} task default`);

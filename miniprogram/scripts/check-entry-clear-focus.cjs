@@ -90,9 +90,11 @@ module.exports = async function checkEntryClearFocus({ page, origin, out, width,
   await page.reload(); await page.getByRole('button', { name: '创建', exact: true }).click(); await expect(title()).toHaveValue(''); await expect(title()).toBeFocused();
   await close();
   await page.getByRole('button', { name: '创建任务', exact: true }).click(); await expect(title()).toBeFocused(); await close();
-  await go('todos'); await page.getByRole('button', { name: '创建高优先级任务', exact: true }).click(); await expect(title()).toBeFocused();
+  await go('todos'); await page.locator('.floating-create-button').click(); await expect(title()).toBeFocused();
+  await composer().locator('.todo-priority-toggle').click();
+  await composer().locator('.todo-priority-options').getByRole('button', { name: '高优先级', exact: true }).click();
   await title().fill('高优先度草稿'); await clear().click();
-  expect((await draft()).task).toMatchObject({ title: '', important: true, urgent: true });
+  expect((await draft()).task, 'Clearing the page-level creation draft returns to the normal unprioritized default').toMatchObject({ title: '', important: false, urgent: false });
   await composer().getByRole('button', { name: '设置日期、提醒和重复', exact: true }).click();
   await expect(clear()).toBeDisabled();
   await page.getByRole('button', { name: '关闭日期设置', exact: true }).click(); await expect(clear()).toBeEnabled(); await close();

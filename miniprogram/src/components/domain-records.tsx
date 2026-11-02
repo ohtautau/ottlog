@@ -5,7 +5,7 @@ import DomainRecordContent from './domain-record-content';
 import './domain-records.css';
 
 type ColumnProps = {
-  kind: RecordKind; children: ReactNode; className?: string; style?: ComponentProps<typeof View>['style']; showHeading?: boolean; scrollable?: boolean;
+  kind: RecordKind; children: ReactNode; className?: string; contentClassName?: string; style?: ComponentProps<typeof View>['style']; showHeading?: boolean; scrollable?: boolean;
 } & ({ variant?: 'static' } | { variant: 'create'; disabled?: boolean; createLabel: string; onCreate: () => void });
 type CardProps = Omit<ComponentProps<typeof Button>, 'children'> & {
   kind: RecordKind; record: Pick<RecordItem, 'content' | 'images'>; metadata?: ReactNode; readOnly?: boolean;
@@ -24,7 +24,7 @@ export function DomainRecordColumn(props: ColumnProps) {
   const heading = <Text>{kind === 'positive' ? '+' : '−'} {label(kind)}</Text>;
   return <View className={`domain-record-column is-${kind}${action ? '' : ' is-static'}${scrollable ? ' has-scroll' : ''} ${className}`} style={style} onClick={create}>
     {showHeading && (action ? <Button className='domain-record-add' disabled={action.disabled} ariaLabel={action.createLabel} onClick={event => { event.stopPropagation(); create?.(); }}>{heading}</Button> : <View className='domain-record-add'>{heading}</View>)}
-    {scrollable ? <ScrollView scrollY enhanced bounces={false} showScrollbar={false} className='domain-record-scroll' ariaLabel={label(kind)}><View className='domain-record-scroll-content'>{children}</View></ScrollView> : children}
+    {scrollable ? <ScrollView scrollY enhanced bounces={false} showScrollbar={false} className='domain-record-scroll' ariaLabel={label(kind)}><View className={`domain-record-scroll-content ${props.contentClassName || ''}`}>{children}</View></ScrollView> : children}
   </View>;
 }
 

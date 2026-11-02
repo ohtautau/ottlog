@@ -28,6 +28,7 @@ const homeEntryModePreview = onlyHomeEntryMode && process.argv.includes('--previ
 const onlyProgressCreation = process.argv.includes('--progress-creation');
 const onlyScreens = process.argv.includes('--screens');
 const onlyToolbars = process.argv.includes('--toolbars');
+const onlyFloatingCreate = process.argv.includes('--floating-create');
 const onlyEntertainmentPreview = process.argv.includes('--domain-entertainment-preview');
 const onlyDomainPreview = process.argv.includes('--domain-preview') || onlyEntertainmentPreview;
 const onlyCalendarLabels = process.argv.includes('--calendar-labels');
@@ -56,7 +57,8 @@ const fixture = {
     coverUrl: '/__preview-cover.svg', content: '# 让记录有一个自己的地方\n\n这里是用于界面验证的文章，不会写入真实博客。\n\n## 一点观察\n\n- 记录生活\n- 保持好奇\n\n**这是重点**，也可以保留 `一段代码`。\n\n```ts\nconst message = "hello, Ottlog";\n```\n\n| 主题 | 内容 |\n| --- | --- |\n| 日常 | 散步 |\n\n![示例图片](/__preview-cover.svg)\n\n[网页链接](https://ohtautau.com)',
   })),
 };
-const routes = ['index', 'todos', 'posts', 'categories', 'detail', 'favorites', 'journal', 'daily', 'pomodoro', 'memos', 'mottos', 'domains', 'domain-detail', 'statistics', ...(onlyDomainPreview ? ['preview-data'] : [])].filter(page => fs.existsSync(path.join(root, 'src', 'pages', page, 'index.tsx')));
+const routes = ['index', 'todos', 'posts', 'categories', 'detail', 'favorites', 'journal', 'articles', 'daily', 'pomodoro', 'memos', 'mottos', 'domains', 'domain-detail', 'statistics', ...(onlyDomainPreview ? ['preview-data'] : [])].filter(page => fs.existsSync(path.join(root, 'src', 'pages', page, 'index.tsx')));
+if (onlyFloatingCreate) fixture.persistEntryTools = true;
 if (process.argv.includes('--todo-undo') || process.argv.includes('--toolbar-defaults') || process.argv.includes('--empty-state') || process.argv.includes('--habit-spacing') || process.argv.includes('--account-habits')) fixture.persistEntryTools = true;
 const imports = routes.map((p, i) => `import Page${i} from ${JSON.stringify(path.join(root, 'src', 'pages', p, 'index.tsx'))};`).join('\n');
 const source = `import React, {useState,useEffect} from 'react'; import {createRoot} from 'react-dom/client'; import ${JSON.stringify(path.join(root, 'src/app.css'))};
@@ -114,7 +116,7 @@ async function checkButtonAppearance(button, { kind = 'secondary', compact = fal
   const appearance = await button.evaluate(node => {
     const style = getComputedStyle(node), rect = node.getBoundingClientRect();
     return { fontSize: parseFloat(style.fontSize), fontWeight: Number(style.fontWeight), lineHeight: parseFloat(style.lineHeight), fontFamily: style.fontFamily,
-      foreground: style.color, background: style.backgroundColor, border: style.borderTopColor, radius: parseFloat(style.borderTopLeftRadius), letterSpacing: style.letterSpacing, height: rect.height, width: rect.width };
+      foreground: style.color, background: style.backgroundColor, border: style.borderTopColor, radius: parseFloat(style.borderTopLeftRadius), floating: node.classList.contains('floating-create-button'), letterSpacing: style.letterSpacing, height: rect.height, width: rect.width };
   });
   const primary = kind === 'primary';
   const large = size ? size === 'large' : primary && !compact;
@@ -134,11 +136,13 @@ async function checkButtonAppearance(button, { kind = 'secondary', compact = fal
     : kind === 'quiet' || kind === 'icon' ? ['rgb(199, 215, 223)', 'rgba(0, 0, 0, 0)', 'rgba(0, 0, 0, 0)']
     : ['rgb(199, 215, 223)', 'rgb(32, 51, 62)', 'rgb(59, 80, 90)']);
   expect([appearance.foreground, appearance.background, appearance.border], `${kind}: shared foreground, background and border for this state`).toEqual(colors);
-  expect(appearance.radius, `${kind}: shared corner format`).toBe(10);
+  expect(appearance.radius, `${kind}: shared corner format`).toBe(appearance.floating ? 50 : 10);
+  if (appearance.floating) { expect(appearance.width).toBe(56); expect(appearance.height).toBe(56); }
   return appearance;
 }
 async function checkCreateButton(button, label, expect, { iconOnly = false } = {}) {
   await expect(button).toHaveClass(/create-button/);
+  iconOnly = iconOnly || await button.evaluate(node => node.classList.contains('floating-create-button'));
   if (iconOnly) {
     await expect(button.locator('.create-button-label')).toHaveCount(0);
     await expect(button).toHaveText('');
@@ -196,6 +200,11 @@ async function main() {
       page.setDefaultTimeout(10000);
       page.on('pageerror', error => failures.push(`${width}: ${error.message}`));
       await page.route('https://preview.invalid/**', route => route.fulfill({ status: 200, contentType: 'image/svg+xml', body: cover }));
+      if (onlyFloatingCreate) {
+        try { await require('./check-floating-create-ui.cjs')({ page, origin, out, width, expect }); }
+        catch (error) { await page.screenshot({ path: path.join(out, `floating-create-failed-${width}.png`) }); fs.writeFileSync(path.join(out, `floating-create-failed-${width}.html`), await page.content()); throw error; }
+        await page.close(); continue;
+      }
       if (process.argv.includes('--empty-state')) {
         await require('./check-empty-state-ui.cjs')({ page, origin, out, width, expect });
         await page.close(); continue;
@@ -667,7 +676,9 @@ async function main() {
       await expect(page.locator('.account-window-name')).toHaveText('preview-reader');
       await page.evaluate(() => { location.hash = '#/pages/todos/index'; });
       await expect(page.locator('.todo-task')).toHaveCount(0);
-      await page.locator('.todo-quadrant-later .todo-quadrant-add').click();
+      await page.locator('.floating-create-button').click();
+      await page.locator('.entry-composer .todo-priority-toggle').click();
+      await page.getByRole('button', { name: '无优先级', exact: true }).click();
       await page.getByPlaceholder('准备做什么？').fill('同步到账号的待办');
       await page.locator('.entry-composer').getByRole('button', { name: '创建任务', exact: true }).click();
       await expect(page.locator('.tool-status')).toContainText('已保存到账号');
@@ -728,6 +739,7 @@ async function main() {
       console.log(`PASS domain recent records at 360/375/430/768px (includes 375x667 and 34px safe area): independently scrolling signed recent columns and domain cards, fixed page/toolbar/recent window, fixed detail card with independent full histories, wheel boundaries, stable goals and independently scrolling vertical habits, round-trip navigation, enlarged content-only recent panel, exactly eight full real cards filling the first screen, additional-domain/creation access inside the card window, cross-boundary sorting, stable mode geometry, short-goal spacing, combined latest ten, stable ties, original arrays, literal plain text/line breaks/image preview, same-ID editing/deletion/refill/reload, 40px controls, empty/loading/invalid states and account isolation. Browser adapter only. Screenshots: ${out}`);
       return;
     }
+    if (onlyFloatingCreate) { if (failures.length) throw new Error(failures.join('\n')); console.log(`PASS floating creation at four sizes: shared 56px plus, page actions, scroll stability, safe areas, last-item clearance, modal layering and account guards. Browser adapter only. ${out}`); return; }
     if (process.argv.includes('--toolbar-defaults')) { console.log(`PASS seven toolbar default actions at four sizes: shared reset geometry, filters/sort restoration, durable retries and preserved manual card preferences. Browser adapter only. ${out}`); return; }
     if (onlyHomeShortcutLibrary) {
       console.log(`PASS browser-adapted React preview: shared 64 colored choices, search/category selection, outline atlas identity, name/color/icon drafts, fixed 48px full-width save footer with one 8px bottom gap, 34px safe-area ownership, X/backdrop/Escape save/discard/continue prompts, layered icon dismissal, same-target explicit-save retry, unchanged replacement confirmation and movement preserving namespaced icons; centered add card, fixed capture during shortcut scrolling, six-slot boundary, empty-layout add/discard/save, selector save retry and mode guards at 360/375/430/768px (includes 375x667), no render errors or horizontal overflow. Not a native WeChat runtime test. Screenshots: ${out}`);

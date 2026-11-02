@@ -11,7 +11,7 @@ module.exports = async function checkScheduleTime({ page, origin, out, width, ex
     location.hash = '#/pages/todos/index';
   });
   const stored = () => page.evaluate(() => JSON.parse(localStorage.getItem('ottlog-mini-tool-v1:guest:todos') || '{"data":{"tasks":[]}}').data);
-  await page.locator('.todo-quadrant-later .todo-quadrant-add').click();
+  await page.locator('.floating-create-button').click();
   await page.getByPlaceholder('准备做什么？').fill('时间小窗验证');
   await schedule.openSchedule(page, expect);
   await schedule.button(page, '选择年月').click();

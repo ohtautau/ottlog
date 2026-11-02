@@ -42,7 +42,7 @@ module.exports = async function checkHomeEntryMode({ page, origin, out, width, e
     } else if (!(await composer().getByRole('button', { name: '清空所有输入', exact: true }).isDisabled())) await expect(firstField, 'Empty creation retains its initial first-field focus').toBeFocused();
   }
   async function explicitTask() {
-    await go('todos'); await page.getByRole('button', { name: '创建高优先级任务', exact: true }).click(); await selected('任务'); await expect(taskTitle()).toBeFocused();
+    await go('todos'); await page.locator('.floating-create-button').click(); await selected('任务'); await expect(taskTitle()).toBeFocused();
   }
   async function explicitMemo() {
     await go('memos'); await page.getByRole('button', { name: '创建便签', exact: true }).click(); await selected('备忘'); await expect(memoTitle()).toBeFocused();

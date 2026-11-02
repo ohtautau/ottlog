@@ -11,7 +11,7 @@ import { openAccount } from '../../lib/account-navigation';
 import { displayedMottos, initialPersonalMottos, isPersonalMottos, MAX_MOTTO_LENGTH, mottoRotationMs, removeMotto, writeMotto } from '../../lib/motto-data';
 import { writeMottoRotation } from '../../lib/motto-settings';
 import { hasVolatilePersonalTool, usePersonalToolState } from '../../lib/use-personal-tool-state';
-import CreateButton from '../../components/create-button';
+import FloatingCreateButton from '../../components/floating-create-button';
 import PageToolbar from '../../components/page-toolbar';
 import { ChoicePopover, PopoverHeading, PopoverActions } from '../../components/form-options';
 import DurationWheelPicker from '../../components/duration-wheel-picker';
@@ -134,6 +134,7 @@ export default function MottosPage() {
 
   return <View className='mottos-page'>
     <AppDialogHost />
+    <FloatingCreateButton className='mottos-add' label='创建格言' disabled={!writable || rotationBusy} onClick={() => open(null)} />
     <PageToolbar className='mottos-heading card-group-heading' leading={<Text className='mottos-count'>{mottos.length} 句</Text>}
       manage={<ChoicePopover ariaLabel='格言轮播设置' open={!!currentRotation} onOpenChange={changeRotationOpen} disabled={!rotationWritable || busy || !!editor}
         trigger={<ManageSymbol />} triggerIconOnly triggerSize='compact' showIndicator={false} panelWidth={240} heightMode='content' panelClassName='mottos-rotation-popover' contentKey={rotationError}
@@ -143,9 +144,9 @@ export default function MottosPage() {
           onChange={text => { if (currentRotation && !rotationSaving.current) { setRotationDraft({ ...currentRotation, text }); setRotationError(''); } }} />
         <Text className='wheel-duration-total'>共 {currentRotation?.text || '15'} 秒</Text>
       </ChoicePopover>}
-      create={<CreateButton className='mottos-add' label='创建格言' disabled={!writable || rotationBusy} onClick={() => open(null)} />} />
+       />
     {!ready || !valid ? <View className='mottos-empty'><Text>{!ready ? status : '数据格式暂不兼容，请重新读取'}</Text><ActionButton className='button-label' onClick={retry}>重新读取</ActionButton></View> : !signedIn ? <View className='mottos-empty'><Text>登录后查看自己的格言</Text><ActionButton appearance='primary' onClick={() => { void openAccount(); }}>登录账号</ActionButton></View> : <ScrollView className='mottos-list-scroll' scrollY enhanced bounces={false} showScrollbar={false}>
-      <CardGroupContent className='mottos-list'>{mottos.map((motto, index) => <MottoRow key={`${index}:${motto}`} text={trimTextEnd(motto)} index={index} disabled={!writable} onEdit={() => open(motto)} />)}
+      <CardGroupContent className='mottos-list floating-create-content'>{mottos.map((motto, index) => <MottoRow key={`${index}:${motto}`} text={trimTextEnd(motto)} index={index} disabled={!writable} onEdit={() => open(motto)} />)}
         {!mottos.length && <EmptyState kind='mottos' />}
         </CardGroupContent>
     </ScrollView>}

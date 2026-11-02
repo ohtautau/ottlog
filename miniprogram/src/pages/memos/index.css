@@ -1,7 +1,6 @@
 .memo-page.core-page { padding-bottom: 0; }
 .memo-page input, .memo-sheet input, .memo-sheet textarea { margin: 0; padding: 0; border: 0; border-radius: 0; background: transparent; }
 .memo-toolbar { flex-shrink: 0; display: flex; align-items: center; justify-content: space-between; gap: 20rpx; padding: 4rpx 0 20rpx; }
-.memo-create { background: #b9dbca; color: #203b30; border: 1rpx solid #b9dbca; }
 .memo-list-heading { display: flex; flex-shrink: 0; align-items: center; justify-content: space-between; gap: 12rpx; padding-top: 4rpx; padding-bottom: 18rpx; color: #829ba7; font-size: 20rpx; line-height: 1.5; }
 .memo-list-heading > view { display: flex; align-items: center; gap: 10rpx; }
 .memo-list-count { padding: 0 10rpx; border: 1rpx solid #344650; border-radius: 8rpx; color: #acc3cb; font-variant-numeric: tabular-nums; }

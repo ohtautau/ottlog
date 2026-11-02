@@ -1,7 +1,6 @@
 .mottos-page { display: flex; flex-direction: column; height: 100vh; min-height: 0; padding: 34rpx 32rpx 0; box-sizing: border-box; color: #e9eee7; background: #101923; }
 .mottos-heading { display: flex; align-items: center; justify-content: space-between; gap: 20rpx; flex-shrink: 0; }
 .mottos-count { color: #8ba4b0; font-size: min(22rpx,14PX); white-space: nowrap; font-variant-numeric: tabular-nums; }
-.mottos-add { flex: none; width: auto; margin: 0; border: 1rpx solid #a5c8b5; border-radius: 16rpx; color: #203b30; background: #b9dbca; }
 .mottos-list-scroll { flex: 1; height: 0; min-height: 0; }
 .mottos-list { display: flex; flex-direction: column; gap: 14rpx; padding-bottom: 24rpx; }
 

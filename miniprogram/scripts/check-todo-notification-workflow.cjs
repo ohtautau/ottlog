@@ -21,7 +21,7 @@ module.exports = async function checkTodoNotificationWorkflow({ page, origin, ou
   const authorize = () => schedule.sheet(page).getByRole('button', { name: /^(开启微信提醒|微信提醒已开启)$/, exact: true });
   const title = `明天的微信提醒 ${width}`;
   await expect(page.locator('.todo-task')).toHaveCount(6);
-  await page.locator('.todo-quadrant-later .todo-quadrant-add').click();
+  await page.locator('.floating-create-button').click();
   await page.getByPlaceholder('准备做什么？').fill(title);
   await schedule.openSchedule(page, expect);
   await schedule.selectDate(page, tomorrow);
@@ -101,7 +101,7 @@ module.exports = async function checkTodoNotificationWorkflow({ page, origin, ou
 
   // Refusing a second reminder must preserve the task without calling bind or POST.
   await page.evaluate(() => { window.__miniFixture.subscriptionResult = 'reject'; });
-  await page.locator('.todo-quadrant-later .todo-quadrant-add').click();
+  await page.locator('.floating-create-button').click();
   await page.getByPlaceholder('准备做什么？').fill('拒绝订阅也能保留任务');
   await schedule.openSchedule(page, expect);
   await schedule.selectDate(page, tomorrow);

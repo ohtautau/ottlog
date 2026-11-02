@@ -64,6 +64,8 @@ module.exports = async function checkEntryCreation({ page, origin, out, width, e
   }
   const openTags = async () => {
     const trigger = composer().getByRole('button', { name: '选择现有标签', exact: true });
+    await expect(trigger).toBeVisible();
+    await expect(trigger).toBeEnabled();
     await checkButtonAppearance(trigger, { kind: 'secondary' }, expect);
     await trigger.click();
     await expect(tagsPanel()).toBeVisible();
@@ -273,33 +275,34 @@ module.exports = async function checkEntryCreation({ page, origin, out, width, e
     todos: { version: 1, categories: [{ id: 'legacy-source', name: '旧分类标签', color: '#94b6e2' }], tasks: [{ id: 'existing-task', title: '原有任务', description: '原有备注', categoryId: 'legacy-source', important: true, urgent: false, dueDate: '', tags: ['任务来源'], completedAt: null, createdAt: stamp, updatedAt: stamp }] },
     memos: { version: 1, notes: [{ id: 'existing-memo', title: '原有备忘录', body: '原有正文', color: 'sage', tags: ['备忘录来源'], pinned: false, createdAt: stamp, updatedAt: stamp }] },
   };
-  // Explicit quadrant entry still supplies its priority to the shared composer.
+  // The page-level entrance preserves restored priority; the existing field chooses all four levels.
   for (const [label, important, urgent] of [['高', true, true], ['中', true, false], ['低', false, true], ['无', false, false]]) {
     await fresh(seed, `quadrant-${label}`);
     const otherLabel = label === '高' ? '低' : '高';
     await page.getByRole('button', { name: '创建任务', exact: true }).click();
     await choosePriority(otherLabel);
     await taskTitle().fill('其它入口保留的创建草稿');
-    await taskBody().fill('象限入口只调整优先度，保留正文');
+    await taskBody().fill('共用入口保留草稿，优先度由表单选择');
     await switchMode('备忘');
     await close();
     const retained = await page.evaluate(() => window.__miniPreviewControl.readStorage('ottlog-mini-entry-draft-v1:guest'));
     await go('todos');
-    const entry = page.getByRole('button', { name: `创建${label}优先级任务`, exact: true });
+    const entry = page.locator('.floating-create-button');
     await expect(entry.locator('.button-add-symbol')).toHaveAttribute('aria-hidden', 'true');
     await expect(entry.locator('.create-button-label')).toHaveCount(0);
     await page.mouse.move(0, 0);
-    await checkButtonAppearance(entry, { kind: 'icon' }, expect);
+    await checkButtonAppearance(entry, { kind: 'primary', compact: true }, expect);
     const before = await stored('todos');
     await entry.click();
-    expect(await priority(), 'An explicit quadrant overrides a different priority in a restored creation draft').toBe(label);
+    expect(await priority(), 'The page-level floating entrance preserves the retained draft priority').toBe(otherLabel);
+    await choosePriority(label);
     await switchMode('备忘');
     expect(await priority(), 'All four task levels retain their color and flag when switching to memo').toBe(label);
     await switchMode('任务');
     await expect(taskTitle()).toHaveValue('其它入口保留的创建草稿');
-    await expect(taskBody()).toHaveValue('象限入口只调整优先度，保留正文');
+    await expect(taskBody()).toHaveValue('共用入口保留草稿，优先度由表单选择');
     const resumed = await page.evaluate(() => window.__miniPreviewControl.readStorage('ottlog-mini-entry-draft-v1:guest'));
-    expect([resumed.task.id, resumed.memo.id], 'Quadrant defaults reuse the retained record IDs').toEqual([retained.task.id, retained.memo.id]);
+    expect([resumed.task.id, resumed.memo.id], 'The shared creation entrance reuses the retained record IDs').toEqual([retained.task.id, retained.memo.id]);
     await page.screenshot({ path: path.join(out, `entry-quadrant-${label}-${width}.png`) });
     await taskTitle().fill(`象限${label}优先级新任务`);
     await close();
@@ -492,8 +495,8 @@ module.exports = async function checkEntryCreation({ page, origin, out, width, e
 
   // The task entry shares the new memo label without copying its saved record.
   await go('todos');
-  await checkButtonAppearance(page.locator('.todo-quadrant-later .todo-quadrant-add'), { kind: 'icon' }, expect);
-  await page.locator('.todo-quadrant-later .todo-quadrant-add').click();
+  await checkButtonAppearance(page.locator('.floating-create-button'), { kind: 'primary', compact: true }, expect);
+  await page.locator('.floating-create-button').click();
   await expect(composer()).toBeVisible();
   await expect(taskTitle()).toHaveValue('');
   await openTags();
@@ -700,9 +703,9 @@ module.exports = async function checkEntryCreation({ page, origin, out, width, e
   expect((await stored('todos')).tasks).toHaveLength(0);
   await close();
   await go('todos');
-  await page.getByRole('button', { name: '创建高优先级任务', exact: true }).click();
+  await page.locator('.floating-create-button').click();
   await expect(taskTitle()).toHaveValue('失败后重试的任务');
-  expect(await priority(), 'A pending same-ID save keeps its original priority when reopened from another quadrant').toBe('无');
+  expect(await priority(), 'A pending same-ID save keeps its original priority when reopened from the floating entrance').toBe('无');
   await expect(composer().getByRole('button', { name: '清空所有输入', exact: true })).toBeDisabled();
   await expect(mode('备忘')).toBeDisabled();
   await swipe('任务', {}, undefined, 'Reopening a pending task keeps its type locked for touch gestures');

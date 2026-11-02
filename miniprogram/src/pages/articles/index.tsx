@@ -11,7 +11,7 @@ import useEditorCloseGuard from '../../lib/use-editor-close-guard';
 import PageScroll from '../../components/page-scroll';
 import { CoreScreen } from '../../components/page-sections';
 import PageToolbar, { CategoryRow, CategoryButton, ToolbarResetButton } from '../../components/page-toolbar';
-import CreateButton from '../../components/create-button';
+import FloatingCreateButton from '../../components/floating-create-button';
 import CardGroupContent from '../../components/card-group-content';
 import ArticleCard from '../../components/article-card';
 import EmptyState from '../../components/empty-state';
@@ -93,13 +93,14 @@ export default function Articles() {
     <PageToolbar leading={writable && <Text>{state.articles.length} 篇</Text>} reset={<ToolbarResetButton ariaLabel='恢复文章默认方式' disabled={!writable || busy} onReset={() => { setSearch(''); setTag(''); setSort('updated'); setFilters(false); setSortOpen(false); }} />}
       sort={<SortPopover ariaLabel='排序我的文章' open={sortOpen} onOpenChange={setSortOpen} disabled={!writable || busy} confirmLabel='完成' onConfirm={() => setSortOpen(false)}><SortOptions value={sort} options={[{ value: 'updated', label: '最近修改' }, { value: 'created', label: '最近创建' }, { value: 'title', label: '文章标题' }]} onChange={setSort} /></SortPopover>}
       filter={<FilterPopover ariaLabel='筛选我的文章' title='筛选文章' closeLabel='关闭文章筛选' resetLabel='重置文章筛选' open={filters} onOpenChange={setFilters} disabled={!writable || busy} onReset={() => { setSearch(''); setTag(''); }} onClose={() => setFilters(false)} applyLabel={`查看 ${rows.length} 篇文章`}><FilterField label='关键词'><FilterSearch ariaLabel='搜索我的文章' value={search} placeholder='搜索标题、内容、分类或标签' onInput={event => setSearch(event.detail.value)} clearLabel='清空文章搜索' onClear={() => setSearch('')} /></FilterField></FilterPopover>}
-      create={<CreateButton label={owner === 'guest' ? '登录创建文章' : '创建文章'} disabled={!ready || !valid || busy} onClick={() => open()} />} />
+       />
     <View className='personal-article-navigation'><CategoryRow className='personal-article-categories' ariaLabel='我的文章标签' fixedLeading={<CategoryButton selected={!tag} onClick={() => setTag('')}>全部</CategoryButton>}>{tags.map(item => <CategoryButton key={item} selected={tag === item} onClick={() => setTag(tag === item ? '' : item)}>#{item}</CategoryButton>)}</CategoryRow><ActionButton appearance='quiet' ariaLabel='阅读公开文章' onClick={() => { void Taro.navigateTo({ url: '/pages/posts/index' }); }}>公开文章</ActionButton></View>
-    <ScrollView scrollY className='personal-articles-scroll' enhanced bounces={false} showScrollbar={false}><CardGroupContent>
+    <ScrollView scrollY className='personal-articles-scroll' enhanced bounces={false} showScrollbar={false}><CardGroupContent className='floating-create-content'>
       {!ready ? <Text>{status || '正在读取文章…'}</Text> : !valid ? <View><Text>文章格式暂不兼容，原始数据已保留。</Text><ActionButton onClick={retry}>重新读取</ActionButton></View> : owner === 'guest' || !state.articles.length ? <EmptyState kind='articles' /> : !rows.length ? <Text>没有符合条件的文章</Text> : <View className='personal-article-grid'>{rows.map(article => <ArticleCard key={article.id} post={articleCardPost(article)} coverSource={article.images?.[0]?.dataUrl} onOpen={() => { if (!busy) setReader(article.id); }} onCategory={category => { setSearch(category); }} onTag={setTag} />)}</View>}
     </CardGroupContent></ScrollView>
     {!!status && <View className='tool-status'><Text>{status}</Text>{owner === 'guest' ? <ActionButton onClick={() => { void openAccount(); }}>登录账号</ActionButton> : /失败|暂存|离线|不可用|无法/.test(status) && <ActionButton onClick={retry}>重试同步</ActionButton>}</View>}
   </CoreScreen></View></PageScroll>
+    <FloatingCreateButton label={owner === 'guest' ? '登录创建文章' : '创建文章'} disabled={!ready || !valid || busy} onClick={() => open()} />
   {viewed && <ChoicePopover ariaLabel='文章内容' open onOpenChange={next => { if (!next && !busy) setReader(null); }} placement='center' panelWidth={680} maxHeightRatio={.9} bodySpacing='none' panelClassName='memo-reader memo-content-reader article-reader' heading={<PopoverHeading title='文章内容' actions={<ActionButton appearance='icon' ariaLabel='关闭文章内容' onClick={() => setReader(null)}>×</ActionButton>} />} footer={<SheetActions leading={<ActionButton appearance='icon' ariaLabel={`编辑文章：${viewed.title}`} onClick={() => open(viewed)}><EditSymbol /></ActionButton>}><ActionButton appearance='primary' size='large' width='fill' onClick={() => setReader(null)}>完成</ActionButton></SheetActions>}>
     <DocumentFieldsLayout readOnly title={<EntityTitleText>{viewed.title}</EntityTitleText>} body={<View className='memo-body-preview'><DomainRecordContent record={{ content: viewed.body, images: viewed.images }} inheritTypography={false} /></View>} tags={<Text>{[viewed.category, ...viewed.tags.map(item => `#${item}`)].filter(Boolean).join(' · ')}</Text>} />
   </ChoicePopover>}

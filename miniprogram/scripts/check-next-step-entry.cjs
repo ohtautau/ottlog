@@ -32,7 +32,7 @@ module.exports = async function checkNextStepEntry({ page, origin, out, width, e
       }
     }
   }
-  await page.getByRole('button', { name: '创建无优先级任务', exact: true }).click();
+  await page.locator('.floating-create-button').click();
   await expect(field(1)).toBeEnabled();
   await expect(rows()).toHaveCount(1); await expect(field(1)).toHaveAttribute('placeholder', '还要做什么？');
   await checkRowAlignment();
@@ -87,7 +87,7 @@ module.exports = async function checkNextStepEntry({ page, origin, out, width, e
   const filtered = (await read()).tasks.find(task => task.id === created.id);
   expect(filtered.nextTasks.map(step => step.title)).toEqual(['第一步', '新增第三步']); expect(filtered.nextTasks.map(step => step.id)).toEqual([edited.nextTasks[0].id, edited.nextTasks[2].id]);
   if (width !== 360) return;
-  await page.getByRole('button', { name: '创建无优先级任务', exact: true }).click(); await field(1).fill('图片处理前的步骤');
+  await page.locator('.floating-create-button').click(); await field(1).fill('图片处理前的步骤');
   await sheet().getByRole('button', { name: '插入图片', exact: true }).evaluate(node => { node.click(); node.closest('.todo-sheet').querySelector('.todo-add-next').click(); });
   await expect(sheet().locator('.memo-image')).toHaveCount(1); await expect(rows()).toHaveCount(2); await expect(field(1)).toHaveValue('图片处理前的步骤');
   await page.evaluate(() => { window.__miniFixture.deferChooseMedia = true; }); await sheet().getByRole('button', { name: '插入图片', exact: true }).click();

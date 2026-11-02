@@ -16,7 +16,7 @@ module.exports = async ({page,origin,out,width,expect}) => {
   await undo();await expect(toast).toHaveText('已撤销此操作');expect((await data()).tasks[0].completedAt).toBeNull();
   await row().locator('.todo-task-content').click();await page.getByLabel('任务名称',{exact:true}).fill('编辑后的任务');await page.locator('.todo-sheet-footer').getByRole('button',{name:'保存',exact:true}).click();
   await expect(toast).toContainText('已修改任务');await undo();await expect(row()).toHaveCount(1);expect((await data()).tasks[0].description).toBe('完整备注');
-  await page.locator('.todo-quadrant-later .todo-quadrant-add').click();await page.getByLabel('任务名称',{exact:true}).fill('新任务');await page.locator('.entry-submit').click();
+  await page.locator('.floating-create-button').click();await page.getByLabel('任务名称',{exact:true}).fill('新任务');await page.locator('.entry-submit').click();
   await expect(toast).toContainText('已创建任务');await undo();expect((await data()).tasks.map(item=>item.id)).toEqual(['undo-original']);
   await row().locator('.todo-task-content').click();await page.getByRole('button',{name:'删除任务',exact:true}).click();await page.getByRole('dialog',{name:'删除这件任务？',exact:true}).getByRole('button',{name:'删除',exact:true}).click();
   await expect(toast).toContainText('已删除任务');await expect(row()).toHaveCount(0);await undo();expect((await data()).tasks[0]).toEqual(task);

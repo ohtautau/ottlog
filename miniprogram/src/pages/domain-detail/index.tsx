@@ -18,6 +18,7 @@ import useEditorCloseGuard from '../../lib/use-editor-close-guard';
 import PageScroll from '../../components/page-scroll';
 import BackButton from '../../components/back-button';
 import CreateButton from '../../components/create-button';
+import FloatingCreateButton from '../../components/floating-create-button';
 import CardCreateButton from '../../components/card-create-button';
 import DomainQuickRecord from '../../components/domain-quick-record';
 import { DomainRecordCard, DomainRecordColumn, DomainRecordColumns } from '../../components/domain-records';
@@ -262,7 +263,7 @@ export default function Domains() {
       <PageToolbar className='domain-detail-toolbar' leading={<BackButton ariaLabel='返回领域列表' disabled={blocked || habitBusy || habitArchive.busy} onClick={() => void Taro.switchTab({ url: '/pages/domains/index' })} />} manage={writable && selectedDomain && <View className='domain-detail-actions'>
         <ActionButton appearance='icon' size='compact' width='content' ariaLabel={`编辑${selectedDomain.name}领域`} disabled={blocked || habitBusy || habitArchive.busy || selectedDomain.id === uncategorizedDomain(sourceState).id} onClick={() => definition.openEdit(selectedDomain.id)}><EditSymbol /></ActionButton>
         <ActionButton appearance='icon' size='compact' width='content' intent='danger' ariaLabel={`删除${selectedDomain.name}领域`} disabled={blocked || habitBusy || habitArchive.busy || selectedDomain.id === uncategorizedDomain(sourceState).id} onClick={() => definition.openDelete(selectedDomain.id)}><DeleteSymbol /></ActionButton>
-      </View>} create={writable && selectedDomain && <CreateButton size='compact' width='content' label='创建记录' disabled={blocked || habitBusy || habitArchive.busy} onClick={() => createRecord(selectedDomain)} />} />
+      </View>}  />
       {!ready && <View className='tool-status'>{status}<ActionButton className='tool-secondary button-label' onClick={retry}>重新读取</ActionButton></View>}
       {ready && !valid && <View className='notice'>暂时无法读取这份领域数据，已有内容已保留。<ActionButton className='tool-secondary button-label' onClick={retry}>重新读取</ActionButton></View>}
       {ready && valid && !selectedDomain && <View className='tool-empty'>领域不存在或已删除</View>}
@@ -281,7 +282,7 @@ export default function Domains() {
           </View>;
         })}</View>
         <View className='domain-habits-heading card-group-heading'><SectionTitle inRow className='domain-label'>每日习惯</SectionTitle></View>
-        {!habitTool.ready ? <View className='domain-habit-notice'>正在读取习惯…</View> : habitTool.owner === 'guest' ? <CardGroupContent><EmptyState kind='habits' compact /></CardGroupContent> : !habitsWritable ? <View className='domain-habit-notice'>习惯数据暂不可用<ActionButton appearance='quiet' className='domain-quiet button-label' onClick={habitTool.retry}>重新读取习惯</ActionButton></View> : <ScrollView key={`habits:${owner}:${domainId}`} className={`domain-habit-scroll${habitEntries.length <= 2 ? ' is-single-row' : ''}`} scrollY enhanced bounces={false} showScrollbar={false} ariaLabel='每日习惯'><HabitGrid inset className='domain-habit-grid'>
+        {!habitTool.ready ? <View className='domain-habit-notice'>正在读取习惯…</View> : habitTool.owner === 'guest' ? <CardGroupContent><EmptyState kind='habits' compact /></CardGroupContent> : !habitsWritable ? <View className='domain-habit-notice'>习惯数据暂不可用<ActionButton appearance='quiet' className='domain-quiet button-label' onClick={habitTool.retry}>重新读取习惯</ActionButton></View> : <ScrollView key={`habits:${owner}:${domainId}`} className={`domain-habit-scroll${habitEntries.length <= 2 ? ' is-single-row' : ''}`} scrollY enhanced bounces={false} showScrollbar={false} ariaLabel='每日习惯'><HabitGrid inset className='domain-habit-grid floating-create-content'>
           {habitEntries.map(item => {
             if (!item) return <View className='daily-suggestion domain-habit-create-card' key='habit-create-card'><CardCreateButton ariaLabel={`创建${domain.name}习惯`} disabled={!habitsWritable || habitBusy || habitArchive.busy} onClick={() => createHabit(domain)} /></View>;
             const done = !!habitState.done[today]?.includes(item.id);
@@ -292,7 +293,7 @@ export default function Domains() {
           const records = kind === 'positive' ? domain.positiveRecords : domain.negativeRecords;
           const recent = [...records].reverse().sort((a, b) => Date.parse(b.createdAt) - Date.parse(a.createdAt));
           const add = () => createRecord(domain);
-          return <DomainRecordColumn key={kind} kind={kind} showHeading={false} scrollable variant='create' disabled={busy} createLabel={`添加${domain.name}${recordLabel(kind)}`} onCreate={add}>
+          return <DomainRecordColumn key={kind} kind={kind} showHeading={false} scrollable contentClassName='floating-create-content' variant='create' disabled={busy} createLabel={`添加${domain.name}${recordLabel(kind)}`} onCreate={add}>
             {!records.length && <EmptyState kind={kind === 'positive' ? 'positive' : 'negative'} compact />}
             {recent.map(record => <DomainRecordCard key={record.id} kind={kind} record={record} disabled={busy} onClick={() => { if (writable && !saving.current) setRecordEditor({ owner, domainId: domain.id, kind, record, title: `${domain.name} · 编辑${recordLabel(kind)}` }); }} />)}
           </DomainRecordColumn>;
@@ -301,6 +302,7 @@ export default function Domains() {
       {ready && valid && !!status && <View className='tool-status domains-status'><Text>{status}</Text><ActionButton appearance='quiet' className='domain-quiet button-label' disabled={busy} onClick={retry}>重试同步</ActionButton></View>}
       {error && !currentEditor && <Text className='domain-error'>{error}</Text>}
     </View></PageScroll>
+    {writable && selectedDomain && <FloatingCreateButton label='创建记录' disabled={blocked || habitBusy || habitArchive.busy} onClick={() => createRecord(selectedDomain)} />}
     <DomainDefinitionEditor controller={definition} />
     {currentEditor && editingDomain && <View className='domains-editor'><Sheet type={currentEditor.type} title={`${editingDomain.name} · ${currentEditor.type === 'goal' ? goalLabel(currentEditor.kind) : '已完成目标'}`} onClose={close}>
       <ScrollView scrollY className='domain-sheet-scroll'><EditorFieldsLayout className='domain-sheet-body'>

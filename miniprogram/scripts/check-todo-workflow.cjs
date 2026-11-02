@@ -30,14 +30,18 @@ module.exports = async function checkTodoWorkflow({ page, origin, out, width, ex
   for (const height of await page.locator('.todo-toolbar button').evaluateAll(nodes => nodes.map(node => node.getBoundingClientRect().height))) expect(height).toBeGreaterThanOrEqual(40);
   expect(await page.locator('.todo-page').evaluate(node => node.scrollHeight - node.clientHeight)).toBeLessThan(2);
   for (const [key, priority] of [['plan', '中优先级'], ['delegate', '低优先级'], ['later', '无优先级']]) {
-    await page.getByRole('button', { name: `创建${priority}任务`, exact: true }).click();
+    await page.locator('.floating-create-button').click();
+    await page.locator('.todo-priority-toggle').click();
+    await page.locator('.todo-priority-options').getByRole('button', { name: priority, exact: true }).click();
     await expect(page.locator('.todo-priority-toggle')).toHaveAttribute('aria-label', priority);
     await expect(page.locator('.todo-priority-toggle')).toHaveText('');
     await page.getByPlaceholder('准备做什么？').fill(`${priority}的任务`);
     await create().click();
     await expect(page.locator(`.todo-quadrant-${key} .todo-task-title`)).toHaveText(`${priority}的任务`);
   }
-  await page.getByRole('button', { name: '创建高优先级任务', exact: true }).click();
+  await page.locator('.floating-create-button').click();
+  await page.locator('.todo-priority-toggle').click();
+  await page.locator('.todo-priority-options').getByRole('button', { name: '高优先级', exact: true }).click();
   await page.getByPlaceholder('准备做什么？').fill('月底整理');
   await schedule.openSchedule(page, expect);
   await schedule.selectDate(page, '2099-01-31');
@@ -82,7 +86,7 @@ module.exports = async function checkTodoWorkflow({ page, origin, out, width, ex
   await page.getByRole('button', { name: '筛选', exact: true }).click();
   await page.getByRole('button', { name: '筛选状态：已完成', exact: true }).click();
   await page.locator('.todo-filter-actions .tool-primary').click();
-  await page.locator('.todo-quadrant-later .todo-quadrant-add').click();
+  await page.locator('.floating-create-button').click();
   await page.getByPlaceholder('准备做什么？').fill('新建任务应当可见');
   await create().click();
   await expect(page.locator('.todo-quadrant-later').getByText('新建任务应当可见', { exact: true })).toBeVisible();

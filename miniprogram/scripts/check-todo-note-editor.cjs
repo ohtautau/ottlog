@@ -22,7 +22,7 @@ module.exports = async function checkTodoNoteEditor({ page, origin, out, width, 
     await expect(body()).toHaveCount(0);
     await expect(note().getByRole('button', { name: /^移除图片/ })).toHaveCount(0);
   }
-  await page.locator('.todo-quadrant-later .todo-quadrant-add').click();
+  await page.locator('.floating-create-button').click();
   await editor().getByRole('textbox', { name: '任务名称', exact: true }).fill('带图的项目记录');
   await expect(body()).toBeVisible();
   for (const name of ['书写', '预览', '插入图片']) await expect(note().getByRole('button', { name, exact: true })).toBeInViewport({ ratio: 1 });
@@ -57,7 +57,7 @@ module.exports = async function checkTodoNoteEditor({ page, origin, out, width, 
   await require('./confirm-unsaved-close.cjs')(page);
   const cached = await page.evaluate(() => window.__miniPreviewControl.readStorage('ottlog-mini-entry-draft-v1:guest'));
   expect(JSON.stringify(cached).split(image).length - 1, 'The shared attachment is stored once in the creation draft').toBe(1);
-  await page.locator('.todo-quadrant-later .todo-quadrant-add').click();
+  await page.locator('.floating-create-button').click();
   await expect(body()).toHaveValue(markdown);
   await expect(note().locator('.memo-image img')).toHaveAttribute('src', `data:image/png;base64,${image}`);
   await editor().getByRole('button', { name: '创建任务', exact: true }).click();
@@ -121,7 +121,7 @@ module.exports = async function checkTodoNoteEditor({ page, origin, out, width, 
   await require('./confirm-unsaved-close.cjs')(page);
   if (width !== 360) return;
   // A pending native picker must neither submit nor attach to another account.
-  await page.locator('.todo-quadrant-later .todo-quadrant-add').click();
+  await page.locator('.floating-create-button').click();
   await editor().getByRole('textbox', { name: '任务名称', exact: true }).fill('尚在选择图片');
   await page.evaluate(() => { window.__miniFixture.deferChooseMedia = true; });
   await insert().click();
@@ -136,7 +136,7 @@ module.exports = async function checkTodoNoteEditor({ page, origin, out, width, 
   });
   await expect(editor()).toHaveCount(0);
   await page.evaluate(() => { window.__miniFixture.deferChooseMedia = false; window.__miniFixture.resolveChooseMedia(); });
-  await page.locator('.todo-quadrant-later .todo-quadrant-add').click();
+  await page.locator('.floating-create-button').click();
   await expect(body()).toHaveValue('');
   await expect(note().locator('.memo-image')).toHaveCount(0);
   await editor().getByRole('button', { name: '关闭编辑', exact: true }).click();

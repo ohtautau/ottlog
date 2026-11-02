@@ -11,6 +11,7 @@
     "test:tool-workspace": "node scripts/check-tool-workspace.mjs && node scripts/check-tool-workflows.mjs && node scripts/check-tool-data.mjs && node scripts/check-tool-touch.mjs",
     "test:desktop-layout": "node scripts/check-desktop-layout.mjs",
     "test:todo-browser": "node scripts/check-todo-browser-interactions.mjs",
+    "test:floating-create": "node scripts/check-floating-create.mjs",
     "test:remember-login": "dotnet build ../backend/Ottlog.Api/Ottlog.Api.csproj --no-restore -p:UseAppHost=false && node scripts/check-remember-login.mjs",
     "start": "next start",
     "lint": "eslint",

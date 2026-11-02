@@ -12,7 +12,7 @@ import useDomainDefinition from '../../lib/use-domain-definition';
 import DomainQuickRecord from '../../components/domain-quick-record';
 import DomainRecentRecords from '../../components/domain-recent-records';
 import DomainRecordEditor from '../../components/domain-record-editor';
-import CreateButton from '../../components/create-button';
+import FloatingCreateButton from '../../components/floating-create-button';
 import CardCreateButton from '../../components/card-create-button';
 import SortSymbol from '../../components/sort-symbol';
 import { CardMoveActions } from '../../components/card-corner-actions';
@@ -112,12 +112,12 @@ export default function Domains() {
   const createCard = <DomainEntryCard create className='domain-create-shell'><CardCreateButton className='domain-create-card' ariaLabel='创建领域' disabled={createDisabled} onClick={definition.openCreate} /></DomainEntryCard>;
   return <>
     <PageScroll snapSections={[]} scrollY={false}><View className='tool-page domains-page domains-list'><View className='domains-index'>
-      <PageToolbar className='domains-page-toolbar' leading={writable && toolbarSummary && <PageToolbarSummary countLabel={`今日记录 ${toolbarSummary.createdToday}`} recentTitle={toolbarSummary.recentShortTermGoal?.content} recentLabel='最近完成短期目标' />} sort={<ChoiceButton iconOnly size='compact' disabled={!writable || blocked} ariaLabel='排序领域' selected={sorting} onClick={() => setSorting(!sorting)}><SortSymbol /></ChoiceButton>} create={<CreateButton className='domain-record-trigger' label='记录进展' disabled={!writable || blocked} onClick={() => setQuick(true)} />} />
+      <PageToolbar className='domains-page-toolbar' leading={writable && toolbarSummary && <PageToolbarSummary countLabel={`今日记录 ${toolbarSummary.createdToday}`} recentTitle={toolbarSummary.recentShortTermGoal?.content} recentLabel='最近完成短期目标' />} sort={<ChoiceButton iconOnly size='compact' disabled={!writable || blocked} ariaLabel='排序领域' selected={sorting} onClick={() => setSorting(!sorting)}><SortSymbol /></ChoiceButton>} />
       {!ready && <View className='tool-status'>{status}<ActionButton className='tool-secondary button-label' onClick={retry}>重新读取</ActionButton></View>}
       {ready && !valid && <View className='notice'>领域数据暂不可用<ActionButton className='tool-secondary button-label' onClick={retry}>重新读取</ActionButton></View>}
       {writable && <DomainRecentRecords key={owner} state={state} disabled={blocked} onEdit={item => { if (!saving.current && !definition.busy) setRecordEditor({ ...item, owner }); }} />}
       {writable && <ScrollView key={`cards:${owner}`} id='domain-entry-scroll' className='domain-entry-scroll' scrollY enhanced bounces={false} showScrollbar={false} ariaLabel='领域卡片'>
-        <CardGroupContent className='domain-card-groups'><View className='domain-entry-grid domain-first-grid'>{cards.slice(0, 8)}{cards.length < 8 && createCard}</View>
+        <CardGroupContent className={`domain-card-groups floating-create-content${error || moveRetry || status || progressStatus ? ' has-raised-action' : ''}`}><View className='domain-entry-grid domain-first-grid'>{cards.slice(0, 8)}{cards.length < 8 && createCard}</View>
         <View className='domain-entry-grid domain-continuation-grid'>{cards.slice(8)}{cards.length >= 8 && createCard}</View></CardGroupContent>
       </ScrollView>}
       {!!(error || moveRetry || status || progressStatus) && <ScrollView className='domains-feedback-scroll' scrollY showScrollbar={false} enhanced bounces={false} ariaLabel='领域保存反馈'>
@@ -125,6 +125,7 @@ export default function Domains() {
         {!!(status || progressStatus) && <View className='tool-status domains-status'><Text>{[status, progressStatus].filter(Boolean).join(' · ')}</Text>{(!ready || !!progressStatus || /不可用|失败|暂存|离线|无法/.test(status)) && <ActionButton appearance='quiet' className='domain-quiet button-label' disabled={blocked} onClick={() => { retry(); habitTool.retry(); }}>重试</ActionButton>}</View>}
       </ScrollView>}
     </View></View></PageScroll>
+    <FloatingCreateButton raised={!!(error || moveRetry || status || progressStatus)} className='domain-record-trigger' label='记录进展' disabled={!writable || blocked} onClick={() => setQuick(true)} />
     <DomainDefinitionEditor controller={definition} />
     {quick && <DomainQuickRecord onClose={() => setQuick(false)} />}
     {currentRecordEditor && <DomainRecordEditor key={`${owner}:${currentRecordEditor.record.id}`} owner={owner} domainId={currentRecordEditor.domainId} kind={currentRecordEditor.kind} record={currentRecordEditor.record}

@@ -11,7 +11,7 @@ module.exports = async function checkTodoEditor({ page, origin, out, width, expe
   // This check owns task-only tag frequency; cross-type suggestions are covered
   // by check-entry-creation, so starter memos must not affect this fixture.
   await page.evaluate(() => { window.__miniFixture.guestToolStates = { todos: { version: 1, tasks: [], categories: [] }, memos: { version: 1, notes: [] } }; location.hash = '#/pages/todos/index'; });
-  await page.locator('.todo-quadrant-later .todo-quadrant-add').click();
+  await page.locator('.floating-create-button').click();
   await expect(page.getByRole('dialog', { name: '创建任务、备忘或记录进展', exact: true })).toBeVisible();
   await expect(page.getByRole('button', { name: '创建类型：任务', exact: true })).toHaveAttribute('aria-pressed', 'true');
   await expect(page.getByRole('button', { name: '创建类型：备忘', exact: true })).toBeVisible();
@@ -282,7 +282,7 @@ module.exports = async function checkTodoEditor({ page, origin, out, width, expe
   await tagPanel().getByRole('button', { name: '完成', exact: true }).click();
   await create().click();
   expect(await page.evaluate(() => window.__miniFixture.todoLocalState.tasks.find(task => task.title === '已有标签的任务').nextTasks), 'An empty permanent next-step field saves no placeholder action').toEqual([]);
-  await page.locator('.todo-quadrant-later .todo-quadrant-add').click();
+  await page.locator('.floating-create-button').click();
   await page.getByPlaceholder('准备做什么？').fill('整理旅行计划');
   await page.locator('.todo-priority-toggle').click();
   await priorityOptions().getByRole('button', { name: '低优先级', exact: true }).click();

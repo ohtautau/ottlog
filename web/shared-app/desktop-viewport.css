@@ -78,4 +78,4 @@
 .tool-app-root .mottos-heading { flex: none; margin-bottom: 8px; }
 .tool-app-root .mottos-list-scroll { flex: 1; height: 0; min-height: 0; overflow-y: auto !important; overflow-x: hidden !important; overscroll-behavior: contain; }
 .tool-app-root .mottos-row { min-height: 64px; align-items: center; }
-.tool-app-root { --operation-toast-bottom: 16px; }
+.tool-app-root { --operation-toast-bottom: calc(var(--floating-create-clearance,88px) + env(safe-area-inset-bottom)); }

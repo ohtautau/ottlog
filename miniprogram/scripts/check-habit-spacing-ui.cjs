@@ -41,7 +41,7 @@ module.exports = async ({ page, origin, out, width, expect }) => {
     fixture.toolRequestDelays = { '/personal-tools/todos': 400, '/personal-tools/memos': 2000, '/personal-tools/domains': 2500 };
     location.hash = '#/pages/todos/index';
   });
-  await page.locator('.todo-quadrant-add').first().click();
+  await page.locator('.floating-create-button').click();
   const input = page.getByLabel('任务名称', { exact: true });
   await expect(input).toBeVisible();
   await expect(input).toBeEnabled({ timeout: 1500 });
