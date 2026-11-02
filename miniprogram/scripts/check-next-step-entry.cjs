@@ -34,6 +34,9 @@ module.exports = async function checkNextStepEntry({ page, origin, out, width, e
   }
   await page.locator('.floating-create-button').click();
   await expect(field(1)).toBeEnabled();
+  // The shared composer intentionally focuses its title after opening. Let
+  // that initial focus settle before exercising synthetic next-step clicks.
+  await expect(sheet().getByRole('textbox', { name: '任务名称', exact: true })).toBeFocused();
   await expect(rows()).toHaveCount(1); await expect(field(1)).toHaveAttribute('placeholder', '还要做什么？');
   await checkRowAlignment();
   await field(1).evaluate(node => { window.__firstNextNode = node; });
