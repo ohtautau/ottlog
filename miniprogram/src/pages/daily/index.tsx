@@ -50,7 +50,7 @@ import './core.css';
 
 const freshReminder = (): Reminder => ({ id: '', title: '', note: '', group: '心理', kind: 'plant', minutes: 0, enabled: true, priority: 'none' });
 const makeId = () => `habit-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 10)}`;
-const habitStatuses = [{ id: 'pending', label: '进行中' }, { id: 'completed', label: '已完成' }, { id: 'archived', label: '已归档' }, { id: 'all', label: '全部' }] as const;
+const habitStatuses = [{id:'both',label:'已完成与未完成'}, { id: 'pending', label: '进行中' }, { id: 'completed', label: '已完成' }, { id: 'archived', label: '已归档' }, { id: 'all', label: '全部' }] as const;
 type HabitStatus = typeof habitStatuses[number]['id'];
 const timedHabitPeriods = ['morning', 'noon', 'afternoon', 'night'] as const;
 type TimedHabitPeriod = typeof timedHabitPeriods[number];
@@ -72,7 +72,7 @@ export default function Daily() {
   const [now, setNow] = useState(Date.now());
   const today = localDate(new Date(now));
   const [visible, setVisible] = useState(true);
-  const [habitStatus, setHabitStatus] = useState<HabitStatus>('pending');
+  const [habitStatus, setHabitStatus] = useState<HabitStatus>('both');
   const [search, setSearch] = useState('');
   const [periodFilters, setPeriodFilters] = useState<HabitTimePeriod[]>([]);
   const [priorityFilters, setPriorityFilters] = useState<HabitPriority[]>([]);
@@ -113,7 +113,7 @@ export default function Daily() {
     setEditor(null); setSelected(null); setMessage(''); setSaving(false); savingRef.current = false;
     setReflection(null); setReflectionText(''); setReflectionError(''); setReflectionSaving(false); reflectionSavingRef.current = false;
     setChecking(false); checkingRef.current = false;
-    setCoreGroup('全部'); setHabitStatus('pending'); setActivePeriod(currentHabitTimePeriod()); setSearch(''); setPeriodFilters([]); setPriorityFilters([]); setShowFilters(false); setShowSort(false); setSortChoice({ field: 'priority', direction: 'desc' }); sortPending.current = null; setSortSaving(false); sortSavingRef.current = false; setSortError('');
+    setCoreGroup('全部'); setHabitStatus('both'); setActivePeriod(currentHabitTimePeriod()); setSearch(''); setPeriodFilters([]); setPriorityFilters([]); setShowFilters(false); setShowSort(false); setSortChoice({ field: 'priority', direction: 'desc' }); sortPending.current = null; setSortSaving(false); sortSavingRef.current = false; setSortError('');
     let log = emptyHabitOpenLog();
     if (owner && owner !== 'guest') { try { log = cleanHabitOpenLog(Taro.getStorageSync(habitOpenKey(owner)), stateRef.current.items.map(item => item.id)); } catch { /* Opening history is optional; check-ins remain available. */ } }
     setOpenings({ owner, log });
@@ -134,6 +134,7 @@ export default function Daily() {
       if (status === 'all') return true;
       if (status === 'archived') return !item.enabled;
       if (!item.enabled) return false;
+      if(status==='both')return true;
       return status === 'completed' ? todayDone.includes(item.id) : !todayDone.includes(item.id);
     });
   }
@@ -266,7 +267,7 @@ export default function Daily() {
     finally { if (deleting.current === operation) { deleting.current = null; savingRef.current = false; setSaving(false); } }
   }
   function viewStatus(status: HabitStatus) { setHabitStatus(status); setShowFilters(false); setShowSort(false); }
-  function resetFilters() { setSearch(''); setPeriodFilters([]); setPriorityFilters([]); setCoreGroup('全部'); setHabitStatus('pending'); }
+  function resetFilters() { setSearch(''); setPeriodFilters([]); setPriorityFilters([]); setCoreGroup('全部'); setHabitStatus('both'); }
   function restoreDefaults() {
     if (!writable || !owner || sortSavingRef.current || sortPending.current || sorter.active || saving || checking || editor || selected || reflection) return;
     resetFilters(); setActivePeriod(currentHabitTimePeriod()); setShowSort(false); setShowFilters(false);
@@ -290,7 +291,7 @@ export default function Daily() {
           {timedHabitPeriods.map(period => <CategoryButton key={period} size='compact' width='fill' selected={activePeriod === period} ariaLabel={`习惯时段分类：${period === 'night' ? '晚上' : habitTimePeriodLabels[period]}`} disabled={!sortable || checking || sortSaving || sorter.active} onTouchStart={event => event.stopPropagation()} onClick={() => { if (!sorter.suppressClick() && !sortSavingRef.current && !checkingRef.current) setActivePeriod(period); }}>{period === 'night' ? '晚上' : habitTimePeriodLabels[period]}</CategoryButton>)}
         </CategoryRow>}
           scrollProps={{ id: sortable ? 'daily-habit-period-scroll' : undefined, className: 'daily-time-period-scroll', scrollY: sortable, scrollTop: sortable ? sorter.scrollTopFor('daily-habit-period-scroll') : undefined, onScroll: sortable ? event => sorter.onScrollFor('daily-habit-period-scroll', event) : undefined }}>
-          {timed.length ? suggestionCards(timed, sortable, !sortable) : !state.items.length && !search.trim() && !periodFilters.length && !priorityFilters.length && status === 'pending' ? <EmptyState kind='habits' compact /> : <View className='daily-time-period-empty'>暂无该时段习惯</View>}
+          {timed.length ? suggestionCards(timed, sortable, !sortable) : !state.items.length && !search.trim() && !periodFilters.length && !priorityFilters.length && status === 'both' ? <EmptyState kind='habits' compact /> : <View className='daily-time-period-empty'>暂无该时段习惯</View>}
         </HabitListSection>
         <HabitListSection className='daily-time-period-section' timePeriod='free' contentClassName='daily-habit-content floating-create-content' scrollKey={`${owner}:${status}`} edgeFade={free.length > 0} heading={<SectionTitle size='compact' inRow>自由</SectionTitle>}
           scrollProps={{ id: sortable ? 'daily-habit-free-scroll' : undefined, className: 'daily-time-period-scroll', scrollY: sortable, scrollTop: sortable ? sorter.scrollTopFor('daily-habit-free-scroll') : undefined, onScroll: sortable ? event => sorter.onScrollFor('daily-habit-free-scroll', event) : undefined }}>
@@ -315,7 +316,7 @@ export default function Daily() {
         <View className='daily-sort-direction'><SortDirection value={sortChoice.direction} disabled={sortSaving} onChange={direction => setSortChoice(previous => ({ ...previous, direction }))} /></View>
         {sortError && <Text className='daily-sort-error'>{sortError}</Text>}
       </SortPopover>}
-      filter={<FilterPopover ariaLabel='筛选习惯' title='筛选习惯' open={showFilters} onOpenChange={open => { if (open) setShowSort(false); setShowFilters(open); }} disabled={!writable || sortSaving || sorter.active} triggerSelected={habitStatus !== 'pending' || coreGroup !== '全部' || !!search.trim() || !!periodFilters.length || !!priorityFilters.length} panelClassName='habit-filter-popover' contentKey={`${search}:${habitStatus}:${coreGroup}:${periodFilters.join(',')}:${priorityFilters.join(',')}`}
+      filter={<FilterPopover ariaLabel='筛选习惯' title='筛选习惯' open={showFilters} onOpenChange={open => { if (open) setShowSort(false); setShowFilters(open); }} disabled={!writable || sortSaving || sorter.active} triggerSelected={habitStatus !== 'both' || coreGroup !== '全部' || !!search.trim() || !!periodFilters.length || !!priorityFilters.length} panelClassName='habit-filter-popover' contentKey={`${search}:${habitStatus}:${coreGroup}:${periodFilters.join(',')}:${priorityFilters.join(',')}`}
         closeLabel='关闭习惯筛选' onClose={() => setShowFilters(false)} resetLabel='重置习惯筛选' applyLabel={`筛选 ${orderedItems.length} 个习惯`} onReset={resetFilters}>
         <FilterFields>
           <FilterField label='关键词'><FilterSearch ariaLabel='搜索习惯' placeholder='搜索名称、备注或领域' value={search} onInput={event => setSearch(event.detail.value)} clearLabel='清空习惯搜索' onClear={() => setSearch('')} onConfirm={() => setShowFilters(false)} /></FilterField>

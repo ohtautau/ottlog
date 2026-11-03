@@ -1,6 +1,6 @@
 .page-toolbar { display: flex; align-items: center; gap: 6PX; box-sizing: border-box; width: 100%; min-width: 0; flex-shrink: 0; margin: 0 0 8PX; }
 .page-toolbar-leading { flex: 1; min-width: 0; }
-.page-toolbar-summary { display: flex; flex-direction: column; justify-content: center; min-width: 0; gap: 2PX; color: #b9e8c5; font-size: 12PX; line-height: 1.4; }
+.page-toolbar-summary { min-height:36PX;display: flex; flex-direction: column; justify-content: center; min-width: 0; gap: 2PX; color: #b9e8c5; font-size: 12PX; line-height: 1.4; }
 .page-toolbar-summary-count { white-space: nowrap; font-variant-numeric: tabular-nums; }
 .page-toolbar-summary .page-toolbar-summary-recent { display: block; width: 100%; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: #9db5b1; }
 .page-toolbar-actions { display: flex; align-items: center; justify-content: flex-end; gap: 6PX; flex: none; margin-left: auto; }

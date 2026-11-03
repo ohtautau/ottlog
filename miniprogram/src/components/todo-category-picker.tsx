@@ -5,6 +5,7 @@ import { toolId, type TodoCategory } from '../lib/tool-records';
 import { TODO_INBOX, todoCategoryChoices, type TodoCategoryDraft } from '../lib/todo-categories';
 import { ChoicePopover, PopoverHeading } from './form-options';
 import ActionButton from './ui-button';
+import ActionMenu from './action-menu';
 import { AddSymbol } from './create-button';
 import { DeleteSymbol, EditSymbol } from './manage-symbol';
 import LibraryIcon from './library-icon';
@@ -16,6 +17,7 @@ import SheetBackdrop from './sheet-backdrop';
 import EditorHeading from './editor-heading';
 import AppDialog from './app-dialog';
 import './todo-category-picker.css';
+import './entity-choice-options.css';
 
 /** Classification is independent of ordinary task tags. Hosts own persistence. */
 export default function TodoCategoryPicker({ categories, value, onChange, onUpsert, onDelete, owner = '', disabled = false }: {
@@ -24,11 +26,12 @@ export default function TodoCategoryPicker({ categories, value, onChange, onUpse
   onDelete: (id: string) => Promise<void>;
 }) {
   const [open, setOpen] = useState(false), [query, setQuery] = useState('');
+  const [managing,setManaging]=useState(false),[more,setMore]=useState(false);
   const [editor, setEditor] = useState<TodoCategoryDraft | null>(null), [icons, setIcons] = useState(false);
   const [deleting, setDeleting] = useState<TodoCategory | null>(null), [busy, setBusy] = useState(false), [error, setError] = useState('');
   const current = useRef({ owner, disabled, busy, onChange }); current.current = { owner, disabled, busy, onChange };
   const generation = useRef(0);
-  useEffect(() => { ++generation.current; setOpen(false); setEditor(null); setIcons(false); setDeleting(null); setBusy(false); setError(''); setQuery(''); }, [owner]);
+  useEffect(() => { ++generation.current; setOpen(false); setManaging(false); setMore(false); setEditor(null); setIcons(false); setDeleting(null); setBusy(false); setError(''); setQuery(''); }, [owner]);
   useEffect(() => () => { ++generation.current; }, []);
   useEffect(() => {
     if (!editor || typeof window === 'undefined') return;
@@ -48,7 +51,7 @@ export default function TodoCategoryPicker({ categories, value, onChange, onUpse
     try {
       await onUpsert(draft);
       if (current.current.owner !== expectedOwner || operation !== generation.current) return;
-      setEditor(null); setIcons(false); setOpen(false); current.current.onChange(draft.id);
+      setEditor(null); setIcons(false); if(!managing){setOpen(false);current.current.onChange(draft.id);}
     } catch (reason) { if (current.current.owner === expectedOwner && operation === generation.current) setError(reason instanceof Error ? reason.message : '分类未保存，请重试'); }
     finally { if (current.current.owner === expectedOwner && operation === generation.current) { setBusy(false); current.current.busy = false; } }
   }
@@ -62,17 +65,17 @@ export default function TodoCategoryPicker({ categories, value, onChange, onUpse
   }
   const rows = todoCategoryChoices({ categories }).filter(item => item.name.toLocaleLowerCase().includes(query.trim().toLocaleLowerCase()));
   return <>
-    <ChoicePopover ariaLabel='任务分类' open={open} onOpenChange={next => { if (!editor && !deleting && !busy) { setOpen(next); setError(''); } }} disabled={disabled}
+    <ChoicePopover ariaLabel='任务分类' open={open} onOpenChange={next => { if (!editor && !deleting && !busy) { setOpen(next); setError(''); if(!next){setManaging(false);setMore(false);setQuery('');} } }} disabled={disabled}
       trigger={<><LibraryIcon name={selected.iconId} fallback='notes' className='todo-category-icon' variant={selected.id ? 'colored' : 'outline'} /><Text>{selected.name}</Text></>}
       triggerAppearance='quiet' triggerSize='compact' triggerClassName='todo-category-trigger' panelClassName='todo-category-panel' layerClassName='todo-category-layer'
-      panelWidth={400} placement='center' maxHeightRatio={.8} contentKey={`${query}:${categories.length}:${error}`} bodySpacing='none'
-      heading={<PopoverHeading title='任务分类' actions={<ActionButton appearance='icon' size='compact' ariaLabel='关闭任务分类' disabled={locked || !!editor || !!deleting} onClick={() => setOpen(false)}>×</ActionButton>} />}
-      footer={<SheetActions><ActionButton appearance='quiet' size='compact' width='fill' ariaLabel='新建任务分类' disabled={locked} onClick={() => begin()}><AddSymbol /><Text>新建分类</Text></ActionButton></SheetActions>}>
+      panelWidth={400} placement='center' maxHeightRatio={.8} contentKey={`${managing}:${query}:${categories.length}:${error}`} bodySpacing='none'
+      heading={<PopoverHeading title={managing?'编辑分类':'任务分类'} actions={<ActionMenu ariaLabel='分类更多操作' open={more} onOpenChange={setMore} disabled={locked || !!editor || !!deleting}><ActionButton appearance='quiet' onClick={()=>{setMore(false);setManaging(!managing);setQuery('');}}>{managing?'完成编辑':'编辑'}</ActionButton><ActionButton appearance='quiet' onClick={()=>{setMore(false);setOpen(false);setManaging(false);}}>关闭</ActionButton></ActionMenu>} />}>
       <View className='todo-category-search'><SearchInput ariaLabel='搜索任务分类' placeholder='搜索分类' value={query} maxlength={100} disabled={locked} onInput={event => setQuery(event.detail.value)} /></View>
-      <View className='todo-category-options'>{rows.map(category => <View className='todo-category-option-row' key={category.id}>
-        <ActionButton appearance='quiet' className={`todo-category-option${selected.id === category.id ? ' is-selected' : ''}`} aria-pressed={selected.id === category.id} ariaLabel={`选择分类：${category.name}`} disabled={locked} onClick={() => { if (!locked) { onChange(category.id); setOpen(false); } }}><LibraryIcon name={category.iconId} fallback='notes' className='todo-category-icon' /><Text>{category.name}</Text>{selected.id === category.id && <CheckSymbol className='todo-category-selected' />}</ActionButton>
-        {!!category.id && <><ActionButton appearance='icon' size='compact' ariaLabel={`编辑分类：${category.name}`} disabled={locked} onClick={() => begin(category)}><EditSymbol /></ActionButton><ActionButton appearance='icon' size='compact' intent='danger' ariaLabel={`删除分类：${category.name}`} disabled={locked} onClick={() => { setError(''); setDeleting(category); }}><DeleteSymbol /></ActionButton></>}
-      </View>)}</View>{!rows.length && <View className='todo-category-empty'>没有找到分类</View>}
+      <View className='todo-category-options entity-choice-options'>{rows.map(category => <View className='todo-category-option-row' key={category.id}>
+        <ActionButton appearance='quiet' className={`todo-category-option${selected.id === category.id ? ' is-selected' : ''}`} aria-pressed={selected.id === category.id} ariaLabel={`选择分类：${category.name}`} disabled={locked} onClick={() => { if (!locked) { if(managing){if(category.id)begin(category);}else{onChange(category.id);setOpen(false);} } }}><LibraryIcon name={category.iconId} fallback='notes' className='todo-category-icon' /><Text>{category.name}</Text></ActionButton>
+        {managing && !!category.id && <><ActionButton appearance='icon' size='compact' ariaLabel={`编辑分类：${category.name}`} disabled={locked} onClick={() => begin(category)}><EditSymbol /></ActionButton><ActionButton appearance='icon' size='compact' intent='danger' ariaLabel={`删除分类：${category.name}`} disabled={locked} onClick={() => { setError(''); setDeleting(category); }}><DeleteSymbol /></ActionButton></>}
+        <View className='todo-category-selection-slot'>{selected.id===category.id && <CheckSymbol className='todo-category-selected'/>}</View>
+      </View>)}<View className='todo-category-create-row'><ActionButton appearance='quiet' size='compact' width='fill' ariaLabel='新建任务分类' disabled={locked} onClick={()=>begin()}><AddSymbol/><Text>新建分类</Text></ActionButton></View></View>{!rows.length && <View className='todo-category-empty'>没有找到分类</View>}
     </ChoicePopover>
     {editor && <View className='todo-category-editor-layer' catchMove><SheetBackdrop disabled={locked} onClose={() => setEditor(null)} /><View className='todo-category-editor floating-window' role='dialog' ariaLabel={editor.existing ? '编辑任务分类' : '新建任务分类'}>
       <EditorHeading title={editor.existing ? '编辑分类' : '新建分类'} actions={<ActionButton appearance='icon' size='compact' ariaLabel='关闭分类编辑' disabled={locked} onClick={() => setEditor(null)}>×</ActionButton>} />

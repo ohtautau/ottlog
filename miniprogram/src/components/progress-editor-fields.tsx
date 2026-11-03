@@ -1,67 +1,87 @@
 import { Text, View } from '@tarojs/components';
 import { useEffect, useRef, useState, type ReactNode } from 'react';
-import { MAX_DOMAIN_RECORD_LENGTH, type DomainState, type RecordKind } from '../lib/domain-data';
-import { appendProgressPair, MAX_PROGRESS_PAIRS, hasProgressContent, pairedProgressDraft, progressRows, saveProgressDraft, type ProgressDraft } from '../lib/progress-draft';
+import { MAX_DOMAIN_RECORD_LENGTH, type DomainState, type RecordItem, type RecordKind } from '../lib/domain-data';
+import { clearProgressInput, MAX_PROGRESS_PAIRS, hasProgressContent, newProgressInput, progressRows, saveProgressDraft, writeProgressInput, type ProgressDraft } from '../lib/progress-draft';
+import { hasSubtaskText } from '../lib/todo-subtasks';
 import type { MemoImage } from '../lib/tool-records';
 import DomainChoiceField from './domain-choice-field';
 import MarkdownNoteEditor from './markdown-note-editor';
 import ActionButton from './ui-button';
 import { TaskAttachmentSymbol } from './task-detail-editor';
-import { AddSymbol } from './create-button';
 import './progress-editor-fields.css';
 import EditorFieldsLayout from './editor-fields-layout';
 
-/** Normal pairs use fixed negative/positive headers; historic signs remain labelled faithfully. */
-export function ProgressRecordField({ slot, kind, pairIndex = 0, children }: {
-  slot: 'positive' | 'negative'; kind: RecordKind; pairIndex?: number; children: ReactNode;
-}) {
-  return <EditorFieldsLayout topSpace={false} className='progress-record-field' data-progress-slot={slot} data-progress-pair={pairIndex}>
-    <View className={`progress-record-heading is-${kind}`}><Text>{kind === 'negative' ? '负记录' : '正记录'}</Text></View>
-    {children}
-  </EditorFieldsLayout>;
+export function ProgressRecordField({ slot, kind, pairIndex = 0, children }: { slot:'positive'|'negative';kind:RecordKind;pairIndex?:number;children:ReactNode }) {
+  return <EditorFieldsLayout topSpace={false} className='progress-record-field' data-progress-slot={slot} data-progress-pair={pairIndex}>{children}</EditorFieldsLayout>;
 }
+const filled=(record:RecordItem)=>hasSubtaskText(record.content)||!!record.images?.length;
 
-/** Every row shares one domain and adds a negative/positive pair without replacing previous input. */
-export default function ProgressEditorFields({ draft, onChange, state, disabled, owner, onBusyChange, autoFocus, insertionSignal = 0 }: {
-  draft: ProgressDraft; onChange: (draft: ProgressDraft) => void; state: DomainState; disabled: boolean;
-  owner: string; onBusyChange: (busy: boolean) => void;
-  autoFocus?: boolean; insertionSignal?: number;
+/** Each sign has one trailing input, stable record IDs and its own attachment target. */
+export default function ProgressEditorFields({ draft,onChange,state,disabled,owner,onBusyChange,autoFocus,insertionSignal=0,actions }: {
+  draft:ProgressDraft;onChange:(draft:ProgressDraft)=>void;state:DomainState;disabled:boolean;owner:string;
+  onBusyChange:(busy:boolean)=>void;autoFocus?:boolean;insertionSignal?:number;actions?:ReactNode;
 }) {
-  const rows = progressRows(draft);
-  const currentDraft = useRef(draft), receivedDraft = useRef(draft);
-  if (receivedDraft.current !== draft) { receivedDraft.current = draft; currentDraft.current = draft; }
-  function emit(next: ProgressDraft) { currentDraft.current = next; onChange(next); }
-  const activeRecord = useRef(draft.positive.id), handledInsertion = useRef(insertionSignal);
-  const [insertions, setInsertions] = useState<Record<string, number>>({});
-  useEffect(() => {
-    if (handledInsertion.current === insertionSignal) return;
-    handledInsertion.current = insertionSignal;
-    if (disabled) return;
-    const id = rows.some(row => row.record.id === activeRecord.current) ? activeRecord.current : draft.positive.id;
-    setInsertions(previous => ({ ...previous, [id]: (previous[id] || 0) + 1 }));
-  }, [insertionSignal]);
-  const groups = Array.from({ length: 1 + (draft.pairs?.length || 0) }, (_, pairIndex) =>
-    (['negative', 'positive'] as const).map(slot => rows.find(row => row.pairIndex === pairIndex && row.slot === slot)!));
-  function changeRecord(pairIndex: number, slot: 'positive' | 'negative', values: Partial<ProgressDraft['positive']>) {
-    const next = pairedProgressDraft(currentDraft.current);
-    return pairIndex === 0 ? { ...next, [slot]: { ...next[slot], ...values } }
-      : { ...next, pairs: next.pairs!.map((pair, index) => index + 1 === pairIndex ? { ...pair, [slot]: { ...pair[slot], ...values } } : pair) };
+  const current=useRef({draft,disabled,owner});current.current={draft,disabled,owner};
+  const autoFocusTaken=useRef(false);
+  const known=useRef(new Set(progressRows(draft).filter(row=>filled(row.record)).map(row=>row.record.id)));
+  const [spares,setSpares]=useState(()=>({positive:newProgressInput(),negative:newProgressInput()}));
+  const [focused,setFocused]=useState(''),[insertions,setInsertions]=useState<Record<string,number>>({});
+  const [navigationId]=useState(()=>`records-${draft.positive.id}`);
+  const moveRef=useRef<(id:string,direction:number)=>void>(()=>{}),activeRecord=useRef(draft.positive.id),handled=useRef(insertionSignal);
+  const rows=progressRows(draft),total=rows.filter(row=>filled(row.record)).length;
+  const columns=(['negative','positive'] as const).map(kind=>{
+    const items=rows.filter(row=>row.kind===kind && (filled(row.record)||known.current.has(row.record.id)&&focused===row.record.id));
+    const unused=rows.find(row=>row.kind===kind&&!filled(row.record)&&!known.current.has(row.record.id));
+    const placeholder=unused?.record || spares[kind];
+    return {kind,items,placeholder,visible:[...items.map(row=>row.record),...(total<MAX_PROGRESS_PAIRS*2?[placeholder]:[])]};
+  });
+  function emit(next:ProgressDraft){current.current.draft=next;onChange(next);}
+  function change(kind:RecordKind,record:RecordItem){
+    if(current.current.disabled)return;
+    const existing=progressRows(current.current.draft).some(row=>row.record.id===record.id);
+    if(!existing && !filled(record)){setSpares(previous=>({...previous,[kind]:record}));return;}
+    const clean=!hasSubtaskText(record.content)?{...record,content:''}:record;
+    emit(writeProgressInput(current.current.draft,kind,clean));
+    if(filled(clean)){known.current.add(record.id);if(spares[kind].id===record.id)setSpares(previous=>({...previous,[kind]:newProgressInput()}));setFocused(record.id);}
   }
-  function checkImages(pairIndex: number, slot: 'positive' | 'negative', images: MemoImage[]) {
-    const next = changeRecord(pairIndex, slot, { images });
-    if (hasProgressContent(next)) {
-      const ownIds = new Set(progressRows(next).map(row => row.record.id));
-      const withoutOwn = { ...state, domains: state.domains.map(domain => ({ ...domain,
-        positiveRecords: domain.positiveRecords.filter(record => !ownIds.has(record.id)), negativeRecords: domain.negativeRecords.filter(record => !ownIds.has(record.id)) })) };
-      saveProgressDraft(withoutOwn, next);
+  function leave(id:string){
+    setFocused(previous=>previous===id?'':previous);
+    const row=progressRows(current.current.draft).find(item=>item.record.id===id);
+    if(!current.current.disabled&&row&&!filled(row.record)&&known.current.has(id))emit(clearProgressInput(current.current.draft,id));
+  }
+  function move(id:string,direction:number){
+    if(current.current.disabled)return;
+    const column=columns.find(item=>item.visible.some(record=>record.id===id));if(!column)return;
+    const index=column.visible.findIndex(record=>record.id===id),next=column.visible[Math.max(0,Math.min(column.visible.length-1,index+direction))];if(next)setFocused(next.id);
+  }
+  moveRef.current=move;
+  useEffect(()=>{
+    if(typeof document==='undefined')return;
+    const arrow=(event:KeyboardEvent)=>{if(event.isComposing||event.altKey||event.ctrlKey||event.metaKey||!['ArrowUp','ArrowDown'].includes(event.key))return;const target=event.target as HTMLElement;if(target?.getAttribute('data-editor-list')!==navigationId)return;event.preventDefault();moveRef.current(target.getAttribute('data-editor-row')||'',event.key==='ArrowUp'?-1:1);};
+    document.addEventListener('keydown',arrow,true);return()=>document.removeEventListener('keydown',arrow,true);
+  },[navigationId]);
+  useEffect(()=>{if(handled.current===insertionSignal)return;handled.current=insertionSignal;if(!disabled)setInsertions(previous=>({...previous,[activeRecord.current]:(previous[activeRecord.current]||0)+1}));},[insertionSignal]);
+  function checkImages(kind:RecordKind,record:RecordItem,images:MemoImage[]){
+    const next=writeProgressInput(current.current.draft,kind,{...record,images});
+    if(hasProgressContent(next)){
+      const own=new Set(progressRows(next).map(row=>row.record.id));
+      saveProgressDraft({...state,domains:state.domains.map(domain=>({...domain,positiveRecords:domain.positiveRecords.filter(item=>!own.has(item.id)),negativeRecords:domain.negativeRecords.filter(item=>!own.has(item.id))}))},next);
     }
   }
   return <EditorFieldsLayout className='progress-editor-fields'>
-    <View className='progress-domain-row'><DomainChoiceField ariaLabel='选择记录领域' domains={state.domains} value={draft.domainId} optionPrefix='记录到' disabled={disabled} onChange={domainId => emit({ ...currentDraft.current, domainId })} /></View>
-    <View className='progress-record-pairs'>{groups.map((group, pairIndex) => <View className='progress-record-pair' key={group[0].record.id}>{group.map(({ slot, kind, record }) => <ProgressRecordField key={record.id} slot={slot} kind={kind} pairIndex={pairIndex}>
-      <MarkdownNoteEditor minimal format='plain' density='compact' showImageInsertion={false} insertionSignal={insertions[record.id] || 0} onFocus={() => { activeRecord.current = record.id; }} autoFocus={pairIndex === 0 && slot === 'positive' && autoFocus} value={record.content} images={record.images} owner={owner} recordId={record.id} disabled={disabled} canInsertImage={!disabled} onBusyChange={onBusyChange} maxLength={MAX_DOMAIN_RECORD_LENGTH} ariaLabel={pairIndex === 0 ? slot === 'positive' ? '记录内容' : '第二条记录内容' : `第 ${pairIndex + 1} 组${slot === 'negative' ? '负' : '正'}记录内容`} placeholder='备注' onChange={content => { activeRecord.current = record.id; emit(changeRecord(pairIndex, slot, { content })); }} onImagesChange={images => emit(changeRecord(pairIndex, slot, { images }))} checkImages={images => checkImages(pairIndex, slot, images)} />
-      <ActionButton appearance='icon' size='compact' className='progress-record-attachment' ariaLabel={`第 ${pairIndex + 1} 组${kind === 'negative' ? '负' : '正'}记录附件`} disabled={disabled} onClick={() => setInsertions(previous => ({ ...previous,[record.id]:(previous[record.id] || 0) + 1 }))}><TaskAttachmentSymbol /></ActionButton>
-    </ProgressRecordField>)}</View>)}</View>
-    <View className='progress-add-pair'><ActionButton appearance='quiet' width='fill' ariaLabel='添加一组正负记录' disabled={disabled || groups.length >= MAX_PROGRESS_PAIRS} onClick={() => emit(appendProgressPair(currentDraft.current))}><AddSymbol /></ActionButton></View>
+    <View className='entry-pane-heading progress-domain-row'><DomainChoiceField compact ariaLabel='选择记录领域' domains={state.domains} value={draft.domainId} optionPrefix='记录到' disabled={disabled} onChange={domainId=>emit({...current.current.draft,domainId})}/>{actions}</View>
+    <View className='progress-columns'>{columns.map(({kind,items,placeholder,visible})=><View className={`progress-record-column is-${kind}`} key={kind}>
+      <View className={`progress-record-heading is-${kind}`}><Text>{kind==='negative'?'负记录':'正记录'}</Text></View>
+      {visible.map((record,index)=>{const empty=record.id===placeholder.id;return <ProgressRecordField key={record.id} slot={kind} kind={kind} pairIndex={index}>
+        <MarkdownNoteEditor minimal format='plain' density='compact' showImageInsertion={false} insertionSignal={insertions[record.id]||0} navigationId={navigationId}
+          onFocus={()=>{autoFocusTaken.current=true;activeRecord.current=record.id;setFocused(record.id);}} onBlur={()=>leave(record.id)} onConfirm={()=>move(record.id,1)} autoFocus={focused===record.id || !focused&&!autoFocusTaken.current&&!!autoFocus&&kind==='positive'&&index===0}
+          value={record.content} images={record.images} owner={owner} recordId={record.id} disabled={disabled} canInsertImage={!disabled} onBusyChange={onBusyChange} maxLength={MAX_DOMAIN_RECORD_LENGTH}
+          ariaLabel={index===0 ? kind==='positive'?'记录内容':'第二条记录内容' : `第 ${index+1} 条${kind==='negative'?'负':'正'}记录内容`} placeholder={empty&&items.length?'换行即可添加记录':'备注'}
+          onChange={content=>change(kind,{...record,content})} onImagesChange={images=>change(kind,{...record,images})} checkImages={images=>checkImages(kind,record,images)}/>
+        <View className='progress-record-tools'>{!empty&&<ActionButton appearance='icon' size='compact' intent='danger' ariaLabel={`删除第 ${index+1} 条${kind==='negative'?'负':'正'}记录`} disabled={disabled} onClick={()=>{emit(clearProgressInput(current.current.draft,record.id));setFocused('');}}>×</ActionButton>}
+          <ActionButton appearance='icon' size='compact' className='progress-record-attachment' ariaLabel={`第 ${index+1} 条${kind==='negative'?'负':'正'}记录附件`} disabled={disabled} onClick={()=>{activeRecord.current=record.id;setInsertions(previous=>({...previous,[record.id]:(previous[record.id]||0)+1}));}}><TaskAttachmentSymbol/></ActionButton>
+        </View>
+      </ProgressRecordField>;})}
+    </View>)}</View>
   </EditorFieldsLayout>;
 }

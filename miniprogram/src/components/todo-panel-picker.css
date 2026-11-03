@@ -6,3 +6,8 @@
 .todo-panel-source-option > text { min-width: 0; overflow-wrap: anywhere; }
 .todo-panel-category-icon { flex:none;width:24PX;height:24PX; }
 .todo-panel-source-error { padding:4PX 6PX;color:#efb7a2;font-size:13PX;line-height:20PX; }
+
+.todo-panel-queue { border:1PX solid #405662;border-radius:10PX;padding:4PX; }
+.todo-panel-queue-row { display:flex;align-items:center;gap:2PX;min-width:0; }
+.todo-panel-queue-row > text { flex:1;min-width:0;font-size:14PX;overflow-wrap:anywhere; }
+.todo-panel-queue-row > button { flex:none;margin:0; }

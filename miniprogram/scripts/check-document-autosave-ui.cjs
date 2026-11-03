@@ -89,8 +89,8 @@ module.exports = async function checkDocumentAutosave({ page, origin, width, out
   await page.evaluate(() => { location.hash = '#/pages/domains/index'; }); await button('添加记录').click();
   const content = () => page.getByRole('textbox', { name: '记录内容', exact: true }); await expect(content()).toBeEnabled();
   const recordFrame=await page.locator('.entry-composer').boundingBox();expect(recordFrame.width).toBeCloseTo(memoFrame.width,0);
-  expect(await page.locator('.progress-record-field').nth(1).evaluate(node=>getComputedStyle(node,'::before').borderLeftWidth)).toBe('1px');
-  const pairBox=await page.locator('.progress-record-pairs').boundingBox(),addBox=await button('添加一组正负记录').boundingBox();expect(addBox.width).toBeCloseTo(pairBox.width,0);
+  expect(await page.locator('.progress-record-column').nth(1).evaluate(node=>getComputedStyle(node,'::before').borderLeftWidth)).toBe('1px');
+  await expect(page.locator('.progress-record-heading')).toHaveText(['负记录','正记录']);
   await expect(page.locator('.progress-record-attachment')).toHaveCount(2);
   await expect(page.locator('.entry-composer').getByRole('button', { name: /^(保存记录|关闭编辑)$/ })).toHaveCount(0);
   await content().fill('第一条自动进展');
@@ -99,7 +99,7 @@ module.exports = async function checkDocumentAutosave({ page, origin, width, out
   await content().fill('同一条进展的修改'); await expect.poll(async () => (await records())[0].content).toBe('同一条进展的修改');
   expect((await records())[0].id).toBe(recordId);
   await content().fill(''); await expect.poll(async () => (await records()).length).toBe(0);
-  await content().fill('进展关窗最后输入');await button('第 1 组正记录附件').click();await expect.poll(async()=>(await records())[0]?.images?.length).toBe(1);
+  await content().fill('进展关窗最后输入');await button('第 1 条正记录附件').click();await expect.poll(async()=>(await records())[0]?.images?.length).toBe(1);
   expect((await data('domains')).domains[0].negativeRecords).toHaveLength(0);
   const imageBox=await page.locator('.entry-composer .memo-image img').boundingBox();expect(imageBox.width).toBeLessThanOrEqual(112);expect(imageBox.height).toBeLessThanOrEqual(96);
   await closeEntry(); expect((await records())[0].content).toBe('进展关窗最后输入'); expect(await records()).toHaveLength(1);
@@ -128,7 +128,7 @@ module.exports = async function checkDocumentAutosave({ page, origin, width, out
   const mottoText=page.getByRole('textbox',{name:'格言内容',exact:true});await expect(mottoText).toBeEnabled();await mottoText.fill('自动保存格言');
   await expect.poll(async()=>(await data('mottos')).mottos[0]).toBe('自动保存格言');
   await expect(page.locator('.document-editor-sheet').getByRole('button',{name:/^(保存|删除格言|关闭格言编辑)$/})).toHaveCount(0);
-  await button('格言更多操作').click();await expect(page.locator('.is-action-menu .action-menu-option')).toHaveCount(2);await page.keyboard.press('Escape');
+  await button('格言更多操作').click();await expect(page.locator('.is-action-menu .action-menu-option')).toHaveCount(1);await page.keyboard.press('Escape');
   await closeMemo();await button('编辑第 1 句格言').click();await mottoText.fill('格言最后输入');await closeMemo();
   expect((await data('mottos')).mottos).toEqual(['格言最后输入']);
   await page.screenshot({ path: path.join(out, `document-autosave-${width}.png`) });

@@ -1,0 +1,44 @@
+const assert = require('node:assert/strict');
+const fs = require('node:fs');
+const path = require('node:path');
+const ts = require('typescript');
+const cache = new Map();
+function load(name) {
+  if (cache.has(name)) return cache.get(name);
+  const output = ts.transpileModule(fs.readFileSync(path.resolve(__dirname, '../src/lib', `${name}.ts`), 'utf8'), { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2020 } }).outputText;
+  const module = { exports: {} }; cache.set(name, module.exports);
+  new Function('exports', 'module', 'require', output)(module.exports, module, dependency => load(dependency.replace(/^\.\//, '')));
+  return module.exports;
+}
+
+const progress=load('progress-draft'),panels=load('todo-panel-source'),categories=load('todo-categories'),undo=load('todo-undo'),schedule=load('todo-schedule');
+const state={version:1,tasks:[],categories:[{id:'fun',name:'娱乐',iconId:'game',color:'#b9dbca'}]};
+const queue=[{kind:'category',categoryId:'fun'},{kind:'quadrant',quadrantId:'do'}];
+let next=panels.setTodoPanelQueue(state,'later',queue);
+assert.deepEqual(panels.getTodoPanelSource(next,'later'),queue[0]);
+assert.equal(undo.isTodoDisplayOnlyChange(state,next),true);
+next=panels.cycleTodoPanelSource(next,'later',1);assert.deepEqual(panels.getTodoPanelSource(next,'later'),queue[1]);
+next=panels.cycleTodoPanelSource(next,'later',1);assert.deepEqual(panels.getTodoPanelSource(next,'later'),queue[0]);
+assert.deepEqual(panels.getTodoPanelQueue(state,'do'),panels.allTodoPanelSources(state));
+assert.throws(()=>panels.setTodoPanelQueue(state,'do',[]));assert.throws(()=>panels.setTodoPanelQueue(state,'do',[queue[0],queue[0]]));
+assert.deepEqual(panels.getTodoPanelQueue(categories.deleteTodoCategory(next,'fun'),'later'),[queue[1]]);
+assert.equal(schedule.shiftScheduleDate('2028-01-31',1,'month'),'2028-02-29');
+assert.equal(schedule.shiftScheduleDate('2027-01-31',1,'month'),'2027-02-28');
+assert.equal(schedule.shiftScheduleDate('2026-03-31',-1,'month'),'2026-02-28');
+assert.equal(schedule.shiftScheduleDate('2026-01-01',-7),'2025-12-25');
+const empty={version:1,domains:[{id:'work',name:'工作',iconId:'work',longTermGoal:null,shortTermGoal:null,habits:[],positiveRecords:[],negativeRecords:[]}],completedGoals:[]};
+let draft=progress.newProgressDraft('work');const row={...progress.newProgressInput(),content:' 独立负记录 '};
+draft=progress.writeProgressInput(draft,'negative',row);
+let saved=progress.saveAutoProgressDraft(empty,null,draft);
+assert.equal(saved.domains[0].negativeRecords.length,1);assert.equal(saved.domains[0].positiveRecords.length,0);
+assert.equal(progress.isProgressDraft(JSON.parse(JSON.stringify(draft))),true);
+const positive={...progress.newProgressInput(),content:'独立正记录'};
+let added=progress.writeProgressInput(draft,'positive',positive);saved=progress.saveAutoProgressDraft(saved,draft,added);
+assert.equal(saved.domains[0].positiveRecords.length,1);
+const removed=progress.clearProgressInput(added,row.id),cleared=progress.saveAutoProgressDraft(saved,added,removed);
+assert.equal(cleared.domains[0].negativeRecords.length,0);assert.equal(cleared.domains[0].positiveRecords[0].id,positive.id);
+const conflicted=structuredClone(saved);conflicted.domains[0].negativeRecords[0].content='其他端修改';
+assert.throws(()=>progress.saveAutoProgressDraft(conflicted,added,removed),/已修改/);
+assert.equal(progress.saveAutoProgressDraft(cleared,added,removed,true),cleared);
+const invalid=structuredClone(added);invalid.extraRecords[1].record.id=invalid.extraRecords[0].record.id;assert.equal(progress.isProgressDraft(invalid),false);
+console.log('PASS independent records, atomic removal/conflict/retry, per-panel queue cycle/deletion/no undo, real calendar month ends.');

@@ -2,10 +2,24 @@ import { todoQuadrants, todoQuadrant, type Todo, type TodoState, type TodoPanelI
 import { moveTodo, orderTodos, saveTodoOrder, retryTodoMove } from './todo-data';
 import { TODO_INBOX, todoCategory, todoCategoryChoices } from './todo-categories';
 
+export const todoPanelSourceKey=(source:TodoPanelSource)=>source.kind==='quadrant'?`quadrant:${source.quadrantId}`:`category:${source.categoryId}`;
+export function allTodoPanelSources(state:Pick<TodoState,'categories'>):TodoPanelSource[]{return [...todoQuadrants.map(item=>({kind:'quadrant' as const,quadrantId:item.id})),...todoCategoryChoices(state).map(item=>({kind:'category' as const,categoryId:item.id}))];}
+export function getTodoPanelQueue(state:TodoState,slot:TodoPanelId):TodoPanelSource[]{
+ const available=allTodoPanelSources(state),keys=new Set(available.map(todoPanelSourceKey)),seen=new Set<string>();
+ const raw=state.panelQueues?.[slot];
+ const queue=(Array.isArray(raw)?raw:available).filter(source=>{if(!source||!['quadrant','category'].includes(source.kind))return false;const key=todoPanelSourceKey(source);if(!keys.has(key)||seen.has(key))return false;seen.add(key);return true;});
+ return queue.length?queue:[getTodoPanelSource(state,slot)];
+}
+export function setTodoPanelQueue(state:TodoState,slot:TodoPanelId,queue:readonly TodoPanelSource[]):TodoState{
+ const allowed=new Set(allTodoPanelSources(state).map(todoPanelSourceKey));
+ if(!todoQuadrants.some(item=>item.id===slot)||!queue.length||queue.length>allowed.size||queue.some(source=>!allowed.has(todoPanelSourceKey(source)))||new Set(queue.map(todoPanelSourceKey)).size!==queue.length)throw new Error('请至少选择一个有效显示项');
+ const current=getTodoPanelSource(state,slot),source=queue.some(item=>todoPanelSourceKey(item)===todoPanelSourceKey(current))?current:queue[0];
+ if(JSON.stringify(state.panelQueues?.[slot])===JSON.stringify(queue)&&todoPanelSourceKey(source)===todoPanelSourceKey(current))return state;
+ return {...state,panelQueues:{...state.panelQueues,[slot]:[...queue]},panelSources:{...state.panelSources,[slot]:source}};
+}
 export function cycleTodoPanelSource(state: TodoState, slot: TodoPanelId, direction: number): TodoState {
-  const sources: TodoPanelSource[] = [...todoQuadrants.map(item => ({ kind: 'quadrant' as const, quadrantId: item.id })), ...todoCategoryChoices(state).map(item => ({ kind: 'category' as const, categoryId: item.id }))];
-  const selected = JSON.stringify(getTodoPanelSource(state, slot)), at = Math.max(0, sources.findIndex(item => JSON.stringify(item) === selected));
-  return setTodoPanelSource(state, slot, sources[(at + (direction < 0 ? -1 : 1) + sources.length) % sources.length]);
+ const sources=getTodoPanelQueue(state,slot),selected=todoPanelSourceKey(getTodoPanelSource(state,slot)),at=sources.findIndex(item=>todoPanelSourceKey(item)===selected);
+ return setTodoPanelSource(state,slot,sources[(at+(direction<0?-1:1)+sources.length)%sources.length]);
 }
 
 export function getTodoPanelSource(state: TodoState, slot: TodoPanelId): TodoPanelSource {

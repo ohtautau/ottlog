@@ -1,5 +1,6 @@
+import {View} from '@tarojs/components';
 import { showAppMessage } from '../lib/app-dialog';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { EntityTitleInput } from './entity-title-field';
 import { ChoiceButton } from './ui-button';
 import { usePersonalToolState } from '../lib/use-personal-tool-state';
@@ -17,10 +18,10 @@ import { PinSymbol } from './manage-symbol';
 const notify = (error: unknown) => { void showAppMessage({ title: error instanceof Error ? error.message : '操作失败，请重试', icon: 'none' }); };
 
 /** Memo-specific controls used by the shared creator and the original-record editor. */
-export default function MemoEditorFields({ draft, onChange, tagsText, onTagsChange, tagOptions, disabled, owner, onBusyChange, autoFocus, minimal = false, showTags = true, insertionSignal = 0, preview, onPreviewChange }: {
+export default function MemoEditorFields({ draft, onChange, tagsText, onTagsChange, tagOptions, disabled, owner, onBusyChange, autoFocus, minimal = false, showTags = true, insertionSignal = 0, preview, onPreviewChange, actions }: {
   draft: Memo; onChange: (next: Memo) => void; tagsText: string; onTagsChange: (text: string) => void;
   tagOptions: readonly string[]; disabled: boolean; owner: string; onBusyChange?: (busy: boolean) => void;
-  autoFocus?: boolean; minimal?: boolean; showTags?: boolean; insertionSignal?: number; preview?:boolean; onPreviewChange?:(value:boolean)=>void;
+  actions?:ReactNode; autoFocus?: boolean; minimal?: boolean; showTags?: boolean; insertionSignal?: number; preview?:boolean; onPreviewChange?:(value:boolean)=>void;
 }) {
   const memoSource = usePersonalToolState('memos', initialMemoState);
   // Editors mount after the page's onShow, so initialize their read-only source.
@@ -47,9 +48,10 @@ export default function MemoEditorFields({ draft, onChange, tagsText, onTagsChan
   }
 
   return <>
+    {actions && <View className='entry-pane-heading'><View/><View className='entry-pane-actions'><PrioritySelect className='memo-priority-field' ariaLabel={`选择便签优先度：${habitPriorityLabels[priority]}`} triggerClassName='memo-priority-trigger' open={priorityOpen} onOpenChange={setPriorityOpen} disabled={locked} options={habitPriorities.map(value => ({ value, label: habitPriorityLabels[value], ariaLabel: `优先度${habitPriorityLabels[value]}`, color: memoPriorityColor(value), outlined: value === 'none' }))} value={priority} onChange={value => change({ priority: value })} />{actions}</View></View>}
     <MemoFieldsLayout title={<>
         <EntityTitleInput className='memo-title-input' ariaLabel='便签标题' focus={titleFocused} onBlur={() => setTitleFocused(false)} disabled={locked} value={draft.title} placeholder='准备记下什么？' maxlength={Math.max(80, draft.title.length)} cursorSpacing={96} adjustPosition onInput={event => change({ title: event.detail.value })} />
-        <PrioritySelect className='memo-priority-field' ariaLabel={`选择便签优先度：${habitPriorityLabels[priority]}`} triggerClassName='memo-priority-trigger' open={priorityOpen} onOpenChange={setPriorityOpen} disabled={locked} options={habitPriorities.map(value => ({ value, label: habitPriorityLabels[value], ariaLabel: `优先度${habitPriorityLabels[value]}`, color: memoPriorityColor(value), outlined: value === 'none' }))} value={priority} onChange={value => change({ priority: value })} />
+        {!actions && <PrioritySelect className='memo-priority-field' ariaLabel={`选择便签优先度：${habitPriorityLabels[priority]}`} triggerClassName='memo-priority-trigger' open={priorityOpen} onOpenChange={setPriorityOpen} disabled={locked} options={habitPriorities.map(value => ({ value, label: habitPriorityLabels[value], ariaLabel: `优先度${habitPriorityLabels[value]}`, color: memoPriorityColor(value), outlined: value === 'none' }))} value={priority} onChange={value => change({ priority: value })} />}
       </>} body={<MarkdownNoteEditor value={draft.body} images={draft.images} onChange={body => change({ body })} onImagesChange={images => change({ images })}
         owner={owner} recordId={draft.id} disabled={locked} maxLength={6000} ariaLabel='便签内容' placeholder={minimal ? '备注' : '写下内容…'} minimal={minimal} preview={preview} onPreviewChange={onPreviewChange} emptyPreviewPlaceholder='备注' insertionSignal={insertionSignal} showImageInsertion={!minimal}
         canInsertImage={memoSource.ready && memoSource.owner === owner && isMemoState(memoSource.value)}

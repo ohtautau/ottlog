@@ -1,6 +1,6 @@
 /* Compact controls share a fixed type scale; object cards own their content layout. */
 page {
-  --control-font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", sans-serif;
+  --control-font-family: var(--app-font-family,-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif);
   --control-font-size: 14PX;
   --control-font-weight: 500;
   --control-primary-font-size: 16PX;

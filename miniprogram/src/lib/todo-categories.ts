@@ -26,6 +26,7 @@ export function deleteTodoCategory(state: TodoState, id: string): TodoState {
     const source = panelSources[slot];
     if (source?.kind === 'category' && source.categoryId === id) delete panelSources[slot];
   }
-  return { ...state, categories: state.categories.filter(item => item.id !== id), panelSources,
+  const panelQueues=state.panelQueues&&Object.fromEntries(Object.entries(state.panelQueues).map(([slot,queue])=>[slot,queue?.filter(source=>source.kind!=='category'||source.categoryId!==id)]));
+  return { ...state, ...(panelQueues?{panelQueues}:{}), categories: state.categories.filter(item => item.id !== id), panelSources,
     tasks: state.tasks.map(task => task.categoryId === id ? { ...task, categoryId: '' } : task) };
 }

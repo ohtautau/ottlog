@@ -20,7 +20,7 @@ import TodoEditorFields from '../../components/todo-editor-fields';
 import TaskDetailEditor from '../../components/task-detail-editor';
 import TodoCategoryField from '../../components/todo-category-field';
 import TodoPanelPicker from '../../components/todo-panel-picker';
-import { getTodoPanelSource, todoPanelPresentation, todoMatchesPanel, setTodoPanelSource, moveTodoToPanel, retryTodoPanelMove, cycleTodoPanelSource } from '../../lib/todo-panel-source';
+import { getTodoPanelSource, todoPanelPresentation, todoMatchesPanel, setTodoPanelSource, moveTodoToPanel, retryTodoPanelMove, cycleTodoPanelSource, getTodoPanelQueue, setTodoPanelQueue } from '../../lib/todo-panel-source';
 import { autoSaveTodo, todoEditSnapshot } from '../../lib/todo-autosave';
 import { ChoicePopover, TagChoiceRow, PopoverHeading } from '../../components/form-options';
 import TagTextInput from '../../components/tag-text-input';
@@ -379,7 +379,7 @@ export default function Todos() {
     {taskUndo.notice && <OperationToast message={taskUndo.notice.message} busy={taskUndo.busy} onUndo={taskUndo.notice.undo ? () => { void taskUndo.undo(); } : undefined} />}
     {panelEditorOpen && <View className='todo-panel-editor-overlay'><SheetBackdrop onClose={()=>setPanelEditorOpen(false)} /><View className='todo-panel-editor' role='dialog' ariaLabel='编辑象限显示'>
       <EditorHeading title='编辑象限显示' actions={<ActionButton appearance='icon' ariaLabel='关闭象限显示编辑' onClick={()=>setPanelEditorOpen(false)}>×</ActionButton>} />
-      <View className='todo-panel-editor-rows'>{todoQuadrants.map((slot,index)=> <View className='todo-panel-editor-row' key={slot.id}><Text>{['左上','右上','左下','右下'][index]}</Text><TodoPanelPicker owner={owner} categories={state.categories} value={getTodoPanelSource(state,slot.id as TodoPanelId)} trigger={<Text>{todoPanelPresentation(state,slot.id as TodoPanelId).title}</Text>} disabled={!writable || busy} ariaLabel={`更换${slot.title}区域显示`} onChange={async source=>{await change(previous=>setTodoPanelSource(previous,slot.id as TodoPanelId,source));if(hasVolatilePersonalTool('todos',owner))throw new Error('显示方式尚未保存，请重试');}} /></View>)}</View>
+      <View className='todo-panel-editor-rows'>{todoQuadrants.map((slot,index)=> <View className='todo-panel-editor-row' key={slot.id}><Text>{['左上','右上','左下','右下'][index]}</Text><TodoPanelPicker queue={getTodoPanelQueue(state,slot.id as TodoPanelId)} onQueueChange={async queue=>{await change(previous=>setTodoPanelQueue(previous,slot.id as TodoPanelId,queue));if(hasVolatilePersonalTool('todos',owner))throw new Error('队列尚未保存，请重试');}} owner={owner} categories={state.categories} value={getTodoPanelSource(state,slot.id as TodoPanelId)} trigger={<Text>{todoPanelPresentation(state,slot.id as TodoPanelId).title}</Text>} disabled={!writable || busy} ariaLabel={`更换${slot.title}区域显示`} onChange={async source=>{await change(previous=>setTodoPanelSource(previous,slot.id as TodoPanelId,source));if(hasVolatilePersonalTool('todos',owner))throw new Error('显示方式尚未保存，请重试');}} /></View>)}</View>
     </View></View>}
     {draft && <TaskDetailEditor draft={draft} onChange={editDraft} onClose={() => { void closeEditor(); }} disabled={imageBusy || !!deletion || !writable || draftOwner.current !== owner} pending={busy} error={autosaveError} onRetry={() => { setAutosaveError(''); void persistDraft(); }}
       category={<TodoCategoryField value={draft.categoryId} owner={owner} disabled={imageBusy || busy || !writable} onChange={categoryId => { const task = liveDraft.current; if (task && draftOwner.current === currentOwner.current) editDraft({ ...task, categoryId }); }} />}
@@ -387,7 +387,7 @@ export default function Todos() {
       more={<ActionMenu ariaLabel='更多任务操作' open={moreOpen} onOpenChange={setMoreOpen} panelWidth={200} layerClassName='task-detail-popover-layer'>
         <ActionButton appearance='quiet' onClick={() => { setMoreOpen(false); setNextStepsOpen(!nextStepsOpen); }}>后续任务</ActionButton>
         <ActionButton appearance='quiet' disabled={!savedDraft} onClick={() => { setMoreOpen(false); void closeEditor().then(closed => { if (closed) void openPomodoro({ task: draft.id, event: draft.title, minutes: '25' }); }); }}>为任务专注</ActionButton>
-        <ActionButton appearance='quiet' onClick={() => { setMoreOpen(false); void closeEditor(); }}>收起</ActionButton>
+
         <ActionButton appearance='quiet' intent='danger' onClick={() => { setMoreOpen(false); requestDelete(); }}>删除任务</ActionButton>
       </ActionMenu>}
       onToggleComplete={() => { void persistDraft().then(saved => { if (saved && liveDraft.current) void toggle(liveDraft.current); }); }} onSchedule={() => setScheduleOpen(true)} scheduleOpen={scheduleOpen} scheduleLabel={draft.dueDate || draft.reminderAt || draft.recurrence ? scheduleSummary(draft, today) : '日期&提醒'}

@@ -1,6 +1,6 @@
 /** Hide routine storage notices on tool pages without changing store state. */
 export function toolPageStatus(status: string): string {
-  return status === '保存在本机 · 登录后可使用账号同步' || status === '已连接账号 · 修改自动保存' ? '' : status;
+  return status === '保存在本机 · 登录后可使用账号同步' || status === '已连接账号 · 修改自动保存' || status === '已保存到账号' ? '' : status;
 }
 
 export function personalDataNotice(authenticated: boolean): string {

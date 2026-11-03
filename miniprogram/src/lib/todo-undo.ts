@@ -4,10 +4,10 @@ import { MAX_TODO_TASKS } from './todo-data';
 const same = (left: unknown, right: unknown) => JSON.stringify(left) === JSON.stringify(right);
 const ids = (state: TodoState) => state.tasks.map(task => task.id);
 export function isTodoDisplayOnlyChange(before: TodoState, after: TodoState): boolean {
-  const { panelSources: _before, ...oldContent } = before, { panelSources: _after, ...newContent } = after;
+  const { panelSources: _before, panelQueues:_oldQueues, ...oldContent } = before, { panelSources: _after, panelQueues:_newQueues, ...newContent } = after;
   // Retiring automatic sorting may normalize this setting on the first remap.
   // The task order has not changed, so this still counts as a display action.
-  if (!same(_before, _after) && after.sort === 'custom') {
+  if ((!same(_before, _after)||!same(_oldQueues,_newQueues)) && after.sort === 'custom') {
     return same({ ...oldContent, sort: 'custom' }, newContent);
   }
   return same(oldContent, newContent);
@@ -33,7 +33,7 @@ export function undoTodoOperation(current: TodoState, before: TodoState, after: 
   const currentMap = new Map(current.tasks.map(task => [task.id, task]));
   if (beforeMap.size !== before.tasks.length || afterMap.size !== after.tasks.length || currentMap.size !== current.tasks.length) throw new Error('任务编号不兼容，无法撤销');
   const affected = [...new Set([...beforeMap.keys(), ...afterMap.keys()])].filter(id => !same(beforeMap.get(id), afterMap.get(id)));
-  const stateFields = (['categories', 'sort', 'panelSources'] as const).filter(key => !same(before[key], after[key]));
+  const stateFields = (['categories', 'sort', 'panelSources', 'panelQueues'] as const).filter(key => !same(before[key], after[key]));
   const reordered = before.tasks.length === after.tasks.length && before.tasks.every(task => afterMap.has(task.id)) && !same(ids(before), ids(after));
   const orderMatches = (reference: TodoState) => same(current.tasks.filter(task => afterMap.has(task.id)).map(task => task.id), reference.tasks.filter(task => currentMap.has(task.id)).map(task => task.id));
   // Retrying a failed local write can see the already-restored memory snapshot.

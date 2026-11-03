@@ -13,3 +13,6 @@ assert.doesNotMatch(model.personalDataNotice(true), /保存在本机/);
 assert.match(model.personalDataNotice(false), /不会自动合并/);
 assert.match(model.personalDataNotice(true), /当前账号/);
 console.log('PASS tool status presentation: routine guest notice centralized, owner-specific guidance, real save/sync failures preserved.');
+
+assert.equal(model.toolPageStatus('已保存到账号'),'');
+assert.equal(model.toolPageStatus('已保存到账号 · 本机缓存不可用'),'已保存到账号 · 本机缓存不可用');

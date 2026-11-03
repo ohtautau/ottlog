@@ -34,7 +34,7 @@ export function PinSymbol() {
   return <View className='pin-symbol' aria-hidden><View><View /><View /><View /></View></View>;
 }
 
-/** Completed-goal archives use a clock and rewind arrow, not a completion checkbox. */
+/** Archive/history entrances share the same outline pie chart. */
 export function CompletedGoalsHistorySymbol() {
   return <View className='completed-goals-history-symbol' aria-hidden><View /><View /><View /></View>;
 }

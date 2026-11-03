@@ -6,7 +6,6 @@ import { trimTextEnd } from '../../lib/text-whitespace';
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { ScrollView, Text, Textarea, View } from '@tarojs/components';
 import ActionButton from '../../components/ui-button';
-import ManageSymbol from '../../components/manage-symbol';
 import { openAccount } from '../../lib/account-navigation';
 import { displayedMottos, initialPersonalMottos, isPersonalMottos, MAX_MOTTO_LENGTH, mottoRotationMs, removeMotto, writeMotto } from '../../lib/motto-data';
 import { writeMottoRotation } from '../../lib/motto-settings';
@@ -28,7 +27,7 @@ export default function MottosPage() {
   const { value, setValue, ready, owner, status, retry } = usePersonalToolState('mottos', initialPersonalMottos);
   const defaults: string[] = [];
   const [editor, setEditor] = useState<{ owner: string; original: string | null } | null>(null);
-  const [more,setMore] = useState(false);
+  const [more,setMore] = useState(false),[pageMore,setPageMore]=useState(false);
   const inFlight=useRef<Promise<boolean>|null>(null),editGeneration=useRef(0);
   const [draft, setDraft] = useState('');
   const [message, setMessage] = useState('');
@@ -141,14 +140,14 @@ export default function MottosPage() {
     <AppDialogHost />
     <FloatingCreateButton className='mottos-add' label='创建格言' disabled={!writable || rotationBusy} onClick={() => open(null)} />
     <PageToolbar className='mottos-heading card-group-heading' leading={<Text className='mottos-count'>{mottos.length} 句</Text>}
-      manage={<ChoicePopover ariaLabel='格言轮播设置' open={!!currentRotation} onOpenChange={changeRotationOpen} disabled={!rotationWritable || busy || !!editor}
-        trigger={<ManageSymbol />} triggerIconOnly triggerSize='compact' showIndicator={false} panelWidth={240} heightMode='content' panelClassName='mottos-rotation-popover' contentKey={rotationError}
+      manage={<><ActionMenu ariaLabel='格言页面更多操作' open={pageMore} onOpenChange={setPageMore} disabled={!rotationWritable||busy||!!editor}><ActionButton appearance='quiet' onClick={()=>{setPageMore(false);changeRotationOpen(true);}}>设置</ActionButton></ActionMenu><View id='mottos-settings-anchor'/><ChoicePopover anchorId='mottos-settings-anchor' placement='center' ariaLabel='格言轮播设置' open={!!currentRotation} onOpenChange={changeRotationOpen} disabled={!rotationWritable || busy || !!editor}
+         panelWidth={240} heightMode='content' panelClassName='mottos-rotation-popover' contentKey={rotationError}
         heading={<PopoverHeading className='mottos-rotation-heading' title='轮播设置' actions={<ActionButton appearance='icon' size='compact' ariaLabel='关闭轮播设置' disabled={rotationBusy} onClick={rotationClose.requestClose}>×</ActionButton>} />}
         footer={<View><PopoverActions className='mottos-rotation-actions' separator={false}><ActionButton appearance='primary' size='compact' width='fill' loading={rotationBusy} disabled={rotationBusy || wheelMoving} onClick={() => { void saveRotation(); }}>保存</ActionButton></PopoverActions>{rotationError && <View className='mottos-rotation-error' role='alert'>{rotationError}</View>}</View>}>
         <DurationWheelPicker label='格言轮播间隔' value={currentRotation?.text || '15'} max={2147483} unit='seconds' disabled={rotationBusy || currentRotation?.pending !== undefined} onMovingChange={setWheelMoving}
           onChange={text => { if (currentRotation && !rotationSaving.current) { setRotationDraft({ ...currentRotation, text }); setRotationError(''); } }} />
         <Text className='wheel-duration-total'>共 {currentRotation?.text || '15'} 秒</Text>
-      </ChoicePopover>}
+      </ChoicePopover></>}
        />
     {!ready || !valid ? <View className='mottos-empty'><Text>{!ready ? status : '数据格式暂不兼容，请重新读取'}</Text><ActionButton className='button-label' onClick={retry}>重新读取</ActionButton></View> : !signedIn ? <View className='mottos-empty'><Text>登录后查看自己的格言</Text><ActionButton appearance='primary' onClick={() => { void openAccount(); }}>登录账号</ActionButton></View> : <ScrollView className='mottos-list-scroll' scrollY enhanced bounces={false} showScrollbar={false}>
       <CardGroupContent className='mottos-list floating-create-content'>{mottos.map((motto, index) => <MottoRow key={`${index}:${motto}`} text={trimTextEnd(motto)} index={index} disabled={!writable} onEdit={() => open(motto)} />)}
@@ -158,8 +157,8 @@ export default function MottosPage() {
     {!!status && <View className='mottos-status'><View className='mottos-status-dot' /><Text>{status}</Text></View>}
     {editor && <DocumentEditorSheet compact title={editor.original===null ? '创建格言' : '编辑格言'} onClose={()=>{void closeEditor();}}
       heading={<ActionMenu ariaLabel='格言更多操作' open={more} onOpenChange={setMore} disabled={busy}>
-        <ActionButton appearance='quiet' onClick={()=>{setMore(false);void closeEditor();}}>收起</ActionButton>
-        {editor.original!==null && <ActionButton appearance='quiet' intent='danger' disabled={busy} onClick={()=>{setMore(false);void commit(true);}}>删除格言</ActionButton>}
+
+        {editor.original===null && <ActionButton appearance='quiet' onClick={()=>{setMore(false);setDraft('');draftRef.current='';}}>清空输入</ActionButton>}{editor.original!==null && <ActionButton appearance='quiet' intent='danger' disabled={busy} onClick={()=>{setMore(false);void commit(true);}}>删除格言</ActionButton>}
       </ActionMenu>}
       footer={<SheetActions className='document-autosave-footer'><View className='document-autosave-status'>{message ? <><View role='alert'>{message}</View><ActionButton appearance='quiet' disabled={busy} onClick={()=>{setMessage('');void commit();}}>重试</ActionButton></> : busy ? <Text>保存中…</Text> : null}</View></SheetActions>}>
       <EditorFieldsLayout><Textarea className='mottos-input compact-motto-input' ariaLabel='格言内容' placeholder='想留给自己的一句话…' value={draft} disabled={busy || !!editorPending.current} maxlength={MAX_MOTTO_LENGTH} autoHeight cursorSpacing={96} adjustPosition fixed showConfirmBar={false} onInput={event=>{draftRef.current=event.detail.value;setDraft(event.detail.value);setMessage('');}} />

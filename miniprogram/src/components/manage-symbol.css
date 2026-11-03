@@ -31,10 +31,9 @@
 .pin-symbol > view > view:nth-child(2) { left: 4PX; top: 9PX; width: 14PX; height: 2PX; background: currentColor; }
 .pin-symbol > view > view:last-child { left: 10PX; top: 10PX; width: 2PX; height: 9PX; background: currentColor; }
 .completed-goals-history-symbol { position: relative; display: block; flex: none; width: 20PX; height: 20PX; color: inherit; }
-.completed-goals-history-symbol > view:first-child { position: absolute; inset: 2PX; border: 1.5PX solid currentColor; border-left-color: transparent; border-radius: 50%; box-sizing: border-box; transform: rotate(25deg); }
-.completed-goals-history-symbol > view:nth-child(2) { position: absolute; left: 1PX; top: 2PX; width: 6PX; height: 6PX; border-left: 1.5PX solid currentColor; border-bottom: 1.5PX solid currentColor; box-sizing: border-box; }
-.completed-goals-history-symbol > view:last-child { position: absolute; left: 9.25PX; top: 5PX; width: 1.5PX; height: 6PX; border-radius: 1PX; background: currentColor; }
-.completed-goals-history-symbol > view:last-child::after { content: ''; position: absolute; left: 0; bottom: 0; width: 5PX; height: 1.5PX; border-radius: 1PX; background: currentColor; }
+.completed-goals-history-symbol > view:first-child { position:absolute;inset:2PX;border:1.5PX solid currentColor;border-radius:50%;box-sizing:border-box; }
+.completed-goals-history-symbol > view:nth-child(2) { position:absolute;left:9.25PX;top:2PX;width:1.5PX;height:8PX;background:currentColor; }
+.completed-goals-history-symbol > view:last-child { position:absolute;left:9.25PX;top:9.25PX;width:8PX;height:1.5PX;background:currentColor; }
 
 .selection-symbol { position:relative;display:block;width:22PX;height:22PX; }
 .selection-symbol > view { position:absolute;width:14PX;height:14PX;border:2PX solid currentColor;border-radius:3PX;box-sizing:border-box; }

@@ -153,3 +153,11 @@ export function scheduleSummary(schedule: TodoSchedule, today: string): string {
   if (schedule.recurrence) parts.push(recurrenceLabel(schedule.recurrence));
   return parts.join(' · ') || '日期';
 }
+
+/** Offset local calendar dates, clamping month ends rather than adding 30 days. */
+export function shiftScheduleDate(base:string,offset:number,unit:'day'|'month'='day'):string {
+ const date=calendarDate(base);if(!date)throw new Error('请选择有效日期');
+ if(unit==='month'){const day=date.getDate();date.setDate(1);date.setMonth(date.getMonth()+offset);const end=new Date(date);end.setMonth(end.getMonth()+1);end.setDate(0);date.setDate(Math.min(day,end.getDate()));}
+ else date.setDate(date.getDate()+offset);
+ const result=dateKey(date);if(result<'1000-01-01'||result>'9999-12-31')throw new Error('请选择有效日期');return result;
+}

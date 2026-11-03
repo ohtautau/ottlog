@@ -5,8 +5,8 @@ import './time-wheel-picker.css';
 import type { CSSProperties } from 'react';
 import { useEffect, useRef } from 'react';
 
-const WHEEL_ROW_HEIGHT = 32;
-const WHEEL_VISIBLE_ROWS = 5;
+const WHEEL_ROW_HEIGHT = 28;
+const WHEEL_VISIBLE_ROWS = 3;
 
 export type WheelColumn = { label: string; ariaLabel: string; values: readonly string[]; value: string };
 /** The only owner of wheel geometry, typography, indicator and fade. */
@@ -15,10 +15,10 @@ export default function WheelPicker({ columns, label, prefix, disabled = false, 
   onChange: (values: string[]) => void; onMovingChange?: (moving: boolean) => void;
 }) {
   const moving = useRef(new Set<number>());
-  const current = useRef({ columns, onChange }); current.current = { columns, onChange };
+  const current = useRef({ columns, onChange, onMovingChange }); current.current = { columns, onChange, onMovingChange };
   const silent = typeof Taro.getEnv === 'function' && Taro.getEnv() === Taro.ENV_TYPE.WEAPP;
-  useEffect(() => () => onMovingChange?.(false), [onMovingChange]);
-  return <View className={`time-wheel${disabled ? ' is-disabled' : ''}`} style={{ '--wheel-row-height': `${WHEEL_ROW_HEIGHT}px`, '--wheel-height': `${WHEEL_ROW_HEIGHT * WHEEL_VISIBLE_ROWS}px` } as CSSProperties}>
+  useEffect(() => () => current.current.onMovingChange?.(false), []);
+  return <View className={`time-wheel${disabled ? ' is-disabled' : ''}`} style={{ '--wheel-row-height': `${WHEEL_ROW_HEIGHT}px`, '--wheel-center-offset': `${WHEEL_ROW_HEIGHT * (WHEEL_VISIBLE_ROWS-1)/2}px`, '--wheel-height': `${WHEEL_ROW_HEIGHT * WHEEL_VISIBLE_ROWS}px` } as CSSProperties}>
     <View className='time-wheel-labels'>{prefix && <Text />}{columns.map(column => <Text key={column.ariaLabel}>{column.label}</Text>)}</View>
     <View className='time-wheel-stage'>
       {prefix && <Text className='time-wheel-prefix'>{prefix}</Text>}

@@ -8,7 +8,9 @@
   margin: 0;
   color: #e0e8f3;
   background: #111a27;
-  font-family: var(--copy-font, "Microsoft YaHei", sans-serif);
+  --app-font-family:var(--copy-font,"Microsoft YaHei",sans-serif);
+  --control-font-family:var(--app-font-family);
+  font-family:var(--app-font-family);
   font-size: 16px;
   line-height: 1.65;
   overflow-wrap: anywhere;

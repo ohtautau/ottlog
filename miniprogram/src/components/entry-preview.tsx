@@ -22,10 +22,7 @@ export default function EntryPreview({ draft, domains }: { draft: EntryDraft; do
   </EditorFieldsLayout>;
   if (draft.mode === 'progress' && draft.progress) return <EditorFieldsLayout className='progress-editor-fields entry-preview'>
     <View className='progress-domain-row entry-preview-domain'><Text>{trimTextEnd(domainDisplayName(domains.domains.find(domain => domain.id === draft.progress!.domainId)?.name || OTHER_DOMAIN_NAME))}</Text></View>
-    <View className='progress-record-pairs'>{Array.from({ length: 1 + (draft.progress.pairs?.length || 0) }, (_, pairIndex) => <View className='progress-record-pair' key={pairIndex}>{(['negative', 'positive'] as const).map(slot => {
-      const row = progressRows(draft.progress!).find(item => item.pairIndex === pairIndex && item.slot === slot)!;
-      return <ProgressRecordField key={row.record.id} slot={slot} kind={row.kind} pairIndex={pairIndex}>{note(row.record.content, '有什么需要记录的？', row.record.images, true, true)}</ProgressRecordField>;
-    })}</View>)}</View>
+    <View className='progress-columns'>{(['negative','positive'] as const).map(kind=><View className={`progress-record-column is-${kind}`} key={kind}><View className={`progress-record-heading is-${kind}`}><Text>{kind==='negative'?'负记录':'正记录'}</Text></View>{progressRows(draft.progress!).filter(row=>row.kind===kind).map((row,index)=><ProgressRecordField key={row.record.id} slot={kind} kind={kind} pairIndex={index}>{note(row.record.content,'备注',row.record.images,true,true)}</ProgressRecordField>)}</View>)}</View>
   </EditorFieldsLayout>;
   const task = draft.mode === 'task';
   return <EditorFieldsLayout className={`entry-preview${task ? '' : ' memo-editor-fields'}`} style={task ? undefined : memoSurfaceStyle()}>

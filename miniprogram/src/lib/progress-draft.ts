@@ -3,10 +3,10 @@ import { validNoteImages } from './note-image-data';
 import { toolId } from './tool-records';
 import { findFallbackDomain, OTHER_DOMAIN_NAME } from './domain-fallback';
 
-type ProgressEntry = { kind: RecordKind; record: RecordItem };
+export type ProgressEntry = { kind: RecordKind; record: RecordItem };
 export type ProgressPair = { positive: RecordItem; negative: RecordItem; kinds: [RecordKind, RecordKind] };
 export const MAX_PROGRESS_PAIRS = 20;
-export type ProgressDraft = { domainId: string; positive: RecordItem; negative: RecordItem; pair?: true; kinds?: [RecordKind, RecordKind]; pairs?: ProgressPair[]; single?: true; kind?: RecordKind; legacy?: ProgressEntry[] };
+export type ProgressDraft = { domainId: string; positive: RecordItem; negative: RecordItem; pair?: true; kinds?: [RecordKind, RecordKind]; pairs?: ProgressPair[]; extraRecords?:ProgressEntry[]; single?: true; kind?: RecordKind; legacy?: ProgressEntry[] };
 export type ProgressRow = ProgressEntry & { slot: 'positive' | 'negative'; pairIndex: number };
 function newProgressPair(): ProgressPair {
   const createdAt = new Date().toISOString();
@@ -24,8 +24,9 @@ export function isProgressDraft(value: unknown): value is ProgressDraft {
   const validKinds = (kinds: unknown): kinds is [RecordKind, RecordKind] => Array.isArray(kinds) && kinds.length === 2 && Array.from(kinds).every(isKind);
   const validPairs = draft.pairs === undefined || draft.pair === true && Array.isArray(draft.pairs) && draft.pairs.length < MAX_PROGRESS_PAIRS
     && Array.from(draft.pairs).every(item => !!item && valid(item.positive) && valid(item.negative) && validKinds(item.kinds));
-  const records = [draft.positive, draft.negative, ...(Array.isArray(draft.pairs) ? draft.pairs.flatMap(item => item ? [item.positive, item.negative] : []) : [])];
-  return typeof draft.domainId === 'string' && valid(draft.positive) && valid(draft.negative) && validPairs
+  const extraValid=draft.extraRecords===undefined || Array.isArray(draft.extraRecords) && draft.extraRecords.length<=MAX_PROGRESS_PAIRS*2 && Array.from(draft.extraRecords).every(item=>!!item && isKind(item.kind) && valid(item.record));
+  const records = [draft.positive, draft.negative, ...(Array.isArray(draft.pairs) ? draft.pairs.flatMap(item => item ? [item.positive, item.negative] : []) : []),...(Array.isArray(draft.extraRecords)?draft.extraRecords.map(item=>item?.record):[])];
+  return typeof draft.domainId === 'string' && valid(draft.positive) && valid(draft.negative) && validPairs && extraValid
     && new Set(records.map(record => record?.id)).size === records.length
     && (draft.single === undefined || draft.single === true) && (draft.kind === undefined || isKind(draft.kind))
     && (draft.pair === undefined ? draft.kinds === undefined : draft.pair === true && draft.single === undefined && draft.kind === undefined
@@ -43,7 +44,27 @@ export function progressRows(draft: ProgressDraft): ProgressRow[] {
       { pairIndex: index + 1, slot: 'positive', kind: pair.kinds[0], record: pair.positive },
       { pairIndex: index + 1, slot: 'negative', kind: pair.kinds[1], record: pair.negative },
     ]) : []),
+    ...(draft.extraRecords || []).map((entry,index)=>({...entry,slot:entry.kind,pairIndex:MAX_PROGRESS_PAIRS+index})),
   ];
+}
+export function newProgressInput():RecordItem {return {id:toolId(),content:'',images:[],createdAt:new Date().toISOString()};}
+/** Independent UI rows preserve old paired draft IDs and never re-sign old records. */
+export function writeProgressInput(draft:ProgressDraft,kind:RecordKind,record:RecordItem):ProgressDraft {
+  let next=pairedProgressDraft(draft);
+  const existing=progressRows(next).find(row=>row.record.id===record.id);
+  if(existing && existing.kind!==kind)throw new Error('记录类型已变化，请重新打开');
+  if(existing?.pairIndex===0)next={...next,[existing.slot]:record};
+  else if(existing && existing.pairIndex<MAX_PROGRESS_PAIRS)next={...next,pairs:next.pairs!.map((pair,index)=>index+1===existing.pairIndex?{...pair,[existing.slot]:record}:pair)};
+  else next={...next,extraRecords:existing ? next.extraRecords!.map(item=>item.record.id===record.id?{...item,record}:item) : [...(next.extraRecords || []),{kind,record}]};
+  if(!isProgressDraft(next) || progressRows(next).filter(row=>hasContent(row.record)).length>MAX_PROGRESS_PAIRS*2)throw new Error('最多同时填写40条记录');
+  return next;
+}
+/** Root/legacy slots remain compatible; independently added blank rows can be removed. */
+export function clearProgressInput(draft:ProgressDraft,id:string):ProgressDraft {
+  const row=progressRows(draft).find(item=>item.record.id===id);
+  if(!row)return draft;
+  if(row.pairIndex>=MAX_PROGRESS_PAIRS)return {...draft,extraRecords:draft.extraRecords?.filter(item=>item.record.id!==id)};
+  return writeProgressInput(draft,row.kind,{...row.record,content:'',images:[]});
 }
 /** Allocate a pair once per explicit add action; blank rows remain draft-only. */
 export function appendProgressPair(draft: ProgressDraft): ProgressDraft {
@@ -112,6 +133,14 @@ export function saveAutoProgressDraft(state: DomainState, baselineDraft: Progres
   const baselineDomain = baselineDraft?.domainId || findFallbackDomain(state.domains)?.id;
   const all = new Map(state.domains.flatMap(domain => (['positive', 'negative'] as const).flatMap(kind => domain[`${kind}Records`].map(record => [record.id, { domainId: domain.id, kind, record }] as const))));
   const changes: { id: string; domainId: string; kind: RecordKind; record: RecordItem | null }[] = [];
+  const currentIds=new Set(progressRows(draft).map(row=>row.record.id));
+  for(const [id,previous] of baselineRows) {
+    if(currentIds.has(id) || !hasContent(previous.record))continue;
+    const latest=all.get(id);
+    if(!latest && retryLocalClear)continue;
+    if(!latest || latest.domainId!==baselineDomain || latest.kind!==previous.kind || JSON.stringify({...latest.record,content:latest.record.content.trim(),images:latest.record.images||[]})!==JSON.stringify({...previous.record,content:previous.record.content.trim(),images:previous.record.images||[]}))throw new Error('原记录已修改、删除或移动，未覆盖其他内容');
+    changes.push({id,domainId:latest.domainId,kind:latest.kind,record:null});
+  }
   for (const row of progressRows(draft)) {
     const previous = baselineRows.get(row.record.id), latest = all.get(row.record.id);
     if (previous && hasContent(previous.record) && (!latest || latest.domainId !== baselineDomain || latest.kind !== previous.kind)) {

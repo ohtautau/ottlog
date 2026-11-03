@@ -2,16 +2,16 @@
 .time-wheel.is-disabled { pointer-events: none; opacity: .6; }
 .time-wheel-labels { display: flex; justify-content: center; color: #a8bdc6; font-size: 14PX; line-height: 20PX; text-align: center; }
 .time-wheel-labels > text { flex: 0 0 25%; min-width: 0; }
-.time-wheel-stage { position: relative; display: flex; align-items: center; justify-content: center; height: var(--wheel-height); overflow: hidden; background: transparent; -webkit-mask-image: linear-gradient(180deg,transparent 0%,rgba(0,0,0,.28) 16%,#000 40%,#000 60%,rgba(0,0,0,.28) 84%,transparent 100%); mask-image: linear-gradient(180deg,transparent 0%,rgba(0,0,0,.28) 16%,#000 40%,#000 60%,rgba(0,0,0,.28) 84%,transparent 100%); }
+.time-wheel-stage { position: relative; display: flex; align-items: center; justify-content: center; height: var(--wheel-height); overflow: hidden; background: transparent; -webkit-mask-image: linear-gradient(180deg,transparent 0%,rgba(0,0,0,.28) 12%,#000 33.333%,#000 66.667%,rgba(0,0,0,.28) 88%,transparent 100%); mask-image: linear-gradient(180deg,transparent 0%,rgba(0,0,0,.28) 12%,#000 33.333%,#000 66.667%,rgba(0,0,0,.28) 88%,transparent 100%); }
 .time-wheel-picker { width: 100%; height: var(--wheel-height); }
 .time-wheel-value { display: block; height: var(--wheel-row-height); line-height: var(--wheel-row-height); text-align: center; color: #e6eee4; font-size: 16PX; }
 .time-wheel-silent { display: flex; height: 100%; }
 .time-wheel-column { flex: 1; min-width: 0; height: 100%; overflow: hidden; touch-action: none; }
 .time-wheel-track { will-change: transform; }
 .time-wheel-column.is-snapping .time-wheel-track { transition: transform 180ms ease-out; }
-.time-wheel-spacer { height: calc(var(--wheel-row-height) * 2); }
+.time-wheel-spacer { height: var(--wheel-center-offset); }
 .time-wheel-prefix { flex: 0 0 25%; color: #a8bdc6; font-size: 14PX; line-height: var(--wheel-row-height); text-align: center; }
-.time-wheel-indicator { position: absolute; top: 40%; left: 0; right: 0; height: 20%; box-sizing: border-box; border-top: 1PX solid #46605f; border-bottom: 1PX solid #46605f; pointer-events: none; }
+.time-wheel-indicator { position: absolute; top: var(--wheel-center-offset); left: 0; right: 0; height: var(--wheel-row-height); box-sizing: border-box; border-top: 1PX solid #46605f; border-bottom: 1PX solid #46605f; pointer-events: none; }
 .time-wheel-fade { position: absolute; inset: 0; pointer-events: none; background: transparent; }
 .wheel-year-context { display: flex; align-items: center; justify-content: center; gap: 8PX; font-size: 14PX; }
 .wheel-duration-total { display: block; margin-top: 6PX; color: #a8bdc6; font-size: 14PX; text-align: center; }
