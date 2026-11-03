@@ -51,7 +51,7 @@ try {
       await expect(fab).toHaveAttribute('aria-label', label); await expect(fab.locator('.create-button-label')).toHaveCount(0);
       await expect(page.locator('.page-toolbar-create,.todo-quadrant-add')).toHaveCount(0);
       const box = await fab.boundingBox(); expect(box.width).toBe(56); expect(box.height).toBe(56);
-      expect(viewport.width - box.x - box.width).toBeCloseTo(16, 0); expect(viewport.height - box.y - box.height).toBeCloseTo(16, 0);
+      expect(viewport.width - box.x - box.width).toBeCloseTo(24, 0); expect(viewport.height - box.y - box.height).toBeCloseTo(24, 0);
       return box;
     }
     for (const [route, label, editor, close] of cases) {

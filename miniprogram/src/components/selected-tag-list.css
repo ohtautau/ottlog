@@ -1,0 +1,2 @@
+.selected-tag-list { display:flex;flex-wrap:wrap;gap:6PX;margin-top:16PX; }
+.selected-tag-list > .selected-tag-chip { --control-feedback-background:#30434c;--control-radius:999PX;flex:none;margin:0;max-width:100%;overflow-wrap:anywhere; }

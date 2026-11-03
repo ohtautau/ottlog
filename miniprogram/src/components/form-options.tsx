@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type ReactNode } from 'react';
+import { Children, isValidElement, useEffect, useRef, useState, type ReactNode } from 'react';
 import Taro from '@tarojs/taro';
 import { ScrollView, Text, View } from '@tarojs/components';
 import { SelectChevron } from './select-trigger';
@@ -45,6 +45,11 @@ export function ChoicePopover({ ariaLabel, open, onOpenChange, trigger, anchorId
   preferredSide?: 'auto' | 'above' | 'below';
   maxHeightRatio?: number; contentKey?: string; heading?: ReactNode; footer?: ReactNode; children: ReactNode;
 }) {
+  // Plain operation menus fit their labels; composed forms retain their own width.
+  const actionChildren = Children.toArray(children);
+  const actionLabels = !heading && !footer && actionChildren.length && actionChildren.every(child => isValidElement<{ children?: ReactNode }>(child) && child.type === ActionButton && typeof child.props.children === 'string')
+    ? actionChildren.map(child => (child as React.ReactElement<{ children: string }>).props.children) : [];
+  const actionLabelsKey = JSON.stringify(actionLabels);
   const [id] = useState(() => anchorId || triggerId || `form-choice-${++nextFieldId}`);
   const currentOpenChange = useRef(onOpenChange); currentOpenChange.current = onOpenChange;
   const [position, setPosition] = useState<{ left: number; top: number; bottom?: number; width: number; maxHeight: number; height: number } | null>(null);
@@ -72,11 +77,14 @@ export function ChoicePopover({ ariaLabel, open, onOpenChange, trigger, anchorId
       query.select(`#${id}-panel .form-popover-body`).boundingClientRect();
       query.select(`#${id}-panel .form-popover-heading`).boundingClientRect();
       query.select(`#${id}-panel .form-popover-footer`).boundingClientRect();
+      query.selectAll(`#${id}-layer .form-action-label-measure`).boundingClientRect();
       query.exec(results => {
         if (!active) return;
         const [anchor, layer, panel, body, header, actions] = results as (Rect | null)[];
         if (!anchor || !layer) return;
-        const gap = 8, edge = 12, width = Math.min(panelWidth, layer.width - edge * 2);
+        const labels = results[6] as Rect[] | null;
+        const labelWidth = labels?.length ? Math.max(...labels.map(label => label.width)) : 0;
+        const gap = 8, edge = 12, width = Math.min(labelWidth ? labelWidth + 48 : panelWidth, layer.width - edge * 2);
         const above = anchor.top - layer.top - edge - gap, below = layer.bottom - anchor.bottom - edge - gap;
         const limit = Math.min(layer.height - edge * 2, placement === 'center' ? layer.height : layer.height * maxHeightRatio);
         const height = Math.min(body ? body.height + (header?.height || 0) + (actions?.height || 0) + 2 : panel?.height || 220, limit);
@@ -90,12 +98,13 @@ export function ChoicePopover({ ariaLabel, open, onOpenChange, trigger, anchorId
     const timer = setTimeout(measure, 0);
     Taro.onWindowResize?.(measure);
     return () => { active = false; clearTimeout(timer); Taro.offWindowResize?.(measure); };
-  }, [open, disabled, renderLayer, id, panelWidth, heightMode, bodySpacing, placement, preferredSide, maxHeightRatio, contentKey]);
+  }, [open, disabled, renderLayer, id, panelWidth, heightMode, bodySpacing, placement, preferredSide, maxHeightRatio, contentKey, actionLabelsKey]);
   const triggerProps = { id, className: `button-label form-choice-trigger${triggerIconOnly && (!showIndicator || trigger == null) ? ' form-choice-trigger-icon' : ''} ${triggerClassName}${open ? ' is-open' : ''}`, size: triggerSize, width: triggerWidth, ariaLabel, 'aria-expanded': open, disabled, onClick: (event: { stopPropagation: () => void }) => { event.stopPropagation(); onOpenChange(!open); } };
   const triggerContent = <>{trigger}{showIndicator && <SelectChevron expanded={open} />}</>;
   const layer = renderLayer && open && !disabled ? <View id={`${id}-layer`} className={`form-popover-layer ${layerClassName}`} catchMove>
+      {!!actionLabels.length && <View className='form-action-labels-measure' aria-hidden>{actionLabels.map((label, index) => <Text key={index} className='form-action-label-measure'>{label}</Text>)}</View>}
       <View className='form-popover-backdrop' onClick={event => { event.stopPropagation(); onOpenChange(false); }} />
-      <View id={`${id}-panel`} className={`form-popover-panel floating-window body-${bodySpacing}${heading || footer ? ' has-chrome' : ''}${position ? ' is-positioned' : ''}${heightMode === 'content' ? ' is-content-height' : ''}${placement === 'center' ? ' is-centered' : ''} ${panelClassName}`} role='dialog' ariaLabel={ariaLabel} style={position ? { left: `${position.left}px`, top: position.bottom === undefined ? `${position.top}px` : 'auto', ...(position.bottom === undefined ? {} : { bottom: `${position.bottom}px` }), width: `${position.width}px`, maxHeight: `${position.maxHeight}px`, ...(heightMode === 'measured' && (heading || footer) ? { height: `${position.height}px` } : {}) } : { visibility: 'hidden' }} onClick={event => event.stopPropagation()}>
+      <View id={`${id}-panel`} className={`form-popover-panel floating-window body-${bodySpacing}${actionLabels.length ? ' is-action-menu' : ''}${heading || footer ? ' has-chrome' : ''}${position ? ' is-positioned' : ''}${heightMode === 'content' ? ' is-content-height' : ''}${placement === 'center' ? ' is-centered' : ''} ${panelClassName}`} role='dialog' ariaLabel={ariaLabel} style={position ? { left: `${position.left}px`, top: position.bottom === undefined ? `${position.top}px` : 'auto', ...(position.bottom === undefined ? {} : { bottom: `${position.bottom}px` }), width: `${position.width}px`, maxHeight: `${position.maxHeight}px`, ...(heightMode === 'measured' && (heading || footer) ? { height: `${position.height}px` } : {}) } : { visibility: 'hidden' }} onClick={event => event.stopPropagation()}>
         {!!heading && <View className='form-popover-heading'>{heading}</View>}
         <ScrollView scrollY className='form-popover-scroll' showScrollbar={false}><View className='form-popover-body'>{children}</View></ScrollView>
         {!!footer && <View className='form-popover-footer'>{footer}</View>}

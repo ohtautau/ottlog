@@ -40,7 +40,7 @@ module.exports = async function checkFloatingCreate({ page, origin, out, width, 
       return { x: b.x, y: b.y, width: b.width, height: b.height, right: v.right - b.right, bottom: v.bottom - b.bottom, radius: style.borderRadius, color: style.backgroundColor, z: getComputedStyle(node.closest('.floating-create-action')).zIndex };
     });
     expect(result.width).toBe(56); expect(result.height).toBe(56);
-    expect(result.right).toBeCloseTo(16, 0); expect(result.bottom).toBeCloseTo(16 + (tab ? 0 : safe), 0);
+    expect(result.right).toBeCloseTo(24, 0); expect(result.bottom).toBeCloseTo(24 + (tab ? 0 : safe), 0);
     expect(result.radius === '50%' || parseFloat(result.radius) >= 28).toBe(true);
     expect(result.color).toBe('rgb(185, 219, 202)');
     return result;

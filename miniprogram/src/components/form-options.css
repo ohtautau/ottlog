@@ -16,6 +16,10 @@
 .form-popover-panel.has-chrome.is-positioned .form-popover-scroll { flex: 1; height: 0; }
 .form-popover-panel.has-chrome.is-positioned.is-content-height .form-popover-scroll { flex: 0 1 auto; height: auto; }
 .form-popover-body { padding: 8PX 12PX; }
+.form-action-labels-measure { position:absolute;left:0;top:0;opacity:0;pointer-events:none; }
+.form-action-label-measure { display:inline-block;white-space:nowrap;font-family:var(--control-font-family);font-size:var(--control-font-size);font-weight:var(--control-font-weight);line-height:var(--control-line-height);letter-spacing:0; }
+.form-popover-panel.is-action-menu .form-popover-body { padding:8PX 12PX; }
+.form-popover-panel.is-action-menu .form-popover-body > .ui-button { width:100%;margin:0;justify-content:flex-start;white-space:nowrap;overflow-wrap:normal; }
 .form-popover-panel.body-tight .form-popover-body { padding-top: 4PX; padding-bottom: 4PX; }
 .form-popover-panel.body-none .form-popover-body { padding: 0; }
 .form-popover-heading button,.form-popover-footer button { margin-top: 0; margin-bottom: 0; }

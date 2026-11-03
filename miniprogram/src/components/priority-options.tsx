@@ -1,5 +1,6 @@
 import { View, Text } from '@tarojs/components';
-import { ChoiceButton } from './ui-button';
+import type { CSSProperties } from 'react';
+import ActionButton from './ui-button';
 import PriorityFlag from './priority-flag';
 import './priority-options.css';
 
@@ -12,6 +13,6 @@ export default function PriorityOptions<T extends string>({ options, value, disa
   options: readonly PriorityOption<T>[]; value: T; disabled?: boolean; className?: string; choiceClassName?: string; ariaLabel?: string; onChange: (value: T) => void;
 }) {
   return <View className={`priority-options ${className}`} role='group' ariaLabel={ariaLabel}>
-    {options.map(option => <ChoiceButton key={option.value} className={`priority-option ${choiceClassName}${value === option.value ? ' is-active' : ''}`} ariaLabel={option.ariaLabel} selected={value === option.value} disabled={disabled} onClick={() => onChange(option.value)}><PriorityFlag className='priority-option-mark' color={option.color} outlined={option.outlined} /><Text className='priority-option-label'>{priorityOptionLabels[option.label] ?? option.label}</Text></ChoiceButton>)}
+    {options.map(option => <ActionButton key={option.value} appearance='quiet' style={{ '--control-text': value === option.value ? 'var(--control-selected-text)' : 'var(--priority-option-text)' } as CSSProperties} className={`priority-option ${choiceClassName}${value === option.value ? ' is-active' : ''}`} ariaLabel={option.ariaLabel} aria-pressed={value === option.value} disabled={disabled} onClick={() => onChange(option.value)}><PriorityFlag className='priority-option-mark' color={option.color} outlined={option.outlined} /><Text className='priority-option-label'>{priorityOptionLabels[option.label] ?? option.label}</Text></ActionButton>)}
   </View>;
 }

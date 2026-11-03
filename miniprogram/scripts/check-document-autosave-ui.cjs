@@ -13,7 +13,7 @@ module.exports = async function checkDocumentAutosave({ page, origin, width, out
   const button = name => page.getByRole('button', { name, exact: true });
   const memoTitle = () => page.getByRole('textbox', { name: '便签标题', exact: true });
   const closeMemo = async () => { await page.locator('.memo-overlay > .memo-backdrop').click({ position: { x: 4, y: 4 } }); await expect(page.locator('.document-editor-sheet')).toHaveCount(0); };
-  const closeEntry = async () => { await page.locator('.entry-overlay > .todo-backdrop').click({ position: { x: 4, y: 4 } }); await expect(page.locator('.entry-composer')).toHaveCount(0); };
+  const closeEntry = async () => { await page.locator('.entry-overlay > .todo-backdrop,.task-detail-overlay:has(.entry-composer) > .sheet-backdrop').click({ position: { x: 4, y: 4 } }); await expect(page.locator('.entry-composer')).toHaveCount(0); };
   await expect(page.locator('.memo-note')).toHaveCount(6);
   const paints = await page.locator('.memo-note').evaluateAll(nodes => nodes.map(node => ({ background: getComputedStyle(node).backgroundColor, border: getComputedStyle(node).borderTopColor })));
   expect(new Set(paints.map(paint => JSON.stringify(paint))).size).toBe(1);
@@ -52,11 +52,25 @@ module.exports = async function checkDocumentAutosave({ page, origin, width, out
   await page.locator('.floating-create-button').click(); await expect(memoTitle()).toBeEnabled();
   await button('创建类型：任务').click();
   const taskTitle = () => page.locator('.entry-composer').getByRole('textbox', { name: '任务名称', exact: true });
-  await expect(taskTitle()).toBeEnabled(); await taskTitle().fill('共享创建器自动任务');
+  await expect(taskTitle()).toBeEnabled();
+  await expect(page.locator('.entry-composer.task-detail-panel')).toBeVisible();
+  await expect(page.locator('.entry-composer .task-detail-tools > button')).toHaveCount(3);
+  await expect(page.locator('.entry-composer .task-detail-heading-actions')).toBeVisible();
+  await taskTitle().focus(); await expect(taskTitle()).toHaveCSS('outline-style', 'none');
+  await button('任务标签').click(); await page.getByRole('textbox', { name:'任务标签', exact:true }).fill('实际，微信采集'); await page.keyboard.press('Escape');
+  await expect(page.locator('.entry-composer .selected-tag-chip')).toHaveText(['实际','微信采集']);
+  await button('添加子任务').click(); await page.getByRole('textbox', { name:'子任务 1', exact:true }).fill('创建器检查项');
+  await taskTitle().fill('共享创建器自动任务');
   await expect.poll(async () => (await data('todos')).tasks.length).toBe(1);
   const taskId = (await data('todos')).tasks[0].id;
+  await page.evaluate(() => { window.__miniFixture.deferChooseMedia = true; });
+  await button('任务附件').click(); await expect(button('创建类型：备忘')).toBeDisabled();
+  await page.evaluate(() => { window.__miniFixture.resolveChooseMedia(); window.__miniFixture.deferChooseMedia = false; });
+  await expect.poll(async () => (await data('todos')).tasks[0].images?.length).toBe(1);
+  await expect(button('创建类型：备忘')).toBeEnabled();
+  await page.screenshot({ path:path.join(out, `shared-task-create-${width}.png`) });
   await taskTitle().fill('共享创建器同一任务修改'); await closeEntry();
-  expect((await data('todos')).tasks[0]).toMatchObject({ id: taskId, title: '共享创建器同一任务修改' });
+  expect((await data('todos')).tasks[0]).toMatchObject({ id: taskId, title: '共享创建器同一任务修改', tags:['实际','微信采集'], subtasks:[{ title:'创建器检查项', completed:false }] });
   expect((await data('todos')).tasks).toHaveLength(1); expect((await data('memos')).notes).toHaveLength(7);
 
   await page.evaluate(() => { location.hash = '#/pages/domains/index'; }); await button('记录进展').click();

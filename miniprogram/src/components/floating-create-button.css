@@ -1,5 +1,5 @@
 /* Both clients use these tokens; native tab pages already stop above the tabBar. */
-page { --floating-create-size: 56PX; --floating-create-inset: 16PX; --floating-create-symbol-size: 24PX; --floating-create-clearance: calc(var(--floating-create-size) + var(--floating-create-inset) * 2); }
+page { --floating-create-size: 56PX; --floating-create-inset: 24PX; --floating-create-symbol-size: 24PX; --floating-create-clearance: calc(var(--floating-create-size) + var(--floating-create-inset) * 2); }
 .floating-create-action { --control-height: var(--floating-create-size); --control-radius: 50%; position: fixed; z-index: 20; right: max(var(--floating-create-inset),env(safe-area-inset-right)); bottom: calc(var(--floating-create-inset) + env(safe-area-inset-bottom)); width: var(--floating-create-size); height: var(--floating-create-size); border-radius: 50%; box-shadow: 0 6PX 20PX #0005; }
 .floating-create-action.has-native-tab-bar { bottom: var(--floating-create-inset); }
 .floating-create-action.is-raised { margin-bottom: var(--floating-create-clearance); }

@@ -1,16 +1,17 @@
-import { useEffect, useRef, useState, type ReactNode } from 'react';
+import { useEffect, useRef, useState, type CSSProperties, type ReactNode } from 'react';
 import { Input, ScrollView, Text, Textarea, View } from '@tarojs/components';
 import type { Todo, TodoSubtask } from '../lib/tool-records';
-import { toolId } from '../lib/tool-records';
+import { toolId, todoQuadrant } from '../lib/tool-records';
 import ActionButton from './ui-button';
 import SheetActions from './sheet-actions';
 import SheetBackdrop from './sheet-backdrop';
 import { MoreSymbol } from './manage-symbol';
 import { ScheduleSymbol } from './todo-schedule-sheet';
+import SelectedTagList from './selected-tag-list';
 import './task-detail-editor.css';
 
 export function TaskTagSymbol() {
-  return <View className='task-detail-symbol task-detail-tag-symbol' aria-hidden><View /></View>;
+  return <View className='task-detail-symbol task-detail-tag-symbol' aria-hidden><View /><View /><View /><View /></View>;
 }
 export function TaskChecklistSymbol() {
   return <View className='task-detail-symbol task-detail-checklist-symbol' aria-hidden><View /><View /><View /></View>;
@@ -27,12 +28,13 @@ type Props = {
   onToggleComplete?: () => void; notes: ReactNode; nextSteps?: ReactNode;
   tagsAction?: ReactNode; attachmentAction?: ReactNode; onTags?: () => void; onAttachment?: () => void;
   pending?: boolean; error?: string; onRetry?: () => void;
+  topBar?: ReactNode; panelClassName?: string;
 };
 
 /** Shared task presentation only; the caller owns autosave, identity and menus. */
 export default function TaskDetailEditor({ draft, onChange, onClose, disabled = false, autoFocus = false,
   ariaLabel = '编辑任务', category, priority, more, onMore, onSchedule, scheduleLabel = '日期和提醒', scheduleOpen,
-  onToggleComplete, notes, nextSteps, tagsAction, attachmentAction, onTags, onAttachment, pending = false, error, onRetry,
+  onToggleComplete, notes, nextSteps, tagsAction, attachmentAction, onTags, onAttachment, pending = false, error, onRetry, topBar, panelClassName = '',
 }: Props) {
   const [showChecklist, setShowChecklist] = useState(!!draft.subtasks?.length);
   const [placeholderId, setPlaceholderId] = useState(toolId);
@@ -62,7 +64,8 @@ export default function TaskDetailEditor({ draft, onChange, onClose, disabled = 
   }
   return <View className='task-detail-overlay' catchMove>
     <SheetBackdrop onClose={onClose} />
-    <View className='task-detail-panel' role='dialog' ariaLabel={ariaLabel}>
+    <View className={`task-detail-panel ${panelClassName}`} style={{ '--todo-completion-color': todoQuadrant(draft).color } as CSSProperties} role='dialog' ariaLabel={ariaLabel}>
+      {topBar}
       <View className='task-detail-heading'>
         <View className='task-detail-category'>{category}</View>
         <View className='task-detail-heading-actions'>{priority}{more || <ActionButton appearance='icon' size='compact' ariaLabel='任务更多操作' disabled={disabled || !onMore} onClick={onMore}><MoreSymbol /></ActionButton>}</View>
@@ -85,6 +88,7 @@ export default function TaskDetailEditor({ draft, onChange, onClose, disabled = 
             </View>)}
           </View>}
           {nextSteps}
+          <SelectedTagList tags={draft.tags || []} disabled={disabled} onEdit={onTags} />
         </View>
       </ScrollView>
       <SheetActions className='task-detail-footer'>
