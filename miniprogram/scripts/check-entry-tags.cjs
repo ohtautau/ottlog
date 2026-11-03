@@ -32,13 +32,13 @@ const combinedTodo = freeze(todos([
 ], [{ id: 'reading', name: ' 阅读 ', color: '' }, { id: 'unused', name: '未使用', color: '' }]));
 const combinedMemo = freeze(memos(note('a', ['共享', '阅读', '阅读']), note('b', ['阅读', '工 作']), note('c', ['共享'])));
 const original = JSON.stringify([combinedTodo, combinedMemo]);
-assert.deepEqual(rankedEntryTags(combinedTodo, combinedMemo), ['共享', '阅读', '工作', '学习', '生活', '购物', '未使用']);
+assert.deepEqual(rankedEntryTags(combinedTodo, combinedMemo), ['共享', '工作', '阅读', '学习', '生活', '购物']);
 assert.equal(JSON.stringify([combinedTodo, combinedMemo]), original, 'catalog generation must not normalize or migrate saved records');
-assert.deepEqual(rankedEntryTags(todos([task('legacy', ['阅读', '阅 读'], 'reading')], [{ id: 'reading', name: '阅读', color: '' }]), memos(note('m', ['自定义']))).slice(0, 2), ['阅读', '自定义'], 'legacy category and explicit duplicate tags count once per record');
-assert.deepEqual(rankedEntryTags(todos([task('unknown-category', [], '旧分类')]), memos()).slice(0, 1), ['旧分类']);
+assert.deepEqual(rankedEntryTags(todos([task('legacy', ['阅读', '阅 读'], 'reading')], [{ id: 'reading', name: '阅读', color: '' }]), memos(note('m', ['自定义']))).slice(0, 2), ['阅读', '自定义'], 'explicit duplicate tags count once per record');
+assert.deepEqual(rankedEntryTags(todos([task('unknown-category', [], '旧分类')]), memos()).includes('旧分类'), false);
 assert.deepEqual(rankedEntryTags(todos([task('symbols', ['工 作/旅行；购物😀复盘', '#旅行'])]), memos(note('same', ['旅 行']))).slice(0, 4), ['旅行', '工作', '购物', '复盘']);
 assert.deepEqual(rankedEntryTags(todos([task('ties', ['乙', '甲'])]), memos(note('memo-tie', ['丙']))).slice(0, 3), ['乙', '甲', '丙'], 'equal counts retain stable first-seen order across both tools');
-assert.deepEqual(rankedEntryTags(todos([], [{ id: 'catalog', name: '旅 行/复盘', color: '' }]), memos()).slice(-2), ['旅行', '复盘']);
+assert.deepEqual(rankedEntryTags(todos([], [{ id: 'catalog', name: '旅 行/复盘', color: '' }]), memos()), DEFAULT_TODO_TAGS);
 
 const complete = entryTagCatalog(source(combinedTodo), source(combinedMemo));
 assert.equal(complete.ready, true);
@@ -79,4 +79,4 @@ for (const priority of ['high', 'medium', 'low', 'none']) {
 }
 for (const priority of [null, '', 'HIGH', 'urgent', 1, false, {}, []]) assert.equal(isMemoState(memos(note('invalid', [], { priority }))), false);
 assert.equal(isMemoState(memos(note('undefined', [], { priority: undefined }))), true);
-console.log('PASS shared entry tags: combined frequencies, legacy categories, normalization, stable order, partial/invalid sources, account isolation and optional memo priority compatibility');
+console.log('PASS shared entry tags: combined tag frequencies, categories excluded, normalization, stable order, partial/invalid sources, account isolation and optional memo priority compatibility');

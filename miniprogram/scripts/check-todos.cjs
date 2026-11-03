@@ -59,20 +59,16 @@ for (const active of [noteDraft, switched]) {
 const legacyImageDraft = { ...noteDraft, task: { ...noteDraft.task, images: undefined }, memo: { ...noteDraft.memo, images: [noteImage] } };
 assert.deepEqual(entry.switchEntryMode(legacyImageDraft, 'memo').memo.images, [noteImage], 'Old memo-only image drafts remain recoverable');
 console.log('PASS task Markdown attachments: validation, persistence, removal, type switching, one-copy draft recovery and atomic generation capacity');
-const { mergeTodoCategories, rankedTodoTags, parseTodoTags } = load('todo-data');
+const { rankedTodoTags, parseTodoTags } = load('todo-data');
 assert.deepEqual(parseTodoTags('工 作/学习；生活😀购物'), ['工作', '学习', '生活', '购物']);
 assert.deepEqual(parseTodoTags('#工作,,工作\\学习|生活+购物_旅行—复盘'), ['工作', '学习', '生活', '购物', '旅行', '复盘']);
 assert.deepEqual(parseTodoTags(' \t，。！👩‍💻❤️\n'), []);
 assert.deepEqual(parseTodoTags('ＡＢＣ 123/cafe\u0301/项目\u3000二'), ['ＡＢＣ123', 'cafe\u0301', '项目二']);
 const legacyTags = state(task({ categoryId: 'work', tags: ['工作', '复盘'] }));
-const mergedTags = mergeTodoCategories(legacyTags);
 assert.equal(legacyTags.tasks[0].categoryId, 'work');
-assert.equal(mergedTags.tasks[0].categoryId, '');
-assert.deepEqual(mergedTags.tasks[0].tags, ['工作', '复盘']);
-assert.deepEqual(mergeTodoCategories(mergedTags), mergedTags);
 assert.deepEqual(rankedTodoTags(state()).slice(0, 4), ['工作', '学习', '生活', '购物']);
-assert.deepEqual(rankedTodoTags(mergedTags).slice(0, 2), ['工作', '复盘']);
-assert.deepEqual(mergeTodoCategories({ ...legacyTags, categories: [{ id: 'work', name: '项目', color: '' }] }).tasks[0].tags, ['工作', '复盘', '项目']);
+assert.deepEqual(rankedTodoTags(legacyTags).slice(0, 2), ['工作', '复盘']);
+assert.equal(rankedTodoTags({ ...legacyTags, categories:[{id:'work',name:'独立分类',color:''}] }).includes('独立分类'), false);
 function freeze(value) {
   if (value && typeof value === 'object') { Object.freeze(value); Object.values(value).forEach(freeze); }
   return value;

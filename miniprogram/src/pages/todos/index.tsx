@@ -7,7 +7,7 @@ import Taro, { useDidShow, useDidHide, useRouter } from '@tarojs/taro';
 import { Button, ScrollView, Text, View } from '@tarojs/components';
 import ActionButton, { ChoiceButton } from '../../components/ui-button';
 import { hasVolatilePersonalTool, usePersonalToolState } from '../../lib/use-personal-tool-state';
-import { createTodo, toggleTodo, mergeTodoCategories, orderTodos, getTodoSortMode, applyTodoSort, todoToolbarSummary, type TodoSortMode, parseTodoTags as parseTags } from '../../lib/todo-data';
+import { createTodo, toggleTodo, orderTodos, getTodoSortMode, applyTodoSort, todoToolbarSummary, type TodoSortMode, parseTodoTags as parseTags } from '../../lib/todo-data';
 import { cancelTodoReminder, getReminderConfig, getTodoReminders, requestTodoReminder } from '../../lib/todo-reminders';
 import { initialTodoState, isTodoState, localToolDay, todoQuadrant, todoQuadrants, type Todo, type TodoState, type TodoPanelId } from '../../lib/tool-records';
 import { useTodoDrag } from '../../components/todo-drag';
@@ -17,9 +17,9 @@ import TodoScheduleSheet from '../../components/todo-schedule-sheet';
 import type { TodoSchedule } from '../../lib/todo-schedule';
 import TodoEditorFields from '../../components/todo-editor-fields';
 import TaskDetailEditor from '../../components/task-detail-editor';
-import TodoPrimaryTagPicker from '../../components/todo-primary-tag-picker';
+import TodoCategoryField from '../../components/todo-category-field';
 import TodoPanelPicker from '../../components/todo-panel-picker';
-import { getTodoPanelSource, todoPanelPresentation, todoMatchesPanel, setTodoPanelSource, saveTodoTag, deleteTodoTag, todoPrimaryTag, taskTagNames, moveTodoToPanel, retryTodoPanelMove } from '../../lib/todo-panel-source';
+import { getTodoPanelSource, todoPanelPresentation, todoMatchesPanel, setTodoPanelSource, moveTodoToPanel, retryTodoPanelMove } from '../../lib/todo-panel-source';
 import { autoSaveTodo, todoEditSnapshot } from '../../lib/todo-autosave';
 import { ChoicePopover, TagChoiceRow, PopoverHeading } from '../../components/form-options';
 import TagTextInput from '../../components/tag-text-input';
@@ -54,7 +54,7 @@ const cloneTask = (task: Todo): Todo => ({ ...task, images: task.images?.map(ima
 
 export default function Todos() {
   const { value, setValue, ready, status, retry, owner } = usePersonalToolState('todos', initialTodoState);
-  const state = useMemo(() => mergeTodoCategories(isTodoState(value) ? value : initialTodoState), [value]);
+  const state = useMemo(() => isTodoState(value) ? value : initialTodoState, [value]);
   const valid = isTodoState(value), writable = ready && valid;
   const [search, setSearch] = useState('');
   const [showFilters, setShowFilters] = useState(false);
@@ -183,7 +183,7 @@ export default function Todos() {
 
   async function change(updater: (old: TodoState) => TodoState, expectedOwner = owner) {
     if (!writable || currentOwner.current !== expectedOwner) throw new Error('账号或数据状态已变化，请重新打开任务');
-    await setValue(previous => { if (!isTodoState(previous)) throw new Error('数据格式暂不兼容，请到网页查看'); return updater(mergeTodoCategories(previous)); });
+    await setValue(previous => { if (!isTodoState(previous)) throw new Error('数据格式暂不兼容，请到网页查看'); return updater(previous); });
   }
   function openEditor(task: Todo, existing: boolean) {
     if (!writable || operating.current || moveBlocked || sorter.suppressClick()) return;
@@ -350,25 +350,7 @@ export default function Todos() {
   function editTags(text: string) {
     liveTags.current = text; setTagsText(text); setAutosaveError('');
     const task = liveDraft.current;
-    if (task) { const tags = parseTags(text); editDraft({ ...task, tags, ...(todoPrimaryTag(task) && !tags.includes(todoPrimaryTag(task)) ? { primaryTag: '' } : {}) }); }
-  }
-  async function upsertTag(tag: {originalName?: string; name: string; iconId: string}) {
-    const expectedOwner = owner;
-    await change(previous => saveTodoTag(previous, tag), expectedOwner);
-    const task = liveDraft.current;
-    if (currentOwner.current === expectedOwner && task && tag.originalName && tag.originalName !== tag.name) {
-      const tags = parseTags(liveTags.current).map(name => name === tag.originalName ? tag.name : name);
-      liveTags.current = tags.join('，'); setTagsText(liveTags.current);
-      editDraft({ ...task, tags, ...(todoPrimaryTag(task) === tag.originalName ? { primaryTag: tag.name } : {}) });
-    }
-    if (hasVolatilePersonalTool('todos', owner)) throw new Error('标签尚未保存，请重试');
-  }
-  async function removeTag(tag: string) {
-    const expectedOwner = owner;
-    await change(previous => deleteTodoTag(previous, tag), expectedOwner);
-    if (currentOwner.current !== expectedOwner) return;
-    if (liveDraft.current && todoPrimaryTag(liveDraft.current) === tag) { const tags = (liveDraft.current.tags || []).filter(item => item !== tag); editDraft({ ...liveDraft.current, primaryTag: '', tags }); setTagsText(tags.join('，')); }
-    if (hasVolatilePersonalTool('todos', owner)) throw new Error('标签尚未保存，请重试');
+    if (task) { const tags = parseTags(text); editDraft({ ...task, tags }); }
   }
   async function authorizeReminder() {
     if (!draft || !canAuthorize || !config || busy || operating.current || reminderLocked) return;
@@ -421,7 +403,7 @@ export default function Todos() {
         const completed = tasks.filter(task => !!task.completedAt);
         const showCompleted = expanded[q.id] ?? !isWebTool;
         return <View id={`todo-zone-${q.id}`} key={q.id} style={{ borderTopColor: panel.color }} className={`todo-quadrant todo-quadrant-${panel.source.kind === 'quadrant' ? panel.source.quadrantId : 'tag'}${sorter.drag?.target === q.id ? ' is-drop-zone' : ''}`}>
-          <View className='todo-quadrant-heading'><View className='todo-quadrant-label'><View className='todo-quadrant-title-row'>{panel.source.kind === 'tag' ? <LibraryIcon name={panel.iconId} fallback='notes' className='todo-panel-icon' /> : <Text className='todo-quadrant-icon' aria-hidden style={{ color: panel.color }}>{panel.source.quadrantId === 'later' ? '⚐' : '⚑'}</Text>}<View className='todo-quadrant-title' style={{ color: panel.color }}>{trimTextEnd(panel.title)}</View></View><Text className='todo-quadrant-caption'>{panel.caption}</Text></View><TodoPanelPicker owner={owner} tags={taskTagNames(state)} value={panel.source} disabled={!writable || busy || !!sorter.drag} ariaLabel={`更换${q.title}区域显示`} onChange={async source => { await change(previous => setTodoPanelSource(previous, q.id as TodoPanelId, source)); if (hasVolatilePersonalTool('todos', owner)) throw new Error('显示方式尚未保存，请重试'); }} /></View>
+          <View className='todo-quadrant-heading'><View className='todo-quadrant-label'><View className='todo-quadrant-title-row'>{panel.source.kind === 'category' ? <LibraryIcon name={panel.iconId} fallback='notes' className='todo-panel-icon' /> : <Text className='todo-quadrant-icon' aria-hidden style={{ color: panel.color }}>{panel.source.quadrantId === 'later' ? '⚐' : '⚑'}</Text>}<View className='todo-quadrant-title' style={{ color: panel.color }}>{trimTextEnd(panel.title)}</View></View><Text className='todo-quadrant-caption'>{panel.caption}</Text></View><TodoPanelPicker owner={owner} categories={state.categories} value={panel.source} disabled={!writable || busy || !!sorter.drag} ariaLabel={`更换${q.title}区域显示`} onChange={async source => { await change(previous => setTodoPanelSource(previous, q.id as TodoPanelId, source)); if (hasVolatilePersonalTool('todos', owner)) throw new Error('显示方式尚未保存，请重试'); }} /></View>
           <ScrollView id={`todo-scroll-${q.id}`} scrollY scrollTop={sorter.scrollTop[q.id]} onScroll={event => sorter.onScroll(q.id, event.detail.scrollTop)} enhanced bounces={false} className='todo-quadrant-scroll'><CardGroupContent className='todo-quadrant-items floating-create-content'>
             {completion !== 'done' && pending.map(task => renderTask(task, q.id))}
             {completion !== 'done' && !pending.length && (completion === 'open' || !completed.length) && <View className={`todo-quadrant-empty ${completed.length ? 'is-clear' : ''}`}>{search || tagFilter !== null ? '没有匹配的待办' : completed.length ? '待办已清空' : '暂时没有任务'}</View>}
@@ -437,7 +419,7 @@ export default function Todos() {
     {sorter.deleteZone}
     {taskUndo.notice && <OperationToast message={taskUndo.notice.message} busy={taskUndo.busy} onUndo={taskUndo.notice.undo ? () => { void taskUndo.undo(); } : undefined} />}
     {draft && <TaskDetailEditor draft={draft} onChange={editDraft} onClose={() => { void closeEditor(); }} disabled={imageBusy || !!deletion || !writable || draftOwner.current !== owner} pending={busy} error={autosaveError} onRetry={() => { setAutosaveError(''); void persistDraft(); }}
-      category={<TodoPrimaryTagPicker tags={taskTagNames(state)} styles={state.tagStyles} value={todoPrimaryTag(draft)} owner={owner} disabled={imageBusy || busy} onChange={primaryTag => { const current = liveDraft.current; if (!current) return; const tags = primaryTag ? [...new Set([...(current.tags || []), primaryTag])] : current.tags || []; liveTags.current = tags.join('，'); editDraft({ ...current, primaryTag, tags }); setTagsText(liveTags.current); }} onUpsert={upsertTag} onDelete={removeTag} />}
+      category={<TodoCategoryField value={draft.categoryId} owner={owner} disabled={imageBusy || busy || !writable} onChange={categoryId => { const task = liveDraft.current; if (task && draftOwner.current === currentOwner.current) editDraft({ ...task, categoryId }); }} />}
       priority={<PrioritySelect ariaLabel='任务优先级' open={priorityOpen} onOpenChange={setPriorityOpen} disabled={imageBusy} optionsAriaLabel='任务优先级' options={todoQuadrants.map((q, index) => ({ value: q.id, label: ['高','中','低','无'][index], ariaLabel: q.title, color: q.color, outlined: q.id === 'later' }))} value={todoQuadrant(draft).id} onChange={id => { const q = todoQuadrants.find(q => q.id === id); if (q) editDraft({ ...draft, important: q.important, urgent: q.urgent }); }} />}
       more={<ChoicePopover ariaLabel='更多任务操作' open={moreOpen} onOpenChange={setMoreOpen} trigger={<Text>···</Text>} triggerIconOnly showIndicator={false} panelWidth={200} layerClassName='task-detail-popover-layer'>
         <ActionButton appearance='quiet' onClick={() => { setMoreOpen(false); setNextStepsOpen(!nextStepsOpen); }}>后续任务</ActionButton>

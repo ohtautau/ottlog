@@ -56,6 +56,10 @@ module.exports = async function checkDocumentAutosave({ page, origin, width, out
   await expect(page.locator('.entry-composer.task-detail-panel')).toBeVisible();
   await expect(page.locator('.entry-composer .task-detail-tools > button')).toHaveCount(3);
   await expect(page.locator('.entry-composer .task-detail-heading-actions')).toBeVisible();
+  await button('任务分类').click(); await button('新建任务分类').click();
+  await page.getByRole('textbox',{name:'分类名称',exact:true}).fill('创建器分类'); await button('完成分类编辑').click();
+  const createdCategory=(await data('todos')).categories.find(c=>c.name==='创建器分类').id;
+
   await taskTitle().focus(); await expect(taskTitle()).toHaveCSS('outline-style', 'none');
   await button('任务标签').click(); await page.getByRole('textbox', { name:'任务标签', exact:true }).fill('实际，微信采集'); await page.keyboard.press('Escape');
   await expect(page.locator('.entry-composer .selected-tag-chip')).toHaveText(['实际','微信采集']);
@@ -70,7 +74,7 @@ module.exports = async function checkDocumentAutosave({ page, origin, width, out
   await expect(button('创建类型：备忘')).toBeEnabled();
   await page.screenshot({ path:path.join(out, `shared-task-create-${width}.png`) });
   await taskTitle().fill('共享创建器同一任务修改'); await closeEntry();
-  expect((await data('todos')).tasks[0]).toMatchObject({ id: taskId, title: '共享创建器同一任务修改', tags:['实际','微信采集'], subtasks:[{ title:'创建器检查项', completed:false }] });
+  expect((await data('todos')).tasks[0]).toMatchObject({ id: taskId, title: '共享创建器同一任务修改', categoryId:createdCategory, tags:['实际','微信采集'], subtasks:[{ title:'创建器检查项', completed:false }] });
   expect((await data('todos')).tasks).toHaveLength(1); expect((await data('memos')).notes).toHaveLength(7);
 
   await page.evaluate(() => { location.hash = '#/pages/domains/index'; }); await button('记录进展').click();

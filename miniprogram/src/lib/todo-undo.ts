@@ -11,7 +11,7 @@ export function todoOperationLabel(before: TodoState, after: TodoState): string 
   if (changed.some(task => !!old.get(task.id)!.completedAt && !task.completedAt)) return '已重新打开任务';
   if (before.tasks.some(task => !after.tasks.some(next => next.id === task.id))) return '已删除任务';
   if (after.tasks.some(task => !old.has(task.id))) return '已创建任务';
-  if (changed.some(task => task.important !== old.get(task.id)!.important || task.urgent !== old.get(task.id)!.urgent)) return '已移动任务';
+  if (changed.some(task => task.important !== old.get(task.id)!.important || task.urgent !== old.get(task.id)!.urgent || task.categoryId !== old.get(task.id)!.categoryId)) return '已移动任务';
   if (!same(ids(before), ids(after)) || before.sort !== after.sort) return '已调整排序';
   return '已修改任务';
 }
@@ -24,7 +24,7 @@ export function undoTodoOperation(current: TodoState, before: TodoState, after: 
   const currentMap = new Map(current.tasks.map(task => [task.id, task]));
   if (beforeMap.size !== before.tasks.length || afterMap.size !== after.tasks.length || currentMap.size !== current.tasks.length) throw new Error('任务编号不兼容，无法撤销');
   const affected = [...new Set([...beforeMap.keys(), ...afterMap.keys()])].filter(id => !same(beforeMap.get(id), afterMap.get(id)));
-  const stateFields = (['categories', 'sort', 'panelSources', 'tagStyles'] as const).filter(key => !same(before[key], after[key]));
+  const stateFields = (['categories', 'sort', 'panelSources'] as const).filter(key => !same(before[key], after[key]));
   const reordered = before.tasks.length === after.tasks.length && before.tasks.every(task => afterMap.has(task.id)) && !same(ids(before), ids(after));
   const orderMatches = (reference: TodoState) => same(current.tasks.filter(task => afterMap.has(task.id)).map(task => task.id), reference.tasks.filter(task => currentMap.has(task.id)).map(task => task.id));
   // Retrying a failed local write can see the already-restored memory snapshot.

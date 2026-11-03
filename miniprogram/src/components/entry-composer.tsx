@@ -7,7 +7,7 @@ import ActionButton, { ChoiceButton } from './ui-button';
 import { applyEntryQuadrant, entryDraftKey, entryDraftForStorage, homeEntryModeKey, isEntryDraft, isEntryMode, newEntryDraft, switchEntryMode, validateEntry, type EntryDraft, type EntryMode, type EntryQuadrantId } from '../lib/entry-draft';
 import { hasVolatilePersonalTool, usePersonalToolState } from '../lib/use-personal-tool-state';
 import { useEntryTags } from '../lib/use-entry-tags';
-import { mergeTodoCategories, parseTodoTags, saveTodo } from '../lib/todo-data';
+import { parseTodoTags, saveTodo } from '../lib/todo-data';
 import { isMemoImage, MAX_MEMO_IMAGES, memoStateFits, withMemo } from '../lib/memo-images';
 import { initialMemoState, initialTodoState, isMemoState, isTodoState, localToolDay, todoQuadrant, todoQuadrants, type Todo } from '../lib/tool-records';
 import { scheduleSummary } from '../lib/todo-schedule';
@@ -24,7 +24,7 @@ import PrioritySelect from './priority-select';
 import TagTextInput from './tag-text-input';
 import MarkdownNoteEditor from './markdown-note-editor';
 import { noteStateFits } from '../lib/note-image-data';
-import { todoPrimaryTag } from '../lib/todo-panel-source';
+import TodoCategoryField from './todo-category-field';
 import { resumeEditorInput } from '../lib/resume-editor-input';
 import ProgressEditorFields from './progress-editor-fields';
 import SwipePanels from './swipe-panels';
@@ -285,7 +285,7 @@ export default function EntryComposer({ initialMode, preferLastCreatedMode = fal
           const existing = previous.tasks.find(row => row.id === captured.task.id);
           if (baseline && !existing) throw new Error('这件任务已删除，内容已保留');
           const task = existing && baseline ? resumeEditorInput(existing, baseline.task, { ...captured.task, tags }) : { ...captured.task, tags };
-          const updated = saveTodo(mergeTodoCategories(previous), task); liveArchives.current.task = updated; return updated;
+          const updated = saveTodo(previous, { ...task, categoryId: previous.categories.some(item => item.id === task.categoryId) ? task.categoryId : '' }); liveArchives.current.task = updated; return updated;
         });
       } else if (captured.mode === 'memo') {
         const note = { ...captured.memo, title: captured.memo.title.trim(), body: trimTextEnd(captured.memo.body), tags, updatedAt: new Date().toISOString() };
@@ -328,7 +328,7 @@ export default function EntryComposer({ initialMode, preferLastCreatedMode = fal
   return <>
     {mode === 'task' && <TaskDetailEditor draft={{ ...task, tags: parseTodoTags(draft?.tagsText || '') }} onChange={changeTask} onClose={() => { void dismiss(); }} disabled={!draft || locked} autoFocus={autoFocus && !retryMode && !scheduleOpen} ariaLabel='创建任务、备忘或记录进展' panelClassName='entry-composer is-autosave'
       topBar={<View className='entry-type-heading' data-entry-swipe='true' onTouchStart={swipeStart} onTouchMove={swipeMove} onTouchEnd={swipeEnd} onTouchCancel={() => { swipe.current = null; setSlide(null); }}>{modes}</View>}
-      category={<ActionButton appearance='quiet' onClick={() => setTagsOpen(true)} disabled={!draft || locked}>{todoPrimaryTag({ ...task, tags: parseTodoTags(draft?.tagsText || '') }) || '主要标签'}</ActionButton>}
+      category={<TodoCategoryField value={task.categoryId} owner={draftOwner.current} disabled={!draft || locked} onChange={categoryId => { const active = latest.current; if (active) changeTask({ ...active.task, categoryId }); }} />}
       priority={<PrioritySelect ariaLabel='任务优先级' open={priorityOpen} onOpenChange={setPriorityOpen} disabled={!draft || locked} optionsAriaLabel='任务优先级' options={todoQuadrants.map((q, index) => ({ value: q.id, label: ['高','中','低','无'][index], ariaLabel: q.title, color: q.color, outlined: q.id === 'later' }))} value={todoQuadrant(task).id} onChange={id => { const q = todoQuadrants.find(q => q.id === id); if (q) changeTask({ ...task, important: q.important, urgent: q.urgent }); }} />}
       more={<ChoicePopover ariaLabel='更多编辑操作' open={moreOpen} onOpenChange={setMoreOpen} trigger={<MoreSymbol />} triggerIconOnly showIndicator={false} panelWidth={180}>
         <ActionButton appearance='quiet' onClick={() => { setMoreOpen(false); setNextOpen(!nextOpen); }}>后续任务</ActionButton>

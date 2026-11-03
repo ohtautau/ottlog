@@ -759,7 +759,7 @@ async function main() {
     }
     if (onlyProgressPairs) { console.log(`PASS progress pairs at 360/375(short)/430/768: negative/positive columns, repeated pairs, autosave and close flush, saved record editing and original-ID retry. Browser adapter only. ${out}`); return; }
     if (onlyDocumentAutosave) { if (failures.length) throw new Error(failures.join('\n')); console.log(`PASS document autosave at 360/375(short)/430/768: neutral memos, shared auto-saving creators, close-flush and same-ID retry. Browser adapter only. ${out}`); return; }
-    if (onlyTaskDetail) { if (failures.length) throw new Error(failures.join('\n')); console.log(`PASS task detail at 360/375(short)/430/768: shared compact autosave editor, checklist, primary tags and configurable panels. Browser adapter only. ${out}`); return; }
+    if (onlyTaskDetail) { if (failures.length) throw new Error(failures.join('\n')); console.log(`PASS task detail at 360/375(short)/430/768: shared compact autosave editor, checklist, independent categories and configurable panels. Browser adapter only. ${out}`); return; }
     if (onlyFloatingCreate) { if (failures.length) throw new Error(failures.join('\n')); console.log(`PASS floating creation at four sizes: shared 56px plus, page actions, scroll stability, safe areas, last-item clearance, modal layering and account guards. Browser adapter only. ${out}`); return; }
     if (process.argv.includes('--toolbar-defaults')) { console.log(`PASS seven toolbar default actions at four sizes: shared reset geometry, filters/sort restoration, durable retries and preserved manual card preferences. Browser adapter only. ${out}`); return; }
     if (onlyHomeShortcutLibrary) {

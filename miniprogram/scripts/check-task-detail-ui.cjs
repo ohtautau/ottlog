@@ -4,8 +4,8 @@ const path = require('node:path');
 // Browser rendering is not certification of the native WeChat runtime.
 module.exports = async function checkTaskDetail({ page, origin, out, width, expect }) {
   const owner = 'task-detail-fixture', stamp = '2026-11-03T00:00:00.000Z';
-  const original = { id: 'task-detail-original', title: '原任务', description: '', categoryId: '', important: true, urgent: true, dueDate: '', completedAt: null, createdAt: stamp, updatedAt: stamp, tags: [], subtasks: [], nextTasks: [] };
-  const state = { version: 1, tasks: [original], categories: [] };
+  const original = { id: 'task-detail-original', title: '原任务', description: '', categoryId: 'legacy', important: true, urgent: true, dueDate: '', completedAt: null, createdAt: stamp, updatedAt: stamp, tags: [], subtasks: [], nextTasks: [] };
+  const state = { version: 1, tasks: [original], categories: [{id:'legacy',name:'历史分类',iconId:'notes',color:'#b9dbca'}] };
   await page.goto(`${origin}/?task-detail-${width}#/pages/posts/index`);
   await page.evaluate(({ state, owner }) => {
     localStorage.clear();
@@ -78,22 +78,25 @@ module.exports = async function checkTaskDetail({ page, origin, out, width, expe
   await expect.poll(async () => (await data()).tasks.find(task => task.id === createdId).subtasks?.[0]?.completed).toBe(true);
   await page.screenshot({ path: path.join(out, `task-detail-checklist-${width}.png`) });
 
-  await button('主要标签').click(); await button('新建任务标签').click();
-  await page.getByRole('textbox', { name: '任务标签名称', exact: true }).fill('娱乐');
-  await button('选择任务标签图标').click(); await button('选择图标：游戏').click();
-  await button('完成标签编辑').click();
-  await expect(page.getByRole('dialog', { name: '新建任务标签', exact: true })).toHaveCount(0);
-  await expect.poll(async () => (await data()).tagStyles?.娱乐?.iconId).toBe('game');
-  await expect.poll(async () => (await data()).tasks.find(task => task.id === createdId).primaryTag).toBe('娱乐');
-  await button('主要标签').click(); await button('编辑标签：娱乐').click();
-  await page.getByRole('textbox', { name: '任务标签名称', exact: true }).fill('娱乐活动');
-  await button('完成标签编辑').click();
-  await expect.poll(async () => (await data()).tasks.find(item => item.id === createdId)?.primaryTag).toBe('娱乐活动');
+  await expect(panel().getByRole('button',{name:'主要标签',exact:true})).toHaveCount(0);
+  await button('任务分类').click(); await button('新建任务分类').click();
+  await page.getByRole('textbox', { name: '分类名称', exact: true }).fill('娱乐');
+  await button('选择分类图标').click(); await button('选择图标：游戏').click();
+  await button('完成分类编辑').click();
+  await expect(page.getByRole('dialog', { name: '新建任务分类', exact: true })).toHaveCount(0);
+  await expect.poll(async () => (await data()).categories.find(c=>c.name==='娱乐')?.iconId).toBe('game');
+  const categoryId=(await data()).categories.find(c=>c.name==='娱乐').id;
+  await expect.poll(async () => (await data()).tasks.find(task=>task.id===createdId).categoryId).toBe(categoryId);
+  await expect(panel().locator('.selected-tag-chip')).toHaveText(['实际','微信采集']);
+  await button('任务分类').click(); await button('编辑分类：娱乐').click();
+  await page.getByRole('textbox', { name: '分类名称', exact: true }).fill('娱乐活动');
+  await button('完成分类编辑').click();
+  await expect.poll(async () => (await data()).categories.find(c=>c.id===categoryId)?.name).toBe('娱乐活动');
   await close();
-  await button('更换无优先级区域显示').click(); await button('显示标签：娱乐活动').click();
-  await expect.poll(async () => (await data()).panelSources?.later).toEqual({ kind: 'tag', tag: '娱乐活动' });
+  await button('更换无优先级区域显示').click(); await button('显示分类：娱乐活动').click();
+  await expect.poll(async () => (await data()).panelSources?.later).toEqual({ kind:'category',categoryId });
   await expect(page.locator('#todo-zone-later .todo-quadrant-title')).toHaveText('娱乐活动');
-  await expect(page.locator('#todo-zone-later .todo-task').filter({ hasText: '关闭前最后输入' })).toHaveCount(1);
+  await expect(page.locator('#todo-zone-later .todo-task').filter({hasText:'关闭前最后输入'})).toHaveCount(1);
 
   await open('关闭前最后输入');
   await page.evaluate(() => { window.__miniFixture.failToolWrites = ['todos']; });
@@ -104,6 +107,12 @@ module.exports = async function checkTaskDetail({ page, origin, out, width, expe
   await page.evaluate(() => { window.__miniFixture.failToolWrites = []; });
   await panel().getByRole('button', { name: '重试', exact: true }).click();
   await expect.poll(async () => (await data()).tasks.find(task => task.id === createdId).title).toBe('失败后保留输入');
+  await button('任务分类').click(); await button('删除分类：娱乐活动').click();
+  await page.getByRole('dialog',{name:'删除任务分类',exact:true}).getByRole('button',{name:'删除分类',exact:true}).click();
+  await expect.poll(async () => (await data()).categories.some(c=>c.id===categoryId)).toBe(false);
+  await expect.poll(async () => (await data()).tasks.find(t=>t.id===createdId).categoryId).toBe('');
+  await button('关闭任务分类').click();
+  await expect(panel().locator('.selected-tag-chip')).toHaveText(['实际','微信采集']);
   await close();
   expect((await data()).tasks.filter(task => task.id === createdId)).toHaveLength(1);
   expect((await data()).tasks.find(task => task.id === original.id)).toEqual(original);
@@ -114,5 +123,5 @@ module.exports = async function checkTaskDetail({ page, origin, out, width, expe
   const geometry = await page.locator('.todo-page').evaluate(node => ({ overflow: node.scrollWidth - node.clientWidth }));
   expect(geometry.overflow).toBeLessThanOrEqual(1);
   await page.screenshot({ path: path.join(out, `task-detail-panels-${width}.png`) });
-  console.log(`PASS task detail ${width}: autosave/close, checklist, primary tags/icons/panel source, retry same ID and original data retained.`);
+  console.log(`PASS task detail ${width}: autosave/close, checklist, independent categories/icons/panel source, retry same ID and original data retained.`);
 };

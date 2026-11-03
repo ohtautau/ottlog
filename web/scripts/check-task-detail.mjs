@@ -26,12 +26,13 @@ try {
     });
     const button = name => page.getByRole('button', { name, exact: true }), panel = () => page.locator('.task-detail-panel');
     const task = () => state.tasks.find(item => item.id === 'detail-existing');
-    const primary = () => task()?.primaryTag ?? task()?.tags?.[0] ?? '';
+    const categoryId = () => task()?.categoryId ?? '';
+    const categoryName = () => state.categories.find(c=>c.id===categoryId())?.name ?? '收集箱';
     async function closeEditor() { await page.keyboard.press('Escape'); await expect(panel()).toHaveCount(0); }
     async function openTask(title) { await button(`编辑任务：${title}`).first().click(); await expect(panel()).toBeVisible(); }
     async function remap(slot, source) {
       await page.locator(`#todo-zone-${slot} .todo-panel-source-trigger`).click();
-      await button(`显示标签：${source}`).click(); await expect(page.locator('.todo-panel-source-panel')).toHaveCount(0);
+      await button(`显示分类：${source}`).click(); await expect(page.locator('.todo-panel-source-panel')).toHaveCount(0);
     }
     await page.goto(origin + '/todos'); await expect(button('编辑任务：原始任务')).toBeVisible();
     await button('完成：原始任务').click(); await expect(page.locator('.operation-toast')).toContainText('已完成：原始任务');
@@ -81,35 +82,35 @@ try {
     await button('设置日期、提醒和重复').click(); await button('设置提醒').click();
     await expect(page.locator('.todo-schedule-reminder-popover')).toBeVisible(); await button('关闭提醒设置').click();
     await button('确认日期设置').click(); expect(task()?.reminderAt).toBeUndefined();
-    await button('主要标签').click(); await button('新建任务标签').click();
-    await page.getByRole('textbox', { name: '任务标签名称', exact: true }).fill('娱乐');
-    await button('选择任务标签图标').click(); await button('选择图标：游戏').click(); await button('完成标签编辑').click();
-    await expect.poll(() => state.tagStyles?.['娱乐']?.iconId).toBe('game');
-    await expect(page.locator('.todo-primary-tag-editor,.todo-primary-tag-panel')).toHaveCount(0);
-    await expect.poll(() => primary()).toBe('娱乐');
-    await button('主要标签').click(); await button('编辑标签：娱乐').click();
-    await page.getByRole('textbox', { name: '任务标签名称', exact: true }).fill('娱乐休闲'); await button('选择任务标签图标').click();
-    await button('选择图标：礼物').click(); await button('完成标签编辑').click();
-    await expect.poll(() => state.tagStyles?.['娱乐休闲']?.iconId).toBe('gift');
-    await expect(page.locator('.todo-primary-tag-editor,.todo-primary-tag-panel')).toHaveCount(0);
-    await expect.poll(() => primary()).toBe('娱乐休闲');
+    await button('任务分类').click(); await button('新建任务分类').click();
+    await page.getByRole('textbox', { name: '分类名称', exact: true }).fill('娱乐');
+    await button('选择分类图标').click(); await button('选择图标：游戏').click(); await button('完成分类编辑').click();
+    await expect.poll(() => state.categories.find(c=>c.name==='娱乐')?.iconId).toBe('game');
+    await expect(page.locator('.todo-category-editor,.todo-category-panel')).toHaveCount(0);
+    await expect.poll(() => categoryName()).toBe('娱乐');
+    await button('任务分类').click(); await button('编辑分类：娱乐').click();
+    await page.getByRole('textbox', { name: '分类名称', exact: true }).fill('娱乐休闲'); await button('选择分类图标').click();
+    await button('选择图标：礼物').click(); await button('完成分类编辑').click();
+    await expect.poll(() => state.categories.find(c=>c.name==='娱乐休闲')?.iconId).toBe('gift');
+    await expect(page.locator('.todo-category-editor,.todo-category-panel')).toHaveCount(0);
+    await expect.poll(() => categoryName()).toBe('娱乐休闲');
     await closeEditor(); await remap('later', '娱乐休闲');
-    await expect.poll(() => state.panelSources?.later).toEqual({ kind: 'tag', tag: '娱乐休闲' });
+    await expect.poll(() => state.panelSources?.later).toEqual({ kind:'category',categoryId:categoryId() });
     await expect(page.locator('#todo-zone-later .todo-quadrant-title')).toContainText('娱乐休闲');
     await remap('delegate', '娱乐休闲');
     const rowIds = await page.locator('.todo-task[id]').evaluateAll(nodes => nodes.map(node => node.id));
     expect(new Set(rowIds).size).toBe(rowIds.length);
     await expect(page.locator('#todo-zone-delegate').getByRole('button', { name: '编辑任务：自动保存任务', exact: true })).toBeVisible();
-    // A secondary tag must not match a panel whose source is the primary tag.
-    await openTask('自动保存任务'); await button('主要标签').click(); await button('设为主要标签：工作').click();
-    await expect.poll(() => primary()).toBe('工作'); await closeEditor();
+    // A tag alone never assigns a task to an independent category.
+    await openTask('自动保存任务'); await button('任务分类').click(); await button('选择分类：收集箱').click();
+    await expect.poll(() => categoryName()).toBe('收集箱'); await closeEditor();
     await expect(page.locator('#todo-zone-later .todo-task')).toHaveCount(0);
-    expect(task().tags).toContain('娱乐休闲');
+    expect(task().tags).toEqual(['工作','新标签']);
     const from = await page.locator('#todo-zone-do .todo-task').first().boundingBox(), to = await page.locator('#todo-zone-later .todo-quadrant-scroll').boundingBox();
     await page.mouse.move(from.x + from.width / 2, from.y + from.height / 2); await page.mouse.down();
     await page.mouse.move(from.x + from.width / 2 + 12, from.y + from.height / 2); await expect(page.locator('.todo-drag-ghost')).toBeVisible();
     await page.mouse.move(to.x + to.width / 2, to.y + Math.min(to.height / 2, 70), { steps: 8 }); await page.mouse.up();
-    await expect.poll(() => primary()).toBe('娱乐休闲'); expect(task()).toMatchObject({ id: 'detail-existing', important: true, urgent: true });
+    await expect.poll(() => categoryName()).toBe('娱乐休闲'); expect(task()).toMatchObject({ id: 'detail-existing', important: true, urgent: true });
     expect(task().tags).toContain('工作'); expect(task().tags).toContain('新标签');
     await expect(page.locator('.todo-drag-ghost')).toHaveCount(0);
     // A new draft autosaves and dismisses without an explicit create/save action.
@@ -138,8 +139,8 @@ try {
     await page.screenshot({ path:path.join(out, `shared-creation-${viewport.width}.png`) });
     await closeEditor(); await expect.poll(() => state.tasks.find(t => t.title === '首页共用任务编辑器')?.tags).toEqual(['实际','微信采集']);
     const created = state.tasks.find(t => t.title === '首页共用任务编辑器'); expect(created.subtasks[0].title).toBe('首页子任务');
-    results.push({ viewport, writes: writes.length, primaryTagRemap: '娱乐休闲', deletedTaskRestored: false, sharedCreation:true, menuSpacing, noBusinessApi: true }); await page.close();
-    console.log(`PASS task detail ${viewport.width}: autosave, notes/subtasks/tags, primary tag icon/name, panel remap, duplicate IDs, primary-tag drag, close/pagehide flush and deletion guard.`);
+    results.push({ viewport, writes: writes.length, categoryRemap: '娱乐休闲', deletedTaskRestored: false, sharedCreation:true, menuSpacing, noBusinessApi: true }); await page.close();
+    console.log(`PASS task detail ${viewport.width}: autosave, notes/subtasks/tags, category icon/name, panel remap, duplicate IDs, category drag, close/pagehide flush and deletion guard.`);
   }
   await fs.writeFile(path.join(out, 'report.json'), JSON.stringify({ origin, results }, null, 2));
 } finally { await browser.close(); }

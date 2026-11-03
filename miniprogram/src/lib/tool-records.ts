@@ -5,15 +5,14 @@ export type TodoRecurrence = { unit: 'day' | 'week' | 'month' | 'year' | 'weekda
 export type Todo = {
   id: string; title: string; description: string; categoryId: string; important: boolean; urgent: boolean;
   dueDate: string; dueTime?: string; tags?: string[]; recurrence?: TodoRecurrence; nextTasks?: TodoNextTask[];
-  primaryTag?: string; reminderAt?: string; generatedFrom?: string; completionGeneration?: string;
+  reminderAt?: string; generatedFrom?: string; completionGeneration?: string;
   completedAt: string | null; createdAt: string; updatedAt: string; subtasks?: TodoSubtask[]; images?: MemoImage[];
 };
-export type TodoCategory = { id: string; name: string; color: string };
+export type TodoCategory = { id: string; name: string; color: string; iconId?: string };
 export type TodoSortMode = 'schedule' | 'created' | 'custom';
 export type TodoPanelId = 'do' | 'plan' | 'delegate' | 'later';
-export type TodoPanelSource = { kind: 'quadrant'; quadrantId: TodoPanelId } | { kind: 'tag'; tag: string };
-export type TodoTagStyle = { iconId?: string };
-export type TodoState = { version: 1; tasks: Todo[]; categories: TodoCategory[]; sort?: TodoSortMode; panelSources?: Partial<Record<TodoPanelId, TodoPanelSource>>; tagStyles?: Record<string, TodoTagStyle> };
+export type TodoPanelSource = { kind: 'quadrant'; quadrantId: TodoPanelId } | { kind: 'category'; categoryId: string };
+export type TodoState = { version: 1; tasks: Todo[]; categories: TodoCategory[]; sort?: TodoSortMode; panelSources?: Partial<Record<TodoPanelId, TodoPanelSource>> };
 export const initialTodoState: TodoState = { version: 1, tasks: [], categories: [{ id: 'work', name: '工作', color: '#8aafff' }, { id: 'life', name: '生活', color: '#a8ceae' }, { id: 'study', name: '学习', color: '#dfd4b4' }] };
 export const todoQuadrants = [
   { id: 'do', title: '高优先级', caption: '重要且紧急', important: true, urgent: true, color: '#e7a097' },

@@ -1,0 +1,20 @@
+.todo-category-layer.form-popover-layer { z-index: 250; }
+.todo-category-trigger.form-choice-trigger { justify-content: flex-start; gap: 6PX; font-size: 16PX; font-weight: 600; }
+.todo-category-icon { flex: none; width: 24PX; height: 24PX; }
+.todo-category-search { padding: 4PX 12PX 8PX; }
+.todo-category-options { display: flex; flex-direction: column; gap: 4PX; padding: 0 8PX 8PX; }
+.todo-category-option-row { display: flex; align-items: center; gap: 2PX; min-width: 0; }
+.todo-category-option-row > .todo-category-option { display: flex; flex: 1; justify-content: flex-start; gap: 10PX; min-width: 0; margin: 0; text-align: left; }
+.todo-category-option-row > .ui-button { flex: none; margin: 0; }
+.todo-category-option > text { min-width: 0; overflow-wrap: anywhere; }
+.todo-category-selected { flex: none; margin-left: auto; }
+.todo-category-empty { padding: 12PX; color: #9fb3bc; text-align: center; }
+.todo-category-panel .sheet-actions > button { display: flex; align-items: center; gap: 8PX; }
+.todo-category-editor-layer { position: fixed; inset: 0; z-index: 260; display: flex; align-items: center; justify-content: center; padding: 16PX; }
+.todo-category-editor { position: relative; width: 100%; max-width: 400PX; max-height: calc(100vh - 32PX); overflow: hidden; border: 1PX solid #3b515a; border-radius: 14PX; background: #192933; }
+.todo-category-definition { display: flex; align-items: center; gap: 8PX; padding: 0 16PX 12PX; }
+.todo-category-definition > button { flex: none; margin: 0; }
+.todo-category-definition .library-icon { width: 28PX; height: 28PX; }
+.todo-category-definition .todo-category-name { flex: 1; width: 0; min-width: 0; height: 44PX; min-height: 44PX; margin: 0; padding: 0 8PX; border: 0; border-radius: 0; background: transparent; color: #edf2e9; font-size: 16PX; }
+.todo-category-error { padding: 0 16PX 8PX; color: #efb7a2; font-size: 13PX; }
+.todo-category-icons.icon-library-overlay { z-index: 270; }

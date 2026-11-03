@@ -14,12 +14,7 @@ export function rankedEntryTags(todo: TodoState, memo: MemoState): string[] {
     for (const tag of normalizedTags(values)) counts.set(tag, (counts.get(tag) || 0) + Number(used));
   };
   include(DEFAULT_TODO_TAGS, false);
-  include(todo.categories.map(category => category.name), false);
-  const categories = new Map(todo.categories.map(category => [category.id, category.name.trim()]));
-  for (const task of todo.tasks) {
-    const legacy = task.categoryId ? categories.get(task.categoryId) || task.categoryId : '';
-    include([...(task.tags || []), legacy], true);
-  }
+  for (const task of todo.tasks) include(task.tags || [], true);
   for (const note of memo.notes) include(note.tags, true);
   return [...counts.keys()].sort((a, b) => counts.get(b)! - counts.get(a)!);
 }

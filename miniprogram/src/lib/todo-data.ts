@@ -98,15 +98,6 @@ export function retryTodoMove(state: TodoState, target: TodoState, id: string): 
   return saveTodoOrder(state, [...tasks, ...remaining.values()], 'custom');
 }
 
-/** Keep the shared storage shape compatible while folding old categories into tags. */
-export function mergeTodoCategories(state: TodoState): TodoState {
-  return { ...state, tasks: state.tasks.map(task => {
-    if (!task.categoryId) return task;
-    const name = state.categories.find(category => category.id === task.categoryId)?.name.trim() || task.categoryId;
-    return { ...task, categoryId: '', tags: [...new Set([...(task.tags || []), name])] };
-  }) };
-}
-
 /** Derive toolbar feedback from all surviving tasks, independently of page filters or order. */
 export function todoToolbarSummary(state: TodoState, now: Date): { completedToday: number; recent: Todo | undefined } {
   const cutoff = now.getTime(), dayStart = new Date(now);
@@ -125,7 +116,7 @@ export function todoToolbarSummary(state: TodoState, now: Date): { completedToda
 
 export function rankedTodoTags(state: TodoState): string[] {
   const counts = new Map<string, number>();
-  for (const name of [...DEFAULT_TODO_TAGS, ...state.categories.map(category => category.name.trim())]) {
+  for (const name of DEFAULT_TODO_TAGS) {
     if (name) counts.set(name, 0);
   }
   for (const task of state.tasks) for (const tag of new Set(task.tags || [])) counts.set(tag, (counts.get(tag) || 0) + 1);
