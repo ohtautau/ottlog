@@ -15,7 +15,6 @@
 .memo-list-empty button { margin: 8rpx 0 0; font-size: 24rpx; min-height: 72rpx; }
 .memo-page .tool-status { display: flex; align-items: center; justify-content: space-between; gap: 20rpx; }
 .memo-page .tool-status button { margin: 0; padding: 0 6rpx; min-width: 104rpx; flex-shrink: 0; background: transparent; color: #9eafb9; border: 0; font-size: 22rpx; }
-.memo-filter-colors > button > view { flex: none; width: min(18rpx,12PX); height: min(18rpx,12PX); border-radius: 50%; }
 
 .memo-page .memo-toolbar { justify-content: flex-end; gap: 6PX; margin: 0 0 8PX; padding: 0; }
 .memo-page .memo-category-row { margin-bottom: 8PX; }

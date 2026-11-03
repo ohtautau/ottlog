@@ -10,7 +10,7 @@ import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import Taro, { useDidHide, useDidShow, useRouter } from '@tarojs/taro';
 import { Button, ScrollView, Text, Textarea, View } from '@tarojs/components';
 import ActionButton from '../../components/ui-button';
-import { EditSymbol, DeleteSymbol, CompletedGoalsSymbol } from '../../components/manage-symbol';
+import { EditSymbol, DeleteSymbol, CompletedGoalsHistorySymbol } from '../../components/manage-symbol';
 import PageToolbar from '../../components/page-toolbar';
 import DomainDefinitionEditor from '../../components/domain-definition-editor';
 import useDomainDefinition from '../../lib/use-domain-definition';
@@ -269,7 +269,7 @@ export default function Domains() {
       {ready && valid && !selectedDomain && <View className='tool-empty'>领域不存在或已删除</View>}
       {ready && valid && <View className='domain-detail-grid'>{state.domains.filter(domain => domain.id === domainId).map(domain => <View className='tool-card domain-card' key={domain.id}>
         <View className='domain-heading'><View className='domain-heading-name'><LibraryIcon name={domainIcon(domain)} className='domain-detail-icon' /><Text className='domain-name'>{trimTextEnd(domain.name)}</Text></View>
-          <ActionButton appearance='icon' size='compact' className='domain-count' ariaLabel={`查看${domain.name}已完成目标`} onClick={() => open({ type: 'history', owner, domainId: domain.id, content: '' })}><CompletedGoalsSymbol /></ActionButton>
+          <ActionButton appearance='icon' size='compact' className='domain-count' ariaLabel={`查看${domain.name}已完成目标`} onClick={() => open({ type: 'history', owner, domainId: domain.id, content: '' })}><CompletedGoalsHistorySymbol /></ActionButton>
         </View>
         <View className='domain-goals'>{(['longTerm', 'shortTerm'] as const).map(kind => {
           const goal = displayedDomainGoal(state, domain.id, kind), completed = goal?.status === 'completed';

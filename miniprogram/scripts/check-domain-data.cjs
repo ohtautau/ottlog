@@ -78,7 +78,7 @@ function checkRecordBatches() {
   assert.throws(() => data.saveDomainRecords(collision, 'work', entries, true), /发生变化/);
   assert.equal(JSON.stringify(collision), beforeCollision, 'A conflicting second row cannot append the first');
   for (const batch of [
-    [], [...entries, { kind: 'positive', record: record('third') }],
+    [], Array.from({ length: data.MAX_DOMAIN_RECORD_BATCH + 1 }, (_, index) => ({ kind: 'positive', record: record(`excess-${index}`) })),
     [entries[0], { kind: 'negative', record: entries[0].record }],
     [entries[0], { kind: 'unknown', record: record('bad-kind') }],
     [entries[0], { kind: 'negative', record: record('bad-content', '字'.repeat(6001)) }],

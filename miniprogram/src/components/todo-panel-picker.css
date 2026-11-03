@@ -1,0 +1,9 @@
+.todo-panel-source-layer.form-popover-layer { z-index: 250; }
+.todo-panel-source-trigger.form-choice-trigger { gap: 6PX; margin: 0; min-width: 0; }
+.todo-panel-source-options { display: flex; flex-direction: column; gap: 4PX; padding: 0 12PX 12PX; }
+.todo-panel-source-section { display: block; padding: 8PX 6PX 4PX; color: #9eb4bd; font-size: 12PX; line-height: 18PX; }
+.todo-panel-source-options > .todo-panel-source-option { display: flex; justify-content: flex-start; gap: 10PX; width: 100%; min-width: 0; margin: 0; text-align: left; }
+.todo-panel-source-option > text { min-width: 0; overflow-wrap: anywhere; }
+.todo-panel-tag-mark { display:block;flex:none;width:24PX;text-align:center;color:#a8c8bb;font-size:20PX;line-height:24PX; }
+.todo-panel-source-empty { padding:8PX 6PX;color:#9eb4bd;font-size:13PX;line-height:20PX; }
+.todo-panel-source-error { padding:4PX 6PX;color:#efb7a2;font-size:13PX;line-height:20PX; }

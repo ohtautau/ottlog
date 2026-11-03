@@ -12,7 +12,7 @@ module.exports = async ({page,origin,out,width,expect}) => {
   const data=()=>page.evaluate(()=>JSON.parse(localStorage.getItem('ottlog-mini-tool-v1:reader:undo-a:todos')).data);
   const undo=()=>toast.getByRole('button',{name:'撤销最近一次操作',exact:true}).click();
   await expect(row()).toHaveCount(1);await expect(toast).toHaveCount(0);
-  await row().locator('.todo-complete').click();await expect(toast).toContainText('已完成任务');
+  await row().locator('.todo-complete').click();await expect(toast).toContainText('已完成：原任务');
   await undo();await expect(toast).toHaveText('已撤销此操作');expect((await data()).tasks[0].completedAt).toBeNull();
   await row().locator('.todo-task-content').click();await page.getByLabel('任务名称',{exact:true}).fill('编辑后的任务');await page.locator('.todo-sheet-footer').getByRole('button',{name:'保存',exact:true}).click();
   await expect(toast).toContainText('已修改任务');await undo();await expect(row()).toHaveCount(1);expect((await data()).tasks[0].description).toBe('完整备注');
@@ -46,10 +46,10 @@ module.exports = async ({page,origin,out,width,expect}) => {
   await page.evaluate(()=>{window.__miniFixture.failToolWrites=[];});await failedDelete.getByRole('button',{name:'重试删除',exact:true}).click();await expect(failedDelete).toHaveCount(0);await expect(row()).toHaveCount(0);await undo();expect((await data()).tasks[0]).toEqual(task);
   await page.locator('.todo-sort-toggle').click();await page.getByRole('button',{name:'创建时间最近',exact:true}).click();await page.locator('.todo-sort-popover').getByRole('button',{name:'排序',exact:true}).click();
   await expect(toast).toContainText('已调整排序');expect((await data()).sort).toBe('created');await undo();expect((await data()).sort).toBeUndefined();
-  await row().locator('.todo-complete').click();await expect(toast).toContainText('已完成任务');
+  await row().locator('.todo-complete').click();await expect(toast).toContainText('已完成：原任务');
   await page.evaluate(()=>{window.__miniFixture.failToolWrites=['todos'];});await undo();await expect(toast).toContainText('撤销尚未保存');
   await page.evaluate(()=>{window.__miniFixture.failToolWrites=[];});await undo();await expect(toast).toHaveText('已撤销此操作');expect((await data()).tasks[0].completedAt).toBeNull();
-  await page.clock.install();await row().locator('.todo-complete').click();await expect(toast).toContainText('已完成任务');
+  await page.clock.install();await row().locator('.todo-complete').click();await expect(toast).toContainText('已完成：原任务');
   await page.clock.fastForward(4000);await expect(toast).toBeVisible();await page.clock.fastForward(1200);await expect(toast).toHaveCount(0);
   await row().locator('.todo-complete').click();await expect(toast).toContainText('已重新打开任务');
   await page.screenshot({path:path.join(out,`task-undo-${width}.png`)});

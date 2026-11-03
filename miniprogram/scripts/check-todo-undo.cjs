@@ -13,7 +13,7 @@ const verify = (before,after,label) => {const beforeJson=JSON.stringify(before),
 verify(base,model.saveTodo(base,task('third')),'已创建任务');
 verify(base,{...base,tasks:base.tasks.filter(item=>item.id!=='first')},'已删除任务');
 verify(base,model.saveTodo(base,{...base.tasks[0],title:'修改后的标题',tags:['工作']}),'已修改任务');
-verify(base,model.toggleTodo(base,'first'),'已完成任务');
+verify(base,model.toggleTodo(base,'first'),'已完成：first');
 const completed=model.toggleTodo(base,'first');verify(completed,model.toggleTodo(completed,'first'),'已重新打开任务');
 verify(base,model.moveTodo(base,'first','do',null,['first','second']),'已移动任务');
 verify(base,model.applyTodoSort(base,'schedule'),'已调整排序');

@@ -35,3 +35,8 @@
 .todo-sort-error { color: #e7a097; font-size: 14PX; line-height: 1.4; }
 .todo-sort-retry { display: flex; align-items: center; gap: 8PX; margin-bottom: 6PX; }
 .todo-sort-retry .todo-sort-error { flex: 1; margin: 0; }
+
+.todo-quadrant-tag { background: #203139; }
+.todo-panel-icon { flex: none; width: 18PX; height: 18PX; }
+.task-detail-hidden-anchor { position: fixed; left: 16PX; bottom: 16PX; width: 1PX; height: 1PX; opacity: 0; pointer-events: none; }
+.task-detail-popover-layer { z-index: 240; }

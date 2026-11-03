@@ -1,5 +1,4 @@
 .memo-editor-fields input,.memo-editor-fields textarea{margin:0;padding:0;border:0;border-radius:0;background:transparent;min-width:0}
-.memo-palette{flex:1;width:0;min-width:0}
 .memo-tags-field{margin:0;font-size:25rpx}
 .memo-editor-settings{display:flex;align-items:center;justify-content:space-between;gap:8PX;margin:0}
 .memo-pin-row{display:flex;justify-content:flex-end;margin:0;border-top:1PX solid #3b4b56;padding-top:var(--editor-section-inset,12PX)}

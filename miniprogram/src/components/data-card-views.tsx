@@ -3,21 +3,21 @@ import { Button, Image, Text, View } from '@tarojs/components';
 import LibraryIcon from './library-icon';
 import HabitPriorityCorner from './habit-priority-corner';
 import { EditSymbol } from './manage-symbol';
-import { memoColorStyle } from './memo-fields-layout';
+import { memoSurfaceStyle } from './memo-fields-layout';
 import { memoIconId } from '../lib/icon-library';
-import { memoPriorityColor, type MemoColor, type MemoPriority, type MemoImage } from '../lib/tool-records';
+import { memoPriorityColor, type MemoPriority, type MemoImage } from '../lib/tool-records';
 import './data-card-views.css';
 
 /** Presentation-only props keep examples out of entity models and save handlers. */
-export function MemoCard({ title, body, color, iconId, priority = 'none', metadata, images = [], actions, onOpen }: {
-  title: string; body: string; color: MemoColor; iconId?: string; priority?: MemoPriority;
+export function MemoCard({ title, body, iconId, priority = 'none', metadata, images = [], actions, onOpen }: {
+  title: string; body: string; iconId?: string; priority?: MemoPriority;
   metadata?: ReactNode; images?: MemoImage[]; actions?: ReactNode; onOpen?: () => void;
 }) {
   const content = <><LibraryIcon className='memo-note-symbol' name={memoIconId(iconId)} /><View className='memo-note-copy'>
     <View className='memo-note-title-row'><Text className='memo-note-title'>{title}</Text></View>
     <Text className='memo-note-body'>{body}</Text><View className='memo-note-meta'>{metadata}</View>
   </View>{!!images.length && <View className='memo-note-images'><Image src={images[0].dataUrl} mode='aspectFill' /></View>}</>;
-  return <View className='memo-note' style={memoColorStyle(color)}><HabitPriorityCorner priority={priority} color={memoPriorityColor(priority)} />
+  return <View className='memo-note' style={memoSurfaceStyle()}><HabitPriorityCorner priority={priority} color={memoPriorityColor(priority)} />
     {onOpen ? <Button className='memo-note-open' hoverClass='none' ariaLabel={`查看便签：${title}`} onClick={onOpen}>{content}</Button> : <View className='memo-note-open'>{content}</View>}
     {actions && <View className='memo-note-actions'>{actions}</View>}
   </View>;

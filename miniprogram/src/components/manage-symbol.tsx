@@ -34,6 +34,7 @@ export function PinSymbol() {
   return <View className='pin-symbol' aria-hidden><View><View /><View /><View /></View></View>;
 }
 
-export function CompletedGoalsSymbol() {
-  return <View className='completed-goals-symbol' aria-hidden><View /><View /></View>;
+/** Completed-goal archives use a clock and rewind arrow, not a completion checkbox. */
+export function CompletedGoalsHistorySymbol() {
+  return <View className='completed-goals-history-symbol' aria-hidden><View /><View /><View /></View>;
 }

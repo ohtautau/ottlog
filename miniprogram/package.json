@@ -46,7 +46,10 @@
     "test:home-navigation": "node scripts/check-ui-preview.cjs --home-navigation",
     "test:home-directory": "node scripts/check-home-shortcuts.cjs && node scripts/check-home-feature-order.cjs && node scripts/check-home-creation-navigation.cjs && node scripts/check-ui-preview.cjs --home-directory",
     "test:home-overview": "npm run test:home-navigation",
-    "test:entry-creation": "node scripts/check-progress-draft.cjs && node scripts/check-entry-tags.cjs && node scripts/check-ui-preview.cjs --entry-creation"
+    "test:entry-creation": "node scripts/check-progress-draft.cjs && node scripts/check-entry-tags.cjs && node scripts/check-ui-preview.cjs --entry-creation",
+    "test:task-detail": "node scripts/check-todo-autosave.cjs && node scripts/check-todo-panel-source.cjs && node scripts/check-ui-preview.cjs --task-detail",
+    "test:progress-pairs": "node scripts/check-progress-pairs.cjs && node scripts/check-ui-preview.cjs --progress-pairs",
+    "test:document-autosave": "node scripts/check-ui-preview.cjs --document-autosave"
   },
   "dependencies": {
     "@tarojs/components": "4.2.1",

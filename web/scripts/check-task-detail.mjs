@@ -1,0 +1,121 @@
+// Use the actual Docker website assets with disposable intercepted API data.
+import { chromium, expect } from '@playwright/test';
+import fs from 'node:fs/promises';
+import path from 'node:path';
+const origin = process.env.OTTLOG_PARITY_ORIGIN || 'http://127.0.0.1:3017';
+const target = new URL(origin);
+if (!['127.0.0.1', 'localhost'].includes(target.hostname) || target.protocol !== 'http:' || !target.port || ['3000', '5229'].includes(target.port)) throw new Error('Use a separate isolated loopback QA website.');
+const out = path.resolve('test-results/task-detail'); await fs.mkdir(out, { recursive: true });
+const stamp = '2026-11-03T00:00:00.000Z', results = [];
+const browser = await chromium.launch({ headless: true });
+try {
+  for (const viewport of [{ width: 1440, height: 900 }, { width: 390, height: 844 }]) {
+    const state = { version: 1, categories: [], tasks: [{ id: 'detail-existing', title: '原始任务', description: '', categoryId: '', important: true, urgent: true, dueDate: '', completedAt: null, createdAt: stamp, updatedAt: stamp, tags: ['工作'], subtasks: [], nextTasks: [] }] };
+    const errors = [], writes = [];
+    const page = await browser.newPage({ viewport, reducedMotion: 'reduce', timezoneId: 'Asia/Singapore' }); page.setDefaultTimeout(12000);
+    page.on('pageerror', error => errors.push(error.message));
+    await page.route('**/api/**', async route => {
+      const request = route.request(), pathname = new URL(request.url()).pathname;
+      if (pathname.startsWith('/api/account/')) return route.fulfill({ json: { authenticated: true, userName: 'detail-fixture', isAdmin: false, csrfToken: 'isolated' } });
+      if (pathname === '/api/personal-tools/todos') {
+        if (request.method() === 'PUT') { const next = request.postDataJSON().data; Object.keys(state).forEach(key => delete state[key]); Object.assign(state, structuredClone(next)); writes.push(structuredClone(state)); }
+        return route.fulfill({ json: { data: state } });
+      }
+      if (pathname.startsWith('/api/personal-tools/')) return route.fulfill({ json: { data: null } });
+      return route.fulfill({ json: { enabled: false, reminders: [], mottos: [] } });
+    });
+    const button = name => page.getByRole('button', { name, exact: true }), panel = () => page.locator('.task-detail-panel');
+    const task = () => state.tasks.find(item => item.id === 'detail-existing');
+    const primary = () => task()?.primaryTag ?? task()?.tags?.[0] ?? '';
+    async function closeEditor() { await page.keyboard.press('Escape'); await expect(panel()).toHaveCount(0); }
+    async function openTask(title) { await button(`编辑任务：${title}`).first().click(); await expect(panel()).toBeVisible(); }
+    async function remap(slot, source) {
+      await page.locator(`#todo-zone-${slot} .todo-panel-source-trigger`).click();
+      await button(`显示标签：${source}`).click(); await expect(page.locator('.todo-panel-source-panel')).toHaveCount(0);
+    }
+    await page.goto(origin + '/todos'); await expect(button('编辑任务：原始任务')).toBeVisible();
+    await button('完成：原始任务').click(); await expect(page.locator('.operation-toast')).toContainText('已完成：原始任务');
+    await button('撤销最近一次操作').click(); await expect(button('完成：原始任务')).toBeVisible();
+    await openTask('原始任务');
+    await expect(panel().getByRole('button', { name: /^(保存|创建任务|关闭编辑)$/ })).toHaveCount(0);
+    await expect(panel().locator('.task-detail-heading .sheet-close')).toHaveCount(0);
+    await expect(panel().locator('.memo-body-preview')).toHaveText('备注');
+    await expect(panel().locator('.task-detail-tools > button')).toHaveCount(3);
+    await expect(button('任务附件')).toBeEnabled();
+    await button('更多任务操作').click(); await expect(button('后续任务')).toBeVisible(); await expect(button('删除任务')).toBeVisible();
+    await page.keyboard.press('Escape'); await expect(panel()).toBeVisible();
+    const dividers = await panel().locator('.task-detail-heading,.task-detail-title,.memo-body-preview,.task-detail-footer').evaluateAll(nodes => nodes.map(node => getComputedStyle(node).borderBottomWidth));
+    expect(dividers.every(width => width === '0px')).toBe(true);
+    await panel().getByRole('textbox', { name: '任务名称', exact: true }).fill('自动保存任务');
+    await expect.poll(() => task()?.title).toBe('自动保存任务'); await expect(panel()).toBeVisible();
+    await button('添加子任务').click(); await panel().getByRole('textbox', { name: '子任务 1', exact: true }).fill('检查子项');
+    await expect.poll(() => task()?.subtasks?.[0]?.title).toBe('检查子项');
+    const field = panel().getByRole('textbox', { name: '子任务 1', exact: true }); await field.focus();
+    const style = await field.evaluate(node => { const s = getComputedStyle(node); return { outline: s.outlineStyle, border: s.borderTopWidth, background: s.backgroundColor, shadow: s.boxShadow }; });
+    expect(style).toMatchObject({ outline: 'none', border: '0px', background: 'rgba(0, 0, 0, 0)', shadow: 'none' });
+    await panel().locator('.memo-body-preview').click(); await panel().getByRole('textbox', { name: '任务备注', exact: true }).fill('备注也自动保存');
+    await expect.poll(() => task()?.description).toBe('备注也自动保存');
+    await panel().getByRole('button', { name: '任务标签', exact: true }).click();
+    await page.getByRole('textbox', { name: '任务标签', exact: true }).fill('工作，新标签');
+    await page.keyboard.press('Escape'); await expect.poll(() => task()?.tags).toEqual(['工作', '新标签']);
+    await button('任务优先级').click(); await button('中优先级').click();
+    await expect.poll(() => task()?.urgent).toBe(false);
+    await button('任务优先级').click(); await button('高优先级').click();
+    await expect.poll(() => task()?.urgent).toBe(true);
+    await button('设置日期、提醒和重复').click(); await button('选择明天').click(); await button('确认日期设置').click();
+    const tomorrow = await page.evaluate(() => { const date = new Date(); date.setDate(date.getDate() + 1); return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`; });
+    await expect.poll(() => task()?.dueDate).toBe(tomorrow);
+    await button('设置日期、提醒和重复').click(); await button('设置提醒').click();
+    await expect(page.locator('.todo-schedule-reminder-popover')).toBeVisible(); await button('关闭提醒设置').click();
+    await button('确认日期设置').click(); expect(task()?.reminderAt).toBeUndefined();
+    await button('主要标签').click(); await button('新建任务标签').click();
+    await page.getByRole('textbox', { name: '任务标签名称', exact: true }).fill('娱乐');
+    await button('选择任务标签图标').click(); await button('选择图标：游戏').click(); await button('完成标签编辑').click();
+    await expect.poll(() => state.tagStyles?.['娱乐']?.iconId).toBe('game');
+    await expect(page.locator('.todo-primary-tag-editor,.todo-primary-tag-panel')).toHaveCount(0);
+    await expect.poll(() => primary()).toBe('娱乐');
+    await button('主要标签').click(); await button('编辑标签：娱乐').click();
+    await page.getByRole('textbox', { name: '任务标签名称', exact: true }).fill('娱乐休闲'); await button('选择任务标签图标').click();
+    await button('选择图标：礼物').click(); await button('完成标签编辑').click();
+    await expect.poll(() => state.tagStyles?.['娱乐休闲']?.iconId).toBe('gift');
+    await expect(page.locator('.todo-primary-tag-editor,.todo-primary-tag-panel')).toHaveCount(0);
+    await expect.poll(() => primary()).toBe('娱乐休闲');
+    await closeEditor(); await remap('later', '娱乐休闲');
+    await expect.poll(() => state.panelSources?.later).toEqual({ kind: 'tag', tag: '娱乐休闲' });
+    await expect(page.locator('#todo-zone-later .todo-quadrant-title')).toContainText('娱乐休闲');
+    await remap('delegate', '娱乐休闲');
+    const rowIds = await page.locator('.todo-task[id]').evaluateAll(nodes => nodes.map(node => node.id));
+    expect(new Set(rowIds).size).toBe(rowIds.length);
+    await expect(page.locator('#todo-zone-delegate').getByRole('button', { name: '编辑任务：自动保存任务', exact: true })).toBeVisible();
+    // A secondary tag must not match a panel whose source is the primary tag.
+    await openTask('自动保存任务'); await button('主要标签').click(); await button('设为主要标签：工作').click();
+    await expect.poll(() => primary()).toBe('工作'); await closeEditor();
+    await expect(page.locator('#todo-zone-later .todo-task')).toHaveCount(0);
+    expect(task().tags).toContain('娱乐休闲');
+    const from = await page.locator('#todo-zone-do .todo-task').first().boundingBox(), to = await page.locator('#todo-zone-later .todo-quadrant-scroll').boundingBox();
+    await page.mouse.move(from.x + from.width / 2, from.y + from.height / 2); await page.mouse.down();
+    await page.mouse.move(from.x + from.width / 2 + 12, from.y + from.height / 2); await expect(page.locator('.todo-drag-ghost')).toBeVisible();
+    await page.mouse.move(to.x + to.width / 2, to.y + Math.min(to.height / 2, 70), { steps: 8 }); await page.mouse.up();
+    await expect.poll(() => primary()).toBe('娱乐休闲'); expect(task()).toMatchObject({ id: 'detail-existing', important: true, urgent: true });
+    expect(task().tags).toContain('工作'); expect(task().tags).toContain('新标签');
+    await expect(page.locator('.todo-drag-ghost')).toHaveCount(0);
+    // A new draft autosaves and dismisses without an explicit create/save action.
+    await page.locator('.floating-create-button').click(); await panel().getByRole('textbox', { name: '任务名称', exact: true }).fill('新任务自动保存');
+    await closeEditor(); await expect.poll(() => state.tasks.some(item => item.title === '新任务自动保存')).toBe(true);
+    expect(state.tasks.filter(item => item.title === '新任务自动保存')).toHaveLength(1);
+    await page.locator('.floating-create-button').click(); await panel().getByRole('textbox', { name: '任务名称', exact: true }).fill('离页立即保存');
+    await page.evaluate(() => window.dispatchEvent(new Event('pagehide')));
+    await expect.poll(() => state.tasks.some(item => item.title === '离页立即保存')).toBe(true); await closeEditor();
+    await openTask('自动保存任务'); await page.screenshot({ path: path.join(out, `detail-${viewport.width}.png`) });
+    state.tasks = state.tasks.filter(item => item.id !== 'detail-existing');
+    await page.evaluate(() => window.dispatchEvent(new Event('focus')));
+    await expect(page.locator('#todo-zone-do .todo-task')).toHaveCount(0);
+    await panel().getByRole('textbox', { name: '任务名称', exact: true }).fill('不得恢复已删除任务');
+    await expect(panel().getByRole('alert')).toContainText('已删除'); expect(state.tasks.some(item => item.id === 'detail-existing')).toBe(false);
+    await page.screenshot({ path: path.join(out, `deleted-guard-${viewport.width}.png`) });
+    const overflow = await page.evaluate(() => document.documentElement.scrollWidth - innerWidth); expect(overflow).toBeLessThanOrEqual(1); expect(errors).toEqual([]);
+    results.push({ viewport, writes: writes.length, primaryTagRemap: '娱乐休闲', deletedTaskRestored: false, noBusinessApi: true }); await page.close();
+    console.log(`PASS task detail ${viewport.width}: autosave, notes/subtasks/tags, primary tag icon/name, panel remap, duplicate IDs, primary-tag drag, close/pagehide flush and deletion guard.`);
+  }
+  await fs.writeFile(path.join(out, 'report.json'), JSON.stringify({ origin, results }, null, 2));
+} finally { await browser.close(); }

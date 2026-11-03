@@ -1,14 +1,14 @@
 import { useEffect, useRef, useState } from 'react';
 import Taro, { useDidHide } from '@tarojs/taro';
 import { View, Text } from '@tarojs/components';
-import { todoQuadrant, todoQuadrants, type Todo } from '../lib/tool-records';
+import { todoQuadrants, type Todo } from '../lib/tool-records';
 import TodoDragCard from './todo-drag-card';
 import { DeleteSymbol } from './manage-symbol';
 
 type Point = { clientX: number; clientY: number };
 type Touch = { touches?: Point[]; changedTouches?: Point[]; stopPropagation: () => void; preventDefault?: () => void };
 type Rect = { id: string; left: number; right: number; top: number; bottom: number };
-type Drag = { task: Todo; owner: string; x: number; y: number; startX: number; startY: number; target: string; before: string | null; moved: boolean; ending?: boolean; width?: number; height?: number; offsetX?: number; offsetY?: number; trash?: Rect; overTrash?: boolean };
+type Drag = { sourceId: string; task: Todo; owner: string; x: number; y: number; startX: number; startY: number; target: string; before: string | null; moved: boolean; ending?: boolean; width?: number; height?: number; offsetX?: number; offsetY?: number; trash?: Rect; overTrash?: boolean };
 export function useTodoDrag(tasks: Todo[], enabled: boolean, owner: string, commit: (id: string, quadrant: string, before: string | null) => void, options?: { onDelete: (task: Todo) => void }) {
   const current = useRef<Drag | null>(null);
   const [drag, setDrag] = useState<Drag | null>(null);
@@ -58,7 +58,7 @@ export function useTodoDrag(tasks: Todo[], enabled: boolean, owner: string, comm
       const zones: Rect[] = results[0] || [], rows: Rect[] = results[1] || [], views: Rect[] = results[2] || [];
       const page: Rect | undefined = results[3];
       if (!item.width) {
-        const source = rows.find(rect => rect.id === `todo-row-${snapshot.findIndex(task => task.id === item.task.id)}`);
+        const source = rows.find(rect => rect.id === item.sourceId);
         if (source) { item.width = source.right - source.left; item.height = source.bottom - source.top; item.offsetX = item.startX - source.left; item.offsetY = item.startY - source.top; }
       }
       if (page) {
@@ -72,8 +72,8 @@ export function useTodoDrag(tasks: Todo[], enabled: boolean, owner: string, comm
       if (zone) {
         const view = views.find(rect => rect.id === `todo-scroll-${item.target}`);
         const candidates = rows.filter(rect => rect.left >= zone.left && rect.right <= zone.right && rect.top < (view?.bottom ?? zone.bottom) && rect.bottom > (view?.top ?? zone.top))
-          .map(rect => ({ rect, task: snapshot[Number(rect.id.replace('todo-row-', ''))] }))
-          .filter(row => row.task && todoQuadrant(row.task).id === item.target && row.task.id !== item.task.id && !!row.task.completedAt === !!item.task.completedAt)
+          .map(rect => ({ rect, task: snapshot[Number(rect.id.match(/^todo-row-(\d+)/)?.[1])] }))
+          .filter(row => row.task && row.task.id !== item.task.id && !!row.task.completedAt === !!item.task.completedAt)
           .sort((a, b) => a.rect.top - b.rect.top);
         item.before = candidates.find(row => item.y < (row.rect.top + row.rect.bottom) / 2)?.task.id || null;
         if (view && !done && item.moved) {
@@ -90,8 +90,8 @@ export function useTodoDrag(tasks: Todo[], enabled: boolean, owner: string, comm
     item.moved ||= Math.hypot(item.x - item.startX, item.y - item.startY) > 6;
   }
   function captureCard(item: Drag) {
-    const index = latest.current.tasks.findIndex(task => task.id === item.task.id);
-    Taro.createSelectorQuery().select(`#todo-row-${index}`).boundingClientRect().exec(results => {
+
+    Taro.createSelectorQuery().select(`#${item.sourceId}`).boundingClientRect().exec(results => {
       if (pending.current !== item && current.current !== item) return;
       const source: Rect | undefined = results[0];
       if (source && !item.width) { item.width = source.right - source.left; item.height = source.bottom - source.top; item.offsetX = item.startX - source.left; item.offsetY = item.startY - source.top; }
@@ -121,12 +121,12 @@ export function useTodoDrag(tasks: Todo[], enabled: boolean, owner: string, comm
       cancel();
     });
   }
-  function bind(task: Todo) {
+  function bind(task: Todo, panelId = '') {
     return {
       onTouchStart: (event: Touch) => {
         if (!latest.current.enabled || event.touches?.length !== 1) return;
         const { clientX: x, clientY: y } = event.touches[0];
-        const item: Drag = { task, owner: latest.current.owner, x, y, startX: x, startY: y, target: '', before: null, moved: false };
+        const item: Drag = { sourceId: `todo-row-${latest.current.tasks.findIndex(item => item.id === task.id)}${panelId ? `-${panelId}` : ''}`, task, owner: latest.current.owner, x, y, startX: x, startY: y, target: '', before: null, moved: false };
         cancel(); pending.current = item;
         captureCard(item);
         holdTimer.current = setTimeout(() => activate(item), 400);

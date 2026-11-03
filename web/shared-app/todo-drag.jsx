@@ -46,7 +46,7 @@ export function useTodoDrag(tasks, enabled, owner, commit, options = {}) {
     item.before = null;
     if (zone) {
       const scroll = zone.querySelector('.todo-quadrant-scroll'), view = scroll.getBoundingClientRect();
-      const rows = [...zone.querySelectorAll('.todo-task')].map(node => ({node, rect: node.getBoundingClientRect(), task: latest.current.tasks[Number(node.id.replace('todo-row-', ''))]}))
+      const rows = [...zone.querySelectorAll('.todo-task')].map(node => ({node, rect: node.getBoundingClientRect(), task: latest.current.tasks[Number(node.id.match(/^todo-row-(\d+)/)?.[1])]}))
         .filter(row => row.task && row.task.id !== item.task.id && !!row.task.completedAt === !!item.task.completedAt && row.rect.bottom > view.top && row.rect.top < view.bottom);
       item.before = rows.find(row => item.y < (row.rect.top + row.rect.bottom) / 2)?.task.id || null;
       if (autoScroll && item.y >= view.top && item.y <= view.bottom) {
@@ -69,7 +69,7 @@ export function useTodoDrag(tasks, enabled, owner, commit, options = {}) {
     if (!latest.current.enabled || event.button !== 0 || event.isPrimary === false || event.target.closest('.todo-complete')) return;
     cancel();
     const rect = event.currentTarget.getBoundingClientRect();
-    const item = {task, owner: latest.current.owner, pointer: event.pointerId, mouse: event.pointerType === 'mouse', node: event.currentTarget, host: event.currentTarget.closest('.tool-app-root'), x: event.clientX, y: event.clientY, startX: event.clientX, startY: event.clientY, width: rect.width, height: rect.height, offsetX: event.clientX - rect.left, offsetY: event.clientY - rect.top, active: false, moved: false, target: '', before: null};
+    const item = {task, sourceId: event.currentTarget.id, owner: latest.current.owner, pointer: event.pointerId, mouse: event.pointerType === 'mouse', node: event.currentTarget, host: event.currentTarget.closest('.tool-app-root'), x: event.clientX, y: event.clientY, startX: event.clientX, startY: event.clientY, width: rect.width, height: rect.height, offsetX: event.clientX - rect.left, offsetY: event.clientY - rect.top, active: false, moved: false, target: '', before: null};
     if (!item.host) return;
     current.current = item;
     const move = e => {

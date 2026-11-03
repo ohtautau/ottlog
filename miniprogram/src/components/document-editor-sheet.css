@@ -5,3 +5,13 @@
 .memo-sheet-scroll { flex: 1; height: 0; min-height: 0; }
 .memo-sheet-fields { padding: 0 32rpx 24rpx; }
 .memo-sheet-footer .tool-primary{width:100%;margin:0}
+
+.document-autosave-heading { display:flex;align-items:center;justify-content:flex-end;gap:8PX;min-height:52PX;padding:8PX 16PX 0;flex:none; }
+.is-compact-autosave .memo-pin-row { display:none; }
+.is-compact-autosave .memo-tags-field { border:0;padding-top:8PX; }
+.document-autosave-tools { display:flex;align-items:center;gap:8PX;flex:none; }
+.document-autosave-tools > button { margin:0; }
+.document-autosave-status { display:flex;align-items:center;gap:4PX;min-width:0;font-size:12PX;color:#e7a097; }
+.document-autosave-footer { align-items:center;justify-content:space-between; }
+
+.is-compact-autosave .entity-title-row { border:0; }

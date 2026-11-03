@@ -1,5 +1,5 @@
 .entry-overlay { z-index: 101; }
-.entry-composer.todo-sheet { height: min(660PX,100%); max-height: 100%; }
+.entry-composer.todo-sheet { height: min(660PX,calc(100% - 24PX)); max-height: calc(100% - 24PX); }
 .entry-modes { display: flex; flex: 1; min-width: 0; align-items: stretch; gap: 4PX; padding: 4PX; border: 1rpx solid #3b505c; border-radius: 14rpx; background: #13232e; }
 .entry-composer .entry-mode { flex: 1; min-width: 0; margin: 0; }
 .entry-composer .entry-clear { flex: none; width: 40PX; margin: 0; }
@@ -22,3 +22,7 @@
 .entry-preview-step { display: flex; align-items: center; min-height: 40PX; }
 .entry-preview-step:first-child { min-height: min(106rpx,64PX); }
 .entry-preview .todo-tags-row,.entry-preview .memo-tags-field { min-height: 40PX; }
+
+.entry-composer.is-autosave .memo-pin-row { display:none; }
+.entry-composer.is-autosave .memo-tags-field,.entry-composer.is-autosave .todo-tags-row { border:0; }
+.entry-composer.is-autosave .entity-title-row { border:0; }

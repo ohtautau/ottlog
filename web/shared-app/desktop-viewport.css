@@ -1,7 +1,7 @@
 .account-motto-widget .tool-app-root { padding: 0; }
 /* Standalone home cards share the list inset in the browser at every width.
    Keep the mini-program's card content padding and input behavior unchanged. */
-.tool-app-root :is(.today-quote, .today-capture) {
+.tool-app-root .today-quote {
   margin-left: var(--card-group-inset);
   margin-right: var(--card-group-inset);
 }

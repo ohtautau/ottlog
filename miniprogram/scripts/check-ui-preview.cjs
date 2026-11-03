@@ -26,9 +26,12 @@ const onlyHomeEntryMode = process.argv.includes('--home-entry-mode');
 const onlyHomeCreationScroll = process.argv.includes('--home-creation-scroll');
 const homeEntryModePreview = onlyHomeEntryMode && process.argv.includes('--preview-mode');
 const onlyProgressCreation = process.argv.includes('--progress-creation');
+const onlyProgressPairs = process.argv.includes('--progress-pairs');
 const onlyScreens = process.argv.includes('--screens');
 const onlyToolbars = process.argv.includes('--toolbars');
 const onlyFloatingCreate = process.argv.includes('--floating-create');
+const onlyTaskDetail = process.argv.includes('--task-detail');
+const onlyDocumentAutosave = process.argv.includes('--document-autosave');
 const onlyEntertainmentPreview = process.argv.includes('--domain-entertainment-preview');
 const onlyDomainPreview = process.argv.includes('--domain-preview') || onlyEntertainmentPreview;
 const onlyCalendarLabels = process.argv.includes('--calendar-labels');
@@ -58,7 +61,7 @@ const fixture = {
   })),
 };
 const routes = ['index', 'todos', 'posts', 'categories', 'detail', 'favorites', 'journal', 'articles', 'daily', 'pomodoro', 'memos', 'mottos', 'domains', 'domain-detail', 'statistics', ...(onlyDomainPreview ? ['preview-data'] : [])].filter(page => fs.existsSync(path.join(root, 'src', 'pages', page, 'index.tsx')));
-if (onlyFloatingCreate) fixture.persistEntryTools = true;
+if (onlyFloatingCreate || onlyTaskDetail || onlyDocumentAutosave || onlyProgressPairs) fixture.persistEntryTools = true;
 if (process.argv.includes('--todo-undo') || process.argv.includes('--toolbar-defaults') || process.argv.includes('--empty-state') || process.argv.includes('--habit-spacing') || process.argv.includes('--account-habits')) fixture.persistEntryTools = true;
 const imports = routes.map((p, i) => `import Page${i} from ${JSON.stringify(path.join(root, 'src', 'pages', p, 'index.tsx'))};`).join('\n');
 const source = `import React, {useState,useEffect} from 'react'; import {createRoot} from 'react-dom/client'; import ${JSON.stringify(path.join(root, 'src/app.css'))};
@@ -200,6 +203,21 @@ async function main() {
       page.setDefaultTimeout(10000);
       page.on('pageerror', error => failures.push(`${width}: ${error.message}`));
       await page.route('https://preview.invalid/**', route => route.fulfill({ status: 200, contentType: 'image/svg+xml', body: cover }));
+      if (onlyProgressPairs) {
+        try { await require('./check-progress-pairs-ui.cjs')({ page, origin, out, width, expect }); }
+        catch (error) { await page.screenshot({ path: path.join(out, `progress-pairs-failed-${width}.png`) }); throw error; }
+        await page.close(); continue;
+      }
+      if (onlyDocumentAutosave) {
+        try { await require('./check-document-autosave-ui.cjs')({ page, origin, out, width, expect }); }
+        catch (error) { await page.screenshot({ path: path.join(out, `document-autosave-failed-${width}.png`) }); throw error; }
+        await page.close(); continue;
+      }
+      if (onlyTaskDetail) {
+        try { await require('./check-task-detail-ui.cjs')({ page, origin, out, width, expect }); }
+        catch (error) { await page.screenshot({ path: path.join(out, `task-detail-failed-${width}.png`) }); throw error; }
+        await page.close(); continue;
+      }
       if (onlyFloatingCreate) {
         try { await require('./check-floating-create-ui.cjs')({ page, origin, out, width, expect }); }
         catch (error) { await page.screenshot({ path: path.join(out, `floating-create-failed-${width}.png`) }); fs.writeFileSync(path.join(out, `floating-create-failed-${width}.html`), await page.content()); throw error; }
@@ -739,6 +757,9 @@ async function main() {
       console.log(`PASS domain recent records at 360/375/430/768px (includes 375x667 and 34px safe area): independently scrolling signed recent columns and domain cards, fixed page/toolbar/recent window, fixed detail card with independent full histories, wheel boundaries, stable goals and independently scrolling vertical habits, round-trip navigation, enlarged content-only recent panel, exactly eight full real cards filling the first screen, additional-domain/creation access inside the card window, cross-boundary sorting, stable mode geometry, short-goal spacing, combined latest ten, stable ties, original arrays, literal plain text/line breaks/image preview, same-ID editing/deletion/refill/reload, 40px controls, empty/loading/invalid states and account isolation. Browser adapter only. Screenshots: ${out}`);
       return;
     }
+    if (onlyProgressPairs) { console.log(`PASS progress pairs at 360/375(short)/430/768: negative/positive columns, repeated pairs, autosave and close flush, saved record editing and original-ID retry. Browser adapter only. ${out}`); return; }
+    if (onlyDocumentAutosave) { if (failures.length) throw new Error(failures.join('\n')); console.log(`PASS document autosave at 360/375(short)/430/768: neutral memos, shared auto-saving creators, close-flush and same-ID retry. Browser adapter only. ${out}`); return; }
+    if (onlyTaskDetail) { if (failures.length) throw new Error(failures.join('\n')); console.log(`PASS task detail at 360/375(short)/430/768: shared compact autosave editor, checklist, primary tags and configurable panels. Browser adapter only. ${out}`); return; }
     if (onlyFloatingCreate) { if (failures.length) throw new Error(failures.join('\n')); console.log(`PASS floating creation at four sizes: shared 56px plus, page actions, scroll stability, safe areas, last-item clearance, modal layering and account guards. Browser adapter only. ${out}`); return; }
     if (process.argv.includes('--toolbar-defaults')) { console.log(`PASS seven toolbar default actions at four sizes: shared reset geometry, filters/sort restoration, durable retries and preserved manual card preferences. Browser adapter only. ${out}`); return; }
     if (onlyHomeShortcutLibrary) {

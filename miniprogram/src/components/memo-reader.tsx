@@ -35,7 +35,7 @@ export default function MemoReader({ note, title, onClose, onEdit, onPin, onIcon
   return <><ChoicePopover ariaLabel='便签内容' anchorId='memo-list' open onOpenChange={open => { if (!open) { if (iconPicker) setIconPicker(false); else if (!closeDisabled) onClose(); } }} placement='center' panelWidth={560} maxHeightRatio={.9} bodySpacing='none' contentKey={changeError} panelClassName='memo-reader memo-content-reader'
     heading={<PopoverHeading className='memo-content-heading' title='便签内容' actions={<ActionButton appearance='icon' size='compact' ariaLabel='关闭便签内容' disabled={closeDisabled} onClick={onClose}>×</ActionButton>} />}
     footer={<>{!!changeError && <View className='memo-reader-error' role='alert'>{changeError}</View>}<SheetActions className='memo-reader-actions' leading={<ActionButton appearance='icon' size='compact' ariaLabel={`编辑便签：${title}`} disabled={editDisabled} onClick={onEdit}><EditSymbol /></ActionButton>}><ActionButton appearance='primary' size='large' width='fill' disabled={changing || (closeDisabled && !changeError)} loading={changing} onClick={changeError ? onRetry : onClose}>{changeError ? '重试保存' : '完成'}</ActionButton></SheetActions></>}>
-    <MemoFieldsLayout readOnly color={note.color} title={<>
+    <MemoFieldsLayout readOnly title={<>
       <ActionButton appearance='icon' className='button-label memo-icon-picker' ariaLabel='选择便签图标' disabled={changeDisabled} onClick={() => { setPriorityOpen(false); setIconPicker(true); }}><MemoIconPreview iconId={note.iconId} /></ActionButton>
       <EntityTitleText className='memo-reader-title' selectable>{title}</EntityTitleText>
       <PrioritySelect {...priorityProps} triggerId={priorityId} renderLayer={false} className='memo-priority-field' triggerClassName='memo-priority-trigger' />

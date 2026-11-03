@@ -1,0 +1,21 @@
+.todo-primary-tag-manager-anchor { position: fixed; top: 0; left: 0; width: 1PX; height: 1PX; opacity: 0; pointer-events: none; }
+.todo-primary-tag-layer.form-popover-layer { z-index: 250; }
+.todo-primary-tag-trigger.form-choice-trigger { justify-content: flex-start; gap: 6PX; font-size: 16PX; font-weight: 600; }
+.todo-primary-tag-icon { flex: none; width: 24PX; height: 24PX; }
+.todo-primary-tag-search { padding: 4PX 12PX 8PX; }
+.todo-primary-tag-options { display: flex; flex-direction: column; gap: 4PX; padding: 0 8PX 8PX; }
+.todo-primary-tag-option-row { display: flex; align-items: center; gap: 2PX; min-width: 0; }
+.todo-primary-tag-option-row > .todo-primary-tag-option { display: flex; flex: 1; justify-content: flex-start; gap: 10PX; min-width: 0; margin: 0; text-align: left; }
+.todo-primary-tag-option-row > .ui-button { flex: none; margin: 0; }
+.todo-primary-tag-option > text { min-width: 0; overflow-wrap: anywhere; }
+.todo-primary-tag-selected { flex: none; margin-left: auto; }
+.todo-primary-tag-empty { padding: 12PX; color: #9fb3bc; text-align: center; }
+.todo-primary-tag-panel .sheet-actions > button { display: flex; align-items: center; gap: 8PX; }
+.todo-primary-tag-editor-layer { position: fixed; inset: 0; z-index: 260; display: flex; align-items: center; justify-content: center; padding: 16PX; }
+.todo-primary-tag-editor { position: relative; width: 100%; max-width: 400PX; max-height: calc(100vh - 32PX); overflow: hidden; border: 1PX solid #3b515a; border-radius: 14PX; background: #192933; }
+.todo-primary-tag-definition { display: flex; align-items: center; gap: 8PX; padding: 0 16PX 12PX; }
+.todo-primary-tag-definition > button { flex: none; margin: 0; }
+.todo-primary-tag-definition .library-icon { width: 28PX; height: 28PX; }
+.todo-primary-tag-definition .todo-primary-tag-name { flex: 1; width: 0; min-width: 0; height: 44PX; min-height: 44PX; margin: 0; padding: 0 8PX; border: 0; border-radius: 0; background: transparent; color: #edf2e9; font-size: 16PX; }
+.todo-primary-tag-error { padding: 0 16PX 8PX; color: #efb7a2; font-size: 13PX; }
+.todo-primary-tag-icons.icon-library-overlay { z-index: 270; }

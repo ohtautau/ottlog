@@ -1,0 +1,88 @@
+const path = require('node:path');
+module.exports = async function checkProgressPairs({ page, origin, out, width, expect }) {
+  const owner = 'progress-pairs-reader';
+  const state = { version: 1, domains: [{ id: 'work', name: '工作', iconId: 'work', longTermGoal: null, shortTermGoal: null, habits: [], positiveRecords: [], negativeRecords: [] }], completedGoals: [] };
+  await page.goto(`${origin}/?progress-pairs-${width}#/pages/posts/index`);
+  await page.evaluate(({ state, owner }) => {
+    localStorage.clear();
+    localStorage.setItem(`ottlog-mini-tool-v1:reader:${owner}:domains`, JSON.stringify({ data: state, pending: false, revision: 0 }));
+  }, { state, owner });
+  await page.reload();
+  await page.evaluate(({ state, owner }) => {
+    window.__miniFixture.sessionProfile = { authenticated: true, userName: owner, isAdmin: false };
+    window.__miniFixture.accountToolStates = { [owner]: { domains: state, todos: { version: 1, categories: [], tasks: [] }, memos: { version: 1, notes: [] } } };
+    location.hash = '#/pages/domains/index';
+  }, { state, owner });
+  const data = () => page.evaluate(owner => window.__miniPreviewControl.readStorage(`ottlog-mini-tool-v1:reader:${owner}:domains`)?.data, owner);
+  const all = async () => (await data()).domains.flatMap(domain => [...domain.negativeRecords, ...domain.positiveRecords]);
+  const composer = () => page.locator('.entry-composer');
+  const field = (pair, slot) => composer().locator(`.progress-record-field[data-progress-pair="${pair}"][data-progress-slot="${slot}"] textarea`);
+  await page.getByRole('button', { name: '记录进展', exact: true }).click();
+  await expect(field(0, 'negative')).toBeEnabled();
+  await expect(composer().getByRole('button', { name: /^(保存记录|关闭编辑|保存)$/ })).toHaveCount(0);
+  await expect(composer().locator('.progress-record-pair')).toHaveCount(1);
+  const negative = await field(0, 'negative').boundingBox(), positive = await field(0, 'positive').boundingBox();
+  expect(negative.x + negative.width).toBeLessThan(positive.x); expect(negative.y).toBeCloseTo(positive.y, 0);
+  expect(negative.width).toBeCloseTo(positive.width, 0);
+  await expect(composer().locator('.progress-record-heading')).toHaveText(['负记录', '正记录']);
+  await expect(composer().locator('.memo-editor-toolbar').first()).toBeHidden();
+  await page.getByRole('button', { name: '添加一组正负记录', exact: true }).click();
+  await page.getByRole('button', { name: '添加一组正负记录', exact: true }).click();
+  await expect(composer().locator('.progress-record-pair')).toHaveCount(3);
+  await field(0, 'negative').fill('第一组负记录');
+  await field(0, 'positive').fill('第一组正记录');
+  await field(1, 'negative').fill('第二组负记录');
+  await expect.poll(async () => (await all()).length).toBe(3);
+  const ids = (await all()).map(record => record.id);
+  expect(new Set(ids).size).toBe(3);
+  await page.screenshot({ path: path.join(out, `progress-pairs-editor-${width}.png`) });
+  await field(1, 'negative').fill('关闭前最后一笔');
+  await page.locator('.entry-overlay > .todo-backdrop').click({ position: { x: 3, y: 3 } });
+  await expect(composer()).toHaveCount(0);
+  await expect.poll(async () => (await all()).some(record => record.content === '关闭前最后一笔')).toBe(true);
+  expect((await all()).map(record => record.id).sort()).toEqual(ids.sort());
+
+  const recordButton = () => page.locator('.domains-recent-record').filter({ hasText: '关闭前最后一笔' });
+  await recordButton().click();
+  const editor = () => page.locator('.record-edit-autosave .document-editor-sheet');
+  const input = () => editor().getByRole('textbox', { name: '记录内容', exact: true });
+  await expect(input()).toBeEnabled();
+  await expect(editor().getByRole('button', { name: /^(保存|关闭记录编辑)$/ })).toHaveCount(0);
+  await input().fill('已有记录自动保存');
+  await expect.poll(async () => (await all()).some(record => record.content === '已有记录自动保存')).toBe(true);
+  await page.locator('.record-edit-autosave .memo-backdrop').click({ position: { x: 3, y: 3 } });
+  await expect(editor()).toHaveCount(0);
+  await page.locator('.domains-recent-record').filter({ hasText: '已有记录自动保存' }).click();
+  await expect(input()).toBeEnabled();
+  await page.evaluate(() => { window.__miniFixture.failToolWrites = ['domains']; });
+  await input().fill('失败后按原编号重试');
+  await expect(editor().locator('.record-edit-save-state [role="alert"]')).toBeVisible();
+  await expect(input()).toHaveValue('失败后按原编号重试');
+  await page.locator('.record-edit-autosave .memo-backdrop').click({ position: { x: 3, y: 3 } });
+  await expect(editor()).toBeVisible();
+  await page.evaluate(() => { window.__miniFixture.failToolWrites = []; });
+  await editor().getByRole('button', { name: '重试', exact: true }).click();
+  await expect.poll(async () => (await all()).some(record => record.content === '失败后按原编号重试')).toBe(true);
+  await page.locator('.record-edit-autosave .memo-backdrop').click({ position: { x: 3, y: 3 } });
+  await expect(editor()).toHaveCount(0);
+  expect((await all()).map(record => record.id).sort()).toEqual(ids.sort());
+  const victim = (await all()).find(record => record.content === '失败后按原编号重试');
+  await page.locator('.domains-recent-record').filter({ hasText: victim.content }).click();
+  await expect(input()).toBeEnabled();
+  await page.evaluate(({ owner, id }) => {
+    const remote = window.__miniFixture.accountToolStates[owner].domains;
+    for (const domain of remote.domains) {
+      domain.positiveRecords = domain.positiveRecords.filter(record => record.id !== id);
+      domain.negativeRecords = domain.negativeRecords.filter(record => record.id !== id);
+    }
+    window.__miniPreviewControl.emit('ottlog-tools-refresh');
+  }, { owner, id: victim.id });
+  await expect.poll(async () => (await all()).some(record => record.id === victim.id)).toBe(false);
+  await input().fill('远端删除后保留的本机输入');
+  await expect(editor().locator('.record-edit-save-state [role="alert"]')).toContainText('已删除或移动');
+  await page.locator('.record-edit-autosave .memo-backdrop').click({ position: { x: 3, y: 3 } });
+  await expect(editor()).toHaveCount(0);
+  expect((await all()).some(record => record.id === victim.id)).toBe(false);
+  await page.screenshot({ path: path.join(out, `progress-pairs-saved-${width}.png`) });
+  console.log(`PASS progress pairs ${width}: columns, repeated append, stable record IDs, creator/saved-record autosave, close flush and failed local write retry.`);
+};

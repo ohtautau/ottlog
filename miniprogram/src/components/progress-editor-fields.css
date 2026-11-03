@@ -1,5 +1,9 @@
 .progress-domain-row { display: flex; min-width: 0; }
-.progress-record-kinds { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 6PX; }
-.progress-record-kinds button { min-width: 0; margin: 0; }
-.progress-record-choice.is-positive { --control-text: var(--domain-positive); --control-selected-text: var(--domain-positive); --control-background: #253934; --control-selected-background: #304c42; --control-selected-border: var(--domain-positive); }
-.progress-record-choice.is-negative { --control-text: var(--domain-negative); --control-selected-text: var(--domain-negative); --control-background: #352f33; --control-selected-background: #4b3b3d; --control-selected-border: var(--domain-negative); }
+.progress-record-pairs { display: flex; flex-direction: column; gap: 12PX; min-width: 0; }
+.progress-record-pair { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 12PX; min-width: 0; }
+.progress-record-field { min-width: 0; }
+.progress-record-heading { display: flex; align-items: center; min-height: 40PX; font-size: 14PX; line-height: 20PX; }
+.progress-record-heading.is-positive { color: var(--domain-positive); }
+.progress-record-heading.is-negative { color: var(--domain-negative); }
+.progress-add-pair { display: flex; align-items: center; justify-content: center; }
+.progress-add-pair > button { flex: none; margin: 0; }

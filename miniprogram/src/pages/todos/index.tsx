@@ -2,35 +2,42 @@ import CardGroupContent from '../../components/card-group-content';
 import { trimTextEnd } from '../../lib/text-whitespace';
 import PageScroll from '../../components/page-scroll';
 import { CoreScreen } from '../../components/page-sections';
-import SheetActions, { SheetDeleteButton } from '../../components/sheet-actions';
-import EditorHeading from '../../components/editor-heading';
-import { useEffect, useMemo, useRef, useState } from 'react';
-import Taro, { useDidShow, useRouter } from '@tarojs/taro';
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
+import Taro, { useDidShow, useDidHide, useRouter } from '@tarojs/taro';
 import { Button, ScrollView, Text, View } from '@tarojs/components';
 import ActionButton, { ChoiceButton } from '../../components/ui-button';
 import { hasVolatilePersonalTool, usePersonalToolState } from '../../lib/use-personal-tool-state';
-import { createTodo, saveTodo, toggleTodo, mergeTodoCategories, moveTodo, retryTodoMove, orderTodos, getTodoSortMode, applyTodoSort, todoToolbarSummary, type TodoSortMode, parseTodoTags as parseTags } from '../../lib/todo-data';
+import { createTodo, toggleTodo, mergeTodoCategories, orderTodos, getTodoSortMode, applyTodoSort, todoToolbarSummary, type TodoSortMode, parseTodoTags as parseTags } from '../../lib/todo-data';
 import { cancelTodoReminder, getReminderConfig, getTodoReminders, requestTodoReminder } from '../../lib/todo-reminders';
-import { initialTodoState, isTodoState, localToolDay, todoQuadrant, todoQuadrants, type Todo, type TodoState } from '../../lib/tool-records';
+import { initialTodoState, isTodoState, localToolDay, todoQuadrant, todoQuadrants, type Todo, type TodoState, type TodoPanelId } from '../../lib/tool-records';
 import { useTodoDrag } from '../../components/todo-drag';
 import { SelectChevron } from '../../components/select-trigger';
 import FilterPopover, { FilterFields, FilterField, FilterOptionGrid, FilterSearch } from '../../components/filter-popover';
 import TodoScheduleSheet from '../../components/todo-schedule-sheet';
 import type { TodoSchedule } from '../../lib/todo-schedule';
 import TodoEditorFields from '../../components/todo-editor-fields';
-import EntryComposer from '../../components/entry-composer';
+import TaskDetailEditor from '../../components/task-detail-editor';
+import TodoPrimaryTagPicker from '../../components/todo-primary-tag-picker';
+import TodoPanelPicker from '../../components/todo-panel-picker';
+import { getTodoPanelSource, todoPanelPresentation, todoMatchesPanel, setTodoPanelSource, saveTodoTag, deleteTodoTag, todoPrimaryTag, taskTagNames, moveTodoToPanel, retryTodoPanelMove } from '../../lib/todo-panel-source';
+import { autoSaveTodo, todoEditSnapshot } from '../../lib/todo-autosave';
+import { ChoicePopover, TagChoiceRow, PopoverHeading } from '../../components/form-options';
+import TagTextInput from '../../components/tag-text-input';
+import PrioritySelect from '../../components/priority-select';
+import MarkdownNoteEditor from '../../components/markdown-note-editor';
+import { noteStateFits } from '../../lib/note-image-data';
+import LibraryIcon from '../../components/library-icon';
+import { scheduleSummary } from '../../lib/todo-schedule';
 import FloatingCreateButton from '../../components/floating-create-button';
 import PageToolbar, { PageToolbarSummary, ToolbarResetButton } from '../../components/page-toolbar';
 import { SortOptions, SortPopover } from '../../components/sort-options';
 import { useEntryTags } from '../../lib/use-entry-tags';
 import { tagLabel } from '../../lib/tag-label';
 import { openPomodoro } from '../../lib/pomodoro-navigation';
-import { resumeEditorInput } from '../../lib/resume-editor-input';
 import usePageNow from '../../lib/use-page-now';
 import TodoTaskCard from '../../components/todo-task-card';
 import AppDialog from '../../components/app-dialog';
 import { showAppMessage } from '../../lib/app-dialog';
-import useEditorCloseGuard from '../../lib/use-editor-close-guard';
 import './index.css';
 import { isWebTool } from '../../lib/tool-platform';
 import useTodoUndo, { type TodoUndoEdit } from '../../lib/use-todo-undo';
@@ -56,7 +63,7 @@ export default function Todos() {
   const [sortError, setSortError] = useState('');
   const sortPending = useRef<{ owner: string; choice: TodoSortMode } | null>(null);
   const [moveError, setMoveError] = useState('');
-  const movePending = useRef<{ owner: string; id: string; target: TodoState } | null>(null);
+  const movePending = useRef<{ owner: string; id: string; slotId: TodoPanelId; target: TodoState } | null>(null);
   const [completion, setCompletion] = useState('all');
   const [tagFilter, setTagFilter] = useState<string | null>(null);
   const [expanded, setExpanded] = useState<Record<string, boolean>>({});
@@ -64,7 +71,11 @@ export default function Todos() {
   const toolbarSummary = useMemo(() => todoToolbarSummary(state, new Date(now)), [state, now]);
   const [draft, setDraft] = useState<Todo | null>(null);
   const [editing, setEditing] = useState(false);
-  const [creation, setCreation] = useState<{ task: Todo } | null>(null);
+  const [autosaveError, setAutosaveError] = useState('');
+  const [priorityOpen, setPriorityOpen] = useState(false), [moreOpen, setMoreOpen] = useState(false), [tagsOpen, setTagsOpen] = useState(false);
+  const [imageSignal, setImageSignal] = useState(0), [nextStepsOpen, setNextStepsOpen] = useState(false);
+  const persistedDraft = useRef<Todo | null>(null), savingDraft = useRef<Promise<boolean> | null>(null);
+  const liveDraft = useRef(draft), liveTags = useRef(''); liveDraft.current = draft;
   const [tagsText, setTagsText] = useState('');
   const [scheduleOpen, setScheduleOpen] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -80,7 +91,6 @@ export default function Todos() {
   const currentOwner = useRef(owner);
   const currentTask = useRef(draft?.id);
   const draftOwner = useRef('');
-  const dismissedEditors = useRef(new Map<string, { owner: string; draft: Todo; baseline: Todo; tags: string }>());
   const operating = useRef(false);
   const operationGeneration = useRef(0);
   const catalog = useEntryTags();
@@ -99,13 +109,12 @@ export default function Todos() {
   }, []);
   useEffect(() => {
     if (owner && lastOwner.current && owner !== lastOwner.current) {
-      dismissedEditors.current.clear();
-      setDraft(null); setCreation(null); setScheduleOpen(false); setSearch(''); setTagFilter(null); setExpanded({}); setBusy(false); setImageBusy(false); setReminder(null); setDeletion(null); setDeleteError(''); operating.current = false; ++operationGeneration.current;
+      setDraft(null); persistedDraft.current = null; savingDraft.current = null; setAutosaveError(''); setMoreOpen(false); setTagsOpen(false); setPriorityOpen(false); setScheduleOpen(false); setSearch(''); setTagFilter(null); setExpanded({}); setBusy(false); setImageBusy(false); setReminder(null); setDeletion(null); setDeleteError(''); operating.current = false; ++operationGeneration.current;
     }
     if (owner) lastOwner.current = owner;
   }, [owner]);
   useEffect(() => {
-    if (writable && requested) { setCreation({ task: createTodo() }); requestCreate(false); }
+    if (writable && requested) { openEditor(createTodo(), false); requestCreate(false); }
   }, [writable, requested]);
   useEffect(() => { setShowSort(false); setSortError(''); setSortChoice('schedule'); sortPending.current = null; setMoveError(''); movePending.current = null; }, [owner]);
   useEffect(() => {
@@ -134,21 +143,37 @@ export default function Todos() {
   const matchingCount = filtered.filter(task => completion === 'all' || (completion === 'done' ? !!task.completedAt : !task.completedAt)).length;
   const moveBlocked = movePending.current?.owner === owner;
   const sortBlocked = sortPending.current?.owner === owner;
-  const taskUndo = useTodoUndo(owner, !writable || busy || imageBusy || !!draft || !!creation || moveBlocked || sortBlocked, restoreOperation);
-  const sorter = useTodoDrag(state.tasks, writable && !busy && !moveBlocked && !draft && !creation && !showFilters && !showSort, owner, (id, quadrant, before) => {
-    const visibleIds = filtered.filter(task => (completion !== 'done' || !!task.completedAt) && (completion !== 'open' || !task.completedAt) && (!task.completedAt || (expanded[todoQuadrant(task).id] ?? !isWebTool))).map(task => task.id);
+  const taskUndo = useTodoUndo(owner, !writable || busy || imageBusy || !!draft || moveBlocked || sortBlocked, restoreOperation);
+  const sorter = useTodoDrag(state.tasks, writable && !busy && !moveBlocked && !draft && !showFilters && !showSort, owner, (id, quadrant, before) => {
+    const visibleIds = filtered.filter(task => (completion !== 'done' || !!task.completedAt) && (completion !== 'open' || !task.completedAt) && todoQuadrants.some(slot => todoMatchesPanel(task, getTodoPanelSource(state, slot.id as TodoPanelId)) && (!task.completedAt || (expanded[slot.id] ?? !isWebTool)))).map(task => task.id);
     void persistMove(id, quadrant, before, visibleIds);
     }, { onDelete: task => { if (writable && !operating.current) void performDelete({ owner, task: cloneTask(task), fromDrag: true }); } });
   const savedDraft = editing && draft ? state.tasks.find(item => item.id === draft.id) : undefined;
   const existingTags = catalog.owner === owner ? catalog.tags : [];
-  const draftChanged = !!(draft && savedDraft && (JSON.stringify(cloneTask(savedDraft)) !== JSON.stringify(cloneTask(draft)) || tagsText !== (savedDraft.tags || []).join('，')));
-  const closeGuard = useEditorCloseGuard({ scope: draft && draftOwner.current === owner ? `${owner}:${draft.id}` : '', hasChanges: draftChanged || !!draft && hasVolatilePersonalTool('todos', owner), blocked: busy || imageBusy || !!deletion, onSave: saveAndClose, onClose: closeEditor });
+  liveTags.current = tagsText;
+  const draftChanged = !!draft && (!persistedDraft.current || todoEditSnapshot({ ...draft, tags: parseTags(tagsText) }) !== todoEditSnapshot(persistedDraft.current));
   useEffect(() => {
-    if (!draft || scheduleOpen || deletion || typeof document === 'undefined') return;
-    const close = (event: KeyboardEvent) => { if (event.key === 'Escape' && !event.defaultPrevented) { event.preventDefault(); closeGuard.requestClose(); } };
+    if (!draft || !draftChanged || !draft.title.trim() || busy || imageBusy || !writable || draftOwner.current !== owner || autosaveError) return;
+    const timer = setTimeout(() => { void persistDraft(); }, 450);
+    return () => clearTimeout(timer);
+  }, [draft, tagsText, draftChanged, busy, imageBusy, writable, owner, autosaveError]);
+  useEffect(() => {
+    if (!draft || scheduleOpen || deletion || priorityOpen || moreOpen || tagsOpen || typeof document === 'undefined') return;
+    const close = (event: KeyboardEvent) => { if (event.key === 'Escape' && !event.defaultPrevented) { event.preventDefault(); void closeEditor(); } };
     document.addEventListener('keydown', close);
     return () => document.removeEventListener('keydown', close);
-  }, [draft?.id, scheduleOpen, deletion, closeGuard.requestClose]);
+  }, [draft?.id, scheduleOpen, deletion, priorityOpen, moreOpen, tagsOpen]);
+  const flushOnLeave = useRef(() => {});
+  flushOnLeave.current = () => { if (liveDraft.current?.title.trim()) void persistDraft(); };
+  useDidHide(() => flushOnLeave.current());
+  // Write the last input to the original local queue before passive store cleanup.
+  useLayoutEffect(() => () => flushOnLeave.current(), []);
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const flush = () => flushOnLeave.current();
+    window.addEventListener('pagehide', flush);
+    return () => window.removeEventListener('pagehide', flush);
+  }, []);
   const canAuthorize = !!(draft && savedDraft && !draftChanged && draft.reminderAt && draft.reminderAt === savedDraft.reminderAt && !draft.completedAt && owner && owner !== 'guest' && config?.enabled && config.templateId);
   const activeReminder = reminder && draft?.reminderAt && new Date(reminder.remindAt).getTime() === new Date(draft.reminderAt).getTime() ? reminder : null;
   const reminderLocked = !!activeReminder && ['pending', 'dispatching', 'sent', 'failed', 'unknown'].includes(activeReminder.status);
@@ -163,18 +188,15 @@ export default function Todos() {
   function openEditor(task: Todo, existing: boolean) {
     if (!writable || operating.current || moveBlocked || sorter.suppressClick()) return;
     draftOwner.current = owner;
-    const retained = dismissedEditors.current.get(task.id);
-    const resume = existing && retained?.owner === owner && retained.draft.id === task.id ? retained : null;
-    dismissedEditors.current.delete(task.id);
-    setEditing(existing); setDraft(cloneTask(resume ? resumeEditorInput(task, resume.baseline, resume.draft) : task));
-    setTagsText(resume && resume.tags !== (resume.baseline.tags || []).join('，') ? resume.tags : (task.tags || []).join('，'));
+    persistedDraft.current = existing ? cloneTask(task) : null; setAutosaveError(''); setPriorityOpen(false); setMoreOpen(false); setTagsOpen(false); setNextStepsOpen(false);
+    setEditing(existing); setDraft(cloneTask(task));
+    setTagsText((task.tags || []).join('，'));
     setScheduleOpen(false);
     setReminder(null);
   }
   function applySchedule(schedule: TodoSchedule) {
     if (!draft || busy || draftOwner.current !== owner || currentOwner.current !== owner) return;
-    const id = draft.id;
-    setDraft(previous => previous?.id === id ? { ...previous, ...schedule } : previous);
+    editDraft({ ...draft, ...schedule });
     setScheduleOpen(false);
   }
   function startOperation() {
@@ -200,7 +222,7 @@ export default function Todos() {
     } finally { finishOperation(generation); }
   }
   function restoreDefaults() {
-    if (!writable || operating.current || busy || moveBlocked || sortBlocked || sorter.drag || draft || creation) return;
+    if (!writable || operating.current || busy || moveBlocked || sortBlocked || sorter.drag || draft) return;
     setShowSort(false); setShowFilters(false); setSortChoice('schedule');
     setSearch(''); setTagFilter(null); setCompletion('all'); setExpanded({});
     const defaultMode = getTodoSortMode(initialTodoState);
@@ -214,17 +236,18 @@ export default function Todos() {
       await change(previous => {
         if (pending?.owner === expectedOwner) {
           if (!previous.tasks.some(task => task.id === pending.id)) { movePending.current = null; throw new Error('任务已删除，请重新排序'); }
-          return retryTodoMove(previous, pending.target, pending.id);
+          return retryTodoPanelMove(previous, pending.target, pending.id, pending.slotId);
         }
-        const next = moveTodo(previous, id!, quadrant, before, visibleIds);
-        if (next !== previous) movePending.current = { owner: expectedOwner, id: id!, target: next };
+        const next = moveTodoToPanel(previous, id!, quadrant as TodoPanelId, before, visibleIds);
+        if (next !== previous) movePending.current = { owner: expectedOwner, id: id!, slotId: quadrant as TodoPanelId, target: next };
         return next;
       }, expectedOwner);
       if (currentOwner.current !== expectedOwner || operationGeneration.current !== generation) return;
       if (hasVolatilePersonalTool('todos', expectedOwner)) throw new Error('排序尚未保存，请重试');
       if (movePending.current) {
+        const targetSlot = movePending.current.slotId;
         const task = movePending.current.target.tasks.find(item => item.id === movePending.current!.id);
-        if (task) setExpanded(previous => ({ ...previous, [todoQuadrant(task).id]: true }));
+        if (task) setExpanded(previous => ({ ...previous, [targetSlot]: true }));
         movePending.current = null;
       }
     } catch (error) {
@@ -252,36 +275,39 @@ export default function Todos() {
       }
     } finally { finishOperation(generation); }
   }
-  async function saveAndClose(): Promise<boolean> {
-    if (!draft || busy || imageBusy || operating.current || !writable) return false;
-    if (!draft.title.trim()) { notify(new Error('先写下任务名称')); return false; }
-    const captured: Todo = { ...draft, tags: parseTags(tagsText) };
-    if (captured.reminderAt && captured.reminderAt !== savedDraft?.reminderAt && new Date(captured.reminderAt).getTime() <= Date.now()) { notify(new Error('请选择未来的通知时间')); return false; }
-    const expectedOwner = draftOwner.current;
-    const previousReminder = savedDraft?.reminderAt;
-    const generation = startOperation();
-    try {
-      await change(previous => {
-        if (editing && !previous.tasks.some(task => task.id === captured.id)) throw new Error('这件任务已删除，请重新添加');
-        return saveTodo(previous, captured);
-      }, expectedOwner);
-      if (currentOwner.current !== expectedOwner || currentTask.current !== captured.id || operationGeneration.current !== generation) return false;
-      if (hasVolatilePersonalTool('todos', expectedOwner)) throw new Error('本机存储不可用，内容已保留，请重试保存');
-      if (!editing) { setCompletion('all'); setSearch(''); setTagFilter(null); }
-      setScheduleOpen(false); setDraft(null);
-      dismissedEditors.current.delete(captured.id);
-      if (captured.reminderAt && previousReminder !== captured.reminderAt) void showAppMessage({ title: '请开启微信提醒', icon: 'none' });
-      if (previousReminder && previousReminder !== captured.reminderAt) { setReminder(null); await cancelReminder(captured.id, expectedOwner, previousReminder); }
-      return true;
-    } catch (error) { if (currentOwner.current === expectedOwner) notify(error); return false; }
-    finally { finishOperation(generation); }
+  async function persistDraft(): Promise<boolean> {
+    if (savingDraft.current) return savingDraft.current;
+    const source = liveDraft.current;
+    if (!source || imageBusy || !writable || draftOwner.current !== currentOwner.current) return false;
+    if (!source.title.trim()) { setAutosaveError('请填写任务名称，修改仍保留在此窗口'); return false; }
+    const captured = cloneTask({ ...source, tags: parseTags(liveTags.current) });
+    const baseline = persistedDraft.current && cloneTask(persistedDraft.current), expectedOwner = draftOwner.current;
+    if (baseline && todoEditSnapshot(captured) === todoEditSnapshot(baseline) && !hasVolatilePersonalTool('todos', expectedOwner)) return true;
+    if (operating.current) return false;
+    const generation = startOperation(); setAutosaveError('');
+    let promise!: Promise<boolean>;
+    promise = (async () => {
+      try {
+        await change(previous => autoSaveTodo(previous, baseline, captured, (captured.tags || []).join('，')), expectedOwner);
+        if (currentOwner.current !== expectedOwner || currentTask.current !== captured.id || operationGeneration.current !== generation) return false;
+        if (hasVolatilePersonalTool('todos', expectedOwner)) throw new Error('本机存储不可用，修改已保留，请重试');
+        persistedDraft.current = captured; setEditing(true);
+        if (baseline?.reminderAt && baseline.reminderAt !== captured.reminderAt) { setReminder(null); void cancelReminder(captured.id, expectedOwner, baseline.reminderAt); }
+        return true;
+      } catch (error) { if (currentOwner.current === expectedOwner) setAutosaveError(error instanceof Error ? error.message : '自动保存失败，请重试'); return false; }
+      finally { finishOperation(generation); if (savingDraft.current === promise) savingDraft.current = null; }
+    })();
+    savingDraft.current = promise;
+    return promise;
   }
   async function toggle(task: Todo) {
     if (operating.current) return;
     const expectedOwner = owner;
     const generation = startOperation();
     try {
-      await change(previous => toggleTodo(previous, task.id), expectedOwner);
+      let nextTask: Todo | undefined;
+      await change(previous => { const next = toggleTodo(previous, task.id); nextTask = next.tasks.find(item => item.id === task.id); return next; }, expectedOwner);
+      if (currentOwner.current === expectedOwner && currentTask.current === task.id && nextTask) { persistedDraft.current = cloneTask(nextTask); setDraft(cloneTask(nextTask)); }
       if (!task.completedAt && task.reminderAt) await cancelReminder(task.id, expectedOwner, task.reminderAt);
     } catch (error) { notify(error); }
     finally { finishOperation(generation); }
@@ -303,22 +329,50 @@ export default function Todos() {
       await change(previous => ({ ...previous, tasks: previous.tasks.filter(item => item.id !== task.id) }), expectedOwner);
       if (currentOwner.current !== expectedOwner || operationGeneration.current !== generation) return;
       if (hasVolatilePersonalTool('todos', expectedOwner)) { setDeletion({ ...target, pending: true }); throw new Error('本机存储不可用，删除尚未保存，请重试'); }
-      dismissedEditors.current.delete(task.id); setDeletion(null); setDeleteError(''); setDraft(null);
+      setDeletion(null); setDeleteError(''); setDraft(null);
       if (task.reminderAt) await cancelReminder(task.id, expectedOwner, task.reminderAt);
     } catch (error) { if (currentOwner.current === expectedOwner && operationGeneration.current === generation) { setDeletion({ ...target, pending: true }); setDeleteError(error instanceof Error ? error.message : '删除失败，请重试'); } }
     finally { finishOperation(generation); }
   }
-  function closeEditor() {
-    if (!draft) return;
-    const expectedOwner = draftOwner.current, expectedTask = draft.id;
-    if (currentOwner.current !== expectedOwner || currentTask.current !== expectedTask) return;
-    const baseline = savedDraft ? cloneTask(savedDraft) : cloneTask(createTodo());
-    dismissedEditors.current.set(draft.id, { owner: expectedOwner, draft: cloneTask(draft), baseline, tags: tagsText });
-    setScheduleOpen(false); setDraft(null);
+  async function closeEditor(): Promise<boolean> {
+    const task = liveDraft.current, expectedOwner = draftOwner.current;
+    if (!task || imageBusy || deletion || expectedOwner !== currentOwner.current) return false;
+    if (persistedDraft.current && writable && !hasVolatilePersonalTool('todos', expectedOwner) && !state.tasks.some(item => item.id === task.id)) { setDraft(null); return true; }
+    if (!task.title.trim() && !persistedDraft.current && !task.description.trim() && !(task.subtasks?.length) && !(task.images?.length)) { setDraft(null); return true; }
+    if (savingDraft.current && !await savingDraft.current) return false;
+    if (!await persistDraft()) return false;
+    const latest = liveDraft.current;
+    if (!latest || expectedOwner !== currentOwner.current || latest.id !== task.id) return false;
+    if (persistedDraft.current && todoEditSnapshot({ ...latest, tags: parseTags(liveTags.current) }) !== todoEditSnapshot(persistedDraft.current)) return closeEditor();
+    setScheduleOpen(false); setDraft(null); setMoreOpen(false); setTagsOpen(false); setPriorityOpen(false); return true;
+  }
+  function editDraft(next: Todo) { if (draftOwner.current !== currentOwner.current) return; liveDraft.current = next; setAutosaveError(''); setDraft(next); }
+  function editTags(text: string) {
+    liveTags.current = text; setTagsText(text); setAutosaveError('');
+    const task = liveDraft.current;
+    if (task) { const tags = parseTags(text); editDraft({ ...task, tags, ...(todoPrimaryTag(task) && !tags.includes(todoPrimaryTag(task)) ? { primaryTag: '' } : {}) }); }
+  }
+  async function upsertTag(tag: {originalName?: string; name: string; iconId: string}) {
+    const expectedOwner = owner;
+    await change(previous => saveTodoTag(previous, tag), expectedOwner);
+    const task = liveDraft.current;
+    if (currentOwner.current === expectedOwner && task && tag.originalName && tag.originalName !== tag.name) {
+      const tags = parseTags(liveTags.current).map(name => name === tag.originalName ? tag.name : name);
+      liveTags.current = tags.join('，'); setTagsText(liveTags.current);
+      editDraft({ ...task, tags, ...(todoPrimaryTag(task) === tag.originalName ? { primaryTag: tag.name } : {}) });
+    }
+    if (hasVolatilePersonalTool('todos', owner)) throw new Error('标签尚未保存，请重试');
+  }
+  async function removeTag(tag: string) {
+    const expectedOwner = owner;
+    await change(previous => deleteTodoTag(previous, tag), expectedOwner);
+    if (currentOwner.current !== expectedOwner) return;
+    if (liveDraft.current && todoPrimaryTag(liveDraft.current) === tag) { const tags = (liveDraft.current.tags || []).filter(item => item !== tag); editDraft({ ...liveDraft.current, primaryTag: '', tags }); setTagsText(tags.join('，')); }
+    if (hasVolatilePersonalTool('todos', owner)) throw new Error('标签尚未保存，请重试');
   }
   async function authorizeReminder() {
     if (!draft || !canAuthorize || !config || busy || operating.current || reminderLocked) return;
-    if (new Date(draft.reminderAt!).getTime() <= Date.now()) { notify(new Error('请选择未来的通知时间并保存')); return; }
+    if (new Date(draft.reminderAt!).getTime() <= Date.now()) { notify(new Error('请选择未来的提醒时间')); return; }
     const expectedOwner = draftOwner.current;
     const generation = startOperation();
     try {
@@ -334,8 +388,8 @@ export default function Todos() {
     } catch (error) { if (currentOwner.current === expectedOwner) notify(error); }
     finally { finishOperation(generation); }
   }
-  function renderTask(task: Todo) {
-    return <TodoTaskCard key={task.id} task={task} now={now} rootProps={{ id: `todo-row-${state.tasks.indexOf(task)}`, ...sorter.bind(task) }} className={`${sorter.drag?.task.id === task.id ? ' is-drag-source' : ''}${sorter.drag?.before === task.id ? ' is-insert-before' : ''}`} disabled={!writable || busy || moveBlocked} ariaLabel={`编辑任务：${task.title}`} onOpen={() => openEditor(task, true)}
+  function renderTask(task: Todo, panelId: string) {
+    return <TodoTaskCard key={task.id} task={task} now={now} rootProps={{ id: `todo-row-${state.tasks.indexOf(task)}-${panelId}`, ...sorter.bind(task, panelId) }} className={`${sorter.drag?.sourceId === `todo-row-${state.tasks.indexOf(task)}-${panelId}` ? ' is-drag-source' : ''}${sorter.drag?.target === panelId && sorter.drag?.before === task.id ? ' is-insert-before' : ''}`} disabled={!writable || busy || moveBlocked} ariaLabel={`编辑任务：${task.title}`} onOpen={() => openEditor(task, true)}
       leading={check => <Button className='button-label todo-complete' aria-label={task.completedAt ? `重新打开：${task.title}` : `完成：${task.title}`} disabled={!writable || busy || moveBlocked} onClick={() => { if (!sorter.suppressClick()) void toggle(task); }}>{check}</Button>} />;
   }
 
@@ -343,7 +397,7 @@ export default function Todos() {
     <PageScroll animateScroll={!sorter.drag} snapSections={[]}><View className='todo-stages'><CoreScreen className='todo-core'><View className='todo-page'>
       <View className='todo-toolbar'><PageToolbar className='todo-page-toolbar'
         leading={ready && valid && !!owner && <PageToolbarSummary countLabel={`今日完成 ${toolbarSummary.completedToday}`} recentTitle={toolbarSummary.recent?.title} />}
-        reset={<ToolbarResetButton ariaLabel='恢复任务默认方式' disabled={!writable || busy || imageBusy || moveBlocked || sortBlocked || !!sorter.drag || !!draft || !!creation} onReset={restoreDefaults} />}
+        reset={<ToolbarResetButton ariaLabel='恢复任务默认方式' disabled={!writable || busy || imageBusy || moveBlocked || sortBlocked || !!sorter.drag || !!draft} onReset={restoreDefaults} />}
         sort={<SortPopover ariaLabel='排序' open={showSort} hasChanges={sortBlocked || sortChoice !== todoSortChoice(getTodoSortMode(state))} onOpenChange={open => { if (!operating.current) { setShowSort(open); if (open) { setShowFilters(false); if (!sortBlocked) setSortError(''); setSortChoice(todoSortChoice(sortBlocked ? sortPending.current!.choice : getTodoSortMode(state))); } } }} disabled={!writable || moveBlocked} triggerClassName='todo-sort-toggle' selected={showSort || getTodoSortMode(state) !== getTodoSortMode(initialTodoState)} panelClassName='todo-sort-popover' contentKey={sortError} saving={busy} confirmDisabled={!writable} onConfirm={applySort}>
           <SortOptions className='todo-sort-options' options={[{ value: 'schedule', label: '日程时间最近' }, { value: 'created', label: '创建时间最近' }]} value={sortChoice} disabled={busy || sortBlocked} onChange={setSortChoice} />
           {!!sortError && <View className='todo-sort-error' role='alert'><Text>{sortError}</Text></View>}
@@ -361,37 +415,46 @@ export default function Todos() {
       {moveError && <View className='todo-sort-retry'><View className='todo-sort-error' role='alert'>{moveError}</View>{moveBlocked && <ActionButton size='compact' ariaLabel='重试任务排序' disabled={busy} onClick={() => { void persistMove(); }}>重试</ActionButton>}</View>}
       {(search || tagFilter) && <Text className='todo-filter-summary'>{search ? `关键词：${search} · ` : ''}{tagFilter ? `标签：${tagLabel(tagFilter)} · ` : ''}{matchingCount} 件匹配</Text>}
       {!ready ? <View className='tool-empty'><Text>{status || '正在整理你的任务…'}</Text><ActionButton className='button-label' onClick={retry}>重新读取</ActionButton></View> : !valid ? <View className='tool-empty'><Text>当前数据格式暂不兼容，请到网页查看。原始数据已保留。</Text><ActionButton className='button-label' onClick={retry}>重新读取</ActionButton></View> : <View className='todo-quadrants'>{todoQuadrants.map(q => {
-        const tasks = filtered.filter(task => todoQuadrant(task).id === q.id);
+        const panel = todoPanelPresentation(state, q.id as TodoPanelId);
+        const tasks = filtered.filter(task => todoMatchesPanel(task, panel.source));
         const pending = tasks.filter(task => !task.completedAt);
         const completed = tasks.filter(task => !!task.completedAt);
         const showCompleted = expanded[q.id] ?? !isWebTool;
-        return <View id={`todo-zone-${q.id}`} key={q.id} className={`todo-quadrant todo-quadrant-${q.id}${sorter.drag?.target === q.id ? ' is-drop-zone' : ''}`}>
-          <View className='todo-quadrant-heading'><View className='todo-quadrant-label'><View className='todo-quadrant-title-row'><Text className='todo-quadrant-icon' aria-hidden style={{ color: q.color }}>{q.id === 'later' ? '⚐' : '⚑'}</Text><View className='todo-quadrant-title' style={{ color: q.color }}>{trimTextEnd(q.title)}</View></View><Text className='todo-quadrant-caption'>{q.caption}</Text></View></View>
+        return <View id={`todo-zone-${q.id}`} key={q.id} style={{ borderTopColor: panel.color }} className={`todo-quadrant todo-quadrant-${panel.source.kind === 'quadrant' ? panel.source.quadrantId : 'tag'}${sorter.drag?.target === q.id ? ' is-drop-zone' : ''}`}>
+          <View className='todo-quadrant-heading'><View className='todo-quadrant-label'><View className='todo-quadrant-title-row'>{panel.source.kind === 'tag' ? <LibraryIcon name={panel.iconId} fallback='notes' className='todo-panel-icon' /> : <Text className='todo-quadrant-icon' aria-hidden style={{ color: panel.color }}>{panel.source.quadrantId === 'later' ? '⚐' : '⚑'}</Text>}<View className='todo-quadrant-title' style={{ color: panel.color }}>{trimTextEnd(panel.title)}</View></View><Text className='todo-quadrant-caption'>{panel.caption}</Text></View><TodoPanelPicker owner={owner} tags={taskTagNames(state)} value={panel.source} disabled={!writable || busy || !!sorter.drag} ariaLabel={`更换${q.title}区域显示`} onChange={async source => { await change(previous => setTodoPanelSource(previous, q.id as TodoPanelId, source)); if (hasVolatilePersonalTool('todos', owner)) throw new Error('显示方式尚未保存，请重试'); }} /></View>
           <ScrollView id={`todo-scroll-${q.id}`} scrollY scrollTop={sorter.scrollTop[q.id]} onScroll={event => sorter.onScroll(q.id, event.detail.scrollTop)} enhanced bounces={false} className='todo-quadrant-scroll'><CardGroupContent className='todo-quadrant-items floating-create-content'>
-            {completion !== 'done' && pending.map(renderTask)}
+            {completion !== 'done' && pending.map(task => renderTask(task, q.id))}
             {completion !== 'done' && !pending.length && (completion === 'open' || !completed.length) && <View className={`todo-quadrant-empty ${completed.length ? 'is-clear' : ''}`}>{search || tagFilter !== null ? '没有匹配的待办' : completed.length ? '待办已清空' : '暂时没有任务'}</View>}
-            {completion !== 'open' && !!completed.length && <><ActionButton className='button-label todo-completed-toggle' aria-expanded={showCompleted} onClick={() => setExpanded(previous => ({ ...previous, [q.id]: !(previous[q.id] ?? !isWebTool) }))}><SelectChevron expanded={showCompleted} /><Text>已完成 · {completed.length}</Text></ActionButton>{showCompleted && completed.map(renderTask)}</>}
+            {completion !== 'open' && !!completed.length && <><ActionButton className='button-label todo-completed-toggle' aria-expanded={showCompleted} onClick={() => setExpanded(previous => ({ ...previous, [q.id]: !(previous[q.id] ?? !isWebTool) }))}><SelectChevron expanded={showCompleted} /><Text>已完成 · {completed.length}</Text></ActionButton>{showCompleted && completed.map(task => renderTask(task, q.id))}</>}
             {completion === 'done' && !completed.length && <View className='todo-quadrant-empty'>还没有已完成任务</View>}
           </CardGroupContent></ScrollView>
         </View>;
       })}</View>}
       {ready && /不可用|失败|暂存|离线|无法|等待/.test(status) && <View className='tool-status todo-sync-error'><Text>{status}</Text><ActionButton className='button-label' onClick={retry}>重试同步</ActionButton></View>}
     </View></CoreScreen></View></PageScroll>
-    <FloatingCreateButton label='创建任务' disabled={!writable || busy || moveBlocked || !!sorter.drag} onClick={() => setCreation({ task: createTodo() })} />
+    <FloatingCreateButton label='创建任务' disabled={!writable || busy || moveBlocked || !!sorter.drag} onClick={() => openEditor(createTodo(), false)} />
     {sorter.ghost}
     {sorter.deleteZone}
     {taskUndo.notice && <OperationToast message={taskUndo.notice.message} busy={taskUndo.busy} onUndo={taskUndo.notice.undo ? () => { void taskUndo.undo(); } : undefined} />}
-    {creation && <EntryComposer initialMode='task' initialTask={creation.task} onClose={() => setCreation(null)} onCreated={kind => { if (kind === 'task') { setCompletion('all'); setSearch(''); setTagFilter(null); } }} />}
-    {draft && <View className='todo-overlay'><View className='todo-backdrop' onClick={closeGuard.requestClose} /><View className='todo-sheet'>
-      <EditorHeading className='todo-sheet-heading' titleClassName='todo-sheet-title' title={editing ? '编辑任务' : '创建任务'} actions={<ActionButton appearance='icon' size='compact' className='button-label' aria-label='关闭编辑' disabled={busy || imageBusy} onClick={closeGuard.requestClose}>×</ActionButton>} />
-      <ScrollView scrollY className='todo-sheet-scroll' enhanced bounces={false} showScrollbar={false}><View className='todo-sheet-fields'>
-        <TodoEditorFields defaultPreview={editing} draft={draft} onChange={setDraft} tagsText={tagsText} onTagsChange={setTagsText} tagOptions={existingTags} disabled={busy || !writable} owner={owner} onBusyChange={setImageBusy} today={today} scheduleOpen={scheduleOpen} onSchedule={() => setScheduleOpen(true)} />
-        {editing && <View className='todo-editor-actions'><ActionButton className='button-label tool-secondary' disabled={busy || imageBusy} onClick={() => { void openPomodoro({ task: draft.id, event: draft.title, minutes: '25' }); }}>◷ 为任务专注</ActionButton></View>}
-      </View></ScrollView>
-      <SheetActions className='todo-sheet-footer' leading={editing ? <SheetDeleteButton ariaLabel='删除任务' disabled={busy || imageBusy} onClick={requestDelete} /> : undefined}><ActionButton appearance='primary' className='button-label tool-primary' loading={busy} disabled={busy || imageBusy || !writable || !draft.title.trim()} onClick={() => { void saveAndClose(); }}>{editing ? '保存' : '创建任务'}</ActionButton></SheetActions>
-    </View></View>}
+    {draft && <TaskDetailEditor draft={draft} onChange={editDraft} onClose={() => { void closeEditor(); }} disabled={imageBusy || !!deletion || !writable || draftOwner.current !== owner} pending={busy} error={autosaveError} onRetry={() => { setAutosaveError(''); void persistDraft(); }}
+      category={<TodoPrimaryTagPicker tags={taskTagNames(state)} styles={state.tagStyles} value={todoPrimaryTag(draft)} owner={owner} disabled={imageBusy || busy} onChange={primaryTag => { const current = liveDraft.current; if (!current) return; const tags = primaryTag ? [...new Set([...(current.tags || []), primaryTag])] : current.tags || []; liveTags.current = tags.join('，'); editDraft({ ...current, primaryTag, tags }); setTagsText(liveTags.current); }} onUpsert={upsertTag} onDelete={removeTag} />}
+      priority={<PrioritySelect ariaLabel='任务优先级' open={priorityOpen} onOpenChange={setPriorityOpen} disabled={imageBusy} optionsAriaLabel='任务优先级' options={todoQuadrants.map((q, index) => ({ value: q.id, label: ['高','中','低','无'][index], ariaLabel: q.title, color: q.color, outlined: q.id === 'later' }))} value={todoQuadrant(draft).id} onChange={id => { const q = todoQuadrants.find(q => q.id === id); if (q) editDraft({ ...draft, important: q.important, urgent: q.urgent }); }} />}
+      more={<ChoicePopover ariaLabel='更多任务操作' open={moreOpen} onOpenChange={setMoreOpen} trigger={<Text>···</Text>} triggerIconOnly showIndicator={false} panelWidth={200} layerClassName='task-detail-popover-layer'>
+        <ActionButton appearance='quiet' onClick={() => { setMoreOpen(false); setNextStepsOpen(!nextStepsOpen); }}>后续任务</ActionButton>
+        <ActionButton appearance='quiet' disabled={!savedDraft} onClick={() => { setMoreOpen(false); void closeEditor().then(closed => { if (closed) void openPomodoro({ task: draft.id, event: draft.title, minutes: '25' }); }); }}>为任务专注</ActionButton>
+        <ActionButton appearance='quiet' onClick={() => { setMoreOpen(false); void closeEditor(); }}>收起</ActionButton>
+        <ActionButton appearance='quiet' intent='danger' onClick={() => { setMoreOpen(false); requestDelete(); }}>删除任务</ActionButton>
+      </ChoicePopover>}
+      onToggleComplete={() => { void persistDraft().then(saved => { if (saved && liveDraft.current) void toggle(liveDraft.current); }); }} onSchedule={() => setScheduleOpen(true)} scheduleOpen={scheduleOpen} scheduleLabel={draft.dueDate || draft.reminderAt || draft.recurrence ? scheduleSummary(draft, today) : '日期&提醒'}
+      onTags={() => setTagsOpen(true)} onAttachment={() => setImageSignal(value => value + 1)}
+      notes={<MarkdownNoteEditor className='task-detail-note' value={draft.description} images={draft.images} defaultPreview minimal emptyPreviewPlaceholder='备注' insertionSignal={imageSignal} onChange={description => editDraft({ ...draft, description })} onImagesChange={images => editDraft({ ...draft, images })} owner={owner} recordId={draft.id} disabled={!writable || draftOwner.current !== owner || !!deletion} maxLength={10000} ariaLabel='任务备注' placeholder='备注' showImageInsertion={false} canInsertImage={writable} onBusyChange={setImageBusy} checkImages={images => { if (!noteStateFits({ ...state, tasks: [{ ...draft, images }, ...state.tasks.filter(task => task.id !== draft.id)] })) throw new Error('任务空间不足，请整理图片'); }} />}
+      nextSteps={nextStepsOpen ? <View className='task-detail-next-steps'><TodoEditorFields nextStepsOnly draft={draft} onChange={editDraft} tagsText={tagsText} onTagsChange={setTagsText} tagOptions={existingTags} disabled={imageBusy} owner={owner} today={today} scheduleOpen={false} onSchedule={() => setScheduleOpen(true)} /></View> : undefined}
+    />}
+    <View id='task-tags-anchor' className='task-detail-hidden-anchor' aria-hidden />
+    <ChoicePopover anchorId='task-tags-anchor' ariaLabel='任务标签' open={!!draft && tagsOpen} onOpenChange={setTagsOpen} placement='center' panelWidth={360} layerClassName='task-detail-popover-layer' heading={<PopoverHeading title='标签' />}>
+      <TagChoiceRow options={existingTags.map(tag => ({ value: tag, label: tag }))} value={parseTags(tagsText)} onChange={tags => editTags(tags.join('，'))} customInputPlacement='inline' customInput={<TagTextInput ariaLabel='任务标签' value={tagsText} onInput={event => editTags(event.detail.value)} />} />
+    </ChoicePopover>
     {draft && scheduleOpen && writable && draftOwner.current === owner && <TodoScheduleSheet key={`${owner}:${draft.id}`} value={draft} today={today} busy={busy} reminderLabel={reminderLabel} canAuthorize={canAuthorize} reminderLocked={reminderLocked} onAuthorize={() => { void authorizeReminder(); }} onConfirm={applySchedule} onClose={() => { if (!busy) setScheduleOpen(false); }} />}
-    {closeGuard.dialog}
     {deletion?.owner === owner && <AppDialog title='删除这件任务？' closeLabel='关闭任务删除确认' onClose={closeDelete} busy={busy || !!deletion.pending} error={deleteError} actions={<ActionButton appearance='danger' size='large' width='fill' loading={busy} disabled={busy} onClick={() => { void remove(); }}>{deletion.pending ? '重试删除' : '删除'}</ActionButton>}><Text>{trimTextEnd(deletion.task.title)}</Text></AppDialog>}
   </>;
 }

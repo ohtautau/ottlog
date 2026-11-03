@@ -16,7 +16,8 @@
     "start": "next start",
     "lint": "eslint",
     "test:e2e": "playwright test",
-    "test:first-run": "node scripts/check-first-run.mjs"
+    "test:first-run": "node scripts/check-first-run.mjs",
+    "test:task-detail": "node scripts/check-task-detail.mjs"
   },
   "dependencies": {
     "@fontsource-variable/noto-sans-sc": "^5.3.0",

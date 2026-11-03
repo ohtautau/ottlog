@@ -13,9 +13,9 @@ export function CoreScreen({ children, className = '', id = 'page-core', previou
   </View>;
 }
 
-export function MoreSection({ children, title, actions, returnTarget = 'page-core', returnLabel = '返回第一页', showReturn = true }: { children: ReactNode; title?: string; actions?: ReactNode; returnTarget?: string; returnLabel?: string; showReturn?: boolean }) {
+export function MoreSection({ children, title, actions, returnTarget = 'page-core', returnLabel = '返回第一页', showReturn = true, className = '' }: { className?: string; children: ReactNode; title?: string; actions?: ReactNode; returnTarget?: string; returnLabel?: string; showReturn?: boolean }) {
   const scrollTo = usePageScroll();
-  return <View id='page-more' className='more-section'>{showReturn && <BackButton className='screen-return-hint' ariaLabel={returnLabel} onClick={() => scrollTo(returnTarget)} />}{title && (actions != null ? <View className='more-section-heading'><View className='more-section-title'>{title}</View>{actions}</View> : <View className='more-section-title'>{title}</View>)}{children}</View>;
+  return <View id='page-more' className={`more-section ${className}`}>{showReturn && <BackButton className='screen-return-hint' ariaLabel={returnLabel} onClick={() => scrollTo(returnTarget)} />}{title && (actions != null ? <View className='more-section-heading'><View className='more-section-title'>{title}</View>{actions}</View> : <View className='more-section-title'>{title}</View>)}{children}</View>;
 }
 
 export function PageJump({ children, target = 'page-more', className = '', ariaLabel, onClick }: { children: ReactNode; target?: string; className?: string; ariaLabel?: string; onClick?: () => void }) {

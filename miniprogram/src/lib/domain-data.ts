@@ -22,6 +22,7 @@ export const MAX_DOMAIN_NAME_LENGTH = 24;
 export const MAX_DOMAIN_GOAL_LENGTH = 200;
 export const MAX_DOMAIN_HABIT_LENGTH = 24;
 export const MAX_DOMAIN_RECORD_LENGTH = 6000;
+export const MAX_DOMAIN_RECORD_BATCH = 40;
 // Leave space for the API envelope under the existing 1 MB request limit.
 export const MAX_DOMAIN_DATA_BYTES = 980 * 1024;
 
@@ -273,7 +274,7 @@ export function addUncategorizedDomainRecord(state: DomainState, kind: RecordKin
 /** Commit both populated boxes together. Draft IDs also make volatile retries idempotent. */
 export function saveDomainRecords(state: DomainState, domainId: string, entries: { kind: RecordKind; record: RecordItem }[], retry = false): DomainState {
   assertState(state);
-  if (!entries.length || entries.length > 2
+  if (!entries.length || entries.length > MAX_DOMAIN_RECORD_BATCH
     || !entries.every(entry => isRecordKind(entry.kind) && isRecord(entry.record)) || !uniqueIds(entries.map(entry => entry.record))) throw new Error('请输入有效的记录内容，最多 6000 字');
   const all = state.domains.flatMap(domain => [...domain.positiveRecords, ...domain.negativeRecords]);
   // Validate the complete batch before creating even the fallback domain.
@@ -292,4 +293,34 @@ export function saveDomainRecords(state: DomainState, domainId: string, entries:
     updated = { ...updated, [key]: [...updated[key], record] };
   }
   return updated === domain ? next : replaceDomain(next, updated);
+}
+
+/** Apply a creator's already-resolved record edits as one immutable, capacity-checked write. */
+export function applyDomainRecordChanges(state: DomainState, changes: { id: string; domainId: string; kind: RecordKind; record: RecordItem | null }[]): DomainState {
+  assertState(state);
+  if (!changes.length) return state;
+  if (changes.length > MAX_DOMAIN_RECORD_BATCH || new Set(changes.map(change => change.id)).size !== changes.length
+    || changes.some(change => !isId(change.id) || !isRecordKind(change.kind) || !state.domains.some(domain => domain.id === change.domainId)
+      || change.record !== null && (!isRecord(change.record) || change.record.id !== change.id))) throw new Error('记录修改无效，请重新打开');
+  const byId = new Map(changes.map(change => [change.id, change]));
+  const original = new Set(state.domains.flatMap(domain => [...domain.positiveRecords, ...domain.negativeRecords]).map(record => record.id));
+  const total = original.size + changes.filter(change => !original.has(change.id) && change.record).length
+    - changes.filter(change => original.has(change.id) && !change.record).length;
+  if (total > MAX_DOMAIN_RECORDS) throw new Error(`最多保存 ${MAX_DOMAIN_RECORDS} 条记录`);
+  const domains = state.domains.map(domain => {
+    const list = (kind: RecordKind, records: RecordItem[]) => {
+      const retained = records.flatMap(record => {
+        const change = byId.get(record.id);
+        return !change ? [record] : change.record && change.domainId === domain.id && change.kind === kind ? [change.record] : [];
+      });
+      const originalIds = new Set(records.map(record => record.id));
+      for (const change of changes) if (change.record && change.domainId === domain.id && change.kind === kind && !originalIds.has(change.id)) retained.push(change.record);
+      return retained.length === records.length && retained.every((record, index) => record === records[index]) ? records : retained;
+    };
+    const positiveRecords = list('positive', domain.positiveRecords), negativeRecords = list('negative', domain.negativeRecords);
+    return positiveRecords === domain.positiveRecords && negativeRecords === domain.negativeRecords ? domain : { ...domain, positiveRecords, negativeRecords };
+  });
+  const next = capacityChecked({ ...state, domains });
+  assertState(next);
+  return next;
 }

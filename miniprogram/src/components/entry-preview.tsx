@@ -7,7 +7,7 @@ import type { DomainState } from '../lib/domain-data';
 import { progressRows } from '../lib/progress-draft';
 import PriorityFlag from './priority-flag';
 import EntityTitleRow from './entity-title-field';
-import { MemoColorChoices, MemoIconPreview, MemoPinRow, memoColorStyle } from './memo-fields-layout';
+import { MemoIconPreview, MemoPinRow, memoSurfaceStyle } from './memo-fields-layout';
 import { PinSymbol } from './manage-symbol';
 import ActionButton, { ChoiceButton } from './ui-button';
 import { ProgressRecordField } from './progress-editor-fields';
@@ -22,14 +22,17 @@ export default function EntryPreview({ draft, domains }: { draft: EntryDraft; do
   </EditorFieldsLayout>;
   if (draft.mode === 'progress' && draft.progress) return <EditorFieldsLayout className='progress-editor-fields entry-preview'>
     <View className='progress-domain-row entry-preview-domain'><Text>{trimTextEnd(domainDisplayName(domains.domains.find(domain => domain.id === draft.progress!.domainId)?.name || OTHER_DOMAIN_NAME))}</Text></View>
-    {progressRows(draft.progress).map(({ slot, kind, record }) => <ProgressRecordField key={record.id} slot={slot} kind={kind}>{note(record.content, '有什么需要记录的？', record.images, true, true)}</ProgressRecordField>)}
+    <View className='progress-record-pairs'>{Array.from({ length: 1 + (draft.progress.pairs?.length || 0) }, (_, pairIndex) => <View className='progress-record-pair' key={pairIndex}>{(['negative', 'positive'] as const).map(slot => {
+      const row = progressRows(draft.progress!).find(item => item.pairIndex === pairIndex && item.slot === slot)!;
+      return <ProgressRecordField key={row.record.id} slot={slot} kind={row.kind} pairIndex={pairIndex}>{note(row.record.content, '有什么需要记录的？', row.record.images, true, true)}</ProgressRecordField>;
+    })}</View>)}</View>
   </EditorFieldsLayout>;
   const task = draft.mode === 'task';
-  return <EditorFieldsLayout className={`entry-preview${task ? '' : ' memo-editor-fields'}`} style={task ? undefined : memoColorStyle(draft.memo.color)}>
+  return <EditorFieldsLayout className={`entry-preview${task ? '' : ' memo-editor-fields'}`} style={task ? undefined : memoSurfaceStyle()}>
     {task && <View className='entry-preview-task-schedule'><View className='entry-preview-domain'><Text>{draft.task.dueDate || '日期'}</Text></View></View>}
     <EntityTitleRow className='todo-title-row'>{!task && <MemoIconPreview iconId={draft.memo.iconId} />}<Text className='entry-preview-title'>{trimTextEnd(task ? draft.task.title : draft.memo.title) || (task ? '准备做什么？' : '准备记下什么？')}</Text><View className='entry-preview-priority'><PriorityFlag color={task ? todoQuadrant(draft.task).color : memoPriorityColor(draft.memo.priority)} outlined={task ? todoQuadrant(draft.task).id === 'later' : !draft.memo.priority || draft.memo.priority === 'none'} /></View></EntityTitleRow>
     {note(task ? draft.task.description : draft.memo.body, task ? '有什么需要补充的？' : '写下内容…', task ? draft.task.images : draft.memo.images)}
-    {task ? <View className='todo-next-list'>{[...(draft.task.nextTasks || []).map(step => step.title), '还要做什么？'].map((title, index) => <View className='entry-preview-step' key={index}><View className='todo-next-bullet' /><Text>{trimTextEnd(title) || '还要做什么？'}</Text></View>)}</View> : <><MemoPinRow><View className={`memo-pin-setting${draft.memo.pinned ? ' is-active' : ''}`}><PinSymbol /></View></MemoPinRow><View className='memo-editor-settings'><MemoColorChoices value={draft.memo.color} readOnly /></View></>}
+    {task ? <View className='todo-next-list'>{[...(draft.task.nextTasks || []).map(step => step.title), '还要做什么？'].map((title, index) => <View className='entry-preview-step' key={index}><View className='todo-next-bullet' /><Text>{trimTextEnd(title) || '还要做什么？'}</Text></View>)}</View> : <><MemoPinRow><View className={`memo-pin-setting${draft.memo.pinned ? ' is-active' : ''}`}><PinSymbol /></View></MemoPinRow></>}
     <View className={task ? 'todo-tags-row' : 'memo-tags-field'}>{!!draft.tagsText && <Text>{draft.tagsText}</Text>}</View>
   </EditorFieldsLayout>;
 }

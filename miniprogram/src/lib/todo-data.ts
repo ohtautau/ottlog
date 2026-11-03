@@ -43,7 +43,7 @@ export function orderTodos(state: TodoState): Todo[] {
   return mode === 'custom' ? state.tasks : sortTodos(state.tasks, mode, mode === 'schedule' ? 'asc' : 'desc');
 }
 
-function saveTodoOrder(state: TodoState, tasks: Todo[], sort: TodoSortMode): TodoState {
+export function saveTodoOrder(state: TodoState, tasks: Todo[], sort: TodoSortMode): TodoState {
   const updated = { ...state, tasks, sort };
   if (tasks.some(task => task.images?.length) && !noteStateFits(updated)) throw new Error('任务空间不足，请移除一些图片或整理旧任务');
   return updated;

@@ -18,3 +18,10 @@
 .memo-image-remove{position:absolute;right:4rpx;top:4rpx;width:40PX;margin:0}
 .memo-images.is-preview{display:flex;flex-direction:column}
 .memo-images.is-preview image{height:auto;min-height:100rpx}
+
+.markdown-note-editor.is-minimal .memo-editor-toolbar { display: none; }
+
+/* Compact editors share the same plain note surface and focus behavior. */
+.markdown-note-editor.is-minimal { --note-editor-height:40PX;--note-editor-padding:4PX 0; }
+.markdown-note-editor.is-minimal .memo-body-preview,.markdown-note-editor.is-minimal textarea.memo-body-input { border:0;border-radius:0;background:transparent;outline:none;box-shadow:none;resize:none;padding:var(--note-editor-padding); }
+.markdown-note-editor.is-minimal textarea.memo-body-input:focus,.markdown-note-editor.is-minimal textarea.memo-body-input:focus-visible { outline:none;box-shadow:none;background:transparent; }
