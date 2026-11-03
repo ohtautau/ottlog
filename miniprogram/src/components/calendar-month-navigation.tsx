@@ -54,7 +54,7 @@ export default function CalendarMonthNavigation({ month, onMonthChange, currentM
       </ChoicePopover>
       <View className='calendar-month-buttons'>
         <ActionButton appearance='icon' size='compact' ariaLabel={previousLabel || `${prefix}上个月`} disabled={disabled || month <= minMonth} onClick={() => step(-1)}>‹</ActionButton>
-        <ActionButton appearance='icon' size='compact' ariaLabel={currentLabel || `${prefix}回到今天`} disabled={disabled} onClick={() => onMonthChange(currentMonth)}>○</ActionButton>
+        <ActionButton appearance='icon' size='compact' ariaLabel={currentLabel || `${prefix}回到今天`} disabled={disabled} onClick={() => onMonthChange(currentMonth)}><View className='calendar-month-current-symbol' aria-hidden /></ActionButton>
         <ActionButton appearance='icon' size='compact' ariaLabel={nextLabel || `${prefix}下个月`} disabled={disabled || month >= maxMonth} onClick={() => step(1)}>›</ActionButton>
       </View>
     </View>

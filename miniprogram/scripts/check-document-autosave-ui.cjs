@@ -62,7 +62,7 @@ module.exports = async function checkDocumentAutosave({ page, origin, width, out
   await expect(taskTitle()).toBeEnabled();
   await expect(page.locator('.entry-composer.task-detail-panel')).toBeVisible();
   const taskFrame=await page.locator('.entry-composer').boundingBox();expect(taskFrame.width).toBeCloseTo(memoFrame.width,0);expect(taskFrame.height).toBeCloseTo(memoFrame.height,0);
-  await expect(page.locator('.entry-composer .task-detail-tools > button')).toHaveCount(4);
+  await expect(page.locator('.entry-composer .task-detail-tools > button')).toHaveCount(5);
   await expect(page.locator('.entry-composer .task-detail-heading-actions')).toBeVisible();
   await button('任务分类').click(); await button('新建任务分类').click();
   await page.getByRole('textbox',{name:'分类名称',exact:true}).fill('创建器分类'); await button('完成分类编辑').click();

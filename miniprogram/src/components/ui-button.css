@@ -34,7 +34,7 @@ page {
 }
 .ui-button,.ui-choice { display: flex; align-items: center; justify-content: center; min-width: 0; }
 .ui-button::after,.ui-choice::after { border: 0; }
-.ui-button[disabled],.ui-choice[disabled] { opacity: .45; }
+.ui-button[disabled],.ui-choice[disabled] { opacity: var(--control-disabled-opacity,.45); }
 .ui-control-borderless { --control-feedback-background: transparent; }
 .ui-control-borderless:not([disabled]):active,
 .ui-control-borderless.ui-control-pressed:not([disabled]) { --control-feedback-background: var(--control-hover-background); }

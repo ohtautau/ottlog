@@ -19,7 +19,7 @@ assert.deepEqual(panels.getTodoPanelSource(next,'later'),queue[0]);
 assert.equal(undo.isTodoDisplayOnlyChange(state,next),true);
 next=panels.cycleTodoPanelSource(next,'later',1);assert.deepEqual(panels.getTodoPanelSource(next,'later'),queue[1]);
 next=panels.cycleTodoPanelSource(next,'later',1);assert.deepEqual(panels.getTodoPanelSource(next,'later'),queue[0]);
-assert.deepEqual(panels.getTodoPanelQueue(state,'do'),panels.allTodoPanelSources(state));
+assert.deepEqual(panels.getTodoPanelQueue(state,'do'),[{kind:'quadrant',quadrantId:'do'}]);assert.equal(panels.cycleTodoPanelSource(state,'do',1),state);
 assert.throws(()=>panels.setTodoPanelQueue(state,'do',[]));assert.throws(()=>panels.setTodoPanelQueue(state,'do',[queue[0],queue[0]]));
 assert.deepEqual(panels.getTodoPanelQueue(categories.deleteTodoCategory(next,'fun'),'later'),[queue[1]]);
 assert.equal(schedule.shiftScheduleDate('2028-01-31',1,'month'),'2028-02-29');

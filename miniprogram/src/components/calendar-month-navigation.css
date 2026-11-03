@@ -8,3 +8,5 @@
 .calendar-month-inputs { font-size: 14PX; color: #afc3ca; }
 .calendar-month-actions button { min-width: 96PX; }
 .calendar-month-error { margin-top: 10PX; font-size: 12PX; color: #9fb4bb; line-height: 1.6; }
+
+.calendar-month-current-symbol { display:block;flex:none;box-sizing:border-box;width:14PX;height:14PX;border:1.5PX solid currentColor;border-radius:50%; }

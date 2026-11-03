@@ -9,7 +9,7 @@ import Taro, { useDidHide, useDidShow, useShareAppMessage } from '@tarojs/taro';
 import { View, Text, Image, ScrollView } from '@tarojs/components';
 import PageScroll from '../../components/page-scroll';
 import HomeFeatureList from '../../components/home-feature-list';
-import PageToolbar, { ToolbarResetButton } from '../../components/page-toolbar';
+import PageToolbar from '../../components/page-toolbar';
 import ManageSymbol from '../../components/manage-symbol';
 import SortSymbol from '../../components/sort-symbol';
 import HomeShortcutCard, { HomeShortcutCreateCard } from '../../components/home-shortcut-card';
@@ -142,10 +142,6 @@ export default function Today() {
     const next = shortcutMode === 'manage' ? 'browse' : 'manage';
     setShortcutMode(next); editingShortcuts.current = next !== 'browse';
   }
-  function restoreShortcutMode() {
-    if (sortRetryRef.current || customizing || directorySorting || featureOrder.pending) return;
-    setShortcutMode('browse'); editingShortcuts.current = false;
-  }
   function openCapture() {
     if (!customizing && !editingShortcuts.current) {
       void Taro.hideKeyboard().catch(() => {});
@@ -192,15 +188,14 @@ export default function Today() {
   return <><PageScroll snapSuspended={!shown || !!composer}><View className='today-page core-page'><CoreScreen className={shortcutsScrollable ? 'today-many-shortcuts' : ''} nextLabel='查看全部入口'>
     <View className='today-brand'><View className='today-wordmark'><Image src='/assets/ottlog-logo.png' mode='aspectFit' /><Text>ottlog</Text></View><View className='today-header-actions'><Text className='today-date'>{String(date.getMonth() + 1).padStart(2, '0')} / {String(date.getDate()).padStart(2, '0')} · {week}</Text><ActionButton appearance='icon' size='compact' className='today-account-button' ariaLabel={`打开账号窗口，${accountSession?.authenticated ? `已登录：${accountSession.userName}` : accountSession === undefined ? '正在确认账号' : accountSession === null ? '账号状态未确认' : '未登录'}`} disabled={!!customizing || !!composer} onClick={() => { void Taro.hideKeyboard(); setAccountOpen(true); }}><View className={`account-symbol${accountSession?.authenticated ? ' is-authenticated' : accountSession == null ? ' is-unconfirmed' : ''}`} aria-hidden /></ActionButton></View></View>
 
-    <MottoBanner active={shown && !editingShortcuts.current} visible={shown} />
+    <MottoBanner showEdit={false} active={shown && !editingShortcuts.current} visible={shown} />
     <PageToolbar className='today-shortcut-toolbar card-group-heading' leading={<View className='today-shortcut-heading-group'><SectionTitle inRow className='today-shortcut-heading'>我的快捷方式</SectionTitle>{sortRetry && <Text className='today-shortcut-overflow-hint'>未保存</Text>}</View>}
-      reset={<ToolbarResetButton ariaLabel='恢复快捷方式默认方式' disabled={!!sortRetry || !!customizing || directorySorting || featureOrder.pending} onReset={restoreShortcutMode} />}
       sort={<ChoiceButton iconOnly size='compact' selected={shortcutMode === 'sort' || !!sortRetry} ariaLabel={sortRetry ? '重试快捷方式排序' : '排序快捷方式'} disabled={cards.length < 2 || !!customizing || directorySorting || featureOrder.pending} onClick={toggleSort}><SortSymbol /></ChoiceButton>}
       manage={<ChoiceButton iconOnly size='compact' selected={shortcutMode === 'manage'} ariaLabel='设置快捷方式' disabled={!!sortRetry || !!customizing || directorySorting || featureOrder.pending} onClick={toggleManage}><ManageSymbol /></ChoiceButton>} />
     <ScrollView className='today-shortcut-scroll' scrollY={shortcutsScrollable} enhanced bounces={false} showScrollbar={false} ariaLabel='我的快捷方式'><CardGroupContent className='today-grid floating-create-content'>{cards.map((entry, index) => <HomeShortcutCard key={entry.key} item={entry} rootProps={{ id: `home-sort-${entry.key}` }} className='today-entry' disabled={!!sortRetry || !!customizing} onMoveUp={shortcutMode === 'sort' ? () => moveShortcut(entry.key, -1) : undefined} onMoveDown={shortcutMode === 'sort' ? () => moveShortcut(entry.key, 1) : undefined} upDisabled={index === 0} downDisabled={index === cards.length - 1} onOpen={shortcutMode === 'browse' ? () => open(entry.key) : undefined} onEdit={shortcutMode === 'manage' ? () => customize(entry.key) : undefined} onReplace={shortcutMode === 'manage' ? () => customize(entry.key, 'replace') : undefined} />)}<HomeShortcutCreateCard disabled={shortcutMode === 'sort' || !!sortRetry || !!customizing || directorySorting || featureOrder.pending} onCreate={() => customize()} /></CardGroupContent></ScrollView>
 
     </CoreScreen>
-    <MoreSection className='floating-create-content' title='全部功能' showReturn={false} actions={<View className='page-toolbar-actions'><ToolbarResetButton ariaLabel='恢复全部功能默认方式' disabled={!!customizing || shortcutMode !== 'browse' || !!sortRetry || featureOrder.pending} onReset={() => { if (!customizing && shortcutMode === 'browse' && !sortRetryRef.current && !featureOrder.pending) setDirectorySorting(false); }} /><ChoiceButton iconOnly size='compact' selected={directorySorting || featureOrder.pending} ariaLabel={featureOrder.pending ? '重试全部功能排序' : '排序全部功能'} disabled={!!customizing || shortcutMode !== 'browse' || !!sortRetry} onClick={() => { if (featureOrder.pending) featureOrder.retry(); else setDirectorySorting(!directorySorting); }}><SortSymbol /></ChoiceButton></View>}>
+    <MoreSection className='floating-create-content' title='全部功能' showReturn={false} actions={<View className='page-toolbar-actions'><ChoiceButton iconOnly size='compact' selected={directorySorting || featureOrder.pending} ariaLabel={featureOrder.pending ? '重试全部功能排序' : '排序全部功能'} disabled={!!customizing || shortcutMode !== 'browse' || !!sortRetry} onClick={() => { if (featureOrder.pending) featureOrder.retry(); else setDirectorySorting(!directorySorting); }}><SortSymbol /></ChoiceButton></View>}>
     {last && <ActionButton className='today-recent' disabled={editingShortcuts.current} onClick={() => open(last.key)}><ShortcutLabel shortcutKey={last.key} label={`最近打开 · ${last.name}`} /><Text>继续 →</Text></ActionButton>}
     {featureOrder.pending && <View className='tool-status' role='alert'><Text>排序尚未保存，请重试</Text></View>}
     <HomeFeatureList className='today-feature-directory' groups={featureOrder.groups} sorting={directorySorting || featureOrder.pending} onMove={featureOrder.move} disabled={!!customizing || shortcutMode !== 'browse' || !!sortRetry || featureOrder.pending} onChoose={entry => open(entry.key)} />

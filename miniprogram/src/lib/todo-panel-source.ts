@@ -7,8 +7,8 @@ export function allTodoPanelSources(state:Pick<TodoState,'categories'>):TodoPane
 export function getTodoPanelQueue(state:TodoState,slot:TodoPanelId):TodoPanelSource[]{
  const available=allTodoPanelSources(state),keys=new Set(available.map(todoPanelSourceKey)),seen=new Set<string>();
  const raw=state.panelQueues?.[slot];
- const queue=(Array.isArray(raw)?raw:available).filter(source=>{if(!source||!['quadrant','category'].includes(source.kind))return false;const key=todoPanelSourceKey(source);if(!keys.has(key)||seen.has(key))return false;seen.add(key);return true;});
- return queue.length?queue:[getTodoPanelSource(state,slot)];
+ const queue=(Array.isArray(raw)?raw:[{kind:'quadrant' as const,quadrantId:slot}]).filter(source=>{if(!source||!['quadrant','category'].includes(source.kind))return false;const key=todoPanelSourceKey(source);if(!keys.has(key)||seen.has(key))return false;seen.add(key);return true;});
+ return queue.length?queue:[{kind:'quadrant',quadrantId:slot}];
 }
 export function setTodoPanelQueue(state:TodoState,slot:TodoPanelId,queue:readonly TodoPanelSource[]):TodoState{
  const allowed=new Set(allTodoPanelSources(state).map(todoPanelSourceKey));

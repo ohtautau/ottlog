@@ -27,7 +27,7 @@ export function PopoverActions({ children, className = '', layout = 'end', separ
 }
 
 /** Anchored app-owned options; opening and dismissing only changes editor UI. */
-export function ChoicePopover({ ariaLabel, open, onOpenChange, trigger, anchorId, triggerId, renderLayer = true, layerClassName = '', disabled = false, className = '', triggerClassName = '', panelClassName = '', panelWidth = 440, heightMode = 'measured', bodySpacing = 'compact', showIndicator = true, triggerAppearance, triggerSize, triggerWidth, triggerIconOnly = false, triggerSelected, placement = 'anchor', preferredSide = 'auto', maxHeightRatio = .65, contentKey = '', menuLabels, menuLeadingWidth = 0, heading, footer, children }: {
+export function ChoicePopover({ ariaLabel, open, onOpenChange, trigger, anchorId, triggerId, renderLayer = true, layerClassName = '', disabled = false, className = '', triggerClassName = '', panelClassName = '', panelWidth = 440, heightMode = 'measured', bodySpacing = 'compact', showIndicator = true, triggerAppearance, triggerSize, triggerWidth, triggerIconOnly = false, triggerSelected, placement = 'anchor', align = 'end', preferredSide = 'auto', maxHeightRatio = .65, contentKey = '', menuLabels, menuLeadingWidth = 0, heading, footer, children }: {
   ariaLabel: string; open: boolean; onOpenChange: (open: boolean) => void; trigger?: ReactNode; disabled?: boolean;
   /** Render only the layer, beside an editor's scroll area, using an existing trigger. */
   anchorId?: string;
@@ -40,7 +40,7 @@ export function ChoicePopover({ ariaLabel, open, onOpenChange, trigger, anchorId
   heightMode?: 'measured' | 'content';
   /** Tight suits sorting; none lets composed filter fields own their padding. */
   bodySpacing?: 'compact' | 'tight' | 'none';
-  placement?: 'anchor' | 'center';
+  placement?: 'anchor' | 'center';align?:'start'|'end';
   /** Prefer a side only when its available space contains the complete panel. */
   preferredSide?: 'auto' | 'above' | 'below';
   menuLabels?: readonly string[]; menuLeadingWidth?: number;
@@ -93,14 +93,14 @@ export function ChoicePopover({ ariaLabel, open, onOpenChange, trigger, anchorId
         const down = preferredSide === 'above' && above >= height ? false : preferredSide === 'below' && below >= height ? true : below >= height || below >= above;
         const maxHeight = Math.max(44, placement === 'center' ? limit : Math.min(limit, down ? below : above));
         const top = placement === 'center' ? Math.max(edge, (layer.height - height) / 2) : down ? anchor.bottom - layer.top + gap : Math.max(edge, anchor.top - layer.top - gap - Math.min(height, maxHeight));
-        const left = placement === 'center' ? (layer.width - width) / 2 : Math.max(edge, Math.min(anchor.right - layer.left - width, layer.width - width - edge));
+        const left = placement === 'center' ? (layer.width - width) / 2 : Math.max(edge, Math.min(align==='start'?anchor.left-layer.left:anchor.right-layer.left-width, layer.width-width-edge));
         setPosition({ left, top, ...(placement === 'anchor' && !down ? { bottom: layer.bottom - anchor.top + gap } : {}), width, maxHeight, height: Math.min(height, maxHeight) });
       });
     };
     const timer = setTimeout(measure, 0);
     Taro.onWindowResize?.(measure);
     return () => { active = false; clearTimeout(timer); Taro.offWindowResize?.(measure); };
-  }, [open, disabled, renderLayer, id, panelWidth, heightMode, bodySpacing, placement, preferredSide, maxHeightRatio, contentKey, actionLabelsKey, menuLeadingWidth]);
+  }, [open, disabled, renderLayer, id, panelWidth, heightMode, bodySpacing, placement, align, preferredSide, maxHeightRatio, contentKey, actionLabelsKey, menuLeadingWidth]);
   const triggerProps = { id, className: `button-label form-choice-trigger${triggerIconOnly && (!showIndicator || trigger == null) ? ' form-choice-trigger-icon' : ''} ${triggerClassName}${open ? ' is-open' : ''}`, size: triggerSize, width: triggerWidth, ariaLabel, 'aria-expanded': open, disabled, onClick: (event: { stopPropagation: () => void }) => { event.stopPropagation(); onOpenChange(!open); } };
   const triggerContent = <>{trigger}{showIndicator && <SelectChevron expanded={open} />}</>;
   const layer = renderLayer && open && !disabled ? <View id={`${id}-layer`} className={`form-popover-layer ${layerClassName}`} catchMove>

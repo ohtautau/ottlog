@@ -89,7 +89,7 @@ module.exports = async function checkTaskDetail({ page, origin, out, width, expe
 
   await expect(panel().getByRole('button',{name:'主要标签',exact:true})).toHaveCount(0);
   await button('任务分类').click();
-  await expect(page.locator('.todo-category-search .search-symbol')).toHaveCount(1);
+  await expect(page.locator('.entity-choice-search .search-symbol')).toHaveCount(1);
   await expect(page.locator('.todo-category-options')).not.toHaveCSS('border-top-width','0px');
   const optionBorders = await page.locator('.todo-category-option').evaluateAll(nodes=>nodes.map(node=>getComputedStyle(node).borderTopColor));
   expect(optionBorders.every(color=>color==='rgba(0, 0, 0, 0)')).toBe(true);
@@ -110,7 +110,7 @@ module.exports = async function checkTaskDetail({ page, origin, out, width, expe
   await button('完成分类编辑').click();
   await expect.poll(async () => (await data()).categories.find(c=>c.id===categoryId)?.name).toBe('娱乐活动');
   await button('分类更多操作').click();await button('关闭').click();await close();
-  await button('待办更多操作').click();await button('编辑').click();await button('更换无优先级区域显示').click(); for(const name of ['高优先级','中优先级','低优先级','无优先级','收集箱','历史分类']){await button(`移出队列：${name}`).click();}await button('关闭区域显示选择').click();
+  await button('待办更多操作').click();await button('编辑').click();await button('更换无优先级区域显示').click(); await button('显示分类：娱乐活动').click();await button('显示象限：无优先级').click();await button('关闭区域显示选择').click();
   await expect.poll(async () => (await data()).panelSources?.later).toEqual({ kind:'category',categoryId });
   await button('关闭象限显示编辑').click();await expect(page.locator('.operation-toast')).toHaveCount(0);
   await expect(page.locator('#todo-zone-later .todo-quadrant-title')).toHaveText('娱乐活动');
@@ -155,19 +155,22 @@ module.exports = async function checkTaskDetail({ page, origin, out, width, expe
   await expect(schedule.locator('.has-reminder .reminder-time')).toHaveText('08:30');
   await button('每天').click();
   expect(await schedule.locator('.has-repeat').count()).toBeGreaterThan(0);
-  await button('确认日期设置').click();
+  await expect.poll(async()=>(await data()).tasks.find(task=>task.id===original.id)?.dueTime).toBe('10:15');await expect.poll(async()=>(await data()).tasks.find(task=>task.id===original.id)?.recurrence?.unit).toBe('day');await expect(schedule).toBeVisible();await expect(button('确认日期设置')).toHaveCount(0);
+  await button('编辑任务日期').click();await page.evaluate(()=>{window.__miniFixture.failToolWrites=['todos'];});await button('选择下个月').click();await expect(schedule.getByRole('alert')).toBeVisible();await expect(schedule).toBeVisible();await page.evaluate(()=>{window.__miniFixture.failToolWrites=[];});await schedule.getByRole('button',{name:'重试',exact:true}).click();await expect(schedule.getByRole('alert')).toHaveCount(0);
+
+  await button('关闭日期设置').click();
   await expect.poll(async()=>(await data()).tasks.find(task=>task.id===original.id).dueTime).toBe('10:15');
   const scheduled=(await data()).tasks.find(task=>task.id===original.id);
   expect(new Date(scheduled.reminderAt).getHours()).toBe(8);expect(scheduled.recurrence.unit).toBe('day');
   await button('设置日期、提醒和重复').click();await button('清除任务时间').click();
   await expect(schedule.locator('.todo-schedule-clock-value')).toHaveText('未设置');
   await button('编辑提醒日期').click();await expect(schedule.locator('.todo-schedule-clock-value')).toHaveText('08:30');
-  await button('清除提醒时间').click();await button('确认日期设置').click();
+  await button('清除提醒时间').click();await button('关闭日期设置').click();
   await expect.poll(async()=>!!(await data()).tasks.find(task=>task.id===original.id).dueTime).toBe(false);
   expect((await data()).tasks.find(task=>task.id===original.id).dueDate).toBe(scheduled.dueDate);
   await button('设置日期、提醒和重复').click();await button('日期更多操作').click();await button('清除日期设置').click();
   await page.screenshot({path:path.join(out,`task-calendar-inline-${width}.png`)});
-  await button('确认日期设置').click();await close();
+  await button('关闭日期设置').click();await close();
   expect((await data()).tasks.find(task=>task.id===original.id).dueDate).toBe('');
   const geometry = await page.locator('.todo-page').evaluate(node => ({ overflow: node.scrollWidth - node.clientWidth }));
   expect(geometry.overflow).toBeLessThanOrEqual(1);

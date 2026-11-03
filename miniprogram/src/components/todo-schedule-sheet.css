@@ -86,7 +86,7 @@
 .todo-schedule-day.has-reminder .calendar-date-circle { background:#e7a097;color:#332426;border-color:#e7a097; }
 .todo-schedule-day.has-due.has-reminder .calendar-date-circle { background:#b9dbca;color:#18332c;border:2PX solid #e7a097; }
 .todo-schedule-controls { min-width:0; }
-.todo-schedule-legend { display:flex;align-items:center;justify-content:flex-start;gap:14PX;min-height:28PX;font-size:12PX;line-height:20PX; }
+.todo-schedule-legend { display:flex;align-items:center;justify-content:flex-end;gap:14PX;min-height:28PX;font-size:12PX;line-height:20PX; }
 .todo-schedule-inline-heading { display:flex;align-items:center;gap:8PX;min-height:40PX;font-size:14PX; }
 .todo-schedule-inline-heading > button { flex:none;margin:0; }
 .todo-schedule-clock-value { flex:1;text-align:right;color:#c5d8de;font-variant-numeric:tabular-nums; }
@@ -104,3 +104,5 @@
 .todo-schedule-mode-heading { flex:none;padding:0 16PX 8PX; }
 .todo-schedule-repeat-heading { display:flex;align-items:center;gap:8PX;min-height:36PX;font-size:14PX; }
 .todo-schedule-repeat-heading > text:last-child:not(:first-child) { min-width:0; }
+
+.todo-schedule-sheet.is-wheel-moving { --control-disabled-opacity:1; }

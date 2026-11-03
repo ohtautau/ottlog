@@ -126,14 +126,14 @@
     overflow-y: auto;
     overscroll-behavior: contain;
   }
-  .tool-app-root .focus-settings-fields { padding: 8px 20px 12px; }
+  .tool-app-root .focus-settings-fields { padding: 8px var(--compact-editor-inset,24px) 16px; }
   .tool-app-root .focus-settings-grid {
     grid-template-columns: repeat(4, minmax(0, 1fr));
     gap: 0;
   }
   .tool-app-root .focus-settings-grid > div { min-width: 0; }
   .tool-app-root .focus-transition-picker { margin-top: 4px; }
-  .tool-app-root .focus-settings-actions { padding-inline: 20px; }
+  .tool-app-root .focus-settings-actions { padding-inline: var(--compact-editor-inset,24px); }
   .tool-app-root .focus-quick-window {
     width: min(360px, calc(100vw - 48px));
     max-width: 360px;

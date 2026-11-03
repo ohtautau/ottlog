@@ -90,10 +90,12 @@ module.exports = async function checkToolbarDefaults({ page, origin, out, width,
   const cardIds = await page.locator('.domain-entry-shell:not(.domain-create-shell)').evaluateAll(nodes => nodes.map(node => node.id)); expect(cardIds.slice(0, 2)).toEqual(['domain-entry-work', 'domain-entry-growth']);
   await fresh('index', {});
   const preferences = () => page.evaluate(() => [localStorage.getItem('ottlog.home-shortcuts.v1'), localStorage.getItem('ottlog.home-feature-order.v1')]);
-  const beforeHome = await preferences(); await button('排序快捷方式').click(); await reset('恢复快捷方式默认方式');
-  await expect(button('排序快捷方式')).toHaveAttribute('aria-pressed', 'false'); await button('设置快捷方式').click(); await button('恢复快捷方式默认方式').click();
-  await expect(button('设置快捷方式')).toHaveAttribute('aria-pressed', 'false'); expect(await preferences()).toEqual(beforeHome);
-  await button('排序全部功能').scrollIntoViewIfNeeded(); await button('排序全部功能').click(); await reset('恢复全部功能默认方式');
-  await expect(button('排序全部功能')).toHaveAttribute('aria-pressed', 'false'); expect(await preferences()).toEqual(beforeHome);
+  const beforeHome = await preferences();
+  await expect(button('恢复快捷方式默认方式')).toHaveCount(0);await expect(button('恢复全部功能默认方式')).toHaveCount(0);
+  await button('排序快捷方式').click();await button('排序快捷方式').click();
+  await expect(button('排序快捷方式')).toHaveAttribute('aria-pressed','false');await button('设置快捷方式').click();await button('设置快捷方式').click();
+  await expect(button('设置快捷方式')).toHaveAttribute('aria-pressed','false');expect(await preferences()).toEqual(beforeHome);
+  await button('排序全部功能').scrollIntoViewIfNeeded();await button('排序全部功能').click();await button('排序全部功能').click();
+  await expect(button('排序全部功能')).toHaveAttribute('aria-pressed','false');expect(await preferences()).toEqual(beforeHome);
   await page.screenshot({ path: path.join(out, `toolbar-defaults-directory-${width}.png`) });
 };

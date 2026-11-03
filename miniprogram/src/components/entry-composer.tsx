@@ -16,7 +16,7 @@ import type { TodoSchedule } from '../lib/todo-schedule';
 import TodoEditorFields from './todo-editor-fields';
 import EditorPreviewButton from './editor-preview-button';
 import MemoEditorFields from './memo-editor-fields';
-import TodoScheduleSheet from './todo-schedule-sheet';
+import TodoScheduleSheet, {ScheduleSymbol} from './todo-schedule-sheet';
 import SheetActions from './sheet-actions';
 import { ChoicePopover, PopoverHeading, TagChoiceRow } from './form-options';
 import TaskDetailEditor, { TaskTagSymbol, TaskAttachmentSymbol } from './task-detail-editor';
@@ -260,7 +260,7 @@ export default function EntryComposer({ initialMode, preferLastCreatedMode = fal
     }
   }
   useEffect(() => {
-    if (!draft || busy || locked || error || scheduleOpen || !entryHasContent(draft) && !baselines.current[draft.mode] || activeEntrySignature(draft) === savedSignatures.current[draft.mode]) return;
+    if (!draft || busy || locked || error || !entryHasContent(draft) && !baselines.current[draft.mode] || activeEntrySignature(draft) === savedSignatures.current[draft.mode]) return;
     const timer = setTimeout(() => { void saveLatest.current(); }, 450); return () => clearTimeout(timer);
   }, [draft, busy, locked, error, scheduleOpen]);
   useDidHide(() => { if (latest.current && !processing.current) void saveLatest.current(); });
@@ -343,6 +343,7 @@ export default function EntryComposer({ initialMode, preferLastCreatedMode = fal
       </ActionMenu>}
       onToggleComplete={() => changeTask({ ...task, completedAt: task.completedAt ? null : new Date().toISOString() })}
       onSchedule={openSchedule} scheduleOpen={scheduleOpen} scheduleLabel={task.dueDate || task.reminderAt || task.recurrence ? scheduleSummary(task, today) : '日期&提醒'}
+      reminderAction={<ActionButton appearance='icon' size='compact' ariaLabel='微信提醒：保存任务后可在任务编辑中开启' disabled><ScheduleSymbol kind='reminder'/></ActionButton>}
       onTags={() => setTagsOpen(true)} onAttachment={() => setImageSignal(value => value + 1)} pending={busy} error={error} onRetry={() => { setError(''); void save(); }}
       notes={(preview,onPreviewChange) => <>{!!info && <View className='entry-info' role='status'>{info}</View>}{!draft && <View className='entry-load' role='status'><Text>正在确认账号与草稿…</Text><ActionButton onClick={() => sources.task.retry()}>重试</ActionButton></View>}<MarkdownNoteEditor className='task-detail-note' value={task.description} images={task.images} preview={preview} onPreviewChange={onPreviewChange} minimal emptyPreviewPlaceholder='备注' insertionSignal={imageSignal} onChange={description => changeTask({ ...task, description })} onImagesChange={images => changeTask({ ...task, images })} owner={draftOwner.current} recordId={task.id} disabled={!draft || locked} maxLength={10000} ariaLabel='任务备注' placeholder='备注' showImageInsertion={false} canInsertImage={writable} onBusyChange={imagesBusy} checkImages={images => { if (!isTodoState(todos.value) || !noteStateFits({ ...todos.value, tasks: [{ ...task, images }, ...todos.value.tasks.filter(item => item.id !== task.id)] })) throw new Error('任务空间不足，请整理图片'); }} /></>}
       nextSteps={nextOpen && draft ? <View className='task-detail-next-steps'><TodoEditorFields nextStepsOnly draft={task} onChange={changeTask} tagsText={draft.tagsText} onTagsChange={tagsText => update({ ...draft, tagsText })} tagOptions={[]} disabled={locked} owner={draftOwner.current} today={today} scheduleOpen={false} onSchedule={openSchedule} /></View> : undefined}
@@ -369,7 +370,7 @@ export default function EntryComposer({ initialMode, preferLastCreatedMode = fal
         {!!error && draft && <ActionButton appearance='quiet' size='compact' disabled={busy || imageBusy} onClick={() => { setError(''); void save(); }}>重试</ActionButton>}
       </SheetActions>
     </View></View>}
-    {draft && mode === 'task' && scheduleOpen && !locked && <TodoScheduleSheet key={`${owner}:${draft.task.id}`} value={draft.task} today={today} busy={busy} reminderLabel={owner === 'guest' ? '请登录' : '保存后开启'} canAuthorize={false} reminderLocked={false} onAuthorize={() => {}} onConfirm={(schedule: TodoSchedule) => { update({ ...draft, task: { ...draft.task, ...schedule } }); setScheduleOpen(false); }} onClose={() => setScheduleOpen(false)} />}
+    {draft && mode === 'task' && scheduleOpen && !locked && <TodoScheduleSheet key={`${owner}:${draft.task.id}`} value={draft.task} today={today} busy={locked} saveError={error} onRetry={()=>{setError('');void save();}} onChange={(schedule: TodoSchedule) => { const active=latest.current;if(active)update({ ...active, task: { ...active.task, ...schedule } }); }} onClose={() => setScheduleOpen(false)} />}
   </>;
 }
 

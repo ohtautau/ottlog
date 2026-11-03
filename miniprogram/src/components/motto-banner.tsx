@@ -9,7 +9,7 @@ import { usePersonalToolState } from '../lib/use-personal-tool-state';
 import './motto-banner.css';
 import EmptyState from './empty-state';
 
-export default function MottoBanner({ active, visible = true }: { active: boolean; visible?: boolean }) {
+export default function MottoBanner({ active, visible = true, showEdit = true }: { active: boolean; visible?: boolean;showEdit?:boolean }) {
   const { value, ready, owner } = usePersonalToolState('mottos', initialPersonalMottos);
   const signedIn = ready && !!owner && owner !== 'guest';
   const mottos = useMemo(() => signedIn ? displayedMottos(value, []) : [], [signedIn, value]);
@@ -38,7 +38,7 @@ export default function MottoBanner({ active, visible = true }: { active: boolea
       <View className='today-quote-content'>{ready && !motto ? <EmptyState kind='mottos' inline /> : <Text className={`today-quote-text${!motto ? ' is-empty' : ''}`}>{trimTextEnd(motto || '正在读取格言…')}</Text>}</View>
     </View>
     <View className='today-quote-side'>
-      <ActionButton appearance='icon' size='compact' className='today-quote-manage' ariaLabel='管理格言' onClick={() => { void Taro.navigateTo({ url: '/pages/mottos/index' }); }}><EditSymbol /></ActionButton>
+      {showEdit && <ActionButton appearance='icon' size='compact' className='today-quote-manage' ariaLabel='管理格言' onClick={() => { void Taro.navigateTo({ url: '/pages/mottos/index' }); }}><EditSymbol /></ActionButton>}
       <Text className='today-quote-count'><Text className='today-quote-current'>{String(mottos.length ? currentIndex + 1 : 0).padStart(2, '0')}</Text><Text className='today-quote-count-divider'>/</Text>{String(mottos.length).padStart(2, '0')}</Text>
     </View>
   </View>;

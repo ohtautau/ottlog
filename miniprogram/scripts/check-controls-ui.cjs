@@ -1,4 +1,5 @@
 const path=require('node:path');
+const assertPopupSpacing=require('./check-layout-spacing.cjs');
 module.exports=async({page,origin,out,width,expect})=>{
  const owner='controls-fixture',stamp=new Date().toISOString(),today=stamp.slice(0,10);
  const states={todos:{version:1,tasks:[],categories:[{id:'fun',name:'娱乐',iconId:'game',color:'#b9dbca'}]},memos:{version:1,notes:[]},mottos:{version:1,mottos:['原格言']},domains:{version:1,domains:[],completedGoals:[]},reminders:{version:1,done:{[today]:['habit-0']},items:Array.from({length:12},(_,i)=>({id:`habit-${i}`,title:`习惯${i}`,note:'',group:'其它',kind:'plant',enabled:true,minutes:0,timePeriod:'free'}))}};
@@ -6,6 +7,7 @@ module.exports=async({page,origin,out,width,expect})=>{
  await page.evaluate(({states,owner})=>{localStorage.clear();window.__miniFixture.persistEntryTools=true;window.__miniFixture.sessionProfile={authenticated:true,userName:owner,isAdmin:false};window.__miniFixture.accountToolStates={[owner]:states};location.hash='#/pages/index/index';},{states,owner});
  const button=name=>page.getByRole('button',{name,exact:true}),entry=()=>page.locator('.entry-composer');
  const close=async()=>{await page.locator('.entry-overlay > .todo-backdrop,.task-detail-overlay > .sheet-backdrop').click({position:{x:2,y:2}});await expect(entry()).toHaveCount(0);};
+ await expect(page.locator('.today-quote')).toBeVisible();await expect(button('管理格言')).toHaveCount(0);await expect(button('恢复快捷方式默认方式')).toHaveCount(0);await expect(button('恢复全部功能默认方式')).toHaveCount(0);for(const group of [page.locator('.today-grid'),page.locator('.home-feature-grid').first()]){await expect(group).toHaveCSS('padding-left','16px');await expect(group).toHaveCSS('padding-right','16px');}
  await button('创建记录').click();await button('创建类型：便签').click();
  await expect(entry().getByRole('textbox',{name:'便签标题',exact:true})).toBeEnabled();
  const edges=await entry().evaluate(node=>['.memo-title-input','.memo-body-input'].map(selector=>{const n=node.querySelector(selector),s=getComputedStyle(n),r=n.getBoundingClientRect();return r.x+parseFloat(s.paddingLeft)+parseFloat(s.borderLeftWidth);}));expect(edges[0]).toBeCloseTo(edges[1],0);
@@ -15,6 +17,7 @@ module.exports=async({page,origin,out,width,expect})=>{
  await button('创建记录').click();await expect(button('创建类型：记录')).toHaveAttribute('aria-pressed','true');await button('选择记录领域').click();
  const title=page.locator('.form-popover-panel .editor-heading-title');const titleBox=await title.boundingBox(),panelBox=await page.locator('.form-popover-panel').boundingBox();expect(titleBox.x+titleBox.width/2).toBeCloseTo(panelBox.x+panelBox.width/2,0);
  await page.keyboard.press('Escape');await button('创建类型：任务').click();await button('任务分类').click();
+ await assertPopupSpacing(page.locator('.todo-category-panel'),expect);const triggerBox=await button('任务分类').boundingBox(),popupBox=await page.locator('.todo-category-panel').boundingBox();if(page.viewportSize().height-triggerBox.y-triggerBox.height>popupBox.height+20)expect(popupBox.y).toBeGreaterThanOrEqual(triggerBox.y+triggerBox.height+7);
  await expect(button('编辑分类：娱乐')).toHaveCount(0);await expect(button('删除分类：娱乐')).toHaveCount(0);
  await expect(page.locator('.todo-category-options').getByRole('button',{name:'新建任务分类',exact:true})).toBeVisible();
  const row=page.locator('.todo-category-option-row').first(),check=await row.locator('.todo-category-selection-slot').boundingBox(),r=await row.boundingBox();expect(r.x+r.width-check.x-check.width).toBeLessThanOrEqual(1);
@@ -25,14 +28,14 @@ module.exports=async({page,origin,out,width,expect})=>{
  await expect(calendar.locator('.time-wheel-stage')).toHaveCSS('height','84px');await expect(calendar.getByRole('button',{name:/^使用/})).toHaveCount(0);
  await button('选择下周').click();const selected=calendar.locator('.todo-schedule-day.is-selected');const dateNote=()=>selected.locator('.calendar-date-note').boundingBox();const before=await dateNote();
  await calendar.getByLabel('任务小时',{exact:true}).selectOption('10',{force:true});await calendar.getByLabel('任务分钟',{exact:true}).selectOption('15',{force:true});
- expect((await dateNote()).y).toBeCloseTo(before.y,0);await expect(selected.locator('.calendar-date-circle')).toHaveCSS('width','28px');await expect(selected.locator('.due-time')).toHaveCSS('border-radius','5px');
- await expect(calendar.locator('.todo-schedule-calendar-pane .todo-schedule-legend')).toBeVisible();await button('编辑提醒日期').click();
+ expect((await dateNote()).y).toBeCloseTo(before.y,0);await expect(selected.locator('.calendar-date-circle')).toHaveCSS('width','28px');expect((await selected.locator('.calendar-date-note').boundingBox()).y-(await selected.locator('.calendar-date-circle').boundingBox()).y-28).toBeCloseTo(4,0);await expect(selected.locator('.due-time')).toHaveCSS('border-radius','5px');
+ await expect(calendar.locator('.todo-schedule-calendar-pane .todo-schedule-legend')).toBeVisible();await expect(calendar.locator('.todo-schedule-legend')).toHaveCSS('justify-content','flex-end');await expect(calendar.locator('.calendar-month-current-symbol')).toHaveCSS('width','14px');await button('编辑提醒日期').click();
  await expect(calendar.locator('.choice-shortcut-track').first().getByRole('button')).toHaveText(['无提醒','前一天','前一周','前一月']);
  await expect(calendar.getByText('选择提醒日期和时间',{exact:true})).toHaveCount(0);await expect(button('设置任务时间')).toHaveCount(0);
  await button('选择提醒前一天').click();await expect(calendar.locator('.has-reminder')).toHaveCount(1);
  await expect(calendar.locator('.choice-shortcut-track').last().getByRole('button')).toHaveText(['无重复','每天','每工作日','每周','每月','每年']);
  await button('每天').click();expect(await calendar.locator('.has-repeat').count()).toBeGreaterThan(0);
- await button('日期更多操作').click();await button('清除日期设置').click();await button('确认日期设置').click();await close();
+ await button('日期更多操作').click();await button('清除日期设置').click();await expect(button('确认日期设置')).toHaveCount(0);await button('关闭日期设置').click();await close();
  await page.evaluate(()=>{location.hash='#/pages/daily/index';});const free=page.locator('.daily-time-period-section[data-time-period=free]');await expect(free.locator('.daily-suggestion')).toHaveCount(12);
  await expect(free.locator('.daily-suggestion.is-done')).toHaveCount(1);
  const content=await free.locator('.habit-list-section-content').boundingBox(),section=await free.boundingBox(),grid=await free.locator('.habit-card-grid').boundingBox();

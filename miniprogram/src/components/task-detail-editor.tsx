@@ -28,7 +28,7 @@ type Props = {
   category: ReactNode; priority: ReactNode; more?: ReactNode; onMore?: () => void;
   onSchedule: () => void; scheduleLabel?: string; scheduleOpen?: boolean;
   onToggleComplete?: () => void; notes: ReactNode | ((preview:boolean,onPreviewChange:(value:boolean)=>void)=>ReactNode); nextSteps?: ReactNode;
-  tagsAction?: ReactNode; attachmentAction?: ReactNode; onTags?: () => void; onAttachment?: () => void;
+  reminderAction?:ReactNode; tagsAction?: ReactNode; attachmentAction?: ReactNode; onTags?: () => void; onAttachment?: () => void;
   pending?: boolean; error?: string; onRetry?: () => void;
   topBar?: ReactNode; panelClassName?: string;
 };
@@ -36,7 +36,7 @@ type Props = {
 /** Shared task presentation only; the caller owns autosave, identity and menus. */
 export default function TaskDetailEditor({ draft, onChange, onClose, disabled = false, autoFocus = false,
   ariaLabel = '编辑任务', category, priority, more, onMore, onSchedule, scheduleLabel = '日期和提醒', scheduleOpen,
-  onToggleComplete, notes, nextSteps, tagsAction, attachmentAction, onTags, onAttachment, pending = false, error, onRetry, topBar, panelClassName = '',
+  onToggleComplete, notes, nextSteps, reminderAction, tagsAction, attachmentAction, onTags, onAttachment, pending = false, error, onRetry, topBar, panelClassName = '',
 }: Props) {
   const [notePreview,setNotePreview] = useState(false);
   const [showChecklist, setShowChecklist] = useState(!!draft.subtasks?.length);
@@ -122,6 +122,7 @@ export default function TaskDetailEditor({ draft, onChange, onClose, disabled = 
           {tagsAction || <ActionButton appearance='icon' size='compact' ariaLabel='任务标签' disabled={disabled || !onTags} onClick={onTags}><TaskTagSymbol /></ActionButton>}
           <ActionButton appearance='icon' size='compact' ariaLabel='添加子任务' disabled={disabled || subtasks.length >= 50} onClick={focusNewSubtask}><TaskChecklistSymbol /></ActionButton>
           {attachmentAction || <ActionButton appearance='icon' size='compact' ariaLabel='任务附件' disabled={disabled || !onAttachment} onClick={onAttachment}><TaskAttachmentSymbol /></ActionButton>}
+          {reminderAction}
           <EditorPreviewButton selected={notePreview} onChange={setNotePreview} disabled={disabled} label='任务备注 Markdown 预览' />
         </View>
         {!!error ? <View className='task-detail-save-state is-error' role='alert'><Text>{error}</Text>{onRetry && <ActionButton appearance='quiet' size='compact' disabled={disabled} onClick={onRetry}>重试</ActionButton>}</View> : pending ? <View className='task-detail-save-state' role='status'><Text>保存中…</Text></View> : null}

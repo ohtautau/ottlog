@@ -14,7 +14,7 @@ import { cancelTodoReminder, getReminderConfig, getTodoReminders, requestTodoRem
 import { initialTodoState, isTodoState, localToolDay, todoQuadrant, todoQuadrants, type Todo, type TodoState, type TodoPanelId } from '../../lib/tool-records';
 import { useTodoDrag } from '../../components/todo-drag';
 import { SelectChevron } from '../../components/select-trigger';
-import TodoScheduleSheet from '../../components/todo-schedule-sheet';
+import TodoScheduleSheet, {ScheduleSymbol} from '../../components/todo-schedule-sheet';
 import type { TodoSchedule } from '../../lib/todo-schedule';
 import TodoEditorFields from '../../components/todo-editor-fields';
 import TaskDetailEditor from '../../components/task-detail-editor';
@@ -188,9 +188,8 @@ export default function Todos() {
     setReminder(null);
   }
   function applySchedule(schedule: TodoSchedule) {
-    if (!draft || busy || draftOwner.current !== owner || currentOwner.current !== owner) return;
-    editDraft({ ...draft, ...schedule });
-    setScheduleOpen(false);
+    if (!liveDraft.current || draftOwner.current !== owner || currentOwner.current !== owner) return;
+    editDraft({ ...liveDraft.current, ...schedule });
   }
   function startOperation() {
     operating.current = true; setBusy(true);
@@ -391,6 +390,7 @@ export default function Todos() {
         <ActionButton appearance='quiet' intent='danger' onClick={() => { setMoreOpen(false); requestDelete(); }}>删除任务</ActionButton>
       </ActionMenu>}
       onToggleComplete={() => { void persistDraft().then(saved => { if (saved && liveDraft.current) void toggle(liveDraft.current); }); }} onSchedule={() => setScheduleOpen(true)} scheduleOpen={scheduleOpen} scheduleLabel={draft.dueDate || draft.reminderAt || draft.recurrence ? scheduleSummary(draft, today) : '日期&提醒'}
+      reminderAction={<ActionButton appearance='icon' size='compact' ariaLabel={`微信提醒：${reminderLabel}`} aria-pressed={reminderLocked} disabled={!canAuthorize||reminderLocked||busy||imageBusy} onClick={()=>{void authorizeReminder();}}><ScheduleSymbol kind='reminder'/></ActionButton>}
       onTags={() => setTagsOpen(true)} onAttachment={() => setImageSignal(value => value + 1)}
       notes={(preview,onPreviewChange) => <MarkdownNoteEditor className='task-detail-note' value={draft.description} images={draft.images} preview={preview} onPreviewChange={onPreviewChange} minimal emptyPreviewPlaceholder='备注' insertionSignal={imageSignal} onChange={description => editDraft({ ...draft, description })} onImagesChange={images => editDraft({ ...draft, images })} owner={owner} recordId={draft.id} disabled={!writable || draftOwner.current !== owner || !!deletion} maxLength={10000} ariaLabel='任务备注' placeholder='备注' showImageInsertion={false} canInsertImage={writable} onBusyChange={setImageBusy} checkImages={images => { if (!noteStateFits({ ...state, tasks: [{ ...draft, images }, ...state.tasks.filter(task => task.id !== draft.id)] })) throw new Error('任务空间不足，请整理图片'); }} />}
       nextSteps={nextStepsOpen ? <View className='task-detail-next-steps'><TodoEditorFields nextStepsOnly draft={draft} onChange={editDraft} tagsText={tagsText} onTagsChange={setTagsText} tagOptions={existingTags} disabled={imageBusy} owner={owner} today={today} scheduleOpen={false} onSchedule={() => setScheduleOpen(true)} /></View> : undefined}
@@ -399,7 +399,7 @@ export default function Todos() {
     <ChoicePopover anchorId='task-tags-anchor' ariaLabel='任务标签' open={!!draft && tagsOpen} onOpenChange={setTagsOpen} placement='center' panelWidth={360} layerClassName='task-detail-popover-layer' heading={<PopoverHeading title='标签' />}>
       <TagChoiceRow options={existingTags.map(tag => ({ value: tag, label: tag }))} value={parseTags(tagsText)} onChange={tags => editTags(tags.join('，'))} customInputPlacement='inline' customInput={<TagTextInput ariaLabel='任务标签' value={tagsText} onInput={event => editTags(event.detail.value)} />} />
     </ChoicePopover>
-    {draft && scheduleOpen && writable && draftOwner.current === owner && <TodoScheduleSheet key={`${owner}:${draft.id}`} value={draft} today={today} busy={busy} reminderLabel={reminderLabel} canAuthorize={canAuthorize} reminderLocked={reminderLocked} onAuthorize={() => { void authorizeReminder(); }} onConfirm={applySchedule} onClose={() => { if (!busy) setScheduleOpen(false); }} />}
+    {draft && scheduleOpen && writable && draftOwner.current === owner && <TodoScheduleSheet key={`${owner}:${draft.id}`} value={draft} today={today} busy={imageBusy||!!deletion} saveError={autosaveError} onRetry={()=>{setAutosaveError('');void persistDraft();}} onChange={applySchedule} onClose={() => setScheduleOpen(false)} />}
     {deletion?.owner === owner && <AppDialog title='删除这件任务？' closeLabel='关闭任务删除确认' onClose={closeDelete} busy={busy || !!deletion.pending} error={deleteError} actions={<ActionButton appearance='danger' size='large' width='fill' loading={busy} disabled={busy} onClick={() => { void remove(); }}>{deletion.pending ? '重试删除' : '删除'}</ActionButton>}><Text>{trimTextEnd(deletion.task.title)}</Text></AppDialog>}
   </>;
 }

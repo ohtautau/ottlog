@@ -11,7 +11,8 @@ page,:root { --editor-heading-horizontal-space: 32rpx; }
 .editor-heading.is-prompt .editor-heading-title { font-size: 18PX; }
 .editor-heading.is-prompt .editor-heading-actions { margin-right: 0; }
 
-/* Equal side tracks keep every popup title on the actual panel centre. */
-.editor-heading.is-titled { display:grid;grid-template-columns:minmax(40PX,1fr) minmax(0,6fr) minmax(40PX,1fr); }
-.editor-heading.is-titled .editor-heading-copy { grid-column:2;text-align:center; }
-.editor-heading.is-titled .editor-heading-actions { grid-column:3;justify-self:end;margin-right:0; }
+/* Actions cannot change the centre of popup titles. */
+.editor-heading.is-titled { position:relative;justify-content:center; }
+.editor-heading.is-titled .editor-heading-copy { flex:1;padding-left:44PX;padding-right:44PX;text-align:center; }
+.editor-heading.is-titled .editor-heading-actions { position:absolute;right:var(--editor-heading-horizontal-space,16PX);top:50%;transform:translateY(-50%);margin:0; }
+.editor-heading.is-titled.is-prompt .editor-heading-actions { right:16PX; }
