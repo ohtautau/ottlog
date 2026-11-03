@@ -3,8 +3,6 @@
 .focus-selection-sheet { position: absolute; left: 0; right: 0; bottom: 0; height: 1100rpx; max-height: 90vh; display: flex; flex-direction: column; border-radius: 32rpx 32rpx 0 0; background: #192633; color: #f3eddf; overflow: hidden; box-shadow: 0 -16rpx 80rpx rgba(0,0,0,.18); }
 .focus-selection-tools { flex-shrink: 0; padding: 4rpx 32rpx 18rpx; border-bottom: 1rpx solid #30424e; }
 .focus-selection-search { display: flex; align-items: center; gap: 16rpx; padding: 0 20rpx; border: 1rpx solid #4d6570; border-radius: 16rpx; background: #12212c; }
-.focus-selection-search-mark { position: relative; flex-shrink: 0; width: 22rpx; height: 22rpx; border: 2rpx solid #a1b6bf; border-radius: 50%; margin-right: 4rpx; }
-.focus-selection-search-mark::after { content: ''; position: absolute; right: -7rpx; bottom: -5rpx; width: 11rpx; height: 2rpx; background: #a1b6bf; transform: rotate(45deg); border-radius: 2rpx; }
 .focus-selection-search input { flex: 1; min-width: 0; width: 0; height: 88rpx; min-height: 88rpx; margin: 0; padding: 0; border: 0; background: transparent; color: #eef2e8; font-size: 25rpx; }
 .focus-selection-clear { flex: none; width: 64rpx; height: 76rpx; min-height: 76rpx; margin: 0 -16rpx 0 0; padding: 0; background: transparent; color: #a1b6bf; font-size: 32rpx; }
 .focus-selection-scroll { flex: 1; height: 0; min-height: 0; }

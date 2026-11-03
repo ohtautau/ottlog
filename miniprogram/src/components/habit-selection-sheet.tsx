@@ -1,3 +1,4 @@
+import SearchSymbol from './search-symbol';
 import { trimTextEnd } from '../lib/text-whitespace';
 import SectionTitle from './section-title';
 import { useMemo, useState } from 'react';
@@ -59,7 +60,7 @@ export default function HabitSelectionSheet({ items, sessions, selectedId, onSel
     <View className='focus-selection-sheet focus-habit-sheet'>
       <EditorHeading className='focus-selection-heading focus-habit-heading' title='选择习惯' actions={<ActionButton appearance='icon' className='button-label' ariaLabel='关闭习惯选择' onClick={onClose}>×</ActionButton>} />
       <View className='focus-selection-tools focus-habit-tools'>
-        <View className='focus-selection-search focus-habit-search'><View className='focus-selection-search-mark focus-habit-search-mark' aria-hidden /><Input ariaLabel='搜索习惯' placeholder='搜索习惯名称或分组' value={query} maxlength={60} cursorSpacing={96} adjustPosition confirmType='search' onInput={event => setQuery(event.detail.value)} />{!!query && <ActionButton appearance='icon' className='button-label focus-selection-clear focus-habit-clear' ariaLabel='清空习惯搜索' onClick={() => setQuery('')}>×</ActionButton>}</View>
+        <View className='focus-selection-search focus-habit-search'><SearchSymbol /><Input ariaLabel='搜索习惯' placeholder='搜索习惯名称或分组' value={query} maxlength={60} cursorSpacing={96} adjustPosition confirmType='search' onInput={event => setQuery(event.detail.value)} />{!!query && <ActionButton appearance='icon' className='button-label focus-selection-clear focus-habit-clear' ariaLabel='清空习惯搜索' onClick={() => setQuery('')}>×</ActionButton>}</View>
         <CategoryRow className='focus-selection-filter-scroll focus-habit-filter-scroll' contentClassName='focus-selection-filters focus-habit-filters' ariaLabel='习惯分组' fixedLeading={<CategoryButton className='focus-selection-filter focus-habit-filter' ariaLabel='习惯分组：全部' selected={effectiveGroup === '全部'} onClick={() => setGroup('全部')}>全部</CategoryButton>}>{availableGroups.map(name => <CategoryButton key={name} className={`button-label focus-selection-filter focus-habit-filter${effectiveGroup === name ? ' is-selected' : ''}`} ariaLabel={`习惯分组：${name}`} selected={effectiveGroup === name} onClick={() => setGroup(name)}>{name}</CategoryButton>)}</CategoryRow>
       </View>
       <ScrollView key={`${effectiveGroup}:${needle}`} scrollY className='focus-selection-scroll focus-habit-scroll' enhanced bounces={false} showScrollbar={false}>

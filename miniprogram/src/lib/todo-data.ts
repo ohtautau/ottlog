@@ -1,5 +1,6 @@
 import { localToolDay, todoQuadrants, toolId, type Todo, type TodoState, type TodoSortMode } from './tool-records';
 import { noteStateFits, validNoteImages } from './note-image-data';
+import { visibleSubtasks } from './todo-subtasks';
 export type { TodoSortMode } from './tool-records';
 
 // The web client shares this limit. Never truncate a state to make room for generated tasks.
@@ -148,7 +149,7 @@ function validRecurrence(task: Todo): boolean {
     && (rule.anchorDay === undefined || Number.isInteger(rule.anchorDay) && rule.anchorDay >= 1 && rule.anchorDay <= 31);
 }
 
-function monthlyAnchor(task: Todo, date: Date): number {
+export function monthlyAnchor(task: Pick<Todo, 'dueDate' | 'recurrence'>, date: Date): number {
   const day = date.getDate();
   const anchor = task.recurrence?.anchorDay;
   if (!calendarDate(task.dueDate) || !anchor) return day;
@@ -196,6 +197,8 @@ export function saveTodo(state: TodoState, draft: Todo, now = new Date()): TodoS
   if (draft.dueTime && (!draft.dueDate || !/^([01]\d|2[0-3]):[0-5]\d$/.test(draft.dueTime))) throw new Error('请先选择任务日期，再设置有效的时间');
   if (!validRecurrence(draft)) throw new Error('循环周期需要是 1 至 365 的整数');
   const nextTasks = draft.nextTasks?.filter(child => child.title.trim());
+  const subtasks = draft.subtasks ? visibleSubtasks(draft.subtasks) : undefined;
+  if ((subtasks?.length || 0) > 50 || subtasks?.some(child => child.title.length > 100)) throw new Error('最多 50 个子任务，每个不超过 100 字');
   if ((nextTasks?.length || 0) > 50 || nextTasks?.some(child => child.title.length > 100)) throw new Error('最多 50 个下一步任务，每个不超过 100 字');
   if (draft.reminderAt && !Number.isFinite(Date.parse(draft.reminderAt))) throw new Error('请选择有效的通知时间');
   ensureRoom(state, existing ? 0 : 1);
@@ -213,7 +216,7 @@ export function saveTodo(state: TodoState, draft: Todo, now = new Date()): TodoS
     images: (draft.images ?? existing?.images)?.map(image => ({ ...image })),
     tags: draft.tags ? [...new Set(draft.tags.map(tag => tag.trim()).filter(Boolean))] : draft.tags,
     recurrence, nextTasks: nextTasks?.map(child => ({ ...child, title: child.title.trim() })),
-    subtasks: draft.subtasks?.map(child => ({ ...child, title: child.title.trim() })),
+    subtasks: subtasks?.map(child => ({ ...child, title: child.title.trim() })),
     completedAt: existing ? existing.completedAt : draft.completedAt,
     completionGeneration: existing ? existing.completionGeneration : draft.completionGeneration,
     generatedFrom: existing?.generatedFrom || draft.generatedFrom,

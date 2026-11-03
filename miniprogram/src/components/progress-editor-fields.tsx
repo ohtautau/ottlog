@@ -5,7 +5,9 @@ import { appendProgressPair, MAX_PROGRESS_PAIRS, hasProgressContent, pairedProgr
 import type { MemoImage } from '../lib/tool-records';
 import DomainChoiceField from './domain-choice-field';
 import MarkdownNoteEditor from './markdown-note-editor';
-import CreateButton from './create-button';
+import ActionButton from './ui-button';
+import { TaskAttachmentSymbol } from './task-detail-editor';
+import { AddSymbol } from './create-button';
 import './progress-editor-fields.css';
 import EditorFieldsLayout from './editor-fields-layout';
 
@@ -58,7 +60,8 @@ export default function ProgressEditorFields({ draft, onChange, state, disabled,
     <View className='progress-domain-row'><DomainChoiceField ariaLabel='选择记录领域' domains={state.domains} value={draft.domainId} optionPrefix='记录到' disabled={disabled} onChange={domainId => emit({ ...currentDraft.current, domainId })} /></View>
     <View className='progress-record-pairs'>{groups.map((group, pairIndex) => <View className='progress-record-pair' key={group[0].record.id}>{group.map(({ slot, kind, record }) => <ProgressRecordField key={record.id} slot={slot} kind={kind} pairIndex={pairIndex}>
       <MarkdownNoteEditor minimal format='plain' density='compact' showImageInsertion={false} insertionSignal={insertions[record.id] || 0} onFocus={() => { activeRecord.current = record.id; }} autoFocus={pairIndex === 0 && slot === 'positive' && autoFocus} value={record.content} images={record.images} owner={owner} recordId={record.id} disabled={disabled} canInsertImage={!disabled} onBusyChange={onBusyChange} maxLength={MAX_DOMAIN_RECORD_LENGTH} ariaLabel={pairIndex === 0 ? slot === 'positive' ? '记录内容' : '第二条记录内容' : `第 ${pairIndex + 1} 组${slot === 'negative' ? '负' : '正'}记录内容`} placeholder='备注' onChange={content => { activeRecord.current = record.id; emit(changeRecord(pairIndex, slot, { content })); }} onImagesChange={images => emit(changeRecord(pairIndex, slot, { images }))} checkImages={images => checkImages(pairIndex, slot, images)} />
+      <ActionButton appearance='icon' size='compact' className='progress-record-attachment' ariaLabel={`第 ${pairIndex + 1} 组${kind === 'negative' ? '负' : '正'}记录附件`} disabled={disabled} onClick={() => setInsertions(previous => ({ ...previous,[record.id]:(previous[record.id] || 0) + 1 }))}><TaskAttachmentSymbol /></ActionButton>
     </ProgressRecordField>)}</View>)}</View>
-    <View className='progress-add-pair'><CreateButton iconOnly label='添加一组正负记录' disabled={disabled || groups.length >= MAX_PROGRESS_PAIRS} onClick={() => emit(appendProgressPair(currentDraft.current))} /></View>
+    <View className='progress-add-pair'><ActionButton appearance='quiet' width='fill' ariaLabel='添加一组正负记录' disabled={disabled || groups.length >= MAX_PROGRESS_PAIRS} onClick={() => emit(appendProgressPair(currentDraft.current))}><AddSymbol /></ActionButton></View>
   </EditorFieldsLayout>;
 }

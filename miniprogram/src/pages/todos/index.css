@@ -40,3 +40,14 @@
 .todo-panel-icon { flex: none; width: 18PX; height: 18PX; }
 .task-detail-hidden-anchor { position: fixed; left: 16PX; bottom: 16PX; width: 1PX; height: 1PX; opacity: 0; pointer-events: none; }
 .task-detail-popover-layer { z-index: 240; }
+
+.todo-quadrant-actions { display:flex;align-items:center;gap:2PX;flex:none; }
+.todo-quadrant-actions > .todo-quadrant-add { flex:none;margin:0; }
+
+.todo-quadrant { touch-action:pan-y; }
+.todo-panel-editor-overlay { position:fixed;inset:0;z-index:220;display:flex;align-items:center;justify-content:center;padding:16PX; }
+.todo-panel-editor { position:relative;width:100%;max-width:400PX;box-sizing:border-box;padding:12PX 16PX 24PX;border:1PX solid #3b505a;border-radius:16PX;background:#20333e;color:#e9eee7; }
+.todo-panel-editor-rows { display:flex;flex-direction:column;gap:8PX; }
+.todo-panel-editor-row { display:flex;align-items:center;justify-content:space-between;gap:16PX;min-height:48PX; }
+.todo-panel-editor-row > text { flex:none;color:#8da6af;font-size:14PX; }
+.todo-panel-editor-row > view { min-width:0; }

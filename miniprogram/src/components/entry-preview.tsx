@@ -7,7 +7,7 @@ import type { DomainState } from '../lib/domain-data';
 import { progressRows } from '../lib/progress-draft';
 import PriorityFlag from './priority-flag';
 import EntityTitleRow from './entity-title-field';
-import { MemoIconPreview, MemoPinRow, memoSurfaceStyle } from './memo-fields-layout';
+import { MemoPinRow, memoSurfaceStyle } from './memo-fields-layout';
 import { PinSymbol } from './manage-symbol';
 import ActionButton, { ChoiceButton } from './ui-button';
 import { ProgressRecordField } from './progress-editor-fields';
@@ -30,7 +30,7 @@ export default function EntryPreview({ draft, domains }: { draft: EntryDraft; do
   const task = draft.mode === 'task';
   return <EditorFieldsLayout className={`entry-preview${task ? '' : ' memo-editor-fields'}`} style={task ? undefined : memoSurfaceStyle()}>
     {task && <View className='entry-preview-task-schedule'><View className='entry-preview-domain'><Text>{draft.task.dueDate || '日期'}</Text></View></View>}
-    <EntityTitleRow className='todo-title-row'>{!task && <MemoIconPreview iconId={draft.memo.iconId} />}<Text className='entry-preview-title'>{trimTextEnd(task ? draft.task.title : draft.memo.title) || (task ? '准备做什么？' : '准备记下什么？')}</Text><View className='entry-preview-priority'><PriorityFlag color={task ? todoQuadrant(draft.task).color : memoPriorityColor(draft.memo.priority)} outlined={task ? todoQuadrant(draft.task).id === 'later' : !draft.memo.priority || draft.memo.priority === 'none'} /></View></EntityTitleRow>
+    <EntityTitleRow className='todo-title-row'><Text className='entry-preview-title'>{trimTextEnd(task ? draft.task.title : draft.memo.title) || (task ? '准备做什么？' : '准备记下什么？')}</Text><View className='entry-preview-priority'><PriorityFlag color={task ? todoQuadrant(draft.task).color : memoPriorityColor(draft.memo.priority)} outlined={task ? todoQuadrant(draft.task).id === 'later' : !draft.memo.priority || draft.memo.priority === 'none'} /></View></EntityTitleRow>
     {note(task ? draft.task.description : draft.memo.body, task ? '有什么需要补充的？' : '写下内容…', task ? draft.task.images : draft.memo.images)}
     {task ? <View className='todo-next-list'>{[...(draft.task.nextTasks || []).map(step => step.title), '还要做什么？'].map((title, index) => <View className='entry-preview-step' key={index}><View className='todo-next-bullet' /><Text>{trimTextEnd(title) || '还要做什么？'}</Text></View>)}</View> : <><MemoPinRow><View className={`memo-pin-setting${draft.memo.pinned ? ' is-active' : ''}`}><PinSymbol /></View></MemoPinRow></>}
     <View className={task ? 'todo-tags-row' : 'memo-tags-field'}>{!!draft.tagsText && <Text>{draft.tagsText}</Text>}</View>

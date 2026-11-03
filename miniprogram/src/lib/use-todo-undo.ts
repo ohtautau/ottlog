@@ -3,7 +3,7 @@ import { useDidHide, useDidShow } from '@tarojs/taro';
 import { isTodoState, type TodoState } from './tool-records';
 import type { PersonalToolEdit } from './tool-state-store';
 import { subscribePersonalToolEdits } from './use-personal-tool-state';
-import { todoOperationLabel } from './todo-undo';
+import { isTodoDisplayOnlyChange, todoOperationLabel } from './todo-undo';
 
 export type TodoUndoEdit = { owner: string; before: TodoState; after: TodoState };
 type Notice = { id: number; message: string; undo?: TodoUndoEdit; expires: number };
@@ -20,6 +20,7 @@ export default function useTodoUndo(owner: string, blocked: boolean, restore: (e
     if (!owner) return;
     const unsubscribe = subscribePersonalToolEdits('todos', owner, (event: PersonalToolEdit) => {
       if (!active.current || restoring.current || !isTodoState(event.before) || !isTodoState(event.after)) return;
+      if (isTodoDisplayOnlyChange(event.before, event.after)) return;
       const edit = { owner, before: copy(failed.current?.before ?? event.before), after: copy(event.after) };
       if (!event.durable) { failed.current = edit; return; }
       failed.current = null;

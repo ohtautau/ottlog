@@ -1,0 +1,3 @@
+.search-symbol { position:relative;display:inline-block;flex:none;box-sizing:border-box;width:20PX;height:20PX;color:inherit;pointer-events:none; }
+.search-symbol::before { content:'';position:absolute;box-sizing:border-box;left:1PX;top:1PX;width:13PX;height:13PX;border:2PX solid currentColor;border-radius:50%; }
+.search-symbol::after { content:'';position:absolute;right:1PX;bottom:4PX;width:8PX;height:2PX;border-radius:1PX;background:currentColor;transform:rotate(45deg); }

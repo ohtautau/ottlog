@@ -13,7 +13,7 @@ export type TodoSortMode = 'schedule' | 'created' | 'custom';
 export type TodoPanelId = 'do' | 'plan' | 'delegate' | 'later';
 export type TodoPanelSource = { kind: 'quadrant'; quadrantId: TodoPanelId } | { kind: 'category'; categoryId: string };
 export type TodoState = { version: 1; tasks: Todo[]; categories: TodoCategory[]; sort?: TodoSortMode; panelSources?: Partial<Record<TodoPanelId, TodoPanelSource>> };
-export const initialTodoState: TodoState = { version: 1, tasks: [], categories: [{ id: 'work', name: '工作', color: '#8aafff' }, { id: 'life', name: '生活', color: '#a8ceae' }, { id: 'study', name: '学习', color: '#dfd4b4' }] };
+export const initialTodoState: TodoState = { version: 1, tasks: [], categories: [{ id:'entertainment',name:'娱乐',iconId:'game',color:'#b9dbca' }, { id:'shopping',name:'购物',iconId:'shopping',color:'#b9dbca' }] };
 export const todoQuadrants = [
   { id: 'do', title: '高优先级', caption: '重要且紧急', important: true, urgent: true, color: '#e7a097' },
   { id: 'plan', title: '中优先级', caption: '重要不紧急', important: true, urgent: false, color: '#e4ce85' },

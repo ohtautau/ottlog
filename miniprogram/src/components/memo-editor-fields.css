@@ -14,5 +14,5 @@
 .memo-editor-fields .memo-tags-field { font-size: min(25rpx,16PX); }
 .memo-editor-fields .memo-editor-settings,.memo-editor-fields .memo-tags-field { border-top: 1PX solid #3b4b56; padding-top: var(--editor-section-inset,12PX); }
 .memo-editor-fields .memo-pin-setting { width: 40PX; min-width: 40PX; height: 40PX; min-height: 40PX; }
-.memo-editor-fields .markdown-note-editor .memo-body-input,.memo-editor-fields .markdown-note-editor .memo-body-preview,.memo-editor-fields .entry-preview-note { background: var(--memo-paper-background,#14212e); border-color: var(--memo-paper-border,#344753); }
+.memo-editor-fields .markdown-note-editor:not(.is-minimal) .memo-body-input,.memo-editor-fields .markdown-note-editor:not(.is-minimal) .memo-body-preview { background: var(--memo-paper-background,#14212e); border-color: var(--memo-paper-border,#344753); }
 .memo-note-pin,.memo-reader-pin,.memo-pin-setting { --control-selected-text: var(--memo-paper-accent); --control-selected-border: var(--memo-paper-accent); --control-selected-background: var(--memo-paper-background); }

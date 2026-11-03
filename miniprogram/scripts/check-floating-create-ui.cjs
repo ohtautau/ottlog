@@ -40,18 +40,20 @@ module.exports = async function checkFloatingCreate({ page, origin, out, width, 
       return { x: b.x, y: b.y, width: b.width, height: b.height, right: v.right - b.right, bottom: v.bottom - b.bottom, radius: style.borderRadius, color: style.backgroundColor, z: getComputedStyle(node.closest('.floating-create-action')).zIndex };
     });
     expect(result.width).toBe(56); expect(result.height).toBe(56);
-    expect(result.right).toBeCloseTo(24, 0); expect(result.bottom).toBeCloseTo(24 + (tab ? 0 : safe), 0);
+    expect(result.right).toBeCloseTo(width / 8, 0); expect(result.bottom).toBeCloseTo(Math.max(width / 8, tab ? 0 : safe), 0);
     expect(result.radius === '50%' || parseFloat(result.radius) >= 28).toBe(true);
     expect(result.color).toBe('rgb(185, 219, 202)');
     return result;
   }
+  const layoutOnly = process.env.OTTLOG_FLOATING_LAYOUT_ONLY === '1';
   const cases = [
+    {route:'index',label:'创建记录',tab:true},
     { route: 'todos', label: '创建任务', tab: true, editor: '.entry-composer', close: '关闭编辑' },
     { route: 'daily', label: '创建习惯', tab: true, editor: '.daily-editor-sheet', close: '关闭习惯编辑', last: '#daily-reminder-scroll .daily-suggestion' },
     { route: 'memos', label: '创建便签', editor: '.entry-composer', close: '关闭编辑', last: '.memo-note' },
     { route: 'mottos', label: '创建格言', editor: '.mottos-editor-sheet', close: '关闭格言编辑', last: '.mottos-row' },
     { route: 'articles', label: '创建文章', editor: '.document-editor-sheet', close: '关闭创建文章', last: '.article-card' },
-    { route: 'domains', label: '记录进展', tab: true, editor: '.entry-composer', close: '关闭编辑', last: '.domain-create-shell' },
+    { route: 'domains', label: '添加记录', tab: true, editor: '.entry-composer', close: '关闭编辑', last: '.domain-create-shell' },
     { route: 'domain-detail/index?id=floating-domain-0', label: '创建记录', editor: '.entry-composer', close: '关闭编辑' },
   ];
   for (const item of cases) {
@@ -59,6 +61,7 @@ module.exports = async function checkFloatingCreate({ page, origin, out, width, 
     const fab = page.locator('.floating-create-button');
     await expect(fab).toBeEnabled();
     const before = await geometry(item.label, item.tab);
+    await fab.focus(); await expect(fab).toHaveCSS('outline-style','none');
     await page.screenshot({ path: path.join(out, `floating-create-${item.route.split('/')[0]}-${width}.png`) });
     // Scrolling the page or an internal list must not move the floating action.
     await page.locator('.page-scroll,.memo-list-scroll,.mottos-list-scroll,.personal-articles-scroll,.domain-entry-scroll,.habit-list-section-scroll').evaluateAll(nodes => nodes.forEach(node => { node.scrollTop = node.scrollHeight; }));
@@ -75,6 +78,7 @@ module.exports = async function checkFloatingCreate({ page, origin, out, width, 
       expect(clearances.length, `${item.route}: scroll content reserves room for FAB`).toBeGreaterThan(0);
       for (const clearance of clearances) expect(clearance).toBeGreaterThanOrEqual(80);
     }
+    if (!layoutOnly) {
     await fab.click();
     await expect(page.locator(item.editor)).toBeVisible();
     // Even on tall screens the backdrop must catch the old FAB hit target.
@@ -86,6 +90,7 @@ module.exports = async function checkFloatingCreate({ page, origin, out, width, 
     await button(item.close).click();
     await expect(page.locator(item.editor)).toHaveCount(0);
     await geometry(item.label, item.tab);
+    }
     await page.evaluate(() => document.documentElement.style.setProperty('--preview-safe-area-bottom', '34px'));
     const safeGeometry = await geometry(item.label, item.tab, 34);
     if (item.last) {
@@ -95,6 +100,8 @@ module.exports = async function checkFloatingCreate({ page, origin, out, width, 
     }
     await page.evaluate(() => document.documentElement.style.removeProperty('--preview-safe-area-bottom'));
   }
+
+  if (layoutOnly) return;
 
   // Persistent create behavior still belongs to the old composer, not the FAB.
   await fresh('memos');

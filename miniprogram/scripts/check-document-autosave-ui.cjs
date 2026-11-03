@@ -4,7 +4,7 @@ const path = require('node:path');
 module.exports = async function checkDocumentAutosave({ page, origin, width, out, expect }) {
   const owner = 'document-autosave', stamp = '2026-11-03T00:00:00.000Z';
   const notes = ['blue', 'sage', 'sand', 'rose', 'violet', 'mint'].map((color, i) => ({ id: `memo-${i}`, title: `便签${i + 1}`, body: `原便签正文${i + 1}`, color, tags: [], pinned: false, createdAt: stamp, updatedAt: stamp }));
-  const states = { todos: { version: 1, tasks: [], categories: [] }, memos: { version: 1, notes }, domains: { version: 1, domains: [{ id: 'autosave-domain', name: '记录领域', iconId: 'plant', longTermGoal: null, shortTermGoal: null, habits: [], positiveRecords: [], negativeRecords: [] }], completedGoals: [] } };
+  const states = { mottos:{version:1,mottos:['原格言']},todos: { version: 1, tasks: [], categories: [] }, memos: { version: 1, notes }, domains: { version: 1, domains: [{ id: 'autosave-domain', name: '记录领域', iconId: 'plant', longTermGoal: null, shortTermGoal: null, habits: [], positiveRecords: [], negativeRecords: [] }], completedGoals: [] } };
   await page.goto(`${origin}/?document-autosave-${width}#/pages/posts/index`);
   await page.evaluate(({ states, owner }) => { localStorage.clear(); for (const [key, data] of Object.entries(states)) localStorage.setItem(`ottlog-mini-tool-v1:reader:${owner}:${key}`, JSON.stringify({ data, pending: false, revision: 0 })); }, { states, owner });
   await page.reload();
@@ -20,33 +20,40 @@ module.exports = async function checkDocumentAutosave({ page, origin, width, out
   expect(paints[0].background).toBe('rgb(32, 51, 62)');
   await button('筛选便签').click(); await expect(page.locator('.memo-filter-colors,.memo-palette')).toHaveCount(0); await expect(page.getByRole('button', { name: /^便签颜色：/ })).toHaveCount(0); await button('关闭便签筛选').click();
   expect((await data('memos')).notes).toEqual(notes);
-  await button('查看便签：便签1').click(); await expect(page.locator('.memo-reader')).toBeVisible();
-  const readerSurface = await page.locator('.memo-reader .memo-editor-fields').evaluate(node => getComputedStyle(node).getPropertyValue('--memo-paper-background').trim()); expect(readerSurface).toBe('#20333e');
-  await button('编辑便签：便签1').click(); await expect(memoTitle()).toBeEnabled();
+  await button('编辑便签：便签1').click();await expect(memoTitle()).toBeEnabled();
+  await expect(page.getByRole('button',{name:'选择便签图标'})).toHaveCount(0);
+  await expect(page.locator('.memo-body-input')).toHaveCSS('background-color','rgba(0, 0, 0, 0)');
   await expect(page.locator('.document-editor-sheet').getByRole('button', { name: /^(保存|关闭便签编辑)$/ })).toHaveCount(0);
   await expect(page.locator('.memo-palette')).toHaveCount(0);
   await memoTitle().fill('自动保存便签'); await expect.poll(async () => (await data('memos')).notes.find(note => note.id === 'memo-0').title).toBe('自动保存便签');
   await memoTitle().fill('关窗最后输入'); await closeMemo();
   expect((await data('memos')).notes.find(note => note.id === 'memo-0')).toMatchObject({ title: '关窗最后输入', color: 'blue', body: '原便签正文1' });
-  await button('关闭便签内容').click();
 
   await page.locator('.floating-create-button').click(); await expect(memoTitle()).toBeEnabled();
+  const memoFrame=await page.locator('.entry-composer').boundingBox();
+  await button('创建类型：任务').click();await expect(page.getByRole('textbox',{name:'任务名称',exact:true})).toBeEnabled();const emptyTaskFrame=await page.locator('.entry-composer').boundingBox();
+  await button('创建类型：记录').click();await expect(page.getByRole('textbox',{name:'记录内容',exact:true})).toBeEnabled();const emptyRecordFrame=await page.locator('.entry-composer').boundingBox();
+  for(const frame of [emptyTaskFrame,emptyRecordFrame]){expect(frame.width).toBeCloseTo(memoFrame.width,0);expect(frame.height).toBeCloseTo(memoFrame.height,0);}
+  await button('创建类型：便签').click();await expect(memoTitle()).toBeEnabled();
+  await expect(page.getByRole('button',{name:'选择便签图标'})).toHaveCount(0);
+  await expect(page.locator('.entry-composer .memo-title-input')).toHaveCSS('font-size','22px');
+  await expect(page.locator('.entry-composer .memo-body-input')).toHaveCSS('background-color','rgba(0, 0, 0, 0)');
   await expect(page.locator('.entry-composer').getByRole('button', { name: /^(保存|创建便签|关闭编辑)$/ })).toHaveCount(0);
   await memoTitle().fill('新建自动便签'); await expect.poll(async () => (await data('memos')).notes.length).toBe(7);
   const newId = (await data('memos')).notes.find(note => note.title === '新建自动便签').id;
-  await page.locator('.entry-composer').getByText('备注', { exact: true }).click();
   await page.getByRole('textbox', { name: '便签内容', exact: true }).fill('持续输入仍然是同一张便签');
   await expect.poll(async () => (await data('memos')).notes.find(note => note.id === newId).body).toBe('持续输入仍然是同一张便签');
+  await button('便签 Markdown 预览').click();await expect(page.locator('.entry-composer .memo-body-preview')).toContainText('持续输入仍然是同一张便签');await expect(page.locator('.entry-composer .memo-body-preview')).toHaveCSS('background-color','rgba(0, 0, 0, 0)');await button('便签 Markdown 预览').click();
   const receiptDraft = await page.evaluate(owner => window.__miniPreviewControl.readStorage(`ottlog-mini-entry-draft-v1:reader:${owner}`), owner);
   expect(receiptDraft.autoSaveReceipt.memo).toEqual([newId]);
   await closeEntry(); expect((await data('memos')).notes).toHaveLength(7);
 
-  await button('查看便签：关窗最后输入').click(); await button('编辑便签：关窗最后输入').click();
+  await button('编辑便签：关窗最后输入').click();
   await page.evaluate(() => { window.__miniFixture.failToolWrites = ['memos']; }); await memoTitle().fill('失败保留原便签');
   await expect(page.locator('.document-autosave-status')).toBeVisible();
   await page.locator('.memo-overlay > .memo-backdrop').click({ position: { x: 4, y: 4 } }); await expect(memoTitle()).toHaveValue('失败保留原便签');
   await page.evaluate(() => { window.__miniFixture.failToolWrites = []; }); await page.locator('.document-editor-sheet').getByRole('button', { name: '重试', exact: true }).click();
-  await expect.poll(async () => (await data('memos')).notes.find(note => note.id === 'memo-0').title).toBe('失败保留原便签'); await closeMemo(); await button('关闭便签内容').click();
+  await expect.poll(async () => (await data('memos')).notes.find(note => note.id === 'memo-0').title).toBe('失败保留原便签'); await closeMemo();
   expect((await data('memos')).notes.filter(note => notes.slice(1).some(old => old.id === note.id))).toEqual(notes.slice(1));
 
   await page.locator('.floating-create-button').click(); await expect(memoTitle()).toBeEnabled();
@@ -54,7 +61,8 @@ module.exports = async function checkDocumentAutosave({ page, origin, width, out
   const taskTitle = () => page.locator('.entry-composer').getByRole('textbox', { name: '任务名称', exact: true });
   await expect(taskTitle()).toBeEnabled();
   await expect(page.locator('.entry-composer.task-detail-panel')).toBeVisible();
-  await expect(page.locator('.entry-composer .task-detail-tools > button')).toHaveCount(3);
+  const taskFrame=await page.locator('.entry-composer').boundingBox();expect(taskFrame.width).toBeCloseTo(memoFrame.width,0);expect(taskFrame.height).toBeCloseTo(memoFrame.height,0);
+  await expect(page.locator('.entry-composer .task-detail-tools > button')).toHaveCount(4);
   await expect(page.locator('.entry-composer .task-detail-heading-actions')).toBeVisible();
   await button('任务分类').click(); await button('新建任务分类').click();
   await page.getByRole('textbox',{name:'分类名称',exact:true}).fill('创建器分类'); await button('完成分类编辑').click();
@@ -68,17 +76,22 @@ module.exports = async function checkDocumentAutosave({ page, origin, width, out
   await expect.poll(async () => (await data('todos')).tasks.length).toBe(1);
   const taskId = (await data('todos')).tasks[0].id;
   await page.evaluate(() => { window.__miniFixture.deferChooseMedia = true; });
-  await button('任务附件').click(); await expect(button('创建类型：备忘')).toBeDisabled();
+  await button('任务附件').click(); await expect(button('创建类型：便签')).toBeDisabled();
   await page.evaluate(() => { window.__miniFixture.resolveChooseMedia(); window.__miniFixture.deferChooseMedia = false; });
   await expect.poll(async () => (await data('todos')).tasks[0].images?.length).toBe(1);
-  await expect(button('创建类型：备忘')).toBeEnabled();
+  await expect(button('创建类型：便签')).toBeEnabled();
   await page.screenshot({ path:path.join(out, `shared-task-create-${width}.png`) });
-  await taskTitle().fill('共享创建器同一任务修改'); await closeEntry();
+  await taskTitle().fill('共享创建器同一任务修改');
+  await closeEntry();
   expect((await data('todos')).tasks[0]).toMatchObject({ id: taskId, title: '共享创建器同一任务修改', categoryId:createdCategory, tags:['实际','微信采集'], subtasks:[{ title:'创建器检查项', completed:false }] });
   expect((await data('todos')).tasks).toHaveLength(1); expect((await data('memos')).notes).toHaveLength(7);
 
-  await page.evaluate(() => { location.hash = '#/pages/domains/index'; }); await button('记录进展').click();
+  await page.evaluate(() => { location.hash = '#/pages/domains/index'; }); await button('添加记录').click();
   const content = () => page.getByRole('textbox', { name: '记录内容', exact: true }); await expect(content()).toBeEnabled();
+  const recordFrame=await page.locator('.entry-composer').boundingBox();expect(recordFrame.width).toBeCloseTo(memoFrame.width,0);
+  expect(await page.locator('.progress-record-field').nth(1).evaluate(node=>getComputedStyle(node,'::before').borderLeftWidth)).toBe('1px');
+  const pairBox=await page.locator('.progress-record-pairs').boundingBox(),addBox=await button('添加一组正负记录').boundingBox();expect(addBox.width).toBeCloseTo(pairBox.width,0);
+  await expect(page.locator('.progress-record-attachment')).toHaveCount(2);
   await expect(page.locator('.entry-composer').getByRole('button', { name: /^(保存记录|关闭编辑)$/ })).toHaveCount(0);
   await content().fill('第一条自动进展');
   const records = async () => (await data('domains')).domains.flatMap(domain => domain.positiveRecords);
@@ -86,7 +99,10 @@ module.exports = async function checkDocumentAutosave({ page, origin, width, out
   await content().fill('同一条进展的修改'); await expect.poll(async () => (await records())[0].content).toBe('同一条进展的修改');
   expect((await records())[0].id).toBe(recordId);
   await content().fill(''); await expect.poll(async () => (await records()).length).toBe(0);
-  await content().fill('进展关窗最后输入'); await closeEntry(); expect((await records())[0].content).toBe('进展关窗最后输入'); expect(await records()).toHaveLength(1);
+  await content().fill('进展关窗最后输入');await button('第 1 组正记录附件').click();await expect.poll(async()=>(await records())[0]?.images?.length).toBe(1);
+  expect((await data('domains')).domains[0].negativeRecords).toHaveLength(0);
+  const imageBox=await page.locator('.entry-composer .memo-image img').boundingBox();expect(imageBox.width).toBeLessThanOrEqual(112);expect(imageBox.height).toBeLessThanOrEqual(96);
+  await closeEntry(); expect((await records())[0].content).toBe('进展关窗最后输入'); expect(await records()).toHaveLength(1);
   // A draft left by a crash must never recreate an acknowledged record deleted remotely.
   const removedMemoState = { ...(await data('memos')), notes: (await data('memos')).notes.filter(note => note.id !== newId) };
   await page.evaluate(({ owner, removedMemoState, receiptDraft }) => {
@@ -99,6 +115,22 @@ module.exports = async function checkDocumentAutosave({ page, origin, width, out
   await page.locator('.floating-create-button').click(); await expect(memoTitle()).toHaveValue('新建自动便签');
   await expect(page.locator('.entry-error')).toContainText('原内容已删除'); await closeEntry();
   expect((await data('memos')).notes.some(note => note.id === newId)).toBe(false);
+  await button('多选便签').click();await button('选择便签：失败保留原便签').click();await button('选择便签：便签2').click();
+  await expect(page.locator('.document-editor-sheet')).toHaveCount(0);await expect(page.locator('.memo-note.is-selected')).toHaveCount(2);
+  await button('批量置顶便签').click();await expect.poll(async()=>(await data('memos')).notes.filter(note=>note.pinned).length).toBe(2);
+  await button('选择便签：失败保留原便签').click();await button('选择便签：便签2').click();await button('批量删除便签').click();
+  const deletion=page.getByRole('dialog',{name:'删除便签确认',exact:true});
+  await page.evaluate(()=>{window.__miniFixture.failToolWrites=['memos'];});await deletion.getByRole('button',{name:'删除',exact:true}).click();
+  await expect(deletion).toContainText('尚未保存');
+  await page.evaluate(()=>{window.__miniFixture.failToolWrites=[];});await deletion.getByRole('button',{name:'重试删除',exact:true}).click();
+  await expect(deletion).toHaveCount(0);expect((await data('memos')).notes).toHaveLength(4);await button('退出便签多选').click();
+  await page.evaluate(()=>{location.hash='#/pages/mottos/index';});await button('编辑第 1 句格言').click();
+  const mottoText=page.getByRole('textbox',{name:'格言内容',exact:true});await expect(mottoText).toBeEnabled();await mottoText.fill('自动保存格言');
+  await expect.poll(async()=>(await data('mottos')).mottos[0]).toBe('自动保存格言');
+  await expect(page.locator('.document-editor-sheet').getByRole('button',{name:/^(保存|删除格言|关闭格言编辑)$/})).toHaveCount(0);
+  await button('格言更多操作').click();await expect(page.locator('.is-action-menu .action-menu-option')).toHaveCount(2);await page.keyboard.press('Escape');
+  await closeMemo();await button('编辑第 1 句格言').click();await mottoText.fill('格言最后输入');await closeMemo();
+  expect((await data('mottos')).mottos).toEqual(['格言最后输入']);
   await page.screenshot({ path: path.join(out, `document-autosave-${width}.png`) });
   console.log(`PASS document autosave ${width}: neutral memo surfaces/no color controls, same-ID create/edit, last-input close, local retry and progress updates.`);
 };

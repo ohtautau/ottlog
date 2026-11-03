@@ -93,9 +93,9 @@ export function validateEntry(draft: EntryDraft) {
     if ((draft.task.nextTasks?.filter(step => step.title.trim()).length || 0) > 50 || draft.task.nextTasks?.some(step => step.title.trim() && step.title.length > 100)) throw new Error('最多 50 个下一步任务，每个不超过 100 字');
     if (draft.task.reminderAt && Date.parse(draft.task.reminderAt) <= Date.now()) throw new Error('请选择未来的通知时间');
   } else {
-    if (!draft.memo.title.trim() && !draft.memo.body.trim() && !draft.memo.images?.length) throw new Error('请先输入备忘录内容');
-    if (draft.memo.title.length > 80) throw new Error('备忘录标题最多 80 字');
-    if (draft.memo.body.length > 6000) throw new Error('备忘录内容最多 6000 字');
+    if (!draft.memo.title.trim() && !draft.memo.body.trim() && !draft.memo.images?.length) throw new Error('请先输入便签内容');
+    if (draft.memo.title.length > 80) throw new Error('便签标题最多 80 字');
+    if (draft.memo.body.length > 6000) throw new Error('便签内容最多 6000 字');
   }
   return tags;
 }

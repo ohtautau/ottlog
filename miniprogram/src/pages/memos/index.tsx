@@ -1,6 +1,9 @@
+import ActionMenu from '../../components/action-menu';
 import DocumentEditorSheet from '../../components/document-editor-sheet';
 import CardGroupContent from '../../components/card-group-content';
 import { MemoCard } from '../../components/data-card-views';
+import EditorPreviewButton from '../../components/editor-preview-button';
+import CheckSymbol from '../../components/check-symbol';
 import EmptyState from '../../components/empty-state';
 import { trimTextEnd } from '../../lib/text-whitespace';
 import FilterPopover, { FilterFields, FilterField, FilterOptionGrid, FilterSearch } from '../../components/filter-popover';
@@ -14,10 +17,8 @@ import PageScroll from '../../components/page-scroll';
 import { hasVolatilePersonalTool, usePersonalToolState } from '../../lib/use-personal-tool-state';
 import { initialMemoState, isMemoState, memoPriority, type Memo, type MemoState } from '../../lib/tool-records';
 import AppDialog from '../../components/app-dialog';
-import { getLibraryIcon } from '../../lib/icon-library';
 import MemoEditorFields from '../../components/memo-editor-fields';
-import MemoReader from '../../components/memo-reader';
-import { DeleteSymbol, PinSymbol, RestoreDefaultsSymbol } from '../../components/manage-symbol';
+import { DeleteSymbol, PinSymbol, RestoreDefaultsSymbol, SelectionSymbol } from '../../components/manage-symbol';
 import EntryComposer from '../../components/entry-composer';
 import FloatingCreateButton from '../../components/floating-create-button';
 import PageToolbar, { CategoryButton, CategoryRow, ToolbarResetButton } from '../../components/page-toolbar';
@@ -30,7 +31,6 @@ import { isMemoImage, memoStateFits, withMemo } from '../../lib/memo-images';
 import { resumeEditorInput } from '../../lib/resume-editor-input';
 import { showAppMessage } from '../../lib/app-dialog';
 import { ChoicePopover } from '../../components/form-options';
-import { MoreSymbol } from '../../components/manage-symbol';
 import { TaskTagSymbol, TaskAttachmentSymbol } from '../../components/task-detail-editor';
 import './index.css';
 
@@ -44,7 +44,6 @@ function noteDate(value: string) {
   return `${date.getFullYear() === today.getFullYear() ? '' : `${date.getFullYear()}/`}${String(date.getMonth() + 1).padStart(2, '0')}/${String(date.getDate()).padStart(2, '0')}`;
 }
 const notify = (error: unknown) => { void showAppMessage({ title: error instanceof Error ? error.message : '操作失败，请重试', icon: 'none' }); };
-type ReaderChange = { owner: string; id: string; patch: Pick<Memo, 'iconId' | 'priority'>; updatedAt: string };
 export default function Memos() {
   const route = useRouter();
   const { value, setValue, ready, status, retry, owner } = usePersonalToolState('memos', initialMemoState);
@@ -55,12 +54,11 @@ export default function Memos() {
   const [showFilters, setShowFilters] = useState(false);
   const [showSort, setShowSort] = useState(false);
   const [managing, setManaging] = useState(false);
-  const [viewed, setViewed] = useState<{ owner: string; id: string } | null>(null);
-  const [readerChange, setReaderChange] = useState<ReaderChange | null>(null);
-  const [readerError, setReaderError] = useState('');
-  const readerChangeRef = useRef<ReaderChange | null>(null);
-  const readerSaving = useRef<ReaderChange | null>(null);
-  const [deletion, setDeletion] = useState<{ owner: string; note: Memo; pending?: boolean } | null>(null);
+  const [selected,setSelected] = useState<string[]>([]);
+  const [memoPreview,setMemoPreview] = useState(false);
+  const [batchError,setBatchError] = useState('');
+  const batchPin = useRef<{owner:string;ids:string[];pinned:boolean;updatedAt:string}|null>(null);
+  const [deletion, setDeletion] = useState<{ owner: string; notes: Memo[]; pending?: boolean } | null>(null);
   const [deleteError, setDeleteError] = useState('');
   const deleting = useRef<object | null>(null);
   const deletionRef = useRef(deletion); deletionRef.current = deletion;
@@ -82,7 +80,7 @@ export default function Memos() {
   const existingTags = tagCatalog.owner === owner || !tagCatalog.owner ? tagCatalog.tags : DEFAULT_TODO_TAGS;
   useEffect(() => { mounted.current = true; return () => { mounted.current = false; }; }, []);
   const lastOwner = useRef('');
-  useEffect(() => { setManaging(false); setViewed(null); setReaderChange(null); setReaderError(''); readerChangeRef.current = null; readerSaving.current = null; setDeletion(null); setDeleteError(''); deleting.current = null; }, [owner]);
+  useEffect(() => { setManaging(false);setSelected([]);setBatchError('');batchPin.current=null;setMemoPreview(false);setDeletion(null);setDeleteError('');deleting.current=null; }, [owner]);
   useEffect(() => {
     if (owner && lastOwner.current && owner !== lastOwner.current) { dismissedEditors.current.clear(); setDraft(null); setCreating(false); setBusy(false); setImageBusy(false); setSearch(''); setTagFilters([]); setSort(0); setShowFilters(false); setShowSort(false); }
     if (owner) lastOwner.current = owner;
@@ -92,7 +90,6 @@ export default function Memos() {
     entryApplied.current = true; create();
   }, [writable, route.params.create]);
   const images = draft?.images?.filter(isMemoImage) ?? [];
-  const readNote = writable && viewed?.owner === owner ? state.notes.find(note => note.id === viewed.id) : undefined;
   const currentDeletion = writable && deletion?.owner === owner ? deletion : null;
   const savedDraft = draft ? state.notes.find(note => note.id === draft.id) : undefined;
   function memoSignature(note: Memo, text = note.tags.join('，')) { const { updatedAt: _, ...fields } = note; return JSON.stringify({ ...fields, title: note.title.trim(), body: trimTextEnd(note.body), tags: parseTodoTags(text) }); }
@@ -115,7 +112,7 @@ export default function Memos() {
   const filterCount = Number(!!search.trim()) + Number(tagFilters.length > 0);
   function clearFilters() { setSearch(''); setTagFilters([]); setSort(0); }
   function restoreDefaults() {
-    if (!writable || busy || imageBusy || currentDeletion || creating || draft || readerChangeRef.current) return;
+    if (!writable || busy || imageBusy || currentDeletion || creating || draft) return;
     clearFilters(); setShowSort(false); setShowFilters(false); setManaging(false);
   }
   async function change(updater: (old: MemoState) => MemoState) {
@@ -129,12 +126,11 @@ export default function Memos() {
   }
   function create() {
     if (!writable || deleting.current) return;
-    setShowFilters(false); setShowSort(false); setViewed(null); setCreating(true);
+    setShowFilters(false); setShowSort(false); setCreating(true);
   }
   function edit(note: Memo) {
     if (!writable || deleting.current || busy || imageBusy) return;
-    setViewed(null);
-    persistedMemo.current = { ...note, tags: [...note.tags] }; setAutosaveError(''); setEditorTagsOpen(false); setMoreOpen(false);
+    setMemoPreview(false);persistedMemo.current = { ...note, tags: [...note.tags] }; setAutosaveError(''); setEditorTagsOpen(false); setMoreOpen(false);
     draftOwner.current = owner;
     const retained = dismissedEditors.current.get(note.id);
     const resume = retained?.owner === owner && retained.draft.id === note.id ? retained : null;
@@ -175,61 +171,46 @@ export default function Memos() {
     try { await change(previous => ({ ...previous, notes: previous.notes.map(item => item.id === note.id ? { ...item, pinned: !item.pinned, updatedAt: new Date().toISOString() } : item) })); }
     catch (error) { notify(error); }
   }
-  function closeReader() {
-    if (!readerChangeRef.current && !busy) setViewed(null);
+  function toggleSelected(id:string) {
+    if (!writable || busy || imageBusy || currentDeletion || batchPin.current) return;
+    setSelected(previous => previous.includes(id) ? previous.filter(value => value !== id) : [...previous,id]);
   }
-  function changeReader(patch: ReaderChange['patch']) {
-    if (!readNote || !writable || busy || imageBusy || currentDeletion || creating || draft || readerChangeRef.current || currentOwner.current !== owner) return;
-    if (Object.entries(patch).every(([key, next]) => readNote[key as keyof Memo] === next)) return;
-    const target: ReaderChange = { owner, id: readNote.id, patch, updatedAt: new Date().toISOString() };
-    readerChangeRef.current = target; setReaderChange(target);
-    void saveReaderChange(target);
-  }
-  async function saveReaderChange(target: ReaderChange) {
-    if (!writable || readerSaving.current || readerChangeRef.current !== target || currentOwner.current !== target.owner) return;
-    readerSaving.current = target; setBusy(true); setReaderError('');
+  async function pinSelected() {
+    if (!writable || busy || imageBusy || currentDeletion || !selected.length && !batchPin.current) return;
+    const rows=state.notes.filter(note => selected.includes(note.id));
+    const target=batchPin.current || { owner,ids:rows.map(note=>note.id),pinned:!rows.every(note=>note.pinned),updatedAt:new Date().toISOString() };
+    batchPin.current=target;setBusy(true);setBatchError('');
     try {
-      await change(previous => {
-        const existing = previous.notes.find(note => note.id === target.id);
-        if (!existing) throw new Error('这张便签已删除，请重新打开');
-        const changed = { ...existing, ...target.patch, updatedAt: target.updatedAt };
-        const next = { ...previous, notes: previous.notes.map(note => note.id === target.id ? changed : note) };
-        if (!memoStateFits(next)) throw new Error('便签空间不足，请先整理旧便签');
-        return next;
-      });
-      if (!mounted.current || currentOwner.current !== target.owner || readerChangeRef.current !== target) return;
-      if (hasVolatilePersonalTool('memos', target.owner)) throw new Error('本机存储不可用，修改已保留，请重试保存');
-      readerChangeRef.current = null; setReaderChange(null);
-    } catch (error) {
-      if (mounted.current && currentOwner.current === target.owner && readerChangeRef.current === target) setReaderError(error instanceof Error ? error.message : '保存失败，请重试');
-    } finally {
-      if (readerSaving.current === target) { readerSaving.current = null; if (mounted.current && currentOwner.current === target.owner) setBusy(false); }
-    }
+      await change(previous => ({...previous,notes:previous.notes.map(note=>target.ids.includes(note.id)?{...note,pinned:target.pinned,updatedAt:target.updatedAt}:note)}));
+      if(currentOwner.current!==target.owner)return;
+      if(hasVolatilePersonalTool('memos',target.owner))throw new Error('置顶尚未保存，请重试');
+      batchPin.current=null;setSelected([]);
+    }catch(error){if(currentOwner.current===target.owner)setBatchError(error instanceof Error?error.message:'置顶失败，请重试');}
+    finally{if(mounted.current&&currentOwner.current===target.owner)setBusy(false);}
   }
   function requestDelete(note: Memo) {
     if (!writable || busy || imageBusy || deleting.current) return;
-    setDeletion({ owner, note }); setDeleteError('');
+    setDeletion({ owner, notes:[note] }); setDeleteError('');
   }
   function closeDelete() { if (!deleting.current && !deletionRef.current?.pending) { setDeletion(null); setDeleteError(''); } }
   async function remove() {
     if (!currentDeletion || deleting.current || busy || imageBusy) return;
-    const target = currentDeletion, id = target.note.id;
+    const target = currentDeletion, ids = target.notes.map(note => note.id);
     deleting.current = target; setBusy(true); setDeleteError('');
     try {
       await change(previous => {
-        if (!target.pending && !previous.notes.some(note => note.id === id)) throw new Error('这张便签已删除');
-        return { ...previous, notes: previous.notes.filter(note => note.id !== id) };
+        if (!target.pending && !previous.notes.some(note => ids.includes(note.id))) throw new Error('所选便签已删除');
+        return { ...previous, notes: previous.notes.filter(note => !ids.includes(note.id)) };
       });
       if (!mounted.current || currentOwner.current !== target.owner || deleting.current !== target) return;
       if (hasVolatilePersonalTool('memos', target.owner)) {
         setDeletion({ ...target, pending: true });
         throw new Error('本机存储不可用，删除尚未保存，请重试');
       }
-      dismissedEditors.current.delete(id); setDeletion(null);
-      if (currentDraft.current?.id === id) setDraft(null);
-      if (viewed?.id === id) setViewed(null);
+      ids.forEach(id => dismissedEditors.current.delete(id)); setDeletion(null);setSelected(previous=>previous.filter(id=>!ids.includes(id)));
+      if (currentDraft.current && ids.includes(currentDraft.current.id)) {currentDraft.current=null;setDraft(null);}
     } catch (error) {
-      if (mounted.current && currentOwner.current === target.owner && deletionRef.current?.note.id === id) setDeleteError(error instanceof Error ? error.message : '删除失败，请重试');
+      if (mounted.current && currentOwner.current === target.owner && deletionRef.current?.notes === target.notes) setDeleteError(error instanceof Error ? error.message : '删除失败，请重试');
     } finally {
       if (deleting.current === target) { deleting.current = null; if (mounted.current && currentOwner.current === target.owner) setBusy(false); }
     }
@@ -240,13 +221,13 @@ export default function Memos() {
     if (persistedMemo.current && writable && currentOwner.current === expectedOwner && !state.notes.some(note => note.id === id) && !hasVolatilePersonalTool('memos', expectedOwner)) {
       const retained = currentDraft.current;
       if (retained) dismissedEditors.current.set(id, { owner: expectedOwner, draft: retained, baseline: persistedMemo.current, tags: tagsRef.current });
-      currentDraft.current = null; setDraft(null); setViewed(null); setAutosaveError(''); return;
+      currentDraft.current = null; setDraft(null); setAutosaveError(''); return;
     }
     while (currentDraft.current?.id === id && currentOwner.current === expectedOwner) {
       if (!await save()) return;
       const current = currentDraft.current;
       if (!current || !persistedMemo.current || memoSignature(current, tagsRef.current) !== memoSignature(persistedMemo.current)) continue;
-      setDraft(null); setViewed({ owner: expectedOwner, id }); setAutosaveError(''); return;
+      currentDraft.current=null;setDraft(null); setAutosaveError(''); return;
     }
   }
 
@@ -256,9 +237,10 @@ export default function Memos() {
   </FilterFields>;
   return <>
     <PageScroll><View className='tool-page memo-page core-page'><CoreScreen className='memo-core'>
-      <PageToolbar className='memo-toolbar' reset={<ToolbarResetButton ariaLabel='恢复便签默认方式' disabled={!writable || busy || imageBusy || !!currentDeletion || creating || !!draft || !!readerChange} onReset={restoreDefaults} />} sort={<SortPopover ariaLabel='排序便签' open={showSort} onOpenChange={open => { if (open) setShowFilters(false); setShowSort(open); }} disabled={!writable} selected={showSort || sort !== 0} confirmLabel='完成' onConfirm={() => setShowSort(false)}><SortOptions className='memo-filter-sort' options={sortLabels.map((label, index) => ({ value: index, label, ariaLabel: `便签排序：${label}` }))} value={sort} onChange={setSort} /></SortPopover>} filter={<FilterPopover ariaLabel='筛选便签' title='筛选便签' open={showFilters} onOpenChange={open => { if (open) setShowSort(false); setShowFilters(open); }} disabled={!writable} triggerClassName='memo-filter-toggle' triggerSelected={filterCount > 0} panelClassName='memo-filter-popover memo-filter-sheet' headingClassName='memo-filter-heading' actionsClassName='memo-filter-footer' resetClassName='memo-filter-reset' closeLabel='关闭便签筛选' onClose={() => setShowFilters(false)} resetLabel='重置便签筛选' applyLabel={`查看 ${filtered.length} 张便签`} onReset={clearFilters}>
+      <PageToolbar className='memo-toolbar' reset={!managing && <ToolbarResetButton ariaLabel='恢复便签默认方式' disabled={!writable || busy || imageBusy || !!currentDeletion || creating || !!draft} onReset={restoreDefaults} />} sort={!managing && <SortPopover ariaLabel='排序便签' open={showSort} onOpenChange={open => { if (open) setShowFilters(false); setShowSort(open); }} disabled={!writable} selected={showSort || sort !== 0} confirmLabel='完成' onConfirm={() => setShowSort(false)}><SortOptions className='memo-filter-sort' options={sortLabels.map((label, index) => ({ value: index, label, ariaLabel: `便签排序：${label}` }))} value={sort} onChange={setSort} /></SortPopover>} filter={!managing && <FilterPopover ariaLabel='筛选便签' title='筛选便签' open={showFilters} onOpenChange={open => { if (open) setShowSort(false); setShowFilters(open); }} disabled={!writable} triggerClassName='memo-filter-toggle' triggerSelected={filterCount > 0} panelClassName='memo-filter-popover memo-filter-sheet' headingClassName='memo-filter-heading' actionsClassName='memo-filter-footer' resetClassName='memo-filter-reset' closeLabel='关闭便签筛选' onClose={() => setShowFilters(false)} resetLabel='重置便签筛选' applyLabel={`查看 ${filtered.length} 张便签`} onReset={clearFilters}>
           {filterFields}
-        </FilterPopover>} manage={<ChoiceButton id='memo-settings' iconOnly size='compact' ariaLabel='管理便签删除' selected={managing} disabled={!writable || busy || imageBusy || !!currentDeletion || creating} onClick={() => { setShowSort(false); setShowFilters(false); setManaging(previous => !previous); }}><DeleteSymbol /></ChoiceButton>} />
+        </FilterPopover>} manage={<View className='memo-selection-actions'>{managing && <><Text className='memo-selection-count'>已选 {selected.length}</Text><ActionButton appearance='icon' ariaLabel='批量置顶便签' disabled={!selected.length || busy || !!currentDeletion} onClick={() => { void pinSelected(); }}><PinSymbol /></ActionButton><ActionButton appearance='icon' intent='danger' ariaLabel='批量删除便签' disabled={!selected.length || busy || !!currentDeletion || !!batchPin.current} onClick={() => {setDeletion({owner,notes:state.notes.filter(note=>selected.includes(note.id))});setDeleteError('');}}><DeleteSymbol /></ActionButton></>}<ChoiceButton id='memo-settings' iconOnly size='compact' ariaLabel={managing ? '退出便签多选' : '多选便签'} selected={managing} disabled={!writable || busy || imageBusy || !!currentDeletion || creating || !!batchPin.current} onClick={() => { setShowSort(false);setShowFilters(false);setSelected([]);setManaging(previous=>!previous); }}><SelectionSymbol /></ChoiceButton></View>} />
+      {batchError && <View className='memo-selection-error' role='alert'><Text>{batchError}</Text><ActionButton appearance='quiet' disabled={busy} onClick={()=>{void pinSelected();}}>重试</ActionButton></View>}
       <CategoryRow ariaLabel='便签分类' className='memo-category-row' fixedLeading={<CategoryButton id='memo-category-all' ariaLabel='便签分类：全部' selected={tagFilters.length === 0} onClick={() => setTagFilters([])}>全部</CategoryButton>} scrollIntoView={categoryTarget} selectionOffset={1.5} contentKey={JSON.stringify([owner, filterTags])} scrollWithAnimation>{filterTags.map((tag, index) => <CategoryButton id={`memo-category-${index}`} key={tag} ariaLabel={`便签分类：${tag}`} selected={tagFilters.includes(tag)} onClick={() => setTagFilters(tagFilters.length === 1 && tagFilters.includes(tag) ? [] : [tag])}>{tagLabel(tag)}</CategoryButton>)}</CategoryRow>
       <View className='memo-list-heading card-group-heading'><View><SectionTitle inRow className='memo-list-label'>{filterCount ? '筛选结果' : '全部便签'}</SectionTitle><Text className='memo-list-count'>{filtered.length}</Text></View><Text>{sortLabels[sort]}{filtered.some(note => note.pinned) ? ' · 置顶优先' : ''}</Text></View>
       {!!filterCount && <View className='memo-active-filters'><Text>{[search.trim() && `“${search.trim()}”`, ...tagFilters.map(tagLabel)].filter(Boolean).join(' · ')}</Text><ActionButton appearance='icon' size='compact' ariaLabel='重置便签筛选' onClick={clearFilters}><RestoreDefaultsSymbol /></ActionButton></View>}
@@ -266,33 +248,26 @@ export default function Memos() {
         <CardGroupContent className='floating-create-content'>{!ready ? <View className='memo-list-empty'><View className='memo-empty-paper' aria-hidden /><Text className='memo-empty-title'>正在读取便签…</Text></View> : !valid ? <View className='memo-list-empty'><Text className='memo-empty-title'>暂时无法显示便签</Text><Text>当前数据格式暂不兼容，原始数据已保留。</Text><ActionButton className='button-label tool-secondary' onClick={retry}>重新读取</ActionButton></View> : filtered.length ? <View className='memo-list'>{filtered.map(note => {
           const photos = note.images?.filter(isMemoImage) ?? [];
           const title = noteTitle(note);
-          return <MemoCard key={note.id} title={title} body={note.body ? excerpt(note.body) : photos.length ? `${photos.length} 张图片` : '暂无正文'} iconId={note.iconId} priority={memoPriority(note)} images={photos}
-              onOpen={() => { if (writable && !busy && !imageBusy && !deletionRef.current) setViewed({ owner, id: note.id }); }}
+          return <MemoCard key={note.id} title={title} body={note.body ? excerpt(note.body) : photos.length ? `${photos.length} 张图片` : '暂无正文'} selected={selected.includes(note.id)} selecting={managing} priority={memoPriority(note)} images={photos}
+              onOpen={() => { if (writable && !busy && !imageBusy && !deletionRef.current) { if(managing)toggleSelected(note.id);else edit(note); } }}
               metadata={<>{note.pinned && <Text className='memo-note-pinned'>置顶</Text>}{note.tags.slice(0, 2).map(tag => <Text className='memo-note-tag' key={tag}>{tagLabel(tag)}</Text>)}{note.tags.length > 2 && <Text>＋{note.tags.length - 2}</Text>}{!!photos.length && !!note.body && <Text className='memo-note-photo-count'>{photos.length} 图</Text>}<Text className='memo-note-date'>{noteDate(sort === 1 ? note.createdAt : note.updatedAt)}</Text></>} actions={<>
-              <ChoiceButton iconOnly size='compact' className='button-label memo-note-pin' ariaLabel={`${note.pinned ? '取消置顶' : '置顶'}便签：${title}`} aria-pressed={note.pinned} disabled={!writable || busy} onClick={() => { void pin(note); }}><PinSymbol /></ChoiceButton>
-              {managing && <ActionButton appearance='icon' intent='danger' size='compact' ariaLabel={`删除便签：${title}`} disabled={busy || imageBusy || !writable} onClick={() => requestDelete(note)}><DeleteSymbol /></ActionButton>}
+              {!managing && <ChoiceButton iconOnly size='compact' className='button-label memo-note-pin' ariaLabel={`${note.pinned ? '取消置顶' : '置顶'}便签：${title}`} aria-pressed={note.pinned} disabled={!writable || busy} onClick={() => { void pin(note); }}><PinSymbol /></ChoiceButton>}
+              {managing && <View className='memo-selection-mark' aria-hidden>{selected.includes(note.id) && <CheckSymbol />}</View>}
             </>} />;
         })}</View> : !state.notes.length && !filterCount ? <EmptyState kind='memos' /> : <View className='memo-list-empty'><View className='memo-empty-paper' aria-hidden /><Text className='memo-empty-title'>没有符合条件的便签</Text>{!!filterCount && <ActionButton className='button-label tool-secondary' onClick={clearFilters}>清除筛选</ActionButton>}</View>}</CardGroupContent>
       </ScrollView>
       {!!status && <View className='tool-status'><Text>{status}</Text><ActionButton className='button-label' onClick={retry}>重试同步</ActionButton></View>}
     </CoreScreen></View></PageScroll>
     <FloatingCreateButton className='memo-create' label='创建便签' disabled={!writable || busy} onClick={create} />
-    {readNote && <MemoReader key={`${owner}:${readNote.id}`} note={readNote} title={noteTitle(readNote)} onClose={closeReader}
-      changing={busy} changeError={readerError} closeDisabled={busy || !!readerChange}
-      changeDisabled={busy || imageBusy || !!currentDeletion || creating || !!draft || !!readerChange}
-      onIconChange={id => { if (id === null || getLibraryIcon(id)) changeReader({ iconId: id ?? undefined }); }} onPriorityChange={priority => changeReader({ priority })}
-      onRetry={() => { const target = readerChangeRef.current; if (target) void saveReaderChange(target); }}
-      editDisabled={busy || imageBusy || !!currentDeletion || creating || !!draft || !!readerChange} onEdit={() => { if (!readerChangeRef.current && viewed?.owner === currentOwner.current) edit(readNote); }}
-      pinDisabled={busy || imageBusy || !!currentDeletion || creating || !!draft || !!readerChange} onPin={() => { if (!readerChangeRef.current && viewed?.owner === currentOwner.current) void pin(readNote); }} />}
     {draft && <DocumentEditorSheet compact title='编辑便签' onClose={() => { void closeEditor(); }} busy={imageBusy}
-      heading={<ChoicePopover ariaLabel='更多便签操作' open={moreOpen} onOpenChange={setMoreOpen} trigger={<MoreSymbol />} triggerIconOnly showIndicator={false} panelWidth={180}>
+      heading={<ActionMenu ariaLabel='更多便签操作' open={moreOpen} onOpenChange={setMoreOpen} panelWidth={180}>
         <ActionButton appearance='quiet' onClick={() => { setMoreOpen(false); void closeEditor(); }}>收起</ActionButton><ActionButton appearance='quiet' intent='danger' onClick={() => { setMoreOpen(false); requestDelete(draft); }}>删除便签</ActionButton>
-      </ChoicePopover>}
-      footer={<SheetActions className='document-autosave-footer'><View className='document-autosave-tools'><ActionButton appearance='icon' ariaLabel='便签标签' onClick={() => setEditorTagsOpen(!editorTagsOpen)}><TaskTagSymbol /></ActionButton><ActionButton appearance='icon' ariaLabel='便签附件' disabled={imageBusy} onClick={() => setImageSignal(value => value + 1)}><TaskAttachmentSymbol /></ActionButton><ChoiceButton iconOnly ariaLabel={draft.pinned ? '取消置顶便签' : '置顶便签'} selected={draft.pinned} onClick={() => { setAutosaveError(''); const next = { ...draft, pinned: !draft.pinned }; currentDraft.current = next; setDraft(next); }}><PinSymbol /></ChoiceButton></View>{autosaveError && <View className='document-autosave-status' role='alert'><Text>{autosaveError}</Text><ActionButton appearance='quiet' disabled={busy} onClick={() => { setAutosaveError(''); void save(); }}>重试</ActionButton></View>}</SheetActions>}>
-      <MemoEditorFields minimal showTags={editorTagsOpen} insertionSignal={imageSignal} draft={draft} onChange={value => { setAutosaveError(''); currentDraft.current = value; setDraft(value); }} tagsText={tags} onTagsChange={value => { setAutosaveError(''); tagsRef.current = value; setTags(value); }} tagOptions={existingTags} disabled={!writable} owner={owner} onBusyChange={setImageBusy} />
+      </ActionMenu>}
+      footer={<SheetActions className='document-autosave-footer'><View className='document-autosave-tools'><ActionButton appearance='icon' ariaLabel='便签标签' onClick={() => setEditorTagsOpen(!editorTagsOpen)}><TaskTagSymbol /></ActionButton><ActionButton appearance='icon' ariaLabel='便签附件' disabled={imageBusy} onClick={() => setImageSignal(value => value + 1)}><TaskAttachmentSymbol /></ActionButton><ChoiceButton iconOnly ariaLabel={draft.pinned ? '取消置顶便签' : '置顶便签'} selected={draft.pinned} onClick={() => { setAutosaveError(''); const next = { ...draft, pinned: !draft.pinned }; currentDraft.current = next; setDraft(next); }}><PinSymbol /></ChoiceButton><EditorPreviewButton selected={memoPreview} onChange={setMemoPreview} disabled={imageBusy} label='便签 Markdown 预览' /></View>{autosaveError && <View className='document-autosave-status' role='alert'><Text>{autosaveError}</Text><ActionButton appearance='quiet' disabled={busy} onClick={() => { setAutosaveError(''); void save(); }}>重试</ActionButton></View>}</SheetActions>}>
+      <MemoEditorFields preview={memoPreview} onPreviewChange={setMemoPreview} minimal showTags={editorTagsOpen} insertionSignal={imageSignal} draft={draft} onChange={value => { setAutosaveError(''); currentDraft.current = value; setDraft(value); }} tagsText={tags} onTagsChange={value => { setAutosaveError(''); tagsRef.current = value; setTags(value); }} tagOptions={existingTags} disabled={!writable} owner={owner} onBusyChange={setImageBusy} />
     </DocumentEditorSheet>}
     <AppDialog open={!!currentDeletion} title='删除便签' ariaLabel='删除便签确认' closeLabel='关闭便签删除确认' onClose={closeDelete} busy={busy || !!currentDeletion?.pending} error={deleteError} actions={<ActionButton appearance='danger' size='large' width='fill' disabled={busy} loading={busy} onClick={() => { void remove(); }}>{currentDeletion?.pending ? '重试删除' : '删除'}</ActionButton>}>
-      <Text>删除「{currentDeletion && noteTitle(currentDeletion.note)}」？</Text>
+      <Text>删除「{currentDeletion?.notes.length === 1 ? noteTitle(currentDeletion.notes[0]) : `所选 ${currentDeletion?.notes.length || 0} 张便签`}」？</Text>
     </AppDialog>
     {creating && <EntryComposer initialMode='memo' onClose={() => setCreating(false)} />}
   </>;

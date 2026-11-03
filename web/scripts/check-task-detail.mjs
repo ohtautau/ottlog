@@ -31,26 +31,26 @@ try {
     async function closeEditor() { await page.keyboard.press('Escape'); await expect(panel()).toHaveCount(0); }
     async function openTask(title) { await button(`编辑任务：${title}`).first().click(); await expect(panel()).toBeVisible(); }
     async function remap(slot, source) {
-      await page.locator(`#todo-zone-${slot} .todo-panel-source-trigger`).click();
-      await button(`显示分类：${source}`).click(); await expect(page.locator('.todo-panel-source-panel')).toHaveCount(0);
+      await button('待办更多操作').click();await button('编辑').click();const names={do:'高优先级',plan:'中优先级',delegate:'低优先级',later:'无优先级'};await button(`更换${names[slot]}区域显示`).click();
+      await button(`显示分类：${source}`).click(); await expect(page.locator('.todo-panel-source-panel')).toHaveCount(0);await button('关闭象限显示编辑').click();
     }
     await page.goto(origin + '/todos'); await expect(button('编辑任务：原始任务')).toBeVisible();
     await button('完成：原始任务').click(); await expect(page.locator('.operation-toast')).toContainText('已完成：原始任务');
     await button('撤销最近一次操作').click(); await expect(button('完成：原始任务')).toBeVisible();
     const fab = await page.locator('.floating-create-button').boundingBox();
-    expect(Math.abs(viewport.width - fab.x - fab.width - 24)).toBeLessThan(1);
-    expect(Math.abs(viewport.height - fab.y - fab.height - 24)).toBeLessThan(1);
+    expect(Math.abs(viewport.width - fab.x - fab.width - viewport.width / 8)).toBeLessThan(1);
+    expect(Math.abs(viewport.height - fab.y - fab.height - viewport.width / 8)).toBeLessThan(1);
     await expect(page.locator('.todo-check').first()).toHaveCSS('border-top-color', 'rgb(231, 160, 151)');
     await openTask('原始任务');
     await expect(panel().locator('.task-detail-check').first()).toHaveCSS('border-top-color', 'rgb(231, 160, 151)');
     await expect(panel().locator('.task-detail-tag-symbol > div')).toHaveCount(4);
     await expect(panel().getByRole('button', { name: /^(保存|创建任务|关闭编辑)$/ })).toHaveCount(0);
     await expect(panel().locator('.task-detail-heading .sheet-close')).toHaveCount(0);
-    await expect(panel().locator('.memo-body-preview')).toHaveText('备注');
-    await expect(panel().locator('.task-detail-tools > button')).toHaveCount(3);
+    await expect(panel().getByRole('textbox',{name:'任务备注',exact:true})).toHaveAttribute('placeholder','备注');
+    await expect(panel().locator('.task-detail-tools > button')).toHaveCount(4);
     await expect(button('任务附件')).toBeEnabled();
     await button('更多任务操作').click(); await expect(button('后续任务')).toBeVisible(); await expect(button('删除任务')).toBeVisible();
-    const menuSpacing = await page.locator('.form-popover-panel.is-action-menu').evaluate(node => { const button = [...node.querySelectorAll('button')].find(b => b.textContent === '为任务专注'), range = document.createRange(); range.selectNodeContents(button); const t = range.getBoundingClientRect(), p = node.getBoundingClientRect(); return { left:t.left-p.left, right:p.right-t.right, width:p.width }; });
+    const menuSpacing = await page.locator('.form-popover-panel.is-action-menu').evaluate(node => { const button = [...node.querySelectorAll('button')].find(b => b.textContent === '为任务专注'), range = document.createRange(); range.setStartBefore(button.querySelector('.action-menu-option').firstElementChild);range.setEndAfter(button.querySelector('.action-menu-option').lastElementChild); const t = range.getBoundingClientRect(), p = node.getBoundingClientRect(); return { left:t.left-p.left, right:p.right-t.right, width:p.width }; });
     expect(Math.abs(menuSpacing.left - menuSpacing.right)).toBeLessThan(2); expect(menuSpacing.width).toBeLessThan(200);
     await page.keyboard.press('Escape'); await expect(panel()).toBeVisible();
     const dividers = await panel().locator('.task-detail-heading,.task-detail-title,.memo-body-preview,.task-detail-footer').evaluateAll(nodes => nodes.map(node => getComputedStyle(node).borderBottomWidth));
@@ -62,7 +62,7 @@ try {
     const field = panel().getByRole('textbox', { name: '子任务 1', exact: true }); await field.focus();
     const style = await field.evaluate(node => { const s = getComputedStyle(node); return { outline: s.outlineStyle, border: s.borderTopWidth, background: s.backgroundColor, shadow: s.boxShadow }; });
     expect(style).toMatchObject({ outline: 'none', border: '0px', background: 'rgba(0, 0, 0, 0)', shadow: 'none' });
-    await panel().locator('.memo-body-preview').click(); await panel().getByRole('textbox', { name: '任务备注', exact: true }).fill('备注也自动保存');
+    await panel().getByRole('textbox', { name: '任务备注', exact: true }).fill('备注也自动保存');
     await expect.poll(() => task()?.description).toBe('备注也自动保存');
     await panel().getByRole('button', { name: '任务标签', exact: true }).click();
     await page.getByRole('textbox', { name: '任务标签', exact: true }).fill('工作，新标签');
@@ -79,8 +79,8 @@ try {
     await button('设置日期、提醒和重复').click(); await button('选择明天').click(); await button('确认日期设置').click();
     const tomorrow = await page.evaluate(() => { const date = new Date(); date.setDate(date.getDate() + 1); return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`; });
     await expect.poll(() => task()?.dueDate).toBe(tomorrow);
-    await button('设置日期、提醒和重复').click(); await button('设置提醒').click();
-    await expect(page.locator('.todo-schedule-reminder-popover')).toBeVisible(); await button('关闭提醒设置').click();
+    await button('设置日期、提醒和重复').click(); await button('编辑提醒日期').click();
+    await expect(page.locator('.todo-schedule-controls .time-wheel')).toBeVisible();await expect(page.locator('.todo-schedule-reminder-popover')).toHaveCount(0);
     await button('确认日期设置').click(); expect(task()?.reminderAt).toBeUndefined();
     await button('任务分类').click(); await button('新建任务分类').click();
     await page.getByRole('textbox', { name: '分类名称', exact: true }).fill('娱乐');
@@ -130,7 +130,7 @@ try {
     const overflow = await page.evaluate(() => document.documentElement.scrollWidth - innerWidth); expect(overflow).toBeLessThanOrEqual(1); expect(errors).toEqual([]);
     await page.goto(origin + '/today'); await button('创建记录').click();
     await expect(page.locator('.entry-composer.task-detail-panel')).toBeVisible();
-    await expect(page.locator('.entry-composer .task-detail-tools > button')).toHaveCount(3);
+    await expect(page.locator('.entry-composer .task-detail-tools > button')).toHaveCount(4);
     const creationTitle = page.locator('.entry-composer').getByRole('textbox', { name:'任务名称', exact:true });
     await creationTitle.focus(); await expect(creationTitle).toHaveCSS('outline-style', 'none'); await expect(creationTitle).toHaveCSS('border-top-width', '0px');
     await creationTitle.fill('首页共用任务编辑器'); await button('添加子任务').click(); await page.getByRole('textbox', { name:'子任务 1', exact:true }).fill('首页子任务');

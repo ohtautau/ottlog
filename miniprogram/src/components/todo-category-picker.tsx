@@ -4,12 +4,13 @@ import { getLibraryIcon } from '../lib/icon-library';
 import { toolId, type TodoCategory } from '../lib/tool-records';
 import { TODO_INBOX, todoCategoryChoices, type TodoCategoryDraft } from '../lib/todo-categories';
 import { ChoicePopover, PopoverHeading } from './form-options';
-import ActionButton, { ChoiceButton } from './ui-button';
+import ActionButton from './ui-button';
 import { AddSymbol } from './create-button';
 import { DeleteSymbol, EditSymbol } from './manage-symbol';
 import LibraryIcon from './library-icon';
 import IconLibrarySheet from './icon-library-sheet';
-import SingleLineInput from './single-line-input';
+import SearchInput from './search-input';
+import CheckSymbol from './check-symbol';
 import SheetActions from './sheet-actions';
 import SheetBackdrop from './sheet-backdrop';
 import EditorHeading from './editor-heading';
@@ -67,9 +68,9 @@ export default function TodoCategoryPicker({ categories, value, onChange, onUpse
       panelWidth={400} placement='center' maxHeightRatio={.8} contentKey={`${query}:${categories.length}:${error}`} bodySpacing='none'
       heading={<PopoverHeading title='任务分类' actions={<ActionButton appearance='icon' size='compact' ariaLabel='关闭任务分类' disabled={locked || !!editor || !!deleting} onClick={() => setOpen(false)}>×</ActionButton>} />}
       footer={<SheetActions><ActionButton appearance='quiet' size='compact' width='fill' ariaLabel='新建任务分类' disabled={locked} onClick={() => begin()}><AddSymbol /><Text>新建分类</Text></ActionButton></SheetActions>}>
-      <View className='todo-category-search'><SingleLineInput ariaLabel='搜索任务分类' placeholder='搜索分类' align='left' value={query} maxlength={100} disabled={locked} onInput={event => setQuery(event.detail.value)} /></View>
+      <View className='todo-category-search'><SearchInput ariaLabel='搜索任务分类' placeholder='搜索分类' value={query} maxlength={100} disabled={locked} onInput={event => setQuery(event.detail.value)} /></View>
       <View className='todo-category-options'>{rows.map(category => <View className='todo-category-option-row' key={category.id}>
-        <ChoiceButton className='todo-category-option' selected={selected.id === category.id} ariaLabel={`选择分类：${category.name}`} disabled={locked} onClick={() => { if (!locked) { onChange(category.id); setOpen(false); } }}><LibraryIcon name={category.iconId} fallback='notes' className='todo-category-icon' /><Text>{category.name}</Text>{selected.id === category.id && <Text className='todo-category-selected' aria-hidden>✓</Text>}</ChoiceButton>
+        <ActionButton appearance='quiet' className={`todo-category-option${selected.id === category.id ? ' is-selected' : ''}`} aria-pressed={selected.id === category.id} ariaLabel={`选择分类：${category.name}`} disabled={locked} onClick={() => { if (!locked) { onChange(category.id); setOpen(false); } }}><LibraryIcon name={category.iconId} fallback='notes' className='todo-category-icon' /><Text>{category.name}</Text>{selected.id === category.id && <CheckSymbol className='todo-category-selected' />}</ActionButton>
         {!!category.id && <><ActionButton appearance='icon' size='compact' ariaLabel={`编辑分类：${category.name}`} disabled={locked} onClick={() => begin(category)}><EditSymbol /></ActionButton><ActionButton appearance='icon' size='compact' intent='danger' ariaLabel={`删除分类：${category.name}`} disabled={locked} onClick={() => { setError(''); setDeleting(category); }}><DeleteSymbol /></ActionButton></>}
       </View>)}</View>{!rows.length && <View className='todo-category-empty'>没有找到分类</View>}
     </ChoicePopover>

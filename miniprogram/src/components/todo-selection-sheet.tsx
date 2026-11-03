@@ -1,3 +1,4 @@
+import SearchSymbol from './search-symbol';
 import SectionTitle from './section-title';
 import { useMemo, useState } from 'react';
 import { Input, ScrollView, Text, View } from '@tarojs/components';
@@ -58,7 +59,7 @@ export default function TodoSelectionSheet({ items, sessions, selectedId, onSele
     <View className='focus-selection-sheet focus-todo-sheet'>
       <EditorHeading className='focus-selection-heading' title='选择待办' actions={<ActionButton appearance='icon' className='button-label' ariaLabel='关闭待办选择' onClick={onClose}>×</ActionButton>} />
       <View className='focus-selection-tools'>
-        <View className='focus-selection-search'><View className='focus-selection-search-mark' aria-hidden /><Input ariaLabel='搜索待办' placeholder='搜索待办名称' value={query} maxlength={60} cursorSpacing={96} adjustPosition confirmType='search' onInput={event => setQuery(event.detail.value)} />{!!query && <ActionButton appearance='icon' className='button-label focus-selection-clear' ariaLabel='清空待办搜索' onClick={() => setQuery('')}>×</ActionButton>}</View>
+        <View className='focus-selection-search'><SearchSymbol /><Input ariaLabel='搜索待办' placeholder='搜索待办名称' value={query} maxlength={60} cursorSpacing={96} adjustPosition confirmType='search' onInput={event => setQuery(event.detail.value)} />{!!query && <ActionButton appearance='icon' className='button-label focus-selection-clear' ariaLabel='清空待办搜索' onClick={() => setQuery('')}>×</ActionButton>}</View>
         <CategoryRow className='focus-selection-filter-scroll' contentClassName='focus-selection-filters is-horizontal' ariaLabel='待办优先度'>{todoQuadrants.map(row => <CategoryButton key={row.id} className='button-label focus-selection-filter' ariaLabel={`待办优先度：${row.title.replace('级', '度')}`} selected={category === row.id} onClick={() => setCategory(row.id)}><PriorityFlag color={row.color} outlined={row.id === 'later'} /></CategoryButton>)}</CategoryRow>
       </View>
       <ScrollView key={JSON.stringify([category, needle])} scrollY className='focus-selection-scroll focus-todo-scroll' enhanced bounces={false} showScrollbar={false}>

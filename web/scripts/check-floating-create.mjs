@@ -17,13 +17,13 @@ const fixtures = {
   articles: { version: 1, articles: Array.from({ length: 20 }, (_, i) => ({ id: `floating-article-${i}`, title: `文章${i + 1}`, body: '隔离布局测试文章。', category: '', tags: [], createdAt: stamp, updatedAt: stamp })) },
 };
 const cases = [
-  ['/todos', '创建任务', '.entry-composer', '关闭编辑'],
+  ['/todos', '创建任务', '.task-detail-panel', null],
   ['/daily', '创建习惯', '.daily-editor-sheet', '关闭习惯编辑'],
-  ['/memos', '创建便签', '.entry-composer', '关闭编辑'],
-  ['/mottos', '创建格言', '.mottos-editor-sheet', '关闭格言编辑'],
+  ['/memos', '创建便签', '.entry-composer', null],
+  ['/mottos', '创建格言', '.document-editor-sheet', null],
   ['/articles', '创建文章', '.document-editor-sheet', '关闭创建文章'],
-  ['/domains', '记录进展', '.entry-composer', '关闭编辑'],
-  ['/domains/floating-domain-0', '创建记录', '.entry-composer', '关闭编辑'],
+  ['/domains', '添加记录', '.entry-composer', null],
+  ['/domains/floating-domain-0', '创建记录', '.entry-composer', null],
 ];
 const browser = await chromium.launch({ headless: true });
 const observations = [];
@@ -49,9 +49,9 @@ try {
     async function geometry(label) {
       const fab = page.locator('.floating-create-button'); await expect(fab).toHaveCount(1);
       await expect(fab).toHaveAttribute('aria-label', label); await expect(fab.locator('.create-button-label')).toHaveCount(0);
-      await expect(page.locator('.page-toolbar-create,.todo-quadrant-add')).toHaveCount(0);
+      await expect(page.locator('.page-toolbar-create')).toHaveCount(0);await expect(page.locator('.todo-quadrant-add')).toHaveCount(new URL(page.url()).pathname==='/todos'?4:0);
       const box = await fab.boundingBox(); expect(box.width).toBe(56); expect(box.height).toBe(56);
-      expect(viewport.width - box.x - box.width).toBeCloseTo(24, 0); expect(viewport.height - box.y - box.height).toBeCloseTo(24, 0);
+      expect(viewport.width - box.x - box.width).toBeCloseTo(viewport.width / 8, 0); expect(viewport.height - box.y - box.height).toBeCloseTo(viewport.width / 8, 0);
       return box;
     }
     for (const [route, label, editor, close] of cases) {
@@ -59,9 +59,9 @@ try {
       await page.locator('.page-scroll,.memo-list-scroll,.mottos-list-scroll,.personal-articles-scroll,.domain-entry-scroll,.habit-list-section-scroll').evaluateAll(nodes => nodes.forEach(node => { node.scrollTop = node.scrollHeight; }));
       const after = await geometry(label); expect(after).toEqual(before);
       await page.screenshot({ path: path.join(out, `${route.slice(1).replaceAll('/', '-')}-${viewport.width}.png`) });
-      await page.locator('.floating-create-button').click(); await expect(page.locator(editor)).toBeVisible();
+      await page.locator('.floating-create-button').click(); await expect(page.locator(editor)).toBeVisible();await expect(page.locator(editor).locator('input,textarea').first()).toBeEnabled();
       expect(await page.evaluate(box => !document.elementFromPoint(box.x + 28, box.y + 28)?.closest('.floating-create-action'), before)).toBe(true);
-      await page.getByRole('button', { name: close, exact: true }).click(); await expect(page.locator(editor)).toHaveCount(0);
+      if(close)await page.getByRole('button', { name: close, exact: true }).click();else await page.keyboard.press('Escape'); await expect(page.locator(editor)).toHaveCount(0);
       await geometry(label);
       const overflow = await page.evaluate(() => ({ x: document.documentElement.scrollWidth - innerWidth, y: document.documentElement.scrollHeight - innerHeight }));
       expect(overflow.x).toBeLessThanOrEqual(1); expect(overflow.y).toBeLessThanOrEqual(1);
@@ -69,9 +69,9 @@ try {
     }
     await go('/todos'); await page.locator('.floating-create-button').click();
     await page.getByRole('textbox', { name: '任务名称', exact: true }).fill(`悬浮按钮测试${viewport.width}`);
-    await page.locator('.entry-composer').getByRole('button', { name: '创建任务', exact: true }).click();
-    await expect(page.locator('.entry-composer')).toHaveCount(0); await expect(page.locator('.operation-toast')).toBeVisible();
-    expect(state.todos.tasks.some(task => task.title === `悬浮按钮测试${viewport.width}`)).toBe(true);
+    await page.keyboard.press('Escape');
+    await expect(page.locator('.task-detail-panel')).toHaveCount(0); await expect(page.locator('.operation-toast')).toBeVisible();
+    await expect.poll(()=>state.todos.tasks.some(task => task.title === `悬浮按钮测试${viewport.width}`)).toBe(true);
     const fab = await geometry('创建任务'), toast = await page.locator('.operation-toast').boundingBox();
     expect(toast.y + toast.height).toBeLessThanOrEqual(fab.y - 8);
     await page.locator('.operation-toast').getByRole('button', { name: '撤销最近一次操作', exact: true }).click();

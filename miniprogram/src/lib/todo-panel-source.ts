@@ -1,6 +1,12 @@
 import { todoQuadrants, todoQuadrant, type Todo, type TodoState, type TodoPanelId, type TodoPanelSource } from './tool-records';
 import { moveTodo, orderTodos, saveTodoOrder, retryTodoMove } from './todo-data';
-import { TODO_INBOX, todoCategory } from './todo-categories';
+import { TODO_INBOX, todoCategory, todoCategoryChoices } from './todo-categories';
+
+export function cycleTodoPanelSource(state: TodoState, slot: TodoPanelId, direction: number): TodoState {
+  const sources: TodoPanelSource[] = [...todoQuadrants.map(item => ({ kind: 'quadrant' as const, quadrantId: item.id })), ...todoCategoryChoices(state).map(item => ({ kind: 'category' as const, categoryId: item.id }))];
+  const selected = JSON.stringify(getTodoPanelSource(state, slot)), at = Math.max(0, sources.findIndex(item => JSON.stringify(item) === selected));
+  return setTodoPanelSource(state, slot, sources[(at + (direction < 0 ? -1 : 1) + sources.length) % sources.length]);
+}
 
 export function getTodoPanelSource(state: TodoState, slot: TodoPanelId): TodoPanelSource {
   const source = state.panelSources?.[slot];

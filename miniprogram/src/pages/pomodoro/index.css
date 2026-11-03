@@ -55,3 +55,7 @@
 @media (min-width: 600px) {
   .focus-source-trigger { min-height: 44rpx; padding: 6rpx 10rpx; gap: 8rpx; font-size: 18rpx; }
 }
+
+.focus-completion-actions { display:flex;flex-direction:column;align-items:center;gap:8PX;color:#b9dbca;font-size:16PX;font-weight:600; }
+.focus-completion-actions > view { display:flex;align-items:center;justify-content:center;gap:12PX;width:100%; }
+.focus-completion-actions button { flex:1;margin:0; }

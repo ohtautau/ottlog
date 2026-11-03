@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import JournalCard from "@/components/journal-card";
 import SortDirection from "@/components/sort-direction";
 import Link from "next/link";
+import SearchInput from "@/components/search-input";
 import { getPosts, getCategories } from "@/lib/posts";
 export const metadata: Metadata = {
   title: "所有文章",
@@ -32,7 +33,7 @@ export default async function Posts({ searchParams }: { searchParams: Promise<{ 
         一点探索，一点思考。这里有 {posts.length} 篇记录。
       </p>
       <form key={JSON.stringify([q, category, tag, sort, direction])} className="search-form archive-filters" action="/posts" method="get">
-        <div><label htmlFor="q">关键词</label><input id="q" name="q" type="search" maxLength={100} defaultValue={q} placeholder="搜索标题、正文或标签" /></div>
+        <div><label htmlFor="q">关键词</label><SearchInput id="q" name="q" maxLength={100} defaultValue={q} placeholder="搜索标题、正文或标签" /></div>
         <div><label htmlFor="category">分类</label><select id="category" name="category" defaultValue={category}><option value="">全部分类</option>{category && !categories.some(item => item.name === category) && <option value={category}>{category}</option>}{categories.map(item => <option key={item.name} value={item.name}>{item.name}（{item.count}）</option>)}</select></div>
         <div><label htmlFor="tag">标签</label><select id="tag" name="tag" defaultValue={tag}><option value="">全部标签</option>{tag && !tags.includes(tag) && <option value={tag}>{tag}</option>}{tags.map(item => <option key={item} value={item}>{item}</option>)}</select></div>
         <div className="article-sort-controls"><label htmlFor="sort">排序依据<select id="sort" name="sort" defaultValue={sort}><option value="date">日期</option><option value="title">标题</option><option value="minutes">阅读时间</option></select></label><SortDirection key={direction} value={direction} autoSubmit /></div>

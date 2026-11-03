@@ -1,3 +1,4 @@
+import SearchInput from '../../components/search-input';
 import EmptyState from '../../components/empty-state';
 import { CoreScreen, MoreSection } from '../../components/page-sections';
 import PageScroll from '../../components/page-scroll';
@@ -59,7 +60,7 @@ export default function PostsPage() {
     <View className='posts-intro'><Text>在这里，翻翻过去的记录。</Text><Text>{posts.length} 篇</Text></View>
 
     <View className='posts-search'>
-      <Input className='posts-search-input' value={draft} maxlength={100} placeholder='搜索标题、摘要、分类或标签' confirmType='search' onInput={event => setDraft(event.detail.value)} onConfirm={() => update({ q: draft })} />
+      <SearchInput ariaLabel='搜索文章' frameClassName='posts-search-input' value={draft} maxlength={100} placeholder='搜索标题、摘要、分类或标签' confirmType='search' onInput={event => setDraft(event.detail.value)} onConfirm={() => update({ q: draft })} />
       <ActionButton appearance='primary' compact className="button-label posts-search-submit" onClick={() => update({ q: draft })}>搜索</ActionButton>
     </View>
     <PageToolbar className='posts-toolbar'

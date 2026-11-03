@@ -2,6 +2,7 @@ import { trimTextEnd } from '../lib/text-whitespace';
 import type { ComponentProps, CSSProperties, ReactNode } from 'react';
 import { Button, Text, View } from '@tarojs/components';
 import { localToolDay, todoQuadrant, type Todo } from '../lib/tool-records';
+import { visibleSubtasks } from '../lib/todo-subtasks';
 import './todo-task-card.css';
 
 /** The page owns completion, editing, selection and drag guards; both hosts share the row. */
@@ -16,7 +17,7 @@ export default function TodoTaskCard({ task, now, checked = !!task.completedAt, 
   const overdue = !task.completedAt && !!task.dueDate && (task.dueDate < today || task.dueDate === today && !!task.dueTime && task.dueTime < time);
   const [year, month, day] = task.dueDate.split('-');
   const dateLabel = task.dueDate ? `${year === today.slice(0, 4) ? '' : `${year}年`}${Number(month)}月${Number(day)}日` : '';
-  const count = task.nextTasks?.length;
+  const count = visibleSubtasks(task.subtasks).length;
   const check = <View style={{ '--todo-completion-color': todoQuadrant(task).color } as CSSProperties} className={`todo-check${checked ? ' checked' : ''}${count ? ' has-count' : ''}`}>{count || (checked ? '✓' : '')}</View>;
   const classes = `todo-task${!task.dueDate ? ' has-no-date' : ''}${task.completedAt ? ' is-done' : ''}${overdue ? ' is-overdue' : ''} ${className}`;
   return <View {...rootProps} className={classes}>{leading && leading(check)}<Button className={`todo-task-content ${contentClassName}`} ariaLabel={ariaLabel} aria-pressed={pressed} disabled={disabled} onClick={onOpen}><View className='todo-task-title'>{trimTextEnd(task.title)}</View>{task.dueDate && <View className='todo-task-meta'><Text className={`todo-task-date${overdue ? ' is-overdue' : !task.completedAt && task.dueDate === today ? ' is-today' : ''}`}>{dateLabel}{task.dueTime ? ` ${task.dueTime}` : ''}</Text></View>}</Button></View>;

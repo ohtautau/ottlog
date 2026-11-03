@@ -4,6 +4,7 @@ import { clearMountHost, events, setMountHost } from './platform';
 import './shell.css';
 import useDialogFocus from './use-dialog-focus';
 import useCategorySizing from './use-category-sizing';
+import FocusCompletionMonitor from './focus-completion-monitor';
 
 class PageBoundary extends React.Component {
   state = { error: '' };
@@ -25,7 +26,7 @@ function SharedPage({ Page }) {
     const escape = event => { if (event.key === 'Escape' && imageRef.current) { event.preventDefault(); event.stopImmediatePropagation(); setImages(null); } };
     window.addEventListener('keydown', escape, true); return () => window.removeEventListener('keydown', escape, true);
   }, []);
-  return <><div className='shared-app-content'><PageBoundary><Page /></PageBoundary></div>
+  return <><FocusCompletionMonitor /><div className='shared-app-content'><PageBoundary><Page /></PageBoundary></div>
     {notice && <div className='browser-notice' role='status'>{notice}</div>}
     {images && <div className='browser-image-viewer' role='dialog' aria-modal='true' aria-label='查看图片' onClick={() => setImages(null)}><button autoFocus aria-label='关闭图片' onClick={() => setImages(null)}>×</button><img src={images.current || images.urls[0]} alt='内容图片' onClick={event => event.stopPropagation()} /><div>{images.urls.map(src => <button key={src} aria-label='选择预览图片' onClick={event => { event.stopPropagation(); setImages({ ...images, current: src }); }}><img src={src} alt='' /></button>)}</div></div>}
   </>;

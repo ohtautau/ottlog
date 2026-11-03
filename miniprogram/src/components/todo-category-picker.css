@@ -2,10 +2,11 @@
 .todo-category-trigger.form-choice-trigger { justify-content: flex-start; gap: 6PX; font-size: 16PX; font-weight: 600; }
 .todo-category-icon { flex: none; width: 24PX; height: 24PX; }
 .todo-category-search { padding: 4PX 12PX 8PX; }
-.todo-category-options { display: flex; flex-direction: column; gap: 4PX; padding: 0 8PX 8PX; }
+.todo-category-options { display: flex; flex-direction: column; gap: 0; margin:0 12PX 12PX;padding:4PX;border:1PX solid #405662;border-radius:12PX;background:#20333e; }
 .todo-category-option-row { display: flex; align-items: center; gap: 2PX; min-width: 0; }
 .todo-category-option-row > .todo-category-option { display: flex; flex: 1; justify-content: flex-start; gap: 10PX; min-width: 0; margin: 0; text-align: left; }
 .todo-category-option-row > .ui-button { flex: none; margin: 0; }
+.todo-category-option.is-selected { --control-text:#d3efdf;--control-font-weight:600; }
 .todo-category-option > text { min-width: 0; overflow-wrap: anywhere; }
 .todo-category-selected { flex: none; margin-left: auto; }
 .todo-category-empty { padding: 12PX; color: #9fb3bc; text-align: center; }

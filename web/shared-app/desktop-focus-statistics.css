@@ -17,7 +17,7 @@
   }
   .tool-app-root .focus-page .focus-core.core-screen > .core-content {
     display: grid;
-    grid-template-rows: 40px 40px minmax(0, 1fr) auto;
+    grid-template-rows: 40px 40px 14px minmax(0, 1fr) auto;
     flex: 1;
     gap: 10px;
     height: 0;

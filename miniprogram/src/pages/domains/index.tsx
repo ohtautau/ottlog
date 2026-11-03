@@ -125,7 +125,7 @@ export default function Domains() {
         {!!(status || progressStatus) && <View className='tool-status domains-status'><Text>{[status, progressStatus].filter(Boolean).join(' · ')}</Text>{(!ready || !!progressStatus || /不可用|失败|暂存|离线|无法/.test(status)) && <ActionButton appearance='quiet' className='domain-quiet button-label' disabled={blocked} onClick={() => { retry(); habitTool.retry(); }}>重试</ActionButton>}</View>}
       </ScrollView>}
     </View></View></PageScroll>
-    <FloatingCreateButton raised={!!(error || moveRetry || status || progressStatus)} className='domain-record-trigger' label='记录进展' disabled={!writable || blocked} onClick={() => setQuick(true)} />
+    <FloatingCreateButton raised={!!(error || moveRetry || status || progressStatus)} className='domain-record-trigger' label='添加记录' disabled={!writable || blocked} onClick={() => setQuick(true)} />
     <DomainDefinitionEditor controller={definition} />
     {quick && <DomainQuickRecord onClose={() => setQuick(false)} />}
     {currentRecordEditor && <DomainRecordEditor key={`${owner}:${currentRecordEditor.record.id}`} owner={owner} domainId={currentRecordEditor.domainId} kind={currentRecordEditor.kind} record={currentRecordEditor.record}

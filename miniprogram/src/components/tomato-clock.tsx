@@ -13,6 +13,5 @@ export default function TomatoClock({ progress, resting, time, label, size, onEd
     })}</View>
     <Image className='focus-tomato-art' src={`/pages/pomodoro/assets/tomato-${resting ? 'rest' : 'focus'}.png`} mode='aspectFit' />
     <View className='focus-tomato-face'><Text className='focus-dial-kind' style={{ fontSize: `${Math.max(9, Math.min(16, size * .048))}px` }}>{label}</Text><Button className='focus-time' ariaLabel={onEditTime ? '修改当前计时时长' : '当前计时剩余时间'} disabled={!onEditTime} hoverClass='focus-time-pressed' style={{ fontSize: `${size * (time.length > 5 ? .18 : .215)}px` }} onClick={onEditTime}>{time}</Button></View>
-    <View className='focus-tomato-progress'><View style={{ width: `${completed}%` }} /></View>
   </View>;
 }

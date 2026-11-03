@@ -1,0 +1,2 @@
+.check-symbol { position:relative;display:block;flex:none;width:20PX;height:20PX; }
+.check-symbol > view { position:absolute;left:6PX;top:1PX;box-sizing:border-box;width:7PX;height:13PX;border:2PX solid currentColor;border-top:0;border-left:0;transform:rotate(45deg); }

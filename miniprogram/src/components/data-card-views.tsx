@@ -4,21 +4,20 @@ import LibraryIcon from './library-icon';
 import HabitPriorityCorner from './habit-priority-corner';
 import { EditSymbol } from './manage-symbol';
 import { memoSurfaceStyle } from './memo-fields-layout';
-import { memoIconId } from '../lib/icon-library';
 import { memoPriorityColor, type MemoPriority, type MemoImage } from '../lib/tool-records';
 import './data-card-views.css';
 
 /** Presentation-only props keep examples out of entity models and save handlers. */
-export function MemoCard({ title, body, iconId, priority = 'none', metadata, images = [], actions, onOpen }: {
-  title: string; body: string; iconId?: string; priority?: MemoPriority;
-  metadata?: ReactNode; images?: MemoImage[]; actions?: ReactNode; onOpen?: () => void;
+export function MemoCard({ title, body, priority = 'none', metadata, images = [], actions, onOpen, selected, selecting = false }: {
+  title: string; body: string; priority?: MemoPriority;
+  metadata?: ReactNode; images?: MemoImage[]; actions?: ReactNode; onOpen?: () => void; selected?:boolean;selecting?:boolean;
 }) {
-  const content = <><LibraryIcon className='memo-note-symbol' name={memoIconId(iconId)} /><View className='memo-note-copy'>
+  const content = <><View className='memo-note-copy'>
     <View className='memo-note-title-row'><Text className='memo-note-title'>{title}</Text></View>
     <Text className='memo-note-body'>{body}</Text><View className='memo-note-meta'>{metadata}</View>
   </View>{!!images.length && <View className='memo-note-images'><Image src={images[0].dataUrl} mode='aspectFill' /></View>}</>;
-  return <View className='memo-note' style={memoSurfaceStyle()}><HabitPriorityCorner priority={priority} color={memoPriorityColor(priority)} />
-    {onOpen ? <Button className='memo-note-open' hoverClass='none' ariaLabel={`查看便签：${title}`} onClick={onOpen}>{content}</Button> : <View className='memo-note-open'>{content}</View>}
+  return <View className={`memo-note${selecting ? ' is-selecting' : ''}${selected ? ' is-selected' : ''}`} style={memoSurfaceStyle()}><HabitPriorityCorner priority={priority} color={memoPriorityColor(priority)} />
+    {onOpen ? <Button className='memo-note-open' hoverClass='none' ariaLabel={`${selecting ? '选择' : '编辑'}便签：${title}`} aria-pressed={selecting ? !!selected : undefined} onClick={onOpen}>{content}</Button> : <View className='memo-note-open'>{content}</View>}
     {actions && <View className='memo-note-actions'>{actions}</View>}
   </View>;
 }

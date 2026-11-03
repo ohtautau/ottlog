@@ -510,7 +510,7 @@ module.exports = async function checkPomodoroWorkflow({ page: parentPage, origin
     await page.clock.fastForward(30_000);
     await expect(page.locator('.focus-time')).toHaveText('00:30');
     await expect(page.locator('.focus-tomato-tick.is-lit')).toHaveCount(18);
-    expect(await page.locator('.focus-tomato-progress > div').evaluate(node => parseFloat(node.style.width))).toBe(50);
+    expect(await page.locator('.focus-progress-fill').evaluateAll(nodes=>nodes.map(node=>parseFloat(node.style.width)))).toEqual([100,100,50,0,0]);
     await expect(page.locator('.focus-tomato-art')).toHaveAttribute('src', '/pages/pomodoro/assets/tomato-focus.png');
     await expect.poll(() => page.locator('.focus-tomato-art').evaluate(node => ({ complete: node.complete, width: node.naturalWidth, height: node.naturalHeight }))).toEqual({ complete: true, width: 960, height: 860 });
     await screenshot('pomodoro-subpackage-focus', '.focus-clock-card');

@@ -25,3 +25,11 @@
 .markdown-note-editor.is-minimal { --note-editor-height:40PX;--note-editor-padding:4PX 0; }
 .markdown-note-editor.is-minimal .memo-body-preview,.markdown-note-editor.is-minimal textarea.memo-body-input { border:0;border-radius:0;background:transparent;outline:none;box-shadow:none;resize:none;padding:var(--note-editor-padding); }
 .markdown-note-editor.is-minimal textarea.memo-body-input:focus,.markdown-note-editor.is-minimal textarea.memo-body-input:focus-visible { outline:none;box-shadow:none;background:transparent; }
+
+/* Attachment thumbnails stay readable at any viewport; opening still shows the original. */
+.memo-images { grid-template-columns:repeat(auto-fill,minmax(80PX,112PX));gap:8PX; }
+.memo-image image { height:96PX;border-radius:8PX; }
+.memo-images.is-preview { display:flex;flex-direction:row;flex-wrap:wrap;gap:8PX; }
+.memo-images.is-preview .memo-image { width:min(100%,280PX);max-width:100%; }
+.memo-images.is-preview image { width:100%;height:180PX;min-height:0;object-fit:contain;background:transparent; }
+.memo-body-preview image { display:block;max-width:min(100%,320PX);max-height:240PX;object-fit:contain; }

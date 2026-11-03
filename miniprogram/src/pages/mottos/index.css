@@ -28,3 +28,5 @@
   .mottos-editor-sheet { padding-top: 18rpx; }
   .mottos-input { height: 180rpx; font-size: 26rpx; }
 }
+
+.document-editor-sheet textarea.compact-motto-input { height:auto;min-height:96PX;border:0;border-radius:0;background:transparent;box-shadow:none;outline:none;resize:none;padding:4PX 0;color:#e9eee7;font-size:var(--compact-editor-title-size,22PX);line-height:var(--compact-editor-title-line,32PX); }

@@ -46,6 +46,7 @@ await build({
   plugins: [{ name: 'browser-personal-tools', setup(builder) {
     builder.onResolve({ filter: /(?:^|\/)login-preference$/ }, args => path.resolve(args.resolveDir, args.path) === path.join(mini, 'components/login-preference') ? { path: path.join(root, 'shared-app/login-preference.tsx') } : undefined);
     builder.onResolve({ filter: /(?:^|\/)todo-drag$/ }, args => path.resolve(args.resolveDir, args.path) === path.join(mini, 'components/todo-drag') ? { path: path.join(root, 'shared-app/todo-drag.jsx') } : undefined);
+    builder.onResolve({ filter: /(?:^|\/)desktop-notifications$/ }, args => path.resolve(args.resolveDir, args.path) === path.join(mini, 'lib/desktop-notifications') ? { path: path.join(root, 'shared-app/desktop-notifications.ts') } : undefined);
     builder.onResolve({ filter: /(?:^|\/)tool-platform$/ }, args => path.resolve(args.resolveDir, args.path) === path.join(mini, 'lib/tool-platform') ? { path: path.join(root, 'shared-app/tool-platform.ts') } : undefined);
     builder.onResolve({ filter: /^@tarojs\/(taro|components)$/ }, args => ({ path: path.join(root, 'shared-app', args.path.endsWith('/taro') ? 'platform.jsx' : 'components.jsx') }));
     builder.onResolve({ filter: /^react(?:-dom)?(?:\/.*)?$/ }, args => ({ path: require.resolve(args.path) }));
@@ -54,6 +55,7 @@ await build({
   } }],
 });
 await fs.cp(path.join(mini, 'assets'), path.join(output, 'assets'), { recursive: true });
+await fs.copyFile(path.join(mini, 'components/search-symbol.css'), path.join(output, 'search-symbol.css'));
 await fs.mkdir(path.join(output, 'pages/pomodoro/assets'), { recursive: true });
 for (const name of ['tomato-focus.png', 'tomato-rest.png']) await fs.copyFile(path.join(mini, 'assets/pomodoro', name), path.join(output, 'pages/pomodoro/assets', name));
 await fs.rm(path.join(output, 'index.html'), { force: true });

@@ -1,0 +1,5 @@
+.focus-progress { display:flex;align-items:center;gap:6PX;flex:none;width:100%;height:14PX;padding:4PX 0;box-sizing:border-box; }
+.focus-progress-segment { position:relative;flex:1;min-width:0;height:6PX;overflow:hidden;border-radius:3PX;background:#354b58; }
+.focus-progress-fill { height:100%;border-radius:inherit;background:#ebac98;transition:width .8s linear; }
+.focus-progress.is-resting .focus-progress-fill { background:#a8ceae; }
+@media(prefers-reduced-motion:reduce) { .focus-progress-fill { transition:none; } }

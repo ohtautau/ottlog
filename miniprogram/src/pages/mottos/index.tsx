@@ -1,10 +1,10 @@
 import { MottoRow } from '../../components/data-card-views';
 import EmptyState from '../../components/empty-state';
 import CardGroupContent from '../../components/card-group-content';
-import SheetActions, { SheetDeleteButton } from '../../components/sheet-actions';
+import SheetActions from '../../components/sheet-actions';
 import { trimTextEnd } from '../../lib/text-whitespace';
-import { useEffect, useRef, useState } from 'react';
-import { Button, ScrollView, Text, Textarea, View } from '@tarojs/components';
+import { useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { ScrollView, Text, Textarea, View } from '@tarojs/components';
 import ActionButton from '../../components/ui-button';
 import ManageSymbol from '../../components/manage-symbol';
 import { openAccount } from '../../lib/account-navigation';
@@ -16,9 +16,11 @@ import PageToolbar from '../../components/page-toolbar';
 import { ChoicePopover, PopoverHeading, PopoverActions } from '../../components/form-options';
 import DurationWheelPicker from '../../components/duration-wheel-picker';
 import useEditorCloseGuard from '../../lib/use-editor-close-guard';
+import Taro, { useDidHide } from '@tarojs/taro';
 import { requestAppConfirmation } from '../../lib/app-dialog';
 import { AppDialogHost } from '../../components/app-dialog';
-import EditorHeading from '../../components/editor-heading';
+import DocumentEditorSheet from '../../components/document-editor-sheet';
+import ActionMenu from '../../components/action-menu';
 import EditorFieldsLayout from '../../components/editor-fields-layout';
 import './index.css';
 
@@ -26,6 +28,8 @@ export default function MottosPage() {
   const { value, setValue, ready, owner, status, retry } = usePersonalToolState('mottos', initialPersonalMottos);
   const defaults: string[] = [];
   const [editor, setEditor] = useState<{ owner: string; original: string | null } | null>(null);
+  const [more,setMore] = useState(false);
+  const inFlight=useRef<Promise<boolean>|null>(null),editGeneration=useRef(0);
   const [draft, setDraft] = useState('');
   const [message, setMessage] = useState('');
   const [busy, setBusy] = useState(false);
@@ -37,6 +41,8 @@ export default function MottosPage() {
   const rotationSaving = useRef(false);
   const saving = useRef(false);
   const currentOwner = useRef(owner); currentOwner.current = owner;
+  const editorRef=useRef(editor),draftRef=useRef(draft);editorRef.current=editor;draftRef.current=draft;
+  const commitRef=useRef<(remove?:boolean)=>Promise<boolean>>(async()=>false);
   const valid = isPersonalMottos(value);
   const signedIn = ready && !!owner && owner !== 'guest';
   const mottos = signedIn ? displayedMottos(value, defaults) : [];
@@ -44,7 +50,7 @@ export default function MottosPage() {
   const rotationWritable = writable;
   const currentRotation = rotationWritable && rotationDraft?.owner === owner ? rotationDraft : null;
 
-  useEffect(() => { setWheelMoving(false); setEditor(null); setDraft(''); setMessage(''); setBusy(false); saving.current = false; editorPending.current = null; setRotationDraft(null); setRotationError(''); setRotationBusy(false); rotationSaving.current = false; }, [owner]);
+  useEffect(() => { ++editGeneration.current;inFlight.current=null;setMore(false);setWheelMoving(false); setEditor(null); setDraft(''); setMessage(''); setBusy(false); saving.current = false; editorPending.current = null; setRotationDraft(null); setRotationError(''); setRotationBusy(false); rotationSaving.current = false; }, [owner]);
 
   function changeRotationOpen(open: boolean) {
     if (rotationSaving.current || saving.current) return;
@@ -80,51 +86,50 @@ export default function MottosPage() {
   function open(original: string | null) {
     if (!writable || saving.current || rotationSaving.current) return;
     editorPending.current = null;
-    setEditor({ owner, original }); setDraft(original || ''); setMessage('');
+    ++editGeneration.current;setMore(false);editorRef.current={owner,original};draftRef.current=original || '';setEditor(editorRef.current); setDraft(draftRef.current); setMessage('');
   }
-  async function commit(remove = false) {
-    if (!editor || editor.owner !== owner || !writable || saving.current) return;
-    const capturedOwner = owner, original = editor.original;
-    const pending = editorPending.current;
-    remove = pending?.remove ?? remove;
-    const text = pending?.text ?? draft;
-    const apply = (previous: typeof value) => {
-      const current = displayedMottos(previous, defaults);
-      const alreadyApplied = pending && (remove ? !current.includes(original!) : current.includes(text.trim()) && (original === null || original === text.trim() || !current.includes(original)));
-      return alreadyApplied ? previous : remove ? removeMotto(previous, defaults, original!) : writeMotto(previous, defaults, text, original);
+  function commit(remove=false):Promise<boolean> {
+    if(inFlight.current)return inFlight.current;
+    const target=editorRef.current;if(!target || target.owner!==currentOwner.current || !writable || saving.current)return Promise.resolve(false);
+    const pending=editorPending.current, text=pending?.text ?? draftRef.current, original=target.original;
+    remove=pending?.remove ?? remove;
+    if(!remove && !pending && text.trim()===original && !hasVolatilePersonalTool('mottos',target.owner))return Promise.resolve(true);
+    if(!remove && !text.trim() && original===null)return Promise.resolve(true);
+    const generation=editGeneration.current;
+    const apply=(previous:typeof value)=>{
+      const rows=displayedMottos(previous,defaults);
+      const applied=pending && (remove ? !rows.includes(original!) : rows.includes(text.trim()) && (original===null || original===text.trim() || !rows.includes(original)));
+      return applied ? previous : remove ? removeMotto(previous,defaults,original!) : writeMotto(previous,defaults,text,original);
     };
-    saving.current = true; setBusy(true); setMessage('');
-    try {
-      if (remove && !pending) {
-        if (original === null) return;
-        const confirmation = await requestAppConfirmation({ title: '删除这句格言？', content: original, confirmText: '删除', intent: 'danger' });
-        if (!confirmation.confirm) return;
-      }
-      if (currentOwner.current !== capturedOwner) return;
-      // Catch ordinary form errors before the shared store treats a failed edit
-      // as stale account state and reloads it. Recheck inside the updater too.
-      apply(value);
-      await setValue(previous => {
-        if (!isPersonalMottos(previous)) throw new Error('数据格式暂不兼容，请重新读取');
-        if (currentOwner.current !== capturedOwner) throw new Error('账号已变化，请重新打开');
-        return apply(previous);
-      });
-      if (currentOwner.current !== capturedOwner) return;
-      if (hasVolatilePersonalTool('mottos', capturedOwner)) { editorPending.current = { remove, text }; throw new Error('本机存储不可用，输入已保留，请重试'); }
-      editorPending.current = null; setEditor(null); setDraft('');
-    } catch (error) {
-      if (currentOwner.current === capturedOwner) setMessage(error instanceof Error ? error.message : '保存失败，请重试');
-    } finally {
-      if (currentOwner.current === capturedOwner) { saving.current = false; setBusy(false); }
-    }
+    saving.current=true;setBusy(true);setMessage('');
+    const operation=(async()=>{
+      try {
+        if(remove && !pending) { if(original===null)return false;const result=await requestAppConfirmation({title:'删除这句格言？',content:original,confirmText:'删除',intent:'danger'});if(!result.confirm)return false; }
+        if(currentOwner.current!==target.owner || editGeneration.current!==generation)return false;
+        apply(value);
+        await setValue(previous=>{if(!isPersonalMottos(previous))throw new Error('数据格式暂不兼容，请重新读取');if(currentOwner.current!==target.owner)throw new Error('账号已变化，请重新打开');return apply(previous);});
+        if(currentOwner.current!==target.owner || editGeneration.current!==generation)return false;
+        if(hasVolatilePersonalTool('mottos',target.owner)){editorPending.current={remove,text};throw new Error('本机存储不可用，输入已保留，请重试');}
+        editorPending.current=null;
+        if(remove){editorRef.current=null;setEditor(null);setDraft('');}
+        else { const acknowledged={owner:target.owner,original:text.trim()};editorRef.current=acknowledged;setEditor(acknowledged); }
+        return true;
+      }catch(error){if(currentOwner.current===target.owner && editGeneration.current===generation)setMessage(error instanceof Error?error.message:'保存失败，请重试');return false;}
+      finally{if(currentOwner.current===target.owner && editGeneration.current===generation){saving.current=false;setBusy(false);}}
+    })();
+    inFlight.current=operation;void operation.finally(()=>{if(inFlight.current===operation)inFlight.current=null;});return operation;
   }
-
-  const editorClose = useEditorCloseGuard({
-    scope: editor?.owner === owner && writable ? `${owner}:motto:${editor.original ?? 'new'}` : '',
-    hasChanges: !!editor && (draft !== (editor.original || '') || !!editorPending.current),
-    blocked: busy || rotationBusy, onSave: () => commit(),
-    onClose: () => { if (!saving.current) { setEditor(null); setDraft(''); setMessage(''); editorPending.current = null; } },
-  });
+  commitRef.current=commit;
+  async function closeEditor(){
+    const generation=editGeneration.current;
+    if(inFlight.current && !await inFlight.current)return;
+    if(!await commit() || generation!==editGeneration.current)return;
+    editorRef.current=null;setEditor(null);setDraft('');setMessage('');setMore(false);
+  }
+  useEffect(()=>{if(!editor || busy || message || draft===editor.original || !draft.trim())return;const timer=setTimeout(()=>{void commitRef.current();},450);return()=>clearTimeout(timer);},[editor,draft,busy,message]);
+  useDidHide(()=>{if(editorRef.current && draftRef.current.trim())void commitRef.current();});
+  useLayoutEffect(()=>()=>{if(editorRef.current && draftRef.current.trim())void commitRef.current();},[]);
+  useEffect(()=>{if(!editor || more || typeof document==='undefined')return;const escape=(event:KeyboardEvent)=>{if(event.key==='Escape'&&!event.defaultPrevented){event.preventDefault();void closeEditor();}};document.addEventListener('keydown',escape);return()=>document.removeEventListener('keydown',escape);},[editor,more]);
   const rotationClose = useEditorCloseGuard({
     scope: currentRotation ? `${owner}:rotation` : '',
     hasChanges: !!currentRotation && (currentRotation.text !== rotationInitial.current || currentRotation.pending !== undefined),
@@ -151,13 +156,15 @@ export default function MottosPage() {
         </CardGroupContent>
     </ScrollView>}
     {!!status && <View className='mottos-status'><View className='mottos-status-dot' /><Text>{status}</Text></View>}
-    {editor && <View className='mottos-editor-overlay'><View className='mottos-editor-backdrop' catchMove onClick={editorClose.requestClose} /><View className='mottos-editor-sheet'>
-      <EditorHeading embedded className='mottos-editor-heading' title={editor.original === null ? '创建格言' : '编辑格言'} actions={<ActionButton appearance='icon' className='button-label' ariaLabel='关闭格言编辑' disabled={busy} onClick={editorClose.requestClose}>×</ActionButton>} />
-      <EditorFieldsLayout><Textarea className='mottos-input' ariaLabel='格言内容' placeholder='想留给自己的一句话…' value={draft} disabled={busy || !!editorPending.current} maxlength={MAX_MOTTO_LENGTH} cursorSpacing={96} adjustPosition fixed showConfirmBar={false} onInput={event => setDraft(event.detail.value)} />
-      <View className='mottos-editor-meta'><Text>{draft.length} / {MAX_MOTTO_LENGTH}</Text></View>
-      {message && <Text className='mottos-message'>{message}</Text>}</EditorFieldsLayout>
-      <SheetActions className='mottos-editor-footer' leading={editor.original !== null ? <SheetDeleteButton ariaLabel='删除格言' disabled={busy || !!editorPending.current} onClick={() => { void commit(true); }} /> : undefined}><ActionButton appearance='primary' className='button-label mottos-save' disabled={busy || !draft.trim()} loading={busy} onClick={() => { void commit(); }}>{editor.original === null ? '创建格言' : '保存'}</ActionButton></SheetActions>
-    </View></View>}
-    {editorClose.dialog}{rotationClose.dialog}
+    {editor && <DocumentEditorSheet compact title={editor.original===null ? '创建格言' : '编辑格言'} onClose={()=>{void closeEditor();}}
+      heading={<ActionMenu ariaLabel='格言更多操作' open={more} onOpenChange={setMore} disabled={busy}>
+        <ActionButton appearance='quiet' onClick={()=>{setMore(false);void closeEditor();}}>收起</ActionButton>
+        {editor.original!==null && <ActionButton appearance='quiet' intent='danger' disabled={busy} onClick={()=>{setMore(false);void commit(true);}}>删除格言</ActionButton>}
+      </ActionMenu>}
+      footer={<SheetActions className='document-autosave-footer'><View className='document-autosave-status'>{message ? <><View role='alert'>{message}</View><ActionButton appearance='quiet' disabled={busy} onClick={()=>{setMessage('');void commit();}}>重试</ActionButton></> : busy ? <Text>保存中…</Text> : null}</View></SheetActions>}>
+      <EditorFieldsLayout><Textarea className='mottos-input compact-motto-input' ariaLabel='格言内容' placeholder='想留给自己的一句话…' value={draft} disabled={busy || !!editorPending.current} maxlength={MAX_MOTTO_LENGTH} autoHeight cursorSpacing={96} adjustPosition fixed showConfirmBar={false} onInput={event=>{draftRef.current=event.detail.value;setDraft(event.detail.value);setMessage('');}} />
+      <View className='mottos-editor-meta'><Text>{draft.length} / {MAX_MOTTO_LENGTH}</Text></View></EditorFieldsLayout>
+    </DocumentEditorSheet>}
+    {rotationClose.dialog}
   </View>;
 }

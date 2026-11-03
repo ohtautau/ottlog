@@ -3,6 +3,15 @@ import { MAX_TODO_TASKS } from './todo-data';
 
 const same = (left: unknown, right: unknown) => JSON.stringify(left) === JSON.stringify(right);
 const ids = (state: TodoState) => state.tasks.map(task => task.id);
+export function isTodoDisplayOnlyChange(before: TodoState, after: TodoState): boolean {
+  const { panelSources: _before, ...oldContent } = before, { panelSources: _after, ...newContent } = after;
+  // Retiring automatic sorting may normalize this setting on the first remap.
+  // The task order has not changed, so this still counts as a display action.
+  if (!same(_before, _after) && after.sort === 'custom') {
+    return same({ ...oldContent, sort: 'custom' }, newContent);
+  }
+  return same(oldContent, newContent);
+}
 export function todoOperationLabel(before: TodoState, after: TodoState): string {
   const old = new Map(before.tasks.map(task => [task.id, task]));
   const changed = after.tasks.filter(task => old.has(task.id) && !same(task, old.get(task.id)));

@@ -1,0 +1,9 @@
+.action-menu-option { display:flex;align-items:center;gap:10PX;width:100%;white-space:nowrap; }
+.action-menu-option > text { flex:1; }
+.action-menu-option > view { flex:none;width:20PX;height:20PX; }
+.action-menu-symbol { position:relative;display:block;width:20PX;height:20PX;box-sizing:border-box; }
+.action-menu-symbol.is-focus { border:2PX solid currentColor;border-radius:50%; }
+.action-menu-symbol.is-focus > view:first-child { position:absolute;left:6PX;top:4PX;width:0;height:0;border-top:4PX solid transparent;border-bottom:4PX solid transparent;border-left:6PX solid currentColor; }
+.action-menu-symbol.is-collapse > view:first-child { position:absolute;left:5PX;top:4PX;width:9PX;height:9PX;border-right:2PX solid currentColor;border-bottom:2PX solid currentColor;transform:rotate(45deg); }
+.action-menu-symbol.is-next > view:first-child { position:absolute;left:1PX;top:4PX;width:17PX;height:2PX;background:currentColor;box-shadow:0 6PX currentColor,0 12PX currentColor; }
+.action-menu-symbol.is-next > view:last-child { position:absolute;right:0;top:12PX;width:5PX;height:5PX;border-right:2PX solid currentColor;border-top:2PX solid currentColor;transform:rotate(45deg);background:var(--control-background,#20333e); }

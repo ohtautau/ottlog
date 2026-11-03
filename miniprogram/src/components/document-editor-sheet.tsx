@@ -11,3 +11,5 @@ export default function DocumentEditorSheet({ title, closeLabel, onClose, busy, 
     <ScrollView scrollY className='memo-sheet-scroll' enhanced bounces={false} showScrollbar={false}><View className='memo-sheet-fields'>{children}</View></ScrollView>{footer}
   </View></View>;
 }
+
+import './compact-editor.css';

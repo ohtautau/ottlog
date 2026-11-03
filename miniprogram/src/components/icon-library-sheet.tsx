@@ -1,3 +1,4 @@
+import SearchSymbol from './search-symbol';
 import SectionTitle from './section-title';
 import { useState } from 'react';
 import { Button, Input, ScrollView, Text, View } from '@tarojs/components';
@@ -22,7 +23,7 @@ export default function IconLibrarySheet({ selectedId, allowNone = false, onSele
     <View className='icon-library-sheet' role='dialog' ariaLabel={ariaLabel}>
       <EditorHeading className='icon-library-heading' title={title} actions={<ActionButton appearance='icon' className='button-label' ariaLabel={closeLabel} onClick={onClose}>×</ActionButton>} />
       <View className='icon-library-tools'>
-        <View className='icon-library-search'><View className='icon-library-search-mark' aria-hidden /><Input ariaLabel='搜索图标' placeholder='搜索图标，如运动、阅读、旅行' value={query} maxlength={60} cursorSpacing={96} adjustPosition confirmType='search' onInput={event => setQuery(event.detail.value)} />{!!query && <ActionButton appearance='icon' className='button-label' ariaLabel='清空图标搜索' onClick={() => setQuery('')}>×</ActionButton>}</View>
+        <View className='icon-library-search'><SearchSymbol /><Input ariaLabel='搜索图标' placeholder='搜索图标，如运动、阅读、旅行' value={query} maxlength={60} cursorSpacing={96} adjustPosition confirmType='search' onInput={event => setQuery(event.detail.value)} />{!!query && <ActionButton appearance='icon' className='button-label' ariaLabel='清空图标搜索' onClick={() => setQuery('')}>×</ActionButton>}</View>
         <CategoryRow className='icon-library-category-scroll' contentClassName='icon-library-categories' ariaLabel='图标分类' enhanced bounces={false} fixedLeading={<CategoryButton className='icon-library-category' ariaLabel='图标分类：全部' selected={category === '全部'} onClick={() => setCategory('全部')}>全部</CategoryButton>}>{iconCategories.map(name => <CategoryButton key={name} className={`button-label icon-library-category${category === name ? ' is-active' : ''}`} ariaLabel={`图标分类：${name}`} selected={category === name} onClick={() => setCategory(name)}>{name}</CategoryButton>)}</CategoryRow>
       </View>
       <ScrollView key={`${category}:${query.trim()}`} scrollY className='icon-library-scroll' enhanced bounces={false} showScrollbar={false}>

@@ -1,13 +1,12 @@
+import ActionMenu from './action-menu';
 import { showAppMessage } from '../lib/app-dialog';
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import Taro, { useDidHide } from '@tarojs/taro';
 import { Text, View } from '@tarojs/components';
 import ActionButton from './ui-button';
 import MarkdownNoteEditor from './markdown-note-editor';
-import SheetActions, { SheetDeleteButton } from './sheet-actions';
+import SheetActions from './sheet-actions';
 import DocumentEditorSheet from './document-editor-sheet';
-import { ChoicePopover } from './form-options';
-import { MoreSymbol } from './manage-symbol';
 import { TaskAttachmentSymbol } from './task-detail-editor';
 import { initialDomainState, isDomainState, MAX_DOMAIN_RECORD_LENGTH, type RecordItem, type RecordKind } from '../lib/domain-data';
 import { hasVolatilePersonalTool, usePersonalToolState } from '../lib/use-personal-tool-state';
@@ -131,8 +130,8 @@ export default function DomainRecordEditor({ owner, domainId, kind, record, titl
     if (mounted.current) onClose();
   }
   return <View className='domains-editor record-edit-autosave'><DocumentEditorSheet compact title={title} onClose={() => { void close(); }} busy={busy || imageBusy}
-    heading={<View className='record-edit-meta'><View><Text>{title}</Text><Text className='record-edit-date'>{dateLabel}</Text></View><ChoicePopover ariaLabel='记录更多操作' open={more} onOpenChange={setMore} trigger={<MoreSymbol />} triggerIconOnly showIndicator={false} panelWidth={180}><ActionButton appearance='quiet' disabled={busy || imageBusy} onClick={() => { setMore(false); void close(); }}>收起</ActionButton></ChoicePopover></View>}
-    footer={<SheetActions className='record-edit-footer' leading={<SheetDeleteButton className='record-edit-delete' ariaLabel={`删除${kind === 'positive' ? '正' : '负'}记录：${record.content}`} disabled={!draft || !writable || busy || imageBusy || draft.pending === 'save'} onClick={() => { void commit('delete'); }} />}><ActionButton appearance='icon' size='compact' ariaLabel='记录附件' disabled={locked} onClick={() => setImageSignal(value => value + 1)}><TaskAttachmentSymbol /></ActionButton><View className='record-edit-save-state'>{error ? <View role='alert'><Text>{error}</Text><ActionButton appearance='quiet' size='compact' disabled={busy || imageBusy || !writable} onClick={() => { setError(''); void commit(draft?.pending || 'save'); }}>重试</ActionButton></View> : busy ? <Text>保存中…</Text> : null}</View></SheetActions>}>
+    heading={<View className='record-edit-meta'><View><Text>{title}</Text><Text className='record-edit-date'>{dateLabel}</Text></View><ActionMenu ariaLabel='记录更多操作' open={more} onOpenChange={setMore} panelWidth={180}><ActionButton appearance='quiet' disabled={busy || imageBusy} onClick={() => { setMore(false); void close(); }}>收起</ActionButton><ActionButton appearance='quiet' intent='danger' disabled={!draft || !writable || busy || imageBusy || draft.pending === 'save'} onClick={()=>{setMore(false);void commit('delete');}}>删除记录</ActionButton></ActionMenu></View>}
+    footer={<SheetActions className='record-edit-footer'><ActionButton appearance='icon' size='compact' ariaLabel='记录附件' disabled={locked} onClick={() => setImageSignal(value => value + 1)}><TaskAttachmentSymbol /></ActionButton><View className='record-edit-save-state'>{error ? <View role='alert'><Text>{error}</Text><ActionButton appearance='quiet' size='compact' disabled={busy || imageBusy || !writable} onClick={() => { setError(''); void commit(draft?.pending || 'save'); }}>重试</ActionButton></View> : busy ? <Text>保存中…</Text> : null}</View></SheetActions>}>
       {!draft ? <View className='record-edit-loading'><Text>正在读取编辑草稿…</Text><ActionButton disabled={!writable} onClick={load}>重试</ActionButton></View> : <MarkdownNoteEditor minimal format='plain' showImageInsertion={false} insertionSignal={imageSignal} value={draft.record.content} images={draft.record.images} owner={owner} recordId={record.id} disabled={locked} canInsertImage={writable} onBusyChange={imagesBusy} maxLength={MAX_DOMAIN_RECORD_LENGTH} ariaLabel='记录内容' placeholder='备注' onChange={content => update({ ...draft.record, content })} onImagesChange={images => update({ ...draft.record, images })} checkImages={images => { saveAutoProgressDraft(current.current.value, asProgress(draft.original), asProgress({ ...draft.record, images }), hasVolatilePersonalTool('domains', owner)); }} />}
       {!!info && <Text className='record-edit-info'>{info}</Text>}
     </DocumentEditorSheet></View>;

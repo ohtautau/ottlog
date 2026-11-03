@@ -3,8 +3,6 @@
 .icon-library-sheet { position: absolute; left: 0; right: 0; bottom: 0; display: flex; flex-direction: column; height: 1160rpx; max-height: 90vh; border: 1rpx solid #354954; border-bottom: 0; border-radius: 32rpx 32rpx 0 0; background: #192933; color: #edf2e9; overflow: hidden; }
 .icon-library-tools { flex-shrink: 0; padding: 0 32rpx; border-bottom: 1rpx solid #344852; }
 .icon-library-search { display: flex; align-items: center; gap: 18rpx; padding: 0 20rpx; border: 1rpx solid #4b626b; border-radius: 16rpx; background: #12222c; }
-.icon-library-search-mark { position: relative; flex: none; width: 22rpx; height: 22rpx; border: 2rpx solid #9bb1bb; border-radius: 50%; }
-.icon-library-search-mark::after { content: ''; position: absolute; right: -7rpx; bottom: -5rpx; width: 10rpx; height: 2rpx; border-radius: 2rpx; transform: rotate(45deg); background: #9bb1bb; }
 .icon-library-search input { flex: 1; min-width: 0; width: 0; min-height: 84rpx; height: 84rpx; margin: 0; padding: 0; border: 0; background: transparent; color: #edf2e9; font-size: 24rpx; }
 .icon-library-search button { flex: none; width: 56rpx; min-height: 72rpx; margin: 0 -10rpx 0 0; padding: 0; background: transparent; color: #a7b9c1; font-size: 32rpx; }
 .icon-library-category-scroll { margin-top: 8PX; }

@@ -1,9 +1,10 @@
 .progress-domain-row { display: flex; min-width: 0; }
 .progress-record-pairs { display: flex; flex-direction: column; gap: 12PX; min-width: 0; }
-.progress-record-pair { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 12PX; min-width: 0; }
-.progress-record-field { min-width: 0; }
+.progress-record-pair { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 32PX; min-width: 0; }
+.progress-record-field { position:relative;min-width:0; }
+.progress-record-field + .progress-record-field::before { content:'';position:absolute;left:-16PX;top:0;bottom:0;border-left:1PX solid #3b505a; }
 .progress-record-heading { display: flex; align-items: center; min-height: 40PX; font-size: 14PX; line-height: 20PX; }
 .progress-record-heading.is-positive { color: var(--domain-positive); }
 .progress-record-heading.is-negative { color: var(--domain-negative); }
 .progress-add-pair { display: flex; align-items: center; justify-content: center; }
-.progress-add-pair > button { flex: none; margin: 0; }
+.progress-add-pair > button { flex:1;width:100%;min-height:44PX;margin:0; }

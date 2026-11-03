@@ -17,7 +17,7 @@ module.exports = async function checkProgressPairs({ page, origin, out, width, e
   const all = async () => (await data()).domains.flatMap(domain => [...domain.negativeRecords, ...domain.positiveRecords]);
   const composer = () => page.locator('.entry-composer');
   const field = (pair, slot) => composer().locator(`.progress-record-field[data-progress-pair="${pair}"][data-progress-slot="${slot}"] textarea`);
-  await page.getByRole('button', { name: '记录进展', exact: true }).click();
+  await page.getByRole('button', { name: '添加记录', exact: true }).click();
   await expect(field(0, 'negative')).toBeEnabled();
   await expect(composer().getByRole('button', { name: /^(保存记录|关闭编辑|保存)$/ })).toHaveCount(0);
   await expect(composer().locator('.progress-record-pair')).toHaveCount(1);

@@ -1,0 +1,13 @@
+/* One frame and type scale for task, note and progress creation/editing. */
+page { --compact-editor-inset:24PX;--compact-editor-title-size:22PX;--compact-editor-title-line:32PX;--task-detail-inset:var(--compact-editor-inset); }
+.task-detail-panel,.document-editor-sheet.is-compact-autosave,.entry-composer.is-autosave.todo-sheet { --compact-editor-height:min(72vh,720PX);box-sizing:border-box;width:100%;height:var(--compact-editor-height);max-height:calc(100vh - 24PX);background:#192933;border-radius:20PX 20PX 0 0; }
+.document-editor-sheet.is-compact-autosave .memo-sheet-fields,.entry-composer.is-autosave .todo-sheet-fields { padding:4PX var(--compact-editor-inset) 24PX; }
+.document-editor-sheet.is-compact-autosave .document-autosave-heading,.entry-composer.is-autosave .entry-heading { padding-left:var(--compact-editor-inset);padding-right:var(--compact-editor-inset); }
+.document-editor-sheet.is-compact-autosave .document-autosave-footer,.entry-composer.is-autosave .entry-footer { padding-left:var(--compact-editor-inset);padding-right:var(--compact-editor-inset);border:0; }
+.is-compact-autosave .memo-editor-fields .memo-title-input,.entry-composer.is-autosave .memo-editor-fields .memo-title-input { height:44PX;min-height:44PX;margin:0;padding:4PX 0;font-size:var(--compact-editor-title-size);font-weight:650;line-height:var(--compact-editor-title-line); }
+.memo-editor-fields .markdown-note-editor.is-minimal .memo-body-input,.memo-editor-fields .markdown-note-editor.is-minimal .memo-body-preview { background:transparent;border:0;box-shadow:none; }
+.entry-composer.is-autosave .entry-preview-note { min-height:40PX;height:auto;padding:4PX 0;border:0;border-radius:0;background:transparent;box-shadow:none; }
+.entry-composer.is-autosave .entry-preview .memo-editor-toolbar { display:none; }
+@media(min-width:900px) {
+  .task-detail-panel,.document-editor-sheet.is-compact-autosave,.entry-composer.is-autosave.todo-sheet { --compact-editor-height:min(640PX,calc(100vh - 32PX));position:relative;inset:auto;width:680PX;max-width:100%;max-height:calc(100vh - 32PX);border-radius:16PX; }
+}

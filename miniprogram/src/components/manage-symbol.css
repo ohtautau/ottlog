@@ -3,11 +3,11 @@
 .manage-symbol > view::after { content: ''; position: absolute; top: -2PX; left: 4PX; width: 6PX; height: 6PX; border-radius: 50%; background: currentColor; }
 .manage-symbol > view:nth-child(2)::after { left: 12PX; }
 .edit-symbol,.delete-symbol { position: relative; display: block; flex: none; width: 20PX; height: 20PX; color: inherit; }
-.edit-symbol > view { position: absolute; top: 2PX; left: 8PX; width: 5PX; height: 14PX; border: 1.5PX solid currentColor; border-radius: 1PX; transform: rotate(45deg); }
+.edit-symbol > view { position: absolute; top: 2PX; left: 8PX; width: 5PX; height: 14PX; border: 2PX solid currentColor; border-radius: 1PX; transform: rotate(45deg); }
 .edit-symbol > view::after { content: ''; position: absolute; bottom: -5PX; left: -.5PX; width: 0; height: 0; border-left: 2PX solid transparent; border-right: 2PX solid transparent; border-top: 4PX solid currentColor; }
-.delete-symbol > view:first-child { position: absolute; left: 3PX; top: 6PX; width: 14PX; height: 12PX; box-sizing: border-box; border: 1.5PX solid currentColor; border-radius: 0 0 2PX 2PX; }
-.delete-symbol > view:last-child { position: absolute; top: 4PX; left: 1PX; width: 18PX; height: 1.5PX; background: currentColor; }
-.delete-symbol > view:last-child::before { content: ''; position: absolute; left: 6PX; top: -3PX; width: 6PX; height: 3PX; box-sizing: border-box; border: 1.5PX solid currentColor; border-bottom: 0; border-radius: 2PX 2PX 0 0; }
+.delete-symbol > view:first-child { position: absolute; left: 3PX; top: 6PX; width: 14PX; height: 12PX; box-sizing: border-box; border: 2PX solid currentColor; border-radius: 0 0 2PX 2PX; }
+.delete-symbol > view:last-child { position: absolute; top: 4PX; left: 1PX; width: 18PX; height: 2PX; background: currentColor; }
+.delete-symbol > view:last-child::before { content: ''; position: absolute; left: 6PX; top: -3PX; width: 6PX; height: 3PX; box-sizing: border-box; border: 2PX solid currentColor; border-bottom: 0; border-radius: 2PX 2PX 0 0; }
 .more-symbol { display: flex; align-items: center; justify-content: center; gap: 3PX; flex: none; width: 20PX; height: 20PX; }
 .more-symbol > view { width: 3PX; height: 3PX; border-radius: 50%; background: currentColor; }
 .replace-symbol { position: relative; display: block; flex: none; width: 20PX; height: 20PX; color: inherit; }
@@ -24,14 +24,19 @@
 .restore-defaults-symbol > view:first-child { position: absolute; left: 6PX; top: 1PX; width: 10PX; height: 15PX; box-sizing: border-box; border: 1.5PX solid currentColor; border-radius: 2PX; transform: rotate(40deg); }
 .restore-defaults-symbol > view:first-child::after { content: ''; position: absolute; left: 0; right: 0; bottom: 4PX; border-top: 1.5PX solid currentColor; }
 .restore-defaults-symbol > view:last-child { position: absolute; left: 2PX; right: 2PX; bottom: 1PX; height: 1.5PX; border-radius: 1PX; background: currentColor; }
-.pin-symbol { position: relative; display: block; flex: none; width: 20PX; height: 20PX; color: inherit; }
+.pin-symbol { position: relative; display: block; flex: none; width: 22PX; height: 22PX; color: inherit; }
 .pin-symbol > view { position: absolute; inset: 0; transform: rotate(35deg); }
 .pin-symbol > view > view { position: absolute; box-sizing: border-box; }
-.pin-symbol > view > view:first-child { left: 5PX; top: 2PX; width: 10PX; height: 8PX; border: 1.5PX solid currentColor; border-radius: 2PX; }
-.pin-symbol > view > view:nth-child(2) { left: 3PX; top: 9PX; width: 14PX; height: 1.5PX; background: currentColor; }
-.pin-symbol > view > view:last-child { left: 9.25PX; top: 10PX; width: 1.5PX; height: 8PX; background: currentColor; }
+.pin-symbol > view > view:first-child { left: 6PX; top: 2PX; width: 10PX; height: 8PX; border: 2PX solid currentColor; border-radius: 2PX; }
+.pin-symbol > view > view:nth-child(2) { left: 4PX; top: 9PX; width: 14PX; height: 2PX; background: currentColor; }
+.pin-symbol > view > view:last-child { left: 10PX; top: 10PX; width: 2PX; height: 9PX; background: currentColor; }
 .completed-goals-history-symbol { position: relative; display: block; flex: none; width: 20PX; height: 20PX; color: inherit; }
 .completed-goals-history-symbol > view:first-child { position: absolute; inset: 2PX; border: 1.5PX solid currentColor; border-left-color: transparent; border-radius: 50%; box-sizing: border-box; transform: rotate(25deg); }
 .completed-goals-history-symbol > view:nth-child(2) { position: absolute; left: 1PX; top: 2PX; width: 6PX; height: 6PX; border-left: 1.5PX solid currentColor; border-bottom: 1.5PX solid currentColor; box-sizing: border-box; }
 .completed-goals-history-symbol > view:last-child { position: absolute; left: 9.25PX; top: 5PX; width: 1.5PX; height: 6PX; border-radius: 1PX; background: currentColor; }
 .completed-goals-history-symbol > view:last-child::after { content: ''; position: absolute; left: 0; bottom: 0; width: 5PX; height: 1.5PX; border-radius: 1PX; background: currentColor; }
+
+.selection-symbol { position:relative;display:block;width:22PX;height:22PX; }
+.selection-symbol > view { position:absolute;width:14PX;height:14PX;border:2PX solid currentColor;border-radius:3PX;box-sizing:border-box; }
+.selection-symbol > view:first-child { left:1PX;top:1PX;opacity:.6; }
+.selection-symbol > view:last-child { right:0;bottom:0;background:var(--control-background,#20333e); }

@@ -4,7 +4,7 @@ import { ChoicePopover, PopoverHeading } from './form-options';
 import ActionButton from './ui-button';
 import FilterActions from './filter-actions';
 import FilterSymbol from './filter-symbol';
-import SingleLineInput from './single-line-input';
+import SearchInput from './search-input';
 import SectionTitle from './section-title';
 import './filter-popover.css';
 
@@ -42,9 +42,9 @@ export function FilterOptionGrid({ children, className = '' }: { children: React
   return <View className={`filter-option-grid ${className}`}>{children}</View>;
 }
 
-export function FilterSearch({ clearLabel, onClear, value = '', className = '', ...props }: Omit<ComponentProps<typeof SingleLineInput>, 'frameClassName' | 'trailing' | 'size' | 'align'> & {
+export function FilterSearch({ clearLabel, onClear, value = '', className = '', ...props }: Omit<ComponentProps<typeof SearchInput>, 'frameClassName' | 'trailing' | 'size'> & {
   clearLabel: string; onClear: () => void;
 }) {
-  return <SingleLineInput {...props} value={value} align='left' size='regular' confirmType='search' cursorSpacing={100} adjustPosition frameClassName={`filter-search ${className}`}
+  return <SearchInput {...props} value={value} size='regular' confirmType='search' cursorSpacing={100} adjustPosition frameClassName={`filter-search ${className}`}
     trailing={!!value && <ActionButton appearance='icon' size='compact' className='filter-search-clear' ariaLabel={clearLabel} disabled={props.disabled} onClick={event => { event.stopPropagation(); onClear(); }}>×</ActionButton>} />;
 }

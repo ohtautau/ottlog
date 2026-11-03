@@ -2,7 +2,7 @@ import MarkdownIt from 'markdown-it';
 import { trimTextEnd } from './text-whitespace';
 
 /** RichText does not inherit browser stylesheet selectors consistently. Style each node. */
-export function createMarkdownRenderer(resolveImage: (source: string) => string, { inheritTypography = false, compact = false }: { inheritTypography?: boolean; compact?: boolean } = {}) {
+export function createMarkdownRenderer(resolveImage: (source: string) => string, { inheritTypography = false, compact = false, attachmentImages = false }: { inheritTypography?: boolean; compact?: boolean; attachmentImages?: boolean } = {}) {
   const markdown = new MarkdownIt({ html: false, breaks: true, linkify: true, typographer: false });
   const textStyle = (style: string) => inheritTypography ? `${style}font-size:inherit;color:inherit;` : style;
   const styles: Record<string, string> = {
@@ -46,7 +46,7 @@ export function createMarkdownRenderer(resolveImage: (source: string) => string,
     const resolved = resolveImage(source);
     if (!resolved || !/^https?:\/\//i.test(resolved)) return '';
     tokens[index].attrSet('src', resolved);
-    tokens[index].attrSet('style', `max-width:100%;height:auto;display:block;margin:${compact ? 6 : 18}px auto;`);
+    tokens[index].attrSet('style', `${attachmentImages ? 'width:100%;max-width:320px;max-height:240px;object-fit:contain;' : 'max-width:100%;'}height:auto;display:block;margin:${compact ? 6 : 18}px auto;`);
     return image(tokens, index, options, env, renderer);
   };
   return (content: string) => `<div style="${textStyle(`font-size:16px;line-height:${compact ? 1.65 : 1.95};color:#d2dce8;word-wrap:break-word;${compact ? 'white-space:normal;' : ''}`)}">${markdown.render(trimTextEnd(content))}</div>`;

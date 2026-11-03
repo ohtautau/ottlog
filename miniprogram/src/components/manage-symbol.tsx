@@ -38,3 +38,5 @@ export function PinSymbol() {
 export function CompletedGoalsHistorySymbol() {
   return <View className='completed-goals-history-symbol' aria-hidden><View /><View /><View /></View>;
 }
+
+export function SelectionSymbol() { return <View className='selection-symbol' aria-hidden><View /><View /></View>; }

@@ -23,10 +23,6 @@
 .tool-app-root textarea,
 .tool-app-root select { font-family: inherit; }
 .tool-app-root button { font-weight: 400; }
-.tool-app-root button:focus-visible,
-.tool-app-root input:focus-visible,
-.tool-app-root textarea:focus-visible,
-.tool-app-root select:focus-visible { outline: 2px solid #99b8ec; outline-offset: 2px; }
 /* The website's embossed input selector has three :not() clauses. Match its
    specificity locally, without stripping the shared field's own outer frame. */
 .tool-app-root input:not([type=checkbox]):not([type=radio]):not([type=file]),

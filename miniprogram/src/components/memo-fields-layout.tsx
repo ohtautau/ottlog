@@ -1,8 +1,6 @@
 import type { CSSProperties, ReactNode } from 'react';
 import { View } from '@tarojs/components';
-import { EntityIconPreview } from './entity-title-field';
 import './memo-editor-fields.css';
-import { memoIconId } from '../lib/icon-library';
 import DocumentFieldsLayout from './document-fields-layout';
 
 /** Creation, editing and reading compose the same field order and visual frame. */
@@ -19,8 +17,4 @@ export function MemoPinRow({ children }: { children: ReactNode }) {
 /** All notes share an opaque neutral surface; legacy color fields remain data only. */
 export function memoSurfaceStyle(): CSSProperties {
   return { '--memo-paper-background': '#20333e', '--memo-paper-accent': '#b9dbca', '--memo-paper-border': '#3b505a' } as CSSProperties;
-}
-
-export function MemoIconPreview({ iconId }: { iconId?: string }) {
-  return <EntityIconPreview iconId={memoIconId(iconId)} className='memo-icon-preview' />;
 }

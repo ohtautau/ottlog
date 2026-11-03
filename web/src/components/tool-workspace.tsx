@@ -6,7 +6,7 @@ import { websiteRoute } from '../../shared-app/routes';
 import './tool-workspace.css';
 const headings: Record<string, [string,string]> = {
   index: ['今日', '快速记下一件事，继续今天的安排。'], todos: ['任务', '分清轻重缓急，把下一步安排好。'],
-  domains: ['领域', '把目标、习惯与日常进展放在一起。'], 'domain-detail': ['领域详情', '持续记录目标、习惯与每一步进展。'],
+  domains: ['领域', '把目标、习惯与日常记录放在一起。'], 'domain-detail': ['领域详情', '持续记录目标、习惯与每一步记录。'],
   daily: ['习惯', '把想做的事放进日常，慢慢积累。'], memos: ['便签', '留住零碎念头，也方便重新找到。'],
   pomodoro: ['专注', '为眼前的一件事留一段完整时间。'],
   articles: ['文章', '管理当前账号的文章。'],

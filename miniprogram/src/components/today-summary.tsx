@@ -48,7 +48,7 @@ export default function TodaySummary({ date, disabled = false }: { date: Date; d
     void Taro.navigateTo({ url }).catch(report);
   }
   const shortcuts = [
-    { id: 'task', title: '创建任务', icon: 'notes' }, { id: 'record', title: '记录进展', icon: 'write' },
+    { id: 'task', title: '创建任务', icon: 'notes' }, { id: 'record', title: '添加记录', icon: 'write' },
     { id: 'memo', title: '写便签', icon: 'book' }, { id: 'habit', title: '习惯', icon: 'plant' },
     { id: 'focus', title: '番茄钟', icon: 'focus' },
   ];

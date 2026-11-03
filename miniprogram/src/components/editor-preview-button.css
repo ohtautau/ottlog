@@ -1,0 +1,3 @@
+.editor-preview-toggle.is-selected { --control-text:#d3efdf;--control-feedback-background:#304c42;background:#304c42!important;color:#d3efdf; }
+.editor-preview-symbol { position:relative;display:block;width:22PX;height:16PX;border:2PX solid currentColor;border-radius:65% 15%;transform:rotate(45deg);box-sizing:border-box; }
+.editor-preview-symbol > view { position:absolute;width:7PX;height:7PX;left:5.5PX;top:2.5PX;border:2PX solid currentColor;border-radius:50%;box-sizing:border-box; }

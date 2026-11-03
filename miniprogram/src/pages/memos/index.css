@@ -20,3 +20,11 @@
 .memo-page .memo-category-row { margin-bottom: 8PX; }
 .memo-reader .domain-record-content { font-size: 16PX; white-space: normal; }
 .memo-reader .domain-record-images image { height: 160PX; }
+
+.memo-selection-actions { display:flex;align-items:center;gap:6PX; }
+.memo-selection-count { color:#b9dbca;font-size:12PX;white-space:nowrap; }
+.memo-selection-actions > button { margin:0; }
+.memo-selection-error { display:flex;align-items:center;gap:8PX;color:#e7a097;font-size:13PX; }
+.memo-note.is-selected { border-color:#b9dbca; }
+.memo-selection-mark { width:24PX;height:24PX;margin:8PX;border:2PX solid #8da6af;border-radius:50%;display:flex;align-items:center;justify-content:center;box-sizing:border-box; }
+.memo-note.is-selected .memo-selection-mark { border-color:#b9dbca;color:#b9dbca; }

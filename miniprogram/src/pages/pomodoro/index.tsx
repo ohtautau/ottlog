@@ -1,3 +1,6 @@
+import { isWebTool } from '../../lib/tool-platform';
+import { requestFocusNotificationPermission } from '../../lib/desktop-notifications';
+import { advanceWithBreakChoice, pendingFocusCompletion, startChosenBreak } from '../../lib/focus-completion';
 import { ChoicePopover, SingleChoiceField } from '../../components/form-options';
 import WheelPicker, { NumberWheelPicker, wheelNumbers } from '../../components/wheel-picker';
 import SheetActions from '../../components/sheet-actions';
@@ -21,6 +24,7 @@ import { cleanState as cleanHabits, emptyReminderState, isReminderState, type Re
 import { advanceTimer, decodeTimerRouteValue, finishTimer, initialPomodoroState, isPomodoroState, normalizePomodoroState, pauseTimer, remainingSeconds, resumeTimer, startTimer, timerModes, type PomodoroState, type TimerMode, type TimerSelection, type TimerSettings } from '../../lib/pomodoro-data';
 import { cancelPomodoroReminders, consumePomodoroLaunch, eligiblePomodoroReminderTemplates, getPomodoroReminderConfig, pomodoroReminderMessage, requestPomodoroReminders, type PomodoroReminderResult } from '../../lib/pomodoro-reminders';
 import TomatoClock from '../../components/tomato-clock';
+import FocusProgress from '../../components/focus-progress';
 import DomainChoiceField from '../../components/domain-choice-field';
 import LibraryIcon from '../../components/library-icon';
 import { initialDomainState, isDomainState } from '../../lib/domain-data';
@@ -84,6 +88,8 @@ export default function Pomodoro() {
   const mounted = useRef(true);
   const ownerRef = useRef(owner); ownerRef.current = owner;
   const active = state.active;
+  const completedFocus=isWebTool ? pendingFocusCompletion(state) : null;
+  const advanceForPage=isWebTool ? advanceWithBreakChoice : advanceTimer;
   const runId = active?.rootRunId || active?.id || '';
   const runRef = useRef(runId); runRef.current = runId;
   const currentMode = active?.mode ?? state.mode;
@@ -132,9 +138,9 @@ export default function Pomodoro() {
   useEffect(() => { if (!visible || currentMode !== 'focus') { setHabitPickerOwner(null); setTodoPickerOwner(null); setSourceMenuOwner(null); } }, [visible, currentMode]);
   useEffect(() => { void getPomodoroReminderConfig().then(config => { if (mounted.current) setReminderConfig(config); }).catch(() => { /* Configuration feedback belongs to the statistics reminder card. */ }); }, []);
   useEffect(() => {
-    if (!ready || !valid || operation.current || !active?.running || active.deadline === null || active.deadline > now || announced.current === `${owner}:${active.id}` || (params.start === '1' && !requestApplied.current)) return;
+    if (isWebTool || !ready || !valid || operation.current || !active?.running || active.deadline === null || active.deadline > now || announced.current === `${owner}:${active.id}` || (params.start === '1' && !requestApplied.current)) return;
     announced.current = `${owner}:${active.id}`;
-    void update(previous => advanceTimer(previous, Date.now())).then(next => {
+    void update(previous => previous.active?.id === active.id ? advanceForPage(previous, Date.now()) : previous).then(next => {
       if (ownerRef.current !== owner || !mounted.current) return;
       if (!next) { announced.current = ''; return; }
       setMessage('');
@@ -152,7 +158,7 @@ export default function Pomodoro() {
     setNow(at);
     const id = toolId();
     void update(previous => {
-      let next = advanceTimer(previous, at);
+      let next = advanceForPage(previous, at);
       if (next.active) return params.start === '1' ? resumeTimer(next, at) : next;
       next = { ...next, mode: 'focus', selection: { ...next.selection, ...linked }, settings: Number.isInteger(minutes) && minutes >= 1 && minutes <= 120 ? { ...next.settings, focus: minutes } : next.settings };
       return params.start === '1' ? startTimer(next, at, id, linked) : next;
@@ -233,6 +239,7 @@ export default function Pomodoro() {
     setHabitPickerOwner(null);
   }
   function begin() {
+    requestFocusNotificationPermission();
     if (!ready || active || operation.current || notificationOperation.current) return;
     if (chosen.domainId && !domains) { setMessage('正在读取所属领域，请稍后再开始。'); return; }
     if (currentMode === 'focus' && chosen.taskId && (!todosReady || todoOwner !== owner)) { setMessage('正在读取关联待办，请稍后再开始。'); return; }
@@ -255,6 +262,11 @@ export default function Pomodoro() {
         applyReminderResult(result, id);
       }).catch(error => { if (mounted.current && ownerRef.current === owner && runRef.current === id) setReminderMessage(error instanceof Error ? error.message : '微信提醒暂未开启，计时照常继续。'); }).finally(() => { notificationOperation.current = false; if (mounted.current) setNotificationBusy(false); });
     }
+  }
+  function chooseBreak(mode:'shortBreak'|'longBreak') {
+    if(!completedFocus || busy || notificationOperation.current)return;
+    const id=completedFocus.id,at=Date.now();setNow(at);
+    void update(previous=>startChosenBreak(previous,mode,at,id));
   }
   function togglePause() {
     if (!active || notificationOperation.current) return;
@@ -335,10 +347,11 @@ export default function Pomodoro() {
     {!ready ? <View className='tool-empty'><Text>{status || '正在恢复你的计时…'}</Text><ActionButton className="button-label tool-secondary" onClick={retry}>重新读取</ActionButton></View> : !valid ? <View className='tool-empty'>当前计时数据格式暂不兼容，请到网页查看。原始数据已保留。</View> : <>
         <PageToolbar className='focus-page-toolbar' leading={!!owner && <PageToolbarSummary countLabel={`今日完成 ${toolbarSummary.completedToday}`} recentTitle={toolbarSummary.recentTitle} recentLabel='最近专注' />} manage={<ActionButton appearance='icon' size='compact' disabled={busy || notificationBusy} className='focus-settings-toggle' ariaLabel='调整节奏' onClick={openSettings}><ManageSymbol /></ActionButton>} />
         <CategoryRow className='focus-toolbar' contentClassName='focus-modes' ariaLabel='计时模式'>{timerModes.map(mode => <CategoryButton key={mode.id} disabled={busy || notificationBusy || (!!active && mode.id !== currentMode)} className={'button-label ' + (currentMode === mode.id ? 'is-active' : '')} onClick={() => { if (!active) void update(previous => ({ ...previous, mode: mode.id })); }}>{mode.label}</CategoryButton>)}</CategoryRow>
+        <FocusProgress progress={completedFocus ? 100 : progress} resting={!completedFocus && currentMode !== 'focus'} />
         <View className={`focus-clock-card ${currentMode !== 'focus' ? 'is-break' : ''}`}>
-          <View className='focus-clock-top'><View className='focus-live'><View className={active?.running ? 'focus-live-dot is-running' : 'focus-live-dot'} /><Text>{active?.running ? '正在计时' : active ? '已暂停' : '准备就绪'}</Text></View><View className='focus-rounds'>{Array.from({ length: state.settings.longEvery }, (_, index) => <View key={index} className={index < round - 1 ? 'focus-round is-complete' : index === round - 1 ? 'focus-round is-current' : 'focus-round'} />)}<Text>第 {round} / {state.settings.longEvery} 轮</Text></View></View>
+          <View className='focus-clock-top'><View className='focus-live'><View className={active?.running ? 'focus-live-dot is-running' : 'focus-live-dot'} /><Text>{completedFocus ? '专注已完成' : active?.running ? '正在计时' : active ? '已暂停' : '准备就绪'}</Text></View><View className='focus-rounds'>{Array.from({ length: state.settings.longEvery }, (_, index) => <View key={index} className={index < round - 1 ? 'focus-round is-complete' : index === round - 1 ? 'focus-round is-current' : 'focus-round'} />)}<Text>第 {round} / {state.settings.longEvery} 轮</Text></View></View>
           <View className='focus-domain-row'><DomainChoiceField key={`${owner}:${visible}:${domainOwner}:${!!domains}:${active?.id || 'draft'}`} ariaLabel='选择番茄钟所属领域' domains={domains || []} value={chosenDomainId} optionPrefix='专注领域：' disabled={!visible || !owner || !domains || busy || notificationBusy || hasVolatilePersonalTool('pomodoro', owner)} onChange={selectDomain} /></View>
-          <View className='focus-timer-stage'><TomatoClock progress={progress} resting={currentMode !== 'focus'} time={clockLabel(remaining)} label={`${modeInfo.label}时间`} size={clockSize} onEditTime={!active && !busy && !notificationBusy ? openDuration : undefined} /></View>
+          <View className='focus-timer-stage'><TomatoClock progress={progress} resting={currentMode !== 'focus'} time={completedFocus ? '00:00' : clockLabel(remaining)} label={completedFocus ? '专注已完成' : `${modeInfo.label}时间`} size={clockSize} onEditTime={!completedFocus && !active && !busy && !notificationBusy ? openDuration : undefined} /></View>
           <View className='focus-purpose-slot'>{currentMode === 'focus' && <>
             <View className='focus-purpose'>
               <Input className='focus-purpose-input' ariaLabel='正在做什么' cursorSpacing={80} adjustPosition maxlength={100} value={chosen.title} placeholder='正在做什么？' onFocus={() => setSourceMenuOwner(null)} onInput={event => editSelection(active ? { ...chosen, title: event.detail.value } : { ...chosen, taskId: null, habitId: null, title: event.detail.value })} />
@@ -351,9 +364,9 @@ export default function Pomodoro() {
             </View>
           </>}</View>
           <View className='focus-action-area'>
-          <View className='focus-primary-actions'>
+          {completedFocus ? <View className='focus-completion-actions' role='status'><Text>专注已完成</Text><View><ActionButton appearance='primary' size='large' disabled={busy || notificationBusy} onClick={()=>chooseBreak('shortBreak')}>开始短休息</ActionButton><ActionButton size='large' disabled={busy || notificationBusy} onClick={()=>chooseBreak('longBreak')}>开始长休息</ActionButton></View></View> : <View className='focus-primary-actions'>
             <ActionButton appearance='primary' size='large' width='fill' disabled={busy || notificationBusy} className='button-label focus-start' onClick={active ? togglePause : begin}>{active ? active.running ? '暂停' : '继续' : `开始${modeInfo.label}`}</ActionButton>
-          </View>
+          </View>}
           <View className='focus-end-slot'>{active && !active.running ? <ActionButton size='large' width='fill' disabled={busy || notificationBusy} className='button-label focus-end' onClick={() => { void end(); }}>结束</ActionButton> : <View className='focus-end-space' aria-hidden />}</View>
           </View>
         </View>
@@ -373,7 +386,7 @@ export default function Pomodoro() {
         <WheelPicker label='专注节奏' disabled={busy} onMovingChange={setWheelMoving}
           columns={settingsFields.map(field => ({ label: field.suffix, ariaLabel: field.key === 'longEvery' ? '长休息间隔' : `${field.label}时长`, values: wheelNumbers(1, field.max), value: settingsDraft[field.key] }))}
           onChange={values => { setSettingsDraft(Object.fromEntries(settingsFields.map((field, index) => [field.key, values[index]])) as Record<DurationSetting, string>); setSettingsError(''); }} />
-        <View className='focus-transition-picker'><FilterFieldHeading label='时间结束后' /><SingleChoiceField ariaLabel='时间结束后' options={transitionOptions} value={transitionDraft} onChange={setTransitionDraft} disabled={busy} width='fill' /></View>
+        <View className='focus-transition-picker'><FilterFieldHeading label='时间结束后' />{isWebTool ? <Text className='tool-muted'>专注完成后通知，并选择短休息或长休息</Text> : <SingleChoiceField ariaLabel='时间结束后' options={transitionOptions} value={transitionDraft} onChange={setTransitionDraft} disabled={busy} width='fill' />}</View>
         {!!settingsError && <Text className='focus-settings-error'>{settingsError}</Text>}
       </EditorFieldsLayout></ScrollView>
       <SheetActions className='focus-settings-actions'><ActionButton appearance='primary' disabled={busy || notificationBusy || wheelMoving} loading={busy} className='button-label tool-primary' onClick={() => { void saveSettings(); }}>保存节奏</ActionButton></SheetActions>

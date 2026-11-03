@@ -10,17 +10,18 @@ import type { MemoImage } from '../lib/tool-records';
 import './markdown-note-editor.css';
 import EditorFieldsLayout from './editor-fields-layout';
 
-const renderMarkdown = createMarkdownRenderer(imageUrl);
+const renderMarkdown = createMarkdownRenderer(imageUrl,{attachmentImages:true});
 const notify = (error: unknown) => { void showAppMessage({ title: error instanceof Error ? error.message : '操作失败，请重试', icon: 'none' }); };
 
 /** Shared text/image input; progress uses the plain-text variant without Markdown modes. */
-export default function MarkdownNoteEditor({ value, images: savedImages, onChange, onImagesChange, checkImages, canInsertImage, showImageInsertion = true, disabled, owner, recordId, onBusyChange, maxLength, ariaLabel, placeholder, className = '', inputClassName = '', autoFocus, defaultPreview = false, density = 'regular', format = 'markdown', emptyPreviewPlaceholder = '暂无内容', insertionSignal = 0, minimal = false, onFocus }: {
+export default function MarkdownNoteEditor({ value, images: savedImages, onChange, onImagesChange, checkImages, canInsertImage, showImageInsertion = true, disabled, owner, recordId, onBusyChange, maxLength, ariaLabel, placeholder, className = '', inputClassName = '', autoFocus, defaultPreview = false, density = 'regular', format = 'markdown', emptyPreviewPlaceholder = '暂无内容', insertionSignal = 0, minimal = false, onFocus, preview: controlledPreview, onPreviewChange }: {
   value: string; images?: MemoImage[]; onChange: (value: string) => void; onImagesChange: (images: MemoImage[]) => void;
   checkImages: (images: MemoImage[]) => void; canInsertImage: boolean; disabled: boolean; owner: string; recordId: string;
   onBusyChange?: (busy: boolean) => void; maxLength: number; ariaLabel: string; placeholder: string; className?: string; inputClassName?: string;
+  preview?:boolean;onPreviewChange?:(value:boolean)=>void;
   onFocus?: () => void; emptyPreviewPlaceholder?: string; insertionSignal?: number; minimal?: boolean; autoFocus?: boolean; defaultPreview?: boolean; density?: 'regular' | 'compact'; format?: 'markdown' | 'plain'; showImageInsertion?: boolean;
 }) {
-  const [preview, setPreview] = useState(defaultPreview), [imageBusy, setImageBusy] = useState(false);
+  const [localPreview, setLocalPreview] = useState(defaultPreview), [imageBusy, setImageBusy] = useState(false);
   const [focused, setFocused] = useState(autoFocus);
   useEffect(() => { if (autoFocus !== undefined) setFocused(autoFocus); }, [autoFocus]);
   const mounted = useRef(true), operating = useRef(false);
@@ -31,7 +32,9 @@ export default function MarkdownNoteEditor({ value, images: savedImages, onChang
   current.current = { images, canInsertImage, disabled, onImagesChange, checkImages };
   const busyCallback = useRef(onBusyChange); busyCallback.current = onBusyChange;
   useEffect(() => { mounted.current = true; return () => { mounted.current = false; busyCallback.current?.(false); }; }, []);
-  useEffect(() => { setPreview(defaultPreview); }, [owner, recordId, format, defaultPreview]);
+  useEffect(() => { setLocalPreview(defaultPreview); }, [owner, recordId, format, defaultPreview]);
+  const preview = controlledPreview ?? localPreview;
+  const setPreview = (value:boolean) => { setLocalPreview(value);onPreviewChange?.(value); };
   const showingPreview = format === 'markdown' && preview;
   const markdown = useMemo(() => showingPreview ? renderMarkdown(value) : '', [showingPreview, value]);
   async function insertImage() {
@@ -61,6 +64,6 @@ export default function MarkdownNoteEditor({ value, images: savedImages, onChang
   return <EditorFieldsLayout topSpace={false} className={`markdown-note-editor${density === 'compact' ? ' is-compact' : ''}${format === 'plain' ? ' is-plain' : ''}${minimal ? ' is-minimal' : ''} ${className}`}>
     {showingPreview ? <View className='memo-body-preview' onClick={minimal && !locked ? () => { setPreview(false); setFocused(true); } : undefined}>{value ? <RichText nodes={markdown} selectable /> : !images.length && <Text className='tool-muted'>{emptyPreviewPlaceholder}</Text>}</View> : <Textarea className={`memo-body-input ${inputClassName}`} ariaLabel={ariaLabel} autoHeight={minimal} focus={focused} onFocus={onFocus} onBlur={() => setFocused(false)} disabled={locked} value={value} placeholder={placeholder} maxlength={Math.max(maxLength, value.length)} fixed cursorSpacing={96} adjustPosition onInput={event => onChange(event.detail.value)} showConfirmBar={false} />}
     <View className='memo-editor-toolbar'>{format === 'markdown' && <View className='memo-editor-modes'><ChoiceButton className={!preview ? 'is-active' : ''} aria-pressed={!preview} disabled={locked} onClick={() => setPreview(false)}>书写</ChoiceButton><ChoiceButton className={preview ? 'is-active' : ''} aria-pressed={preview} disabled={locked} onClick={() => setPreview(true)}>预览</ChoiceButton></View>}<Text className='memo-body-count'>{value.length} / {maxLength}{images.length ? ` · ${images.length} 张图片` : ''}</Text>{showImageInsertion && <ActionButton className='memo-insert-image' ariaLabel='插入图片' disabled={locked || images.length >= MAX_MEMO_IMAGES || !canInsertImage} loading={imageBusy} onClick={() => { void insertImage(); }}><View className='memo-image-mark' aria-hidden />{imageBusy ? '处理中' : '图片'}</ActionButton>}</View>
-    {!!images.length && <View className={`memo-images${showingPreview ? ' is-preview' : ''}`}>{images.map((image, index) => <View className='memo-image' key={image.id}><Image src={image.dataUrl} mode={showingPreview ? 'widthFix' : 'aspectFill'} ariaLabel={`${ariaLabel}图片 ${index + 1}`} onClick={() => { void previewMemoImages(images, index).catch(notify); }} />{!showingPreview && <ActionButton appearance='icon' context='overlay' className='memo-image-remove' ariaLabel={`移除图片 ${index + 1}`} disabled={locked} onClick={() => onImagesChange(images.filter(item => item.id !== image.id))}>×</ActionButton>}</View>)}</View>}
+    {!!images.length && <View className={`memo-images${showingPreview ? ' is-preview' : ''}`}>{images.map((image, index) => <View className='memo-image' key={image.id}><Image src={image.dataUrl} mode={showingPreview ? 'aspectFit' : 'aspectFill'} ariaLabel={`${ariaLabel}图片 ${index + 1}`} onClick={() => { void previewMemoImages(images, index).catch(notify); }} />{!showingPreview && <ActionButton appearance='icon' context='overlay' className='memo-image-remove' ariaLabel={`移除图片 ${index + 1}`} disabled={locked} onClick={() => onImagesChange(images.filter(item => item.id !== image.id))}>×</ActionButton>}</View>)}</View>}
   </EditorFieldsLayout>;
 }

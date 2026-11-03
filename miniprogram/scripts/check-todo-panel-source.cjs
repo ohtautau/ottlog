@@ -19,6 +19,7 @@ const b = { ...createTodo('delegate', now), id:'b', title:'娱乐任务', catego
 const state = { version:1, tasks:[a,b], categories:[{id:'legacy',name:'历史分类',color:'#fff'}, {id:'leisure',name:'娱乐',iconId:'game',color:'#b9dbca'}], tagStyles:{娱乐:{iconId:'game'}} };
 const original = JSON.stringify(state);
 assert.equal(records.isTodoState(state), true);
+assert.deepEqual(category.todoCategoryChoices(records.initialTodoState).map(item=>item.name),['收集箱','娱乐','购物']);
 assert.equal(category.todoCategory(state,a).name, '历史分类');
 assert.equal(category.todoCategory(state,{categoryId:'missing'}).id, '');
 assert.equal(panel.todoMatchesPanel(a,{kind:'category',categoryId:'leisure'}),false,'Ordinary tags never assign categories');
