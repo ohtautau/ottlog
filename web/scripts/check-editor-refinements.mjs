@@ -8,7 +8,7 @@ if(!/^http:\/\/(127\.0\.0\.1|localhost):\d+$/.test(origin)||['3000','5229'].incl
 const out=path.resolve('test-results/editor-refinements');await fs.mkdir(out,{recursive:true});
 const browser=await chromium.launch({headless:true}),report=[];
 try {
- for(const viewport of [{width:1440,height:900},{width:390,height:844},{width:375,height:667}]) {
+ for(const viewport of [{width:1440,height:900},{width:390,height:844},{width:375,height:667}].filter(v=>!process.env.OTTLOG_REFINEMENT_WIDTH||v.width===Number(process.env.OTTLOG_REFINEMENT_WIDTH))) {
   const stamp=new Date().toISOString(),states={
    todos:{version:1,tasks:[],categories:[{id:'fun',name:'娱乐',iconId:'game',color:'#b9dbca'}],sort:'created'},
    memos:{version:1,notes:[1,2,3].map(i=>({id:`memo-${i}`,title:`便签${i}`,body:'**正文**',color:'blue',iconId:'game',tags:[],pinned:false,createdAt:stamp,updatedAt:stamp}))},
@@ -62,7 +62,11 @@ try {
   await page.goto(origin+'/domains/uncategorized');await expect(page.locator('.domain-card')).toBeVisible();
   if(viewport.width>=900){const goals=await page.locator('.domain-goal-card').all();const first=await goals[0].boundingBox(),second=await goals[1].boundingBox(),habits=page.locator('.domain-habit-scroll');expect(first.y).toBeCloseTo(second.y,0);expect(second.x).toBeGreaterThan(first.x);expect((await habits.boundingBox()).y).toBeGreaterThanOrEqual(first.y+first.height);const cards=await habits.locator('.daily-suggestion').evaluateAll(nodes=>nodes.map(n=>n.getBoundingClientRect().y));expect(Math.max(...cards)-Math.min(...cards)).toBeLessThan(1);expect(await habits.evaluate(n=>n.scrollWidth>n.clientWidth)).toBe(true);await habits.evaluate(n=>{n.scrollLeft=n.scrollWidth;});await expect(habits.locator('.daily-suggestion').last()).toBeInViewport();}
   await page.screenshot({path:path.join(out,`domain-detail-row-${viewport.width}.png`)});
-  await page.goto(origin+'/daily');const free=page.locator('.daily-time-period-section[data-time-period=free]');await expect(free.locator('.daily-suggestion')).toHaveCount(12);const a=await free.boundingBox(),g=await free.locator('.habit-card-grid').boundingBox();expect(g.x-a.x).toBeGreaterThanOrEqual(15);expect(a.x+a.width-g.x-g.width).toBeCloseTo(g.x-a.x,0);const first=await free.locator('.daily-suggestion').first().boundingBox();await free.getByRole('button',{name:'网页习惯0 今天打卡',exact:true}).click();await expect(button('关闭打卡留言')).toBeVisible();await button('关闭打卡留言').click();await expect(free.locator('.daily-suggestion')).toHaveCount(12);const after=await free.locator('.daily-suggestion').first().boundingBox();expect(after.y).toBeCloseTo(first.y,0);
+  await page.goto(origin+'/daily');const free=page.locator('.daily-time-period-section[data-time-period=free]');await expect(free.locator('.daily-suggestion')).toHaveCount(12);const a=await free.boundingBox(),g=await free.locator('.habit-card-grid').boundingBox();expect(g.x-a.x).toBeGreaterThanOrEqual(15);expect(a.x+a.width-g.x-g.width).toBeCloseTo(g.x-a.x,0);
+  const first=await free.locator('.daily-suggestion').first().boundingBox(),toggle=await free.getByRole('button',{name:'网页习惯0 今天打卡',exact:true}).boundingBox(),list=await free.locator('.habit-list-section-scroll').boundingBox();
+  // Click its actually visible part; locator.click would first scroll the whole
+  // clipped control into view on a short screen, before the action being tested.
+  await page.mouse.click(toggle.x+toggle.width/2,(Math.max(toggle.y,list.y)+Math.min(toggle.y+toggle.height,list.y+list.height))/2);await expect(button('关闭打卡留言')).toBeVisible();await button('关闭打卡留言').click();await expect(free.locator('.daily-suggestion')).toHaveCount(12);const after=await free.locator('.daily-suggestion').first().boundingBox();expect(after.y).toBeCloseTo(first.y,0);
   await page.goto(origin+'/todos');await expect(page.locator('.todo-quadrant-add')).toHaveCount(4);await expect(page.locator('.todo-filter-toggle,.todo-sort-toggle,.todo-quadrant .todo-panel-source-trigger')).toHaveCount(0);
   await button('待办更多操作').click();await button('编辑').click();await button('更换无优先级区域显示').click();await button('显示分类：收集箱').click();await button('关闭区域显示选择').click();await button('关闭象限显示编辑').click();
   const zone=page.locator('#todo-zone-later');
