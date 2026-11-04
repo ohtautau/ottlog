@@ -1,3 +1,5 @@
+import { useMessageNotice } from './message-notice';
+import { todoReminderValidation } from '../lib/todo-reminder-time';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { ScrollView, Text, View } from '@tarojs/components';
 import ActionMenu from './action-menu';
@@ -42,7 +44,7 @@ export default function TodoScheduleSheet({value,today,busy,onChange,onClose,sav
   function publish(){
     if(blocked)return false;
     try{const next=schedule(),encoded=JSON.stringify(next);if(encoded!==published.current){
-      if(next.reminderAt&&next.reminderAt!==initial.reminderAt&&new Date(next.reminderAt).getTime()<=Date.now())throw new Error('请选择未来的提醒时间');
+      const validation=todoReminderValidation(next,initial);if(validation)throw new Error(validation);
       onChange(next);published.current=encoded;
     }setError('');return true;}catch(reason){setError(reason instanceof Error?reason.message:'请检查日期设置');return false;}
   }
@@ -89,6 +91,7 @@ export default function TodoScheduleSheet({value,today,busy,onChange,onClose,sav
   const marks=useMemo(()=>scheduleCalendarMarks({dueDate:hasTime?date||today:date,dueTime:hasTime?`${hour}:${minute}`:undefined,reminderAt,
     recurrence:repeat?{...repeat,interval:repeat.interval,...(date!==initial.dueDate?{anchorDay:undefined}:{})}:undefined},month),[date,hasTime,hour,minute,reminderAt,repeat,month,today,initial.dueDate]);
   const activeHour=mode==='due'?hour:reminderHour, activeMinute=mode==='due'?minute:reminderMinute, activeTime=mode==='due'?hasTime:hasReminder;
+  useMessageNotice(error||saveError);
   return <View className='todo-schedule-overlay'>
     <View className='todo-schedule-backdrop' catchMove onClick={requestClose}/>
     <View className={`todo-schedule-sheet is-overview has-inline-time${moving&&!busy?' is-wheel-moving':''}`} role='dialog' ariaLabel='日期、提醒和重复'>
@@ -104,7 +107,7 @@ export default function TodoScheduleSheet({value,today,busy,onChange,onClose,sav
 
         </View>
       </View></ScrollView>
-      {(error||saveError)&&<View className='todo-schedule-error' role='alert'><Text>{error||saveError}</Text>{saveError&&onRetry&&<ActionButton appearance='quiet' disabled={blocked} onClick={onRetry}>重试</ActionButton>}</View>}
+      {saveError&&onRetry&&<View className='todo-schedule-error'><ActionButton appearance='quiet' disabled={blocked} onClick={onRetry}>重试</ActionButton></View>}
     </View>
   </View>;
 }

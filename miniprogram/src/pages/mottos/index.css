@@ -33,7 +33,3 @@
 
 /* Body owns its whitespace; the shared compact frame owns the 24px edges. */
 .document-editor-sheet .compact-motto-input { min-height:180PX!important;padding:16PX 0 24PX!important;font-size:18PX!important;line-height:1.85!important;font-family:var(--app-font-family); }
-.document-editor-sheet .mottos-editor-meta { padding:8PX 0;color:#8ca5b0;font-size:12PX; }
-.document-editor-sheet .motto-editor-heading { width:100%;padding-left:0;padding-right:0; }
-.document-editor-sheet .motto-editor-heading .editor-heading-actions { right:0; }
-.document-editor-sheet .motto-editor-heading .editor-heading-title { font-size:var(--compact-editor-title-size,22PX); }

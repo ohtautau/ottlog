@@ -1,3 +1,4 @@
+import { MEMO_TITLE_PLACEHOLDER } from './editor-copy';
 import SelectedTagList from './selected-tag-list';
 import EditorTagField from './editor-tag-field';
 import {View} from '@tarojs/components';
@@ -42,7 +43,7 @@ export default function MemoEditorFields({ draft, onChange, tagsText, onTagsChan
   return <>
     {actions && <View className='entry-pane-heading'><View/><View className='entry-pane-actions'><PrioritySelect className='memo-priority-field' ariaLabel={`选择便签优先度：${habitPriorityLabels[priority]}`} triggerClassName='memo-priority-trigger' open={priorityOpen} onOpenChange={setPriorityOpen} disabled={locked} options={habitPriorities.map(value => ({ value, label: habitPriorityLabels[value], ariaLabel: `优先度${habitPriorityLabels[value]}`, color: memoPriorityColor(value), outlined: value === 'none' }))} value={priority} onChange={value => change({ priority: value })} />{actions}</View></View>}
     <MemoFieldsLayout title={<>
-        <EntityTitleInput className='memo-title-input' ariaLabel='便签标题' focus={titleFocused} onBlur={() => setTitleFocused(false)} disabled={locked} value={draft.title} placeholder='准备记下什么？' maxlength={Math.max(80, draft.title.length)} cursorSpacing={96} adjustPosition onInput={event => change({ title: event.detail.value })} />
+        <EntityTitleInput className='memo-title-input' ariaLabel='便签标题' focus={titleFocused} onBlur={() => setTitleFocused(false)} disabled={locked} value={draft.title} placeholder={MEMO_TITLE_PLACEHOLDER} maxlength={Math.max(80, draft.title.length)} cursorSpacing={96} adjustPosition onInput={event => change({ title: event.detail.value })} />
         {!actions && <PrioritySelect className='memo-priority-field' ariaLabel={`选择便签优先度：${habitPriorityLabels[priority]}`} triggerClassName='memo-priority-trigger' open={priorityOpen} onOpenChange={setPriorityOpen} disabled={locked} options={habitPriorities.map(value => ({ value, label: habitPriorityLabels[value], ariaLabel: `优先度${habitPriorityLabels[value]}`, color: memoPriorityColor(value), outlined: value === 'none' }))} value={priority} onChange={value => change({ priority: value })} />}
       </>} body={<MarkdownNoteEditor value={draft.body} images={draft.images} onChange={body => change({ body })} onImagesChange={images => change({ images })}
         owner={owner} recordId={draft.id} disabled={locked} maxLength={6000} ariaLabel='便签内容' placeholder={minimal ? '备注' : '写下内容…'} minimal={minimal} preview={preview} onPreviewChange={onPreviewChange} emptyPreviewPlaceholder='备注' insertionSignal={insertionSignal} showImageInsertion={!minimal}

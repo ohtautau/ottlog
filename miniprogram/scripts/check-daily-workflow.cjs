@@ -413,7 +413,7 @@ module.exports = async function checkDailyWorkflow({ page, origin, out, width, e
   await page.getByRole('button', { name: '关闭打卡留言', exact: true }).click();
   await closePrompt().getByRole('button', { name: '保存', exact: true }).click();
   await expect(page.locator('.daily-reflection-sheet')).toHaveCount(0);
-  await expect(page.locator('.app-message')).toHaveCount(0);
+  await expect(page.locator('.operation-toast')).toHaveCount(0);
   await expect(core.locator('.daily-page-toolbar .page-toolbar-summary-recent')).toHaveText(nearTitle);
   await expect(core.locator('.daily-page-toolbar .page-toolbar-summary-count')).toHaveText('今日完成 1');
   await expect(nearCard()).toHaveCount(0);

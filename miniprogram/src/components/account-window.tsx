@@ -1,3 +1,4 @@
+import { useMessageNotice } from './message-notice';
 import { useEffect, useRef, useState } from 'react';
 import Taro from '@tarojs/taro';
 import { ScrollView, Text, View } from '@tarojs/components';
@@ -60,6 +61,7 @@ export default function AccountWindow({ onClose }: { onClose: () => void }) {
     finally { lock.current = false; if (active.current) setBusy(false); }
   }
   const canSubmit = !!session && !loading && (session.authenticated || !!userName.trim() && (register ? password.length >= 12 : !!password));
+  useMessageNotice(error, !busy);
   return <View className='account-window-overlay'>
     <SheetBackdrop onClose={close} disabled={busy} />
     <View className='account-window floating-window' role='dialog' ariaLabel='账号'>
@@ -76,7 +78,7 @@ export default function AccountWindow({ onClose }: { onClose: () => void }) {
             <View><Text className='account-window-label'>密码</Text><SingleLineInput align='left' ariaLabel='账号密码' placeholder={register ? '至少 12 位密码' : '输入密码'} password maxlength={128} value={password} disabled={busy} confirmType='done' onInput={event => setPassword(event.detail.value)} onConfirm={() => { void submit(); }} /></View>
             <LoginPreference checked={rememberMe} onChange={setRememberMe} disabled={busy} />
           </> : <ActionButton appearance='secondary' disabled={busy} onClick={() => { void load(); }}>重新连接</ActionButton>}
-          {!!error && <View className='account-window-error' role='alert'><Text>{error}</Text></View>}
+
         </EditorFieldsLayout>
       </ScrollView>
       <SheetActions><ActionButton appearance={session?.authenticated ? 'secondary' : 'primary'} size='large' width='fill' loading={busy} disabled={busy || !canSubmit} onClick={() => { void submit(); }}>{session?.authenticated ? '退出登录' : register ? '注册并登录' : '登录并同步'}</ActionButton></SheetActions>

@@ -125,7 +125,7 @@ try {
     await page.evaluate(() => window.dispatchEvent(new Event('focus')));
     await expect(page.locator('#todo-zone-do .todo-task')).toHaveCount(0);
     await panel().getByRole('textbox', { name: '任务名称', exact: true }).fill('不得恢复已删除任务');
-    await expect(panel().getByRole('alert')).toContainText('已删除'); expect(state.tasks.some(item => item.id === 'detail-existing')).toBe(false);
+    await expect(page.locator('.operation-toast[role=alert]')).toContainText('已删除'); expect(state.tasks.some(item => item.id === 'detail-existing')).toBe(false);
     await page.screenshot({ path: path.join(out, `deleted-guard-${viewport.width}.png`) });
     const overflow = await page.evaluate(() => document.documentElement.scrollWidth - innerWidth); expect(overflow).toBeLessThanOrEqual(1); expect(errors).toEqual([]);
     await page.goto(origin + '/today'); await button('创建记录').click();

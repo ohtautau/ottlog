@@ -1,3 +1,4 @@
+import { useMessageNotice } from './message-notice';
 import { useEffect, useRef, useState } from 'react';
 import Taro from '@tarojs/taro';
 import { ScrollView, Text, View } from '@tarojs/components';
@@ -65,6 +66,8 @@ export default function HomeShortcutEditor({ value, initialKey, replacementKey, 
     document.addEventListener('keydown', dismiss);
     return () => document.removeEventListener('keydown', dismiss);
   }, [iconOpen, closeGuard.requestClose]);
+  useMessageNotice(saveError);
+
   return <View className='home-editor-overlay'>
     <View className='home-editor-backdrop' catchMove onClick={close} />
     <View className={'home-editor-sheet' + (initialKey ? ' is-single' : ' is-selector')} role='dialog' ariaLabel={title}>
@@ -85,7 +88,7 @@ export default function HomeShortcutEditor({ value, initialKey, replacementKey, 
               <EntityTitleInput ariaLabel={'快捷方式名称：' + original!.name} value={item.name} maxlength={8} placeholder={original!.name} cursorSpacing={96} adjustPosition disabled={iconOpen || !!saveError} onInput={event => patch(item.key, { name: event.detail.value })} />
             </EntityTitleRow>
             <View className='home-editor-color-section'><ColorChoiceRow className='home-editor-colors' buttonClassName='home-editor-color' dotClassName='home-editor-color-dot' disabled={!!saveError} options={shortcutColors.map(color => ({ key: color.key, label: color.name, ariaLabel: '使用' + color.name + '色', dotClassName: 'shortcut-color-' + color.key }))} value={item.color} onChange={color => patch(item.key, { color })} /></View>
-            {!!saveError && <View className='home-editor-save-error' role='alert'><Text>{saveError}</Text></View>}
+
           </EditorFieldsLayout> : <View className='home-editor-removed'><Text>已移除快捷方式</Text><ActionButton appearance='quiet' size='compact' width='fill' onClick={() => toggle(initialKey)}>恢复快捷方式</ActionButton></View>)}
         </View>
       </ScrollView>

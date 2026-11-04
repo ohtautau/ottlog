@@ -59,7 +59,7 @@
     height: clamp(88px, calc(var(--app-page-height) * .18), 120px);
     min-height: 0;
     margin: 0;
-    padding: 10px 14px;
+    padding: 10px 16px;
   }
   .tool-app-root .domains-list .domain-entry-scroll {
     flex: 1;
@@ -298,4 +298,7 @@
  .tool-app-root .domain-detail-page .domain-habit-scroll,.tool-app-root .domain-detail-page .domain-habit-scroll.is-single-row,.tool-app-root .domain-detail-page .domain-habit-notice { grid-column:1;grid-row:4;overflow-x:auto!important;overflow-y:hidden!important; }
  .tool-app-root .domain-detail-page .domain-habit-grid { width:max-content;min-width:100%;grid-template-columns:none;grid-auto-flow:column;grid-auto-columns:var(--web-habit-card-min-width,224px);grid-template-rows:var(--habit-card-min-height);padding-bottom:var(--card-group-inset)!important; }
  .tool-app-root .domain-detail-page .domain-records { grid-column:1;grid-row:5; }
+}
+@media(min-width:900px) {
+  .tool-app-root .daily-core .daily-habit-sections.is-simple-grid { grid-template-columns:minmax(0,1fr); }
 }

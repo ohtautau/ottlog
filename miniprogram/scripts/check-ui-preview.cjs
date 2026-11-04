@@ -612,7 +612,7 @@ async function main() {
       if (routes.includes('memos')) {
         await page.evaluate(() => { location.hash = '#/pages/memos/index'; });
         await page.getByRole('button', { name: '创建便签', exact: true }).click();
-        await page.getByPlaceholder('准备记下什么？').fill('留给明天的灵感');
+        await page.getByPlaceholder('准备记什么？').fill('留给明天的灵感');
         await page.locator('.memo-body-input').fill('**认真生活**，也记得休息。');
         await page.getByRole('button', { name: '预览', exact: true }).click();
         await expect(page.locator('.memo-body-preview strong')).toHaveText('认真生活');

@@ -1,3 +1,4 @@
+import { useMessageNotice } from './message-notice';
 import {todoPanelSourceKey} from '../lib/todo-panel-source';
 import CheckSymbol from './check-symbol';
 import { useEffect, useRef, useState, type ReactNode } from 'react';
@@ -49,6 +50,7 @@ export default function TodoPanelPicker({ categories, value, onChange, disabled 
    <View {...sorter.bind(index)} className='handle-sort-grip' data-sort-index={index}><ActionButton appearance='icon' ariaLabel={`拖动排序：${p.text}（上下方向键调整）`} disabled={busy||ghost} onClick={event=>event.stopPropagation()}><View className='todo-queue-grip-symbol' aria-hidden><View/><View/><View/></View></ActionButton></View>
   </View>;
  };
+  useMessageNotice(error, !busy);
  return <ChoicePopover ariaLabel={ariaLabel} open={open} onOpenChange={next=>{if(!busy){sorter.cancel();setOpen(next);setAdding(false);setError('');retry.current=null;}}} disabled={disabled}
   trigger={trigger||<MoreSymbol/>} triggerAppearance={trigger?'quiet':'icon'} triggerSize='compact' triggerIconOnly={!trigger} showIndicator={!!trigger}
   triggerClassName='todo-panel-source-trigger' layerClassName='todo-panel-source-layer' panelClassName='todo-panel-source-panel' placement='anchor' align='start' preferredSide='below' panelWidth={400} maxHeightRatio={.8} bodySpacing='none' bodyScroll={queueMode?{id:sorter.id,top:sorter.scrollTop,onScroll:sorter.onScroll}:undefined} contentKey={`${JSON.stringify(queue)}:${choices.length}:${error}`}
@@ -60,7 +62,7 @@ export default function TodoPanelPicker({ categories, value, onChange, disabled 
      <View className='entity-choice-body'><View className='entity-choice-options'>{all.map(source=>{const key=todoPanelSourceKey(source),included=selectedKeys.has(key),p=presentation(source);return <ActionButton key={key} appearance='quiet' className={`entity-choice-option${included?' is-selected':''}`} ariaLabel={`${included?'移出':'加入'}显示队列：${p.text}`} aria-pressed={included} disabled={busy||included&&queue!.length===1} onClick={()=>{const next=included?queue!.filter(item=>todoPanelSourceKey(item)!==key):[...queue!,source];void save(()=>onQueueChange!(next));}}>{p.icon}<Text className='entity-choice-label'>{p.text}</Text></ActionButton>;})}</View></View>
     </ChoicePopover>
    </View>:<View className='entity-choice-options'>{all.map(source=>{const key=todoPanelSourceKey(source),selected=key===todoPanelSourceKey(value),p=presentation(source);return <View key={key} className='entity-choice-row'><ActionButton appearance='quiet' className={`entity-choice-option${selected?' is-selected':''}`} ariaLabel={source.kind==='quadrant'?`显示象限：${p.text}`:`显示分类：${p.text}`} aria-pressed={selected} disabled={busy} onClick={()=>{void save(()=>onChange(source),true);}}>{p.icon}<Text className='entity-choice-label'>{p.text}</Text></ActionButton><View className='entity-choice-selection'>{selected&&<CheckSymbol/>}</View></View>;})}</View>}
-   {!!error&&<View className='todo-panel-source-error' role='alert'><Text>{error}</Text><ActionButton appearance='quiet' disabled={busy} ariaLabel='重试保存显示队列' onClick={()=>{void retry.current?.();}}>重试</ActionButton></View>}
+   {!!error&&<View className='todo-panel-source-error'><ActionButton appearance='quiet' disabled={busy} ariaLabel='重试保存显示队列' onClick={()=>{void retry.current?.();}}>重试</ActionButton></View>}
   </View>
   {sorter.drag?.active&&sorter.drag.rect&&queue&&<View className='todo-queue-ghost' style={{position:'fixed',left:`${sorter.drag.rect.left}px`,top:`${sorter.drag.point.clientY-sorter.drag.start.clientY+sorter.drag.rect.top}px`,width:`${sorter.drag.rect.right-sorter.drag.rect.left}px`}}>{row(queue[sorter.drag.index],sorter.drag.index,true)}</View>}
  </ChoicePopover>;

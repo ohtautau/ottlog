@@ -1,5 +1,6 @@
-.action-menu-option { display:flex;align-items:center;gap:10PX;width:100%;white-space:nowrap; }
-.action-menu-option > text { flex:1; }
+.action-menu-option { display:flex;align-items:center;gap:10PX;width:100%;white-space:nowrap;text-align:left;justify-content:flex-start; }
+.action-menu-option > :last-child { flex:none;text-align:left; }
+.action-menu-option > :first-child { flex:0 0 20PX;width:20PX;height:20PX; }
 .action-menu-option > view { flex:none;width:20PX;height:20PX; }
 .action-menu-symbol { position:relative;display:block;width:20PX;height:20PX;box-sizing:border-box; }
 .action-menu-symbol.is-focus { border:2PX solid currentColor;border-radius:50%; }

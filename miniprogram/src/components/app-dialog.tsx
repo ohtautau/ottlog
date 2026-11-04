@@ -8,6 +8,9 @@ import SheetActions from './sheet-actions';
 import SheetBackdrop from './sheet-backdrop';
 import { registerAppDialogHost, type AppDialogSnapshot } from '../lib/app-dialog';
 import './app-dialog.css';
+import OperationToast from './operation-toast';
+import { useMessageNotice } from './message-notice';
+import { hasAppOperation, subscribeAppMessages, clearAppMessages } from '../lib/app-dialog';
 
 let nextDialog = 0;
 const openDialogs: number[] = [];
@@ -50,12 +53,13 @@ export default function AppDialog({ open = true, title, ariaLabel, closeLabel = 
     Taro.onWindowResize?.(measure);
     return () => { active = false; clearTimeout(timer); Taro.offWindowResize?.(measure); };
   }, [open, id, title, children, error, actions]);
+  useMessageNotice(error, open);
   if (!open) return null;
   return <View id={`app-dialog-${id}`} className='app-dialog-layer' catchMove>
     <SheetBackdrop disabled={busy} onClose={onClose} />
     <View className={`app-dialog-panel floating-window ${panelClassName}`} role='dialog' aria-modal='true' ariaLabel={ariaLabel || title} onClick={event => event.stopPropagation()}>
       <EditorHeading variant='prompt' title={title} actions={<ActionButton appearance='icon' size='compact' ariaLabel={closeLabel} disabled={busy} onClick={onClose}>×</ActionButton>} />
-      {(children != null || error) && <ScrollView scrollY enhanced bounces={false} showScrollbar={false} className='app-dialog-scroll' style={bodyHeight == null ? undefined : { height: `${bodyHeight}px` }}><View className='app-dialog-body'>{children}{!!error && <View className='app-dialog-error' role='alert'>{trimTextEnd(error)}</View>}</View></ScrollView>}
+      {children != null && <ScrollView scrollY enhanced bounces={false} showScrollbar={false} className='app-dialog-scroll' style={bodyHeight == null ? undefined : { height: `${bodyHeight}px` }}><View className='app-dialog-body'>{children}</View></ScrollView>}
       <SheetActions>{actions}</SheetActions>
     </View>
   </View>;
@@ -67,10 +71,13 @@ export function AppDialogHost() {
   useEffect(() => {
     const host = registerAppDialogHost(Taro.getCurrentInstance().router?.path || '', setState);
     registration.current = host;
-    return () => { registration.current = null; host.dispose(); };
+    Taro.eventCenter.on('ottlog-session', clearAppMessages);
+    return () => { registration.current = null; Taro.eventCenter.off('ottlog-session', clearAppMessages); host.dispose(); };
   }, []);
   useDidShow(() => registration.current?.activate());
   useDidHide(() => registration.current?.hide());
+  const [, refresh] = useState(0);
+  useEffect(() => subscribeAppMessages(() => refresh(value => value + 1)), []);
   const request = state.confirmation;
   const answer = (confirm: boolean) => { if (request) registration.current?.answer(request.id, confirm); };
   return <>
@@ -78,6 +85,6 @@ export function AppDialogHost() {
       {request.options.cancelText === '不保存' && <ActionButton size='large' width='fill' onClick={() => answer(false)}>不保存</ActionButton>}
       <ActionButton appearance={request.options.intent === 'danger' ? 'danger' : 'primary'} size='large' width='fill' onClick={() => answer(true)}>{request.options.confirmText || '确认'}</ActionButton>
     </>}>{request.options.content && <Text>{trimTextEnd(request.options.content)}</Text>}</AppDialog>}
-    {state.message && <View className='app-message' role='status' aria-live='polite'><Text>{trimTextEnd(state.message.options.title)}</Text></View>}
+    {state.message && !hasAppOperation() && <OperationToast notification message={trimTextEnd(state.message.options.title)} kind={state.message.options.kind} />}
   </>;
 }

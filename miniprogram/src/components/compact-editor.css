@@ -16,3 +16,12 @@ page { --compact-editor-inset:24PX;--compact-editor-title-size:22PX;--compact-ed
 .entry-pane-heading > button { margin:0; }
 .entry-pane-actions { display:flex;align-items:center;gap:8PX;flex:none; }
 .entry-pane-actions > button { margin:0; }
+
+/* The frame owns title/body/footer edges; embedded headings add no second inset. */
+.document-editor-sheet.is-compact-autosave .document-autosave-heading.has-title { display:block;min-height:0;padding-top:0; }
+.document-editor-sheet.is-compact-autosave .document-autosave-heading > .editor-heading { width:100%;box-sizing:border-box;padding-left:0;padding-right:0; }
+.document-editor-sheet.is-compact-autosave .document-autosave-heading .editor-heading-actions { right:0; }
+.document-editor-sheet.is-compact-autosave .document-autosave-heading .editor-heading-title { font-size:var(--compact-editor-title-size); }
+.entry-composer.is-autosave { box-sizing:border-box;border:0;padding:0; }
+.entry-composer.is-autosave > .entry-type-heading { box-sizing:border-box;width:100%;flex:none;margin:0;padding:16PX var(--compact-editor-inset) 0;border:0; }
+.entry-composer.is-autosave > .entry-type-heading .entry-modes { box-sizing:border-box; }

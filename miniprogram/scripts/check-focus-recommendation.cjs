@@ -27,3 +27,12 @@ console.log('PASS focus recommendation: completed counts, intervals, explicit ac
 const legacySessions=Array.from({length:4},(_,i)=>({...initialPomodoroState.selection,id:`legacy-${i}`,mode:'focus',durationSeconds:60,plannedSeconds:60,completed:true,startedAt:new Date(now-i*60000).toISOString(),endedAt:new Date(now-i*60000+60000).toISOString()}));
 const old=normalizePomodoroState({...initialPomodoroState,completedFocusCount:undefined,sessions:legacySessions});assert.equal(old.completedFocusCount,4);assert.equal(recommend(old.completedFocusCount,4),'longBreak');
 const retained=normalizePomodoroState({...old,completedFocusCount:1008});assert.equal(recommend(retained.completedFocusCount,4),'longBreak');assert.equal(retained.sessions.length,4);
+
+const suggestions=load('focus-activities');
+assert.equal(suggestions.focusActivities.length,11);
+assert.equal(suggestions.claimFocusSuggestions('owner-a','completion-1'),true);
+assert.equal(suggestions.claimFocusSuggestions('owner-a','completion-1'),false);
+assert.equal(suggestions.claimFocusSuggestions('owner-a','completion-2'),true);
+assert.equal(suggestions.claimFocusSuggestions('owner-b','completion-1'),true);
+assert.equal(suggestions.claimFocusSuggestions('owner-b',''),false);
+console.log('PASS suggestion UI completion/owner isolation, no storage');

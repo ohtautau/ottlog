@@ -1,3 +1,4 @@
+import { useMessageNotice } from './message-notice';
 import { trimTextEnd } from '../lib/text-whitespace';
 import SectionTitle from './section-title';
 import { useEffect, useMemo, useState, type ReactNode } from 'react';
@@ -86,6 +87,8 @@ export default function HabitCalendar({ state, habitId, now, layout = 'page', de
     {calendar.logs.length ? calendar.logs.slice(0, logLimit).map(entry => <View key={entry.day} className='habit-calendar-log-row'><View className='habit-calendar-log-mark'><View className='daily-small-check' /></View><View className='habit-calendar-log-copy'><View><Text>{Number(entry.day.slice(5, 7))}月{Number(entry.day.slice(8))}日</Text><Text>{weekday(entry.day)}</Text></View><Text className='habit-calendar-log-text'>{trimTextEnd(entry.text)}</Text></View></View>) : <Text className='habit-calendar-log-empty'>这个月还没有打卡留言</Text>}
     {calendar.logs.length > logLimit && <ActionButton className='habit-calendar-log-more' size='compact' width='fill' onClick={() => setLogLimit(previous => previous + 10)}>更多</ActionButton>}
   </>;
+  useMessageNotice(error);
+
   return <View className={`habit-calendar${layout === 'detail' ? ' is-detail' : ''}${interactive ? ' is-interactive' : ''}`}>
     <View className='habit-calendar-stats'>
       <View><Text className='habit-calendar-stat-number'>{calendar.completed}<Text>天</Text></Text><Text className='habit-calendar-stat-label'>月打卡</Text></View>
@@ -104,7 +107,7 @@ export default function HabitCalendar({ state, habitId, now, layout = 'page', de
         return interactive ? <Button key={day.day} className={className} ariaLabel={ariaLabel} aria-pressed={day.completed} disabled={disabled || !enabled || !habitCalendarDayEditable(day.day, now)} hoverClass='habit-calendar-day-pressed' onClick={() => onDayToggle?.(day.day)} onLongPress={() => { if (!disabled) showDate(day.day); }}>{content}</Button> : <View key={day.day} className={className} ariaLabel={ariaLabel} onLongPress={() => showDate(day.day)}>{content}</View>;
       })}</View>
     </View>
-    {error && <View className='habit-calendar-error' role='alert'><Text>{error}</Text></View>}
+
     <View className='habit-calendar-log'><View className='habit-calendar-log-heading'><SectionTitle inRow>月打卡日志</SectionTitle><Text className='habit-calendar-log-count'>{calendar.logs.length} 条</Text>{layout === 'detail' && detailAction}</View>
       {layout === 'detail' ? <ScrollView key={`logs:${habitId}:${month}`} className='habit-calendar-log-scroll' scrollY enhanced bounces={false} showScrollbar={false}>{logContent}</ScrollView> : logContent}
     </View>

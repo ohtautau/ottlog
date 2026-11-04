@@ -26,7 +26,7 @@ try {
   await app.getByLabel('任务名称').fill('本机失败重试同一任务');
   await app.evaluate(() => { window.savedSetItem = Storage.prototype.setItem; Storage.prototype.setItem = function(key, value) { if (key === 'ottlog-tool-v1:guest:todos') throw new Error('test storage quota'); return window.savedSetItem.call(this, key, value); }; });
   await button('保存', app.locator('.todo-sheet')).click();
-  await expect(app.locator('.app-message')).toContainText('本机存储不可用'); await expect(app.locator('.todo-sheet')).toBeVisible();
+  await expect(app.locator('.operation-toast')).toContainText('本机存储不可用'); await expect(app.locator('.todo-sheet')).toBeVisible();
   await expect(app.getByLabel('任务名称')).toHaveValue('本机失败重试同一任务');
   await app.evaluate(() => { Storage.prototype.setItem = window.savedSetItem; });
   await button('保存', app.locator('.todo-sheet')).click(); await expect(app.locator('.todo-sheet')).toHaveCount(0);

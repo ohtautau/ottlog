@@ -1,5 +1,8 @@
 # 开发说明
 
+2026-11-04专注建议与习惯后续：完成／休息页移除inline活动条，11项只读建议共用独立深色浅绿窗口，桌面三列／手机两列、窗内滚动；专注完成按owner与完成ID在当前UI会话自动一次，隐藏页面不抢焦点，三点→休息建议可重开，不创建业务数据。长／短休息选择留在专注页，原生自动休息保持。专注三点“设置”仅此入口改“调整时长”及时间线稿；实时保存设置期间背景时长／轮次读取打开快照，运行deadline仍实时走，关窗一次反映新设置，滚轮保留用户手势提交守卫。习惯完成只打卡，不自动打开打卡留言；领域详情仍沿原toggle，手动记录与日志保留。
+
+
 2026-11-03统一控件后续（本段替代此前对应的成对追加、五行滚轮、1/8宽度边距和分类行内管理规则）：两端编辑器沿compact-editor.css共用24px边界，EntityTitleInput在该框内取消额外12px内缩；任务名称、分类等控件共用--app-font-family，字号层级保持。创建类型切换行不再放菜单，每种内容的右上角自行组合同一ActionMenu；删除菜单里的“收起”，Markdown符号显示MD。今日创建类型按当前账号最后停留的类型记忆，空白关闭也保留，不依赖保存成功。
 
 记录负左正右，各有一个标题及独立追加队列，保留中线；每列末尾一个空输入，输入后自动续接、回车和方向键切换，空白失焦清理，附件在各条右下角。ProgressDraft保留原首组／pairs／legacy，追加用稳定ID的extraRecords，最多40条非空记录；原子保存、同ID重试及远端变更保护不变。旧草稿不在读取时写迁移。
@@ -2921,3 +2924,72 @@ UI断言建议独立放在 `.tmp/short-focus-assertions.txt`，供协调端合�
 正常小程序构建、15页启动、21个ES2019产物、媒体138608字节及主包预算通过。本轮未发布小程序，未宣称微信原生或真机交互已验收；全部交互夹具未修改真实账号记录。候选检查截图和运行日志保持忽略，后续部署状态见server-codex-handoff.md。
 
 发布复核：服务器Codex经当前受限broker实际部署68a781d6d008，HTTPS、API容器身份及业务卷不变、回滚配置、QA清理均通过。正式站1440/390共20个页面及两主机账号数据/CSRF/读者隔离通过；阻止并核对原已过期计时的预期自动写请求，八类业务记录哈希保持不变。本地验收通道已关闭；正式网页及API不依赖它。部署备份api-edge-20261104T035405Z，当前交接状态见server-codex-handoff.md。
+
+### 2026-11-04 当前轮提醒间隔、网页专注边距及三点菜单
+
+当前轮仍仅保存绝对 reminderAt。共享底层 todo-reminder-time 在 completeTodo 生成唯一下一轮时派生提醒：有真实 dueTime 时沿新旧任务实际本地时刻计算有符号毫秒间隔；只有日期时沿本地日历日期差移动提醒，保留提醒时分，不补任务午夜或新增存档规则。原月末／闰年锚点、过期仅进一周期、原子容量／幂等／撤销与账号队列保持。缺日期、无效旧提醒不猜下一轮提醒，原任务数据保留且完成不因此失败；日期表单提供可修正校验。重复任务允许过去提醒作为模板；普通任务新设过去提醒仍拒绝，既有过去提醒未改时可修改其它项。具体日历提醒标记、微信显式单次订阅和服务端实际投递校验未改。
+
+网页专注移除自身1280px宽度上限，左右沿任务／便签的公共工作区；底部留白由 tool-workspace-bottom-space（宽屏默认24px、窄屏16px）拥有，不给专注额外叠加padding。保留原stage实测缩放及计时。共用ActionMenu图标固定20px，文字紧随10px且左对齐；分类菜单删除纯关闭项，真实业务开关、窗口关闭及原收起交互保持。
+
+新增 miniprogram/scripts/check-reminder-interval.cjs 覆盖有符号提醒间隔、日／周／月31／闰年／工作日、跨午夜、仅日期、缺日期／无效值、过去校验与完成幂等。旧 check-todos 中“下一轮清空提醒”的断言按当前规则更新，提醒时间不等于订阅授权。
+
+Windows候选UI命令（web目录，所有业务API由脚本夹具拦截，仅允许本地3017）：
+```powershell
+$env:OTTLOG_PARITY_ORIGIN="http://127.0.0.1:3017"
+node scripts/check-reminder-layout-menu.mjs
+```
+覆盖1440×900、2412×1051、840×900、390×844、375×667的专注公共边界／底部／stage居中与无外层滚动、三点菜单图文几何与Escape／再次三点、重复过去提醒自动保存关闭／完成派生／撤销、普通新过去提醒保留校验。服务器仅语法检查，未安装或执行浏览器，UI通过状态以Windows实际结果为准。本轮真实命令与结果见.tmp/reminder-layout-menu-result.json；未部署、未提交推送、未改.git、API、真实数据、worker或系统。
+
+### 2026-11-04 统一表单通知（unified-notification）
+
+保留 reminder-layout-menu 全部未提交改动。AppDialogHost 普通消息改为共享 OperationToast；删除独立 `.app-message` 几何。默认5000ms、显式duration兼容；校验错误为role=alert，普通反馈为status。共用位置、安全夹取和实际高度下移保持，层级510覆盖日期详情500及AppDialog400；原生键盘沿useKeyboardDock避让，不加遮罩、不挤正文。提示本身穿透点击，只有真实撤销按钮接收点击，避免挡住图库确认。
+
+撤销与通知共用既有app-dialog通道的可见host订阅：普通消息存在时如有任务操作条，在原条内按“通知 · 原操作说明”合并；host不再另画一条。撤销按钮仍使用原onUndo／busy／无障碍名称；原撤销5秒截止与业务持久化保持，通知不延长、不偷偷触发撤销。任务条消失后尚未到期的通知由host接续。
+
+useMessageNotice小型hook在表单父组件稳定挂载，0ms延后等host注册，绑定可见host、visibility generation及session epoch；稳定错误不重复通知，空值后再出现同错误可重新提示。host内按来源symbol记录当前错误，父子同文去重；清空／卸载释放来源。切账号事件仅clearAppMessages，真实confirmation不取消；旧host／旧账号错误不转投新host。表单原error状态、retry和未保存保护不改。已接入日程、任务详情、EntryComposer、便签／记录／格言、习惯编辑／日历／详情、分类／显示队列、年月、领域定义／排序／详情、账号及AppDialog错误；保留加载／离线／同步／服务配置。未使用的growth-garden旧分支及文章／收藏加载状态未机械替换。
+
+实际检查记录见 `.tmp/unified-notification-result.json`。新增 `check-unified-notification.cjs` 检查真实消息模块与hook（确定性effects/ref夹具），覆盖默认期限／替换／去重／清空重现／host注册顺序／隐藏重开／账号／真实确认保留／operation登记。原todo-undo、提醒间隔及日程模型另行运行；typecheck、build:tools与diffcheck实际执行。旧依赖app-message的定向脚本只更新共同类／语义，不宣称旧全量UI套件通过。
+
+Windows在更新的隔离3017候选运行（不安装浏览器，不执行旧候选部署）：
+```powershell
+cd web
+$env:OTTLOG_PARITY_ORIGIN="http://127.0.0.1:3017"
+node scripts/check-unified-notification.mjs
+node scripts/check-reminder-layout-menu.mjs
+```
+新增聚焦脚本拦截全部业务API，覆盖1440／390／375短错误只在浮窗外显示一次、无撤销按钮、无布局位移、安全边界、5秒消失与不无限刷新、清空再错、导航清理、真实任务名撤销及本机保存失败同ID／原值重试。消息覆盖／账号／隐藏和确认保留另由确定性模型检查。浏览器短长／键盘／安全区、图库确认及真实未保存拦截仍需协调端现场验证；不把脚本内容、模型或构建视为浏览器／原生验收证据。本轮不处理活动独立弹窗或专注滚轮背景抖动，不访问真实API／账号，不部署、不改.git或系统配置。
+
+## 第三项候选实现及验证（2026-11-04）
+
+独立窗口沿focus-activities目录title/iconId渲染，不包含休息选择或补剂用量。网页pendingFocusCompletion支持全局monitor在别页完成后回页显示；原生仅active.originFocusId对应完整focus session可触发，不读取任意历史完成。UI去重仅内存，在路由重挂载间保留，账号变化清理；页面窗口与监听卸载清理。关闭不写工具存档。设置打开快照只替换背景idle total／longEvery，真实settings继续通过原停稳队列保存，active.totalSeconds／deadline不替换；PageScroll暂禁滚动、浏览器背景overflow锁住并恢复原位置，窗口wheel阻断滚动链。
+
+习惯页原checkIn成功链会选历史留言并更新lastShownAt，随后打开daily-reflection-sheet。本轮删除该自动链，checkIn仍走原toggle与失败处理；已完成习惯详情增加显式“记录”打开原留言编辑，历史文字带回。领域详情checkHabit原本只toggle，无需删除详情入口。
+
+本地实际通过：miniprogram typecheck、web build:tools、check-habits-focus、check-focus-recommendation（含UI owner/ID去重）、脚本语法检查及git diff --check。check-habit-reflections与check-pomodoro-cross-client因旧web/src/app源文件缺失失败，未改协调端旧夹具。未安装或运行浏览器、未做Next全构建、未提交／部署／访问真实业务API。
+
+Windows协调端候选3017：
+```powershell
+cd web
+$env:OTTLOG_PARITY_ORIGIN="http://127.0.0.1:3017"
+node scripts/check-focus-layout-spacing.mjs
+node scripts/check-focus-activity-habit.mjs
+```
+旧layout脚本已改独立窗口完整访问并关闭后再测背景，增加2412宽。新增脚本拦截全部API，覆盖窗口11卡／菜单重开、鼠标wheel改值时35次背景几何采样（1px）、保留active deadline、路由重挂载、习惯打卡持久化及手动记录。该脚本尚未运行，不能作为浏览器通过证据。仍需补齐实际focus到期同轮刷新／切换、owner切换、隐藏返回、真实触摸滚轮、关闭后数字精确、运行中设置及领域详情打卡场景的浏览器断言；当前脚本deadline比较发生于idle，不能替代运行deadline验收。短屏窗口及原生滚动也待现场验收。
+
+### 2026-11-04 第四项 editor-polish（未提交候选）
+
+保留前三项全部未提交修改。DocumentEditorSheet 的 titledHeading 分支与 compact-editor 统一居中标题／24px边界，普通便签仅操作菜单的旧heading保持；格言去掉字数计数，maxlength、字符串身份、自动保存／失败重试／关闭与owner守卫保持。DomainRecordEditor 使用“编辑记录”及领域／正负／日期一行只读元信息，plain正文、原附件尺寸与保存队列不变。三创建共用同一个typeHeading元素和compact几何，不恢复旧TodoEditorFields。收集箱trigger统一colored，真实disabled保持。
+
+UI提示由editor-copy拥有：便签标题“准备记什么？”，记录正文“记录内容”；只改提示及对应测试，不替换存档文本。记录创建左右各一个回形针，点击从当前列末个有效记录捕获稳定ID；空列针对本列已有空输入／spare，不依赖焦点，不在点击时写业务。列内删除与已有附件保持，移除条级附件及全局记录附件路由，中线延伸到列操作区。第五项仍负责异步选图busy回填，不能将本轮路由模型通过视为图片保存验收。
+
+便签AppliedOptions合并搜索／标签／非默认“排序：…”且20px对称内距、换行、无eraser；原筛选窗口重置和工具栏恢复默认保留。习惯使用view:today／view:all／domain:名称这组仅内存UI键，默认今日，全部和领域走原简单网格／排序／打卡底座；创建仍取真实默认领域，账号变化恢复今日。真实同名“今日／全部”领域不会撞UI键；不迁移业务group。网页简单网格不保留提醒空列。领域顶部实际正负摘要宿主为DomainRecentRecords／DomainRecordColumns（DomainProgressSummary是领域卡完成进度），因此在正确的共用摘要容器统一16px外内距与中线两侧留白，空态同起点；原最近十条及排序口径不变。
+
+真实检查与失败见`.tmp/editor-polish-result.json`。新增check-editor-polish.cjs渲染真实ProgressEditorFields的确定性hooks，检查双入口／空列／末条稳定ID／旧焦点和对侧隔离／disabled。原记录草稿／pairs／单条编辑／格言／最近记录／统一通知／习惯专注模型、typecheck、build:tools及diffcheck通过。旧check-habit-order.cjs因缺失web/src/app/daily/reminders.ts失败，未修旧路径，不宣称排序模型通过。
+
+Windows协调端仅对新隔离3017候选执行：
+```powershell
+cd web
+$env:OTTLOG_PARITY_ORIGIN="http://127.0.0.1:3017"
+node scripts/check-editor-polish.mjs
+```
+脚本拦截全部/api请求；1440／2412／390／375覆盖三模式同框与顶部1px几何、彩色收集箱、提示、格言与单条记录正文／元信息／footer边界、自动保存与本机失败保留／重试、删除、筛选排序条、习惯今日／全部／同名领域无写入、完成与归档、排序保存及换owner重载隔离。服务器只语法检查，未安装／运行浏览器。异步选图回填、真实长按拖排、运行中owner变化、加载／错误／附件场景顶部基线及原生滚动仍需协调端补充实测；脚本内容不等于UI通过。本轮未访问真实账号／数据、未改API／.git／系统、未提交／部署。

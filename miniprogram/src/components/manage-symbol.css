@@ -39,3 +39,9 @@
 .selection-symbol > view { position:absolute;width:14PX;height:14PX;border:2PX solid currentColor;border-radius:3PX;box-sizing:border-box; }
 .selection-symbol > view:first-child { left:1PX;top:1PX;opacity:.6; }
 .selection-symbol > view:last-child { right:0;bottom:0;background:var(--control-background,#20333e); }
+.time-symbol,.rest-symbol { position:relative;width:20PX;height:20PX;box-sizing:border-box;color:inherit;flex:none; }
+.time-symbol { border:1.7PX solid currentColor;border-radius:50%; }
+.time-symbol > view { position:absolute;left:8PX;top:3PX;width:1.7PX;height:6PX;background:currentColor;border-radius:2PX; }
+.time-symbol > view + view { top:8PX;width:5PX;height:1.7PX; }
+.rest-symbol > view { position:absolute;top:3PX;left:5PX;width:2PX;height:14PX;background:currentColor;border-radius:2PX; }
+.rest-symbol > view + view { left:13PX; }

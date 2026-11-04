@@ -1,3 +1,4 @@
+import { useMessageNotice } from '../../components/message-notice';
 import CardGroupContent from '../../components/card-group-content';
 import DomainEntryCard from '../../components/domain-entry-card';
 import { useEffect, useRef, useState } from 'react';
@@ -111,6 +112,7 @@ export default function Domains() {
   const cards = [...ordinaryDomains.map(entryCard), entryCard(fallbackDomain)];
   const createDisabled = sorting || blocked || state.domains.length >= MAX_DOMAIN_COUNT;
   const createCard = <DomainEntryCard create className='domain-create-shell'><CardCreateButton className='domain-create-card' ariaLabel='创建领域' disabled={createDisabled} onClick={definition.openCreate} /></DomainEntryCard>;
+  useMessageNotice(error);
   return <>
     <PageScroll snapSections={[]} scrollY={false}><View className='tool-page domains-page domains-list'><View className='domains-index'>
       <PageToolbar className='domains-page-toolbar' leading={writable && toolbarSummary && <PageToolbarSummary countLabel={`今日记录 ${toolbarSummary.createdToday}`} recentTitle={toolbarSummary.recentShortTermGoal?.content} recentLabel='最近完成短期目标' />} sort={writable && <ActionMenu ariaLabel='领域更多操作' open={menuOpen} onOpenChange={setMenuOpen} disabled={blocked}><ActionButton appearance='quiet' disabled={blocked} onClick={() => { setMenuOpen(false);setSorting(!sorting); }}>排序</ActionButton></ActionMenu>} />
@@ -122,7 +124,7 @@ export default function Domains() {
         <View className='domain-entry-grid domain-continuation-grid'>{cards.slice(8)}{cards.length >= 8 && createCard}</View></CardGroupContent>
       </ScrollView>}
       {!!(error || moveRetry || status || progressStatus) && <ScrollView className='domains-feedback-scroll' scrollY showScrollbar={false} enhanced bounces={false} ariaLabel='领域保存反馈'>
-        {(error || moveRetry) && <View className='domain-error domain-move-retry' role='alert'><Text>{error || '正在保存…'}</Text>{moveRetry && <ActionButton size='compact' disabled={blocked} ariaLabel='重试领域排序' onClick={() => { void retryMove(); }}>重试</ActionButton>}</View>}
+        {(error || moveRetry) && <View className='domain-error domain-move-retry'>{!error && <Text>正在保存…</Text>}{moveRetry && <ActionButton size='compact' disabled={blocked} ariaLabel='重试领域排序' onClick={() => { void retryMove(); }}>重试</ActionButton>}</View>}
         {!!(status || progressStatus) && <View className='tool-status domains-status'><Text>{[status, progressStatus].filter(Boolean).join(' · ')}</Text>{(!ready || !!progressStatus || /不可用|失败|暂存|离线|无法/.test(status)) && <ActionButton appearance='quiet' className='domain-quiet button-label' disabled={blocked} onClick={() => { retry(); habitTool.retry(); }}>重试</ActionButton>}</View>}
       </ScrollView>}
     </View></View></PageScroll>

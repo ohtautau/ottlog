@@ -40,3 +40,6 @@ export function CompletedGoalsHistorySymbol() {
 }
 
 export function SelectionSymbol() { return <View className='selection-symbol' aria-hidden><View /><View /></View>; }
+
+export function TimeSymbol(){return <View className='time-symbol' aria-hidden><View/><View/></View>;}
+export function RestSymbol(){return <View className='rest-symbol' aria-hidden><View/><View/></View>;}

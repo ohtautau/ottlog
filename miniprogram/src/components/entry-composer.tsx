@@ -1,3 +1,4 @@
+import { useMessageNotice } from './message-notice';
 import ActionMenu from './action-menu';
 import { showAppMessage } from '../lib/app-dialog';
 import { trimTextEnd } from '../lib/text-whitespace';
@@ -325,13 +326,15 @@ export default function EntryComposer({ initialMode, preferLastCreatedMode = fal
   const today = localToolDay(), autoFocus = focusRequested && focusReady;
   const previewDraft = draft && slide ? switchEntryMode(draft, slide.mode) : null;
   const modes = <View className='entry-modes' data-entry-swipe='true'>{entryModes.map(kind => <ChoiceButton key={kind} className={`button-label entry-mode${mode === kind ? ' is-active' : ''}`} ariaLabel={`创建类型：${modeLabel(kind)}`} aria-pressed={mode === kind} disabled={locked || busy || !modeReady(kind) || !!retryMode && retryMode !== kind} onClick={() => changeMode(kind)}>{modeLabel(kind)}</ChoiceButton>)}</View>;
+  const typeHeading = <View className='entry-type-heading' data-entry-swipe='true' onTouchStart={swipeStart} onTouchMove={swipeMove} onTouchEnd={swipeEnd} onTouchCancel={() => { swipe.current = null; setSlide(null); }}>{modes}</View>;
   const paneActions=<ActionMenu ariaLabel='更多编辑操作' open={moreOpen} onOpenChange={setMoreOpen} panelWidth={180}><ActionButton appearance='quiet' onClick={()=>{setMoreOpen(false);clearInputs();}}>清空输入</ActionButton></ActionMenu>;
   const task = draft?.task || pendingDraft.task;
   const changeTask = (value: Todo) => { const active = latest.current; if (active && current.current.writable && current.current.owner === draftOwner.current) { setError(''); const next = { ...active, task: value }; latest.current = next; setDraft(next); } };
   const openSchedule = () => { setFocusReady(false); void Taro.hideKeyboard().catch(() => {}); setScheduleOpen(true); };
+  useMessageNotice(error, !busy);
   return <>
     {mode === 'task' && <TaskDetailEditor draft={{ ...task, tags: parseTodoTags(draft?.tagsText || '') }} onChange={changeTask} onClose={() => { void dismiss(); }} disabled={!draft || locked} autoFocus={autoFocus && !retryMode && !scheduleOpen} ariaLabel='创建任务、便签或添加记录' panelClassName='entry-composer is-autosave'
-      topBar={<View className='entry-type-heading' data-entry-swipe='true' onTouchStart={swipeStart} onTouchMove={swipeMove} onTouchEnd={swipeEnd} onTouchCancel={() => { swipe.current = null; setSlide(null); }}>{modes}</View>}
+      topBar={typeHeading}
       category={<TodoCategoryField value={task.categoryId} owner={draftOwner.current} disabled={!draft || locked} onChange={categoryId => { const active = latest.current; if (active) changeTask({ ...active.task, categoryId }); }} />}
       priority={<PrioritySelect ariaLabel='任务优先级' open={priorityOpen} onOpenChange={setPriorityOpen} disabled={!draft || locked} optionsAriaLabel='任务优先级' options={todoQuadrants.map((q, index) => ({ value: q.id, label: ['高','中','低','无'][index], ariaLabel: q.title, color: q.color, outlined: q.id === 'later' }))} value={todoQuadrant(task).id} onChange={id => { const q = todoQuadrants.find(q => q.id === id); if (q) changeTask({ ...task, important: q.important, urgent: q.urgent }); }} />}
       more={<ActionMenu ariaLabel='更多编辑操作' open={moreOpen} onOpenChange={setMoreOpen} panelWidth={180}>
@@ -348,17 +351,17 @@ export default function EntryComposer({ initialMode, preferLastCreatedMode = fal
       <EditorTagField text={draft?.tagsText || ''} onChange={tagsText => { if (draft) update({ ...draft, tagsText }); }} options={catalog.owner === owner ? catalog.tags : []} disabled={locked} label='任务标签' />
     </ChoicePopover>
     {mode !== 'task' && <View className='todo-overlay entry-overlay'  catchMove><View className='todo-backdrop' onClick={() => { void dismiss(); }} /><View className={`entry-composer is-autosave todo-sheet${mode === 'memo' ? ' memo-sheet' : ''}`} role='dialog' ariaLabel='创建任务、便签或添加记录' data-entry-swipe='true' onTouchStart={swipeStart} onTouchMove={swipeMove} onTouchEnd={swipeEnd} onTouchCancel={() => { swipe.current = null; setSlide(null); }}>
-      <View className='entry-type-heading'>{modes}</View>
+      {typeHeading}
       <ScrollView scrollY className='todo-sheet-scroll entry-scroll' data-entry-swipe='true' enhanced bounces={false} showScrollbar={false}><SwipePanels offset={slide?.offset} direction={slide && entryModes.indexOf(slide.mode) < entryModes.indexOf(mode) ? 'previous' : 'next'} adjacent={previewDraft && isDomainState(domains.value) ? <View className='todo-sheet-fields'><EntryPreview draft={previewDraft} domains={domains.value} /></View> : undefined}><View key={mode} className={`todo-sheet-fields${mode === 'memo' ? ' memo-sheet-body' : ''}`} data-entry-swipe='true'>
         {!!info && <View className='entry-info' role='status'>{info}</View>}
-        {!draft && <><View className='entry-load' role='status'><Text>{error || (readable && !writable ? '当前类型的数据格式暂不兼容' : '正在确认账号与草稿…')}</Text><ActionButton className='button-label tool-secondary' onClick={() => { setError(''); sources[mode].retry(); }}>重试</ActionButton></View>
+        {!draft && <><View className='entry-load' role='status'><Text>{error ? '' : (readable && !writable ? '当前类型的数据格式暂不兼容' : '正在确认账号与草稿…')}</Text><ActionButton className='button-label tool-secondary' onClick={() => { setError(''); sources[mode].retry(); }}>重试</ActionButton></View>
           {mode === 'memo' && <MemoEditorFields onTags={() => setTagsOpen(true)} actions={paneActions} minimal showTags={tagsOpen} draft={pendingDraft.memo} onChange={() => {}} tagsText={pendingDraft.tagsText} onTagsChange={() => {}} tagOptions={[]} disabled owner='' onBusyChange={() => {}} />}
           {mode === 'progress' && pendingDraft.progress && <ProgressEditorFields actions={paneActions} draft={pendingDraft.progress} state={initialDomainState} owner='' disabled onBusyChange={() => {}} onChange={() => {}} />}
         </>}
         {draft && slide && isDomainState(domains.value) && <EntryPreview draft={draft} domains={domains.value} />}
         {draft && !slide && mode === 'memo' && <MemoEditorFields onTags={() => setTagsOpen(true)} actions={paneActions} preview={memoPreview} onPreviewChange={setMemoPreview} minimal showTags={tagsOpen} insertionSignal={imageSignal} key={draft.memo.id} autoFocus={autoFocus && !retryMode} draft={draft.memo} onChange={memo => { if (current.current.writable && current.current.owner === draftOwner.current) { setError(''); const next = { ...draft, memo }; latest.current = next; setDraft(next); } }} tagsText={draft.tagsText} onTagsChange={tagsText => update({ ...draft, tagsText })} tagOptions={catalog.owner === owner ? catalog.tags : []} disabled={locked} owner={draftOwner.current} onBusyChange={imagesBusy} />}
-        {draft?.progress && !slide && mode === 'progress' && isDomainState(domains.value) && <ProgressEditorFields actions={paneActions} insertionSignal={imageSignal} key={progressRecord(draft.progress).id} autoFocus={autoFocus && !retryMode} draft={draft.progress} state={domains.value} owner={draftOwner.current} disabled={locked} onBusyChange={imagesBusy} onChange={progress => { if (current.current.writable && current.current.owner === draftOwner.current) { setError(''); const next = { ...draft, progress }; latest.current = next; setDraft(next); } }} />}
-        {!!error && !!draft && <View className='entry-error' role='alert'>{error}</View>}
+        {draft?.progress && !slide && mode === 'progress' && isDomainState(domains.value) && <ProgressEditorFields actions={paneActions} key={progressRecord(draft.progress).id} autoFocus={autoFocus && !retryMode} draft={draft.progress} state={domains.value} owner={draftOwner.current} disabled={locked} onBusyChange={imagesBusy} onChange={progress => { if (current.current.writable && current.current.owner === draftOwner.current) { setError(''); const next = { ...draft, progress }; latest.current = next; setDraft(next); } }} />}
+
       </View></SwipePanels></ScrollView>
       <SheetActions className='todo-sheet-footer entry-footer document-autosave-footer'>
         <View className='document-autosave-tools'>{mode !== 'progress' && <><ActionButton appearance='icon' ariaLabel='编辑标签' disabled={!draft || locked} onClick={() => setTagsOpen(!tagsOpen)}><TaskTagSymbol /></ActionButton><ActionButton appearance='icon' ariaLabel='编辑附件' disabled={!draft || locked} onClick={() => setImageSignal(value => value + 1)}><TaskAttachmentSymbol /></ActionButton></>}{mode === 'memo' && <EditorPreviewButton selected={memoPreview} onChange={setMemoPreview} disabled={!draft || locked} label='便签 Markdown 预览' />}</View>

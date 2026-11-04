@@ -114,7 +114,7 @@ module.exports = async function checkTodoNotificationWorkflow({ page, origin, ou
   await schedule.openSection(page, '设置提醒');
   await expect(authorize()).toBeEnabled();
   await authorize().click();
-  await expect(page.locator('.app-message')).toContainText(/未同意|未开启|没有同意|取消|拒绝/);
+  await expect(page.locator('.operation-toast')).toContainText(/未同意|未开启|没有同意|取消|拒绝/);
   await expect(authorize()).toBeEnabled();
   await expect(authorize()).toHaveText('开启');
   expect(await scheduledPosts()).toHaveLength(1);

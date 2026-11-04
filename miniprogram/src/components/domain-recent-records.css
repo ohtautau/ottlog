@@ -1,2 +1,5 @@
-.domains-recent-records { box-sizing: border-box; flex: none; height: var(--domain-recent-height,100PX); min-width: 0; padding: 6PX 8PX; border: 1PX solid var(--domain-line); border-radius: 10PX; background: var(--domain-surface); overflow: hidden; }
+.domains-recent-records { box-sizing: border-box; flex: none; height: var(--domain-recent-height,100PX); min-width: 0; --domain-record-column-padding:16PX; padding: 8PX 16PX; border: 1PX solid var(--domain-line); border-radius: 10PX; background: var(--domain-surface); overflow: hidden; }
 .domains-recent-empty { display: block; color: var(--domain-muted); font-size: 13PX; line-height: 1.5; }
+.domains-recent-records .domain-record-empty { max-width:100%; }
+.domains-recent-records .domain-record-column { box-sizing:border-box; }
+.domains-recent-records .empty-state { padding:2PX 0;text-align:left; }

@@ -77,7 +77,7 @@ module.exports = async function checkWindowCloseGuard({ page, origin, out, width
   await taskSheet().getByRole('button', { name: '关闭编辑', exact: true }).click();
   await prompt().getByRole('button', { name: '保存', exact: true }).click();
   await expect(prompt()).toHaveCount(0); await expect(taskSheet()).toBeVisible();
-  await expect(page.locator('.app-message')).toContainText('本机存储不可用');
+  await expect(page.locator('.operation-toast')).toContainText('本机存储不可用');
   expect((await storedTasks())[0].title).toBe('关闭守卫任务');
   await page.evaluate(() => { window.__miniFixture.failToolWrites = []; });
   await taskSheet().getByRole('button', { name: '关闭编辑', exact: true }).click();
@@ -171,7 +171,7 @@ module.exports = async function checkWindowCloseGuard({ page, origin, out, width
   await expect(appConfirm()).toHaveCount(0);
   expect(await page.evaluate(() => window.__miniFixture.appDialogResult), 'Leaving the host page resolves its request without leaking a prompt').toEqual({ confirm: false, cancel: true });
   await page.evaluate(() => { window.__miniAppDialogPreview.showAppMessage({ title: '应用内反馈测试' }); });
-  await expect(page.locator('.app-message')).toHaveText('应用内反馈测试');
+  await expect(page.locator('.operation-toast')).toHaveText('应用内反馈测试');
   // The prompt suite stops at this boundary; the full close suite still runs all later editor cases.
   if (onlyPromptCases) return;
   await page.evaluate(() => { location.hash = '#/pages/index/index'; });
@@ -256,7 +256,7 @@ module.exports = async function checkWindowCloseGuard({ page, origin, out, width
   await shortcutEditor().getByRole('button', { name: '添加快捷方式：查看任务', exact: true }).click();
   await page.evaluate(() => { window.__miniFixture.failHomeShortcutWrites = true; });
   await closeShortcut(); await prompt().getByRole('button', { name: '保存', exact: true }).click();
-  await expect(prompt()).toHaveCount(0); await expect(shortcutEditor()).toBeVisible(); await expect(page.locator('.app-message')).toContainText('保存失败');
+  await expect(prompt()).toHaveCount(0); await expect(shortcutEditor()).toBeVisible(); await expect(page.locator('.operation-toast')).toContainText('保存失败');
   expect(JSON.parse(await readShortcuts()).items).toEqual([]);
   await page.evaluate(() => { window.__miniFixture.failHomeShortcutWrites = false; });
   await closeShortcut(); await prompt().getByRole('button', { name: '保存', exact: true }).click(); await expect(shortcutEditor()).toHaveCount(0);

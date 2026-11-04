@@ -1,3 +1,4 @@
+import { useMessageNotice } from './message-notice';
 import { OTHER_DOMAIN_NAME, domainDisplayName } from '../lib/domain-fallback';
 import { useEffect, useState } from 'react';
 import Taro from '@tarojs/taro';
@@ -54,6 +55,7 @@ export default function HabitEditor({ draft, domains, saving, pendingSave = fals
     onChange({ ...draft, iconId: icon.id, kind: icon.fallback, backgroundKind: undefined });
     setIconPicker(false);
   }
+  useMessageNotice(message);
   return <>
     <View className='daily-editor-overlay'><SheetBackdrop disabled={saving} onClose={closeGuard.requestClose} /><View className='daily-editor-sheet' role='dialog' ariaLabel={draft.id ? '编辑习惯' : '创建习惯'}>
       <EditorHeading className='daily-editor-heading' titleClassName='daily-sheet-title' title={draft.id ? '编辑习惯' : '创建习惯'} actions={<ActionButton appearance='icon' className='button-label' ariaLabel='关闭习惯编辑' disabled={saving} onClick={closeGuard.requestClose}>×</ActionButton>} />
@@ -63,7 +65,7 @@ export default function HabitEditor({ draft, domains, saving, pendingSave = fals
         <HabitNoteField className='daily-note-input' ariaLabel='提醒自己的话' disabled={saving} fixed cursorSpacing={96} adjustPosition showConfirmBar={false} maxlength={240} value={draft.note} placeholder='把动作写小一点，会更容易开始。' onInput={event => onChange({ ...draft, note: event.detail.value })} />
         <View className='daily-editor-settings'><View className='daily-time-period-field' role='group' ariaLabel='习惯时段设置'>{habitTimePeriods.map(timePeriod => <ChoiceButton key={timePeriod} size='compact' width='fill' ariaLabel={`习惯时段：${habitTimePeriodLabels[timePeriod]}`} selected={habitTimePeriod(draft) === timePeriod} disabled={saving} onClick={() => { void Taro.hideKeyboard?.().catch(() => {}); onChange({ ...draft, timePeriod }); }}>{habitTimePeriodLabels[timePeriod]}</ChoiceButton>)}</View></View>
         {draft.id && <View className='daily-editor-lifecycle'><ActionButton size='compact' width='fill' disabled={saving} ariaLabel={archiveLabel} onClick={onArchive}>{archiveLabel}</ActionButton></View>}
-        {message && <View className='daily-editor-message' role='alert'>{message}</View>}
+
       </EditorFieldsLayout></ScrollView>
       <SheetActions className='daily-editor-footer' leading={draft.id ? <SheetDeleteButton ariaLabel='删除习惯' disabled={saving || archivePending} onClick={() => setDeleteOpen(true)} /> : undefined}><ActionButton appearance='primary' size='large' width='fill' className='button-label tool-primary' loading={saving} disabled={saving || archivePending || !draft.title.trim()} onClick={onSave}>{draft.id ? '保存' : '创建习惯'}</ActionButton></SheetActions>
     </View></View>

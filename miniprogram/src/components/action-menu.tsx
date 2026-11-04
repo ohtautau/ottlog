@@ -1,11 +1,13 @@
 import { Children, cloneElement, isValidElement, type ComponentProps, type ReactNode } from 'react';
 import { Text, View } from '@tarojs/components';
 import { ChoicePopover } from './form-options';
-import { DeleteSymbol, EditSymbol, MoreSymbol, default as ManageSymbol, RestoreDefaultsSymbol } from './manage-symbol';
+import { TimeSymbol, RestSymbol, DeleteSymbol, EditSymbol, MoreSymbol, default as ManageSymbol, RestoreDefaultsSymbol } from './manage-symbol';
 import SortSymbol from './sort-symbol';
 import './action-menu.css';
 
 function OptionSymbol({ label }: { label:string }) {
+  if (/调整时长/.test(label))return <TimeSymbol/>;
+  if (/休息建议/.test(label))return <RestSymbol/>;
   if (/排序/.test(label))return <SortSymbol/>;
   if (/设置/.test(label))return <ManageSymbol/>;
   if (/删除/.test(label)) return <DeleteSymbol />;

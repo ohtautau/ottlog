@@ -1,3 +1,4 @@
+import { nextTodoReminder } from './todo-reminder-time';
 import { localToolDay, todoQuadrants, toolId, type Todo, type TodoState, type TodoSortMode } from './tool-records';
 import { noteStateFits, validNoteImages } from './note-image-data';
 import { visibleSubtasks } from './todo-subtasks';
@@ -259,9 +260,10 @@ export function completeTodo(state: TodoState, taskId: string, now = new Date())
     images: task.images?.map(image => ({ ...image })),
   };
   if (task.recurrence) {
+    const nextDate = nextRecurrenceDate(task, now);
     const anchor = calendarDate(task.dueDate) || calendarDate(localToolDay(now))!;
     generated.push({
-      ...base, id: generatedId(task, 'cycle', now, occupied), dueDate: nextRecurrenceDate(task, now),
+      ...base, id: generatedId(task, 'cycle', now, occupied), dueDate: nextDate, reminderAt: nextTodoReminder(task, nextDate),
       recurrence: { ...task.recurrence, ...(['month', 'year'].includes(task.recurrence.unit) ? { anchorDay: monthlyAnchor(task, anchor) } : {}) },
       nextTasks: nextTasks.map(child => ({ ...child })), subtasks: task.subtasks?.map(child => ({ ...child, completed: false })),
     });

@@ -7,3 +7,7 @@
 .record-edit-save-state { display: flex; justify-content: flex-end; flex: 1; min-width: 0; color: var(--domain-muted); font-size: 12PX; }
 .record-edit-save-state > view { display: flex; align-items: center; gap: 4PX; color: #efb7a2; }
 .record-edit-save-state button { flex: none; margin: 0; }
+.record-edit-meta { justify-content:flex-start;flex-wrap:wrap;gap:6PX 12PX;margin:0 0 16PX;overflow-wrap:anywhere; }
+.record-kind { font-size:15PX;font-weight:600;line-height:24PX; }
+.record-kind.is-negative { color:var(--domain-negative,#eeb9aa); }
+.record-kind.is-positive { color:var(--domain-positive,#b9dbca); }

@@ -1,3 +1,4 @@
+import { useMessageNotice } from '../../components/message-notice';
 import ActionMenu from '../../components/action-menu';
 import { AddSymbol } from '../../components/create-button';
 import CardGroupContent from '../../components/card-group-content';
@@ -344,6 +345,8 @@ export default function Todos() {
       leading={check => <Button className='button-label todo-complete' aria-label={task.completedAt ? `重新打开：${task.title}` : `完成：${task.title}`} disabled={!writable || busy || moveBlocked} onClick={() => { if (!sorter.suppressClick()) void toggle(task); }}>{check}</Button>} />;
   }
 
+  useMessageNotice(moveError);
+
   return <>
     <PageScroll animateScroll={!sorter.drag} snapSections={[]}><View className='todo-stages'><CoreScreen className='todo-core'><View className='todo-page'>
       <View className='todo-toolbar'><PageToolbar className='todo-page-toolbar'
@@ -352,7 +355,7 @@ export default function Todos() {
           <ActionButton appearance='quiet' onClick={()=>{setPageMenu(false);setPanelEditorOpen(true);}}>编辑</ActionButton>
         </ActionMenu>} />
       </View>
-      {moveError && <View className='todo-sort-retry'><View className='todo-sort-error' role='alert'>{moveError}</View>{moveBlocked && <ActionButton size='compact' ariaLabel='重试任务排序' disabled={busy} onClick={() => { void persistMove(); }}>重试</ActionButton>}</View>}
+      {moveError && <View className='todo-sort-retry'>{moveBlocked && <ActionButton size='compact' ariaLabel='重试任务排序' disabled={busy} onClick={() => { void persistMove(); }}>重试</ActionButton>}</View>}
       {!ready ? <View className='tool-empty'><Text>{status || '正在整理你的任务…'}</Text><ActionButton className='button-label' onClick={retry}>重新读取</ActionButton></View> : !valid ? <View className='tool-empty'><Text>当前数据格式暂不兼容，请到网页查看。原始数据已保留。</Text><ActionButton className='button-label' onClick={retry}>重新读取</ActionButton></View> : <View className='todo-quadrants'>{todoQuadrants.map(q => {
         const panel = todoPanelPresentation(state, q.id as TodoPanelId);
         const tasks = filtered.filter(task => todoMatchesPanel(task, panel.source));

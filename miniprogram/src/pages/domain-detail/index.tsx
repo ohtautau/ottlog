@@ -1,3 +1,4 @@
+import { useMessageNotice } from '../../components/message-notice';
 import { GoalHistoryCard } from '../../components/data-card-views';
 import EmptyState from '../../components/empty-state';
 import ActionMenu from '../../components/action-menu';
@@ -260,6 +261,9 @@ export default function Domains() {
   const domainHabits = sortHabits(habitState.items.filter(item => item.enabled && item.domainId === domainId));
   const habitEntries: (Reminder | null)[] = [...domainHabits, null];
 
+  useMessageNotice(detailEdit.error);
+  useMessageNotice(error);
+
   return <>
     <PageScroll><View className='tool-page domains-page domain-detail-page'>
       <PageToolbar className='domain-detail-toolbar' leading={<BackButton ariaLabel='返回领域列表' disabled={blocked || habitBusy || habitArchive.busy} onClick={() => void Taro.switchTab({ url: '/pages/domains/index' })} />} manage={writable && selectedDomain && <ActionMenu ariaLabel='领域更多操作' open={menuOpen} onOpenChange={setMenuOpen} disabled={blocked || habitBusy || habitArchive.busy || selectedDomain.id === uncategorizedDomain(sourceState).id}>
@@ -302,7 +306,7 @@ export default function Domains() {
         })}</DomainRecordColumns>
       </View>)}</View>}
       {ready && valid && !!status && <View className='tool-status domains-status'><Text>{status}</Text><ActionButton appearance='quiet' className='domain-quiet button-label' disabled={busy} onClick={retry}>重试同步</ActionButton></View>}
-      {error && !currentEditor && <Text className='domain-error'>{error}</Text>}
+
     </View></PageScroll>
     {writable && selectedDomain && <FloatingCreateButton label='创建记录' disabled={blocked || habitBusy || habitArchive.busy} onClick={() => createRecord(selectedDomain)} />}
     <DomainDefinitionEditor controller={definition} />
@@ -313,11 +317,11 @@ export default function Domains() {
           <Text className='domain-input-count'>{currentEditor.content.length} / 200</Text>
         </>}
         {currentEditor.type === 'history' && <>
-          
+
           {state.completedGoals.filter(goal => goal.domainId === editingDomain.id).slice().reverse().map(goal => <GoalHistoryCard key={goal.id} kind={goalLabel(goal.kind)} date={goal.completedAt ? formatDate(goal.completedAt) : ''} text={trimTextEnd(goal.content)} />)}
           {!completedGoalCount(state, editingDomain.id) && <EmptyState kind='goals' />}
         </>}
-        {error && <View className='domain-error' role='alert'>{error}</View>}
+
       </EditorFieldsLayout></ScrollView>
       <SheetActions className='domain-sheet-actions'>
         {currentEditor.type === 'history' && <ActionButton appearance='primary' size='large' width='fill' disabled={busy} onClick={close}>完成</ActionButton>}
@@ -329,8 +333,8 @@ export default function Domains() {
     {recordEditor?.owner === owner && writable && <DomainRecordEditor key={`${owner}:${recordEditor.record.id}`} {...recordEditor} dateLabel={formatDate(recordEditor.record.createdAt)} onClose={() => setRecordEditor(null)} />}
     {currentHabit && !currentHabitEditor && <View className='domains-editor'><View className='domain-overlay'><View className='domain-backdrop' catchMove onClick={closeHabitDetail} /><View className={`domain-sheet domain-sheet-habit-detail ${habitDetailSheetClass(currentHabit)}`} role='dialog' ariaLabel={`习惯：${currentHabit.title}`}>
       <EditorHeading title='习惯详情' className='domain-sheet-heading' actions={<ActionButton appearance='icon' size='compact' className='habit-detail-close' ariaLabel='关闭习惯详情' disabled={calendarEdit.busy || habitBusy || detailEdit.locked} onClick={closeHabitDetail}>×</ActionButton>} />
-      <ScrollView scrollY className='domain-sheet-scroll' showScrollbar={false}><View className='domain-sheet-body habit-detail-body'><HabitDetailHeader key={`${owner}:${currentHabit.id}`} item={currentHabit} domains={sourceState.domains} onChange={detailEdit.change} disabled={calendarEdit.busy || habitBusy || detailEdit.locked} /><HabitDetailNote key={`note:${currentHabit.id}`} note={currentHabit.note} /><HabitCalendar key={`${owner}:${currentHabit.id}`} state={habitState} habitId={currentHabit.id} now={Date.now()} layout='detail' onDayToggle={day => { if (!detailEdit.isLocked()) void calendarEdit.toggleDay(day); }} disabled={calendarEdit.busy || habitBusy || detailEdit.locked} error={calendarEdit.error} />{error && <Text className='domain-error'>{error}</Text>}</View></ScrollView>
-      {!!detailEdit.error && <View className='habit-detail-save-error' role='alert'>{detailEdit.error}</View>}
+      <ScrollView scrollY className='domain-sheet-scroll' showScrollbar={false}><View className='domain-sheet-body habit-detail-body'><HabitDetailHeader key={`${owner}:${currentHabit.id}`} item={currentHabit} domains={sourceState.domains} onChange={detailEdit.change} disabled={calendarEdit.busy || habitBusy || detailEdit.locked} /><HabitDetailNote key={`note:${currentHabit.id}`} note={currentHabit.note} /><HabitCalendar key={`${owner}:${currentHabit.id}`} state={habitState} habitId={currentHabit.id} now={Date.now()} layout='detail' onDayToggle={day => { if (!detailEdit.isLocked()) void calendarEdit.toggleDay(day); }} disabled={calendarEdit.busy || habitBusy || detailEdit.locked} error={calendarEdit.error} /></View></ScrollView>
+
       <SheetActions className='domain-sheet-actions' leading={<ActionButton appearance='icon' size='compact' ariaLabel='编辑习惯' disabled={calendarEdit.busy || habitBusy || detailEdit.locked} onClick={() => { if (!detailEdit.isLocked()) editHabit(currentHabit); }}><EditSymbol /></ActionButton>}><ActionButton appearance='primary' size='large' width='fill' className='tool-primary button-label' disabled={habitBusy || calendarEdit.busy || detailEdit.busy} loading={detailEdit.busy} onClick={() => { if (detailEdit.pending) detailEdit.retry(); else if (!detailEdit.isLocked()) void checkHabit(currentHabit); }}>{detailEdit.pending ? '重试保存' : habitState.done[today]?.includes(currentHabit.id) ? '撤销完成' : '已完成'}</ActionButton></SheetActions>
     </View></View></View>}
     {currentHabitEditor && <HabitEditor key={`${owner}:${currentHabitEditor.item.id}`} draft={currentHabitEditor.item} domains={state.domains} pendingSave={hasVolatilePersonalTool('reminders', owner)} saving={habitBusy || habitArchive.busy} message={habitArchive.error || error} archiveLabel={habitArchive.label} archivePending={habitArchive.retrying} onArchive={() => { void habitArchive.toggle(); }} onChange={item => setHabitEditor(previous => previous?.owner === owner ? { ...previous, item } : previous)} onSave={saveHabit} onDelete={() => { void deleteHabit(); }} onClose={closeHabitEditor} />}

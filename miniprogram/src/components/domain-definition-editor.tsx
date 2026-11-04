@@ -1,3 +1,4 @@
+import { useMessageNotice } from './message-notice';
 import { Text, View } from '@tarojs/components';
 import type { DomainDefinitionController } from '../lib/use-domain-definition';
 import { MAX_DOMAIN_NAME_LENGTH } from '../lib/domain-data';
@@ -15,6 +16,7 @@ import './domain-definition-editor.css';
 /** The same definition editor and deletion confirmation serve list and detail. */
 export default function DomainDefinitionEditor({ controller }: { controller: DomainDefinitionController }) {
   const { currentEditor: editor, currentDelete: deleting, iconOpen, blocked, busy, error } = controller;
+  useMessageNotice(error, !busy);
   return <>
     {controller.closeDialog}
     {editor && <View className='domain-definition-root'>
@@ -26,7 +28,7 @@ export default function DomainDefinitionEditor({ controller }: { controller: Dom
             <EntityTitleRow className='domain-definition-title-row'><ActionButton className='domain-definition-icon domain-icon-button' appearance='icon' size='compact' ariaLabel='选择领域图标' disabled={blocked} onClick={controller.openIcons}><LibraryIcon name={editor.iconId} /></ActionButton>
             <EntityTitleInput className='domain-name-field' ariaLabel='领域名称' placeholder='领域名称' value={editor.name} maxlength={MAX_DOMAIN_NAME_LENGTH} focus={!iconOpen} disabled={blocked} confirmType='done' cursorSpacing={100} onInput={event => controller.setName(event.detail.value)} onConfirm={() => { void controller.save(); }} /></EntityTitleRow>
           </EditorFieldsLayout>
-          {!!error && <View className='domain-definition-error domain-error' role='alert'>{error}</View>}
+
           <SheetActions className='domain-definition-actions'><ActionButton appearance='primary' size='large' width='fill' loading={busy} disabled={blocked || !editor.name.trim()} onClick={() => { void controller.save(); }}>{editor.id ? '保存' : '创建领域'}</ActionButton></SheetActions>
         </View>
       </View>

@@ -63,3 +63,4 @@
 /* Save/sync feedback must not resize both habit list viewports. */
 .daily-core { position:relative; }
 .daily-core > .tool-status,.daily-core > .core-content > .tool-status { position:absolute;z-index:5;left:16PX;right:16PX;bottom:8PX;box-sizing:border-box;margin:0;padding:8PX 12PX;border-radius:8PX;background:#20333e; }
+.daily-core-filters > .daily-core-filter { box-sizing:border-box;flex:none;width:72PX;min-width:72PX;height:40PX;min-height:40PX; }

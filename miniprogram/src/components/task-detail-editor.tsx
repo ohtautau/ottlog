@@ -1,3 +1,4 @@
+import { useMessageNotice } from './message-notice';
 import { useEffect, useRef, useState, type CSSProperties, type ReactNode } from 'react';
 import { Input, ScrollView, Text, Textarea, View } from '@tarojs/components';
 import type { Todo, TodoSubtask } from '../lib/tool-records';
@@ -88,6 +89,7 @@ export default function TaskDetailEditor({ draft, onChange, onClose, disabled = 
     setFocusedSubtask(previous => previous === id ? '' : previous);
     if ((latest.current.draft.subtasks || []).some(item => item.id === id && !hasSubtaskText(item.title))) changeSubtasks(items => items.filter(item => item.id !== id));
   }
+  useMessageNotice(error);
   return <View className='task-detail-overlay' catchMove>
     <SheetBackdrop onClose={onClose} />
     <View className={`task-detail-panel ${panelClassName}`} style={{ '--todo-completion-color': todoQuadrant(draft).color } as CSSProperties} role='dialog' ariaLabel={ariaLabel}>
@@ -124,7 +126,7 @@ export default function TaskDetailEditor({ draft, onChange, onClose, disabled = 
           {reminderAction}
           <EditorPreviewButton selected={notePreview} onChange={setNotePreview} disabled={disabled} label='任务备注 Markdown 预览' />
         </View>
-        {!!error ? <View className='task-detail-save-state is-error' role='alert'><Text>{error}</Text>{onRetry && <ActionButton appearance='quiet' size='compact' disabled={disabled} onClick={onRetry}>重试</ActionButton>}</View> : pending ? <View className='task-detail-save-state' role='status'><Text>保存中…</Text></View> : null}
+        {!!error ? onRetry && <View className='task-detail-save-state is-error'>{ <ActionButton appearance='quiet' size='compact' disabled={disabled} onClick={onRetry}>重试</ActionButton>}</View> : pending ? <View className='task-detail-save-state' role='status'><Text>保存中…</Text></View> : null}
       </SheetActions>
     </View>
   </View>;

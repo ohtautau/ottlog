@@ -44,7 +44,7 @@ module.exports = async function checkMemoWorkflow({ page, origin, out, width, ex
   await expect(sheet()).toBeVisible();
   await expect(sheet().getByRole('button', { name: '创建类型：备忘', exact: true })).toHaveAttribute('aria-pressed', 'true');
   await expect(sheet().locator('.tool-kicker')).toHaveCount(0);
-  await expect(page.getByPlaceholder('准备记下什么？')).toBeVisible();
+  await expect(page.getByPlaceholder('准备记什么？')).toBeVisible();
   await expect(sheet().locator('.memo-priority-trigger .priority-select-flag')).toHaveCSS('color', 'rgb(171, 208, 178)');
   await sheet().locator('.memo-priority-trigger').click();
   await expect(sheet().locator('.priority-option-mark')).toHaveCount(4);
@@ -52,7 +52,7 @@ module.exports = async function checkMemoWorkflow({ page, origin, out, width, ex
   await sheet().getByRole('button', { name: '优先度低', exact: true }).click();
   await expect(sheet().locator('.memo-priority-trigger .priority-select-flag')).toHaveCSS('color', 'rgb(153, 184, 236)');
   await expect(page.locator('.memo-body-input')).toHaveAttribute('placeholder', '写下内容…');
-  await page.getByPlaceholder('准备记下什么？').fill('周末想做的事');
+  await page.getByPlaceholder('准备记什么？').fill('周末想做的事');
   await page.getByRole('button', { name: '生活', exact: true }).click();
   await expect(page.getByRole('button', { name: '生活', exact: true })).toHaveAttribute('aria-pressed', 'true');
   await page.getByRole('button', { name: '选择现有标签', exact: true }).click();
@@ -113,7 +113,7 @@ module.exports = async function checkMemoWorkflow({ page, origin, out, width, ex
   await expect(page.locator('.memo-note .habit-priority')).toHaveCSS('border-top-color', 'rgb(153, 184, 236)');
   await goHome();
   await page.getByRole('button', { name: '创建便签', exact: true }).click();
-  await expect(page.getByPlaceholder('准备记下什么？')).toHaveValue('');
+  await expect(page.getByPlaceholder('准备记什么？')).toHaveValue('');
   await expect(page.locator('.memo-image')).toHaveCount(0);
   await close();
   await goMemos();
@@ -127,7 +127,7 @@ module.exports = async function checkMemoWorkflow({ page, origin, out, width, ex
   await sheet().getByRole('button', { name: '优先度中', exact: true }).click();
   await expect(sheet().locator('.memo-priority-trigger .priority-select-flag')).toHaveCSS('color', 'rgb(228, 206, 133)');
   const beforeDismiss = await state();
-  await page.getByPlaceholder('准备记下什么？').fill('收起后保留的便签输入');
+  await page.getByPlaceholder('准备记什么？').fill('收起后保留的便签输入');
   await page.locator('.memo-sheet-title').click();
   await expect(sheet()).toBeVisible();
   await page.evaluate(() => { window.__miniFixture.modalFailure = true; });
@@ -137,8 +137,8 @@ module.exports = async function checkMemoWorkflow({ page, origin, out, width, ex
   expect(await state(), 'Choosing not to save retains input without saving the memo').toEqual(beforeDismiss);
   await page.getByRole('button', { name: '查看便签：周末想做的事', exact: true }).click();
   await page.getByRole('button', { name: '编辑便签：周末想做的事', exact: true }).click();
-  await expect(page.getByPlaceholder('准备记下什么？')).toHaveValue('收起后保留的便签输入');
-  await page.getByPlaceholder('准备记下什么？').fill('周末想做的事');
+  await expect(page.getByPlaceholder('准备记什么？')).toHaveValue('收起后保留的便签输入');
+  await page.getByPlaceholder('准备记什么？').fill('周末想做的事');
   await page.evaluate(() => { window.__miniFixture.modalFailure = false; });
   await expect(page.locator('.memo-image img')).toHaveAttribute('src', saved.images[0].dataUrl);
   await expect(page.getByRole('button', { name: '生活', exact: true })).toHaveAttribute('aria-pressed', 'true');
@@ -182,7 +182,7 @@ module.exports = async function checkMemoWorkflow({ page, origin, out, width, ex
   await insert().click();
   await expect(insert()).toBeEnabled();
   await expect(page.locator('.memo-image')).toHaveCount(0);
-  await expect(page.locator('.app-message')).toContainText('图片压缩后仍过大');
+  await expect(page.locator('.operation-toast')).toContainText('图片压缩后仍过大');
   await page.evaluate(data => { window.__miniFixture.memoImageBase64 = data; }, image);
   await insert().click();
   await expect(page.locator('.memo-image')).toHaveCount(1);

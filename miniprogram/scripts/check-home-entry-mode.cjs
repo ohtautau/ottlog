@@ -116,7 +116,7 @@ module.exports = async function checkHomeEntryMode({ page, origin, out, width, e
   await page.evaluate(() => { window.__miniFixture.failHomeEntryModeWrites = true; });
   await save('任务'); expect(await preference()).toBe('progress');
   expect((await business('todos')).tasks.filter(task => task.title === '类型偏好写入失败但任务已保存')).toHaveLength(1);
-  await expect(page.locator('.app-message')).toContainText('默认类型未记住');
+  await expect(page.locator('.operation-toast')).toContainText('默认类型未记住');
   expect(await page.evaluate(() => window.__miniNotices)).toEqual([]);
   await page.evaluate(() => { window.__miniFixture.failHomeEntryModeWrites = false; });
 

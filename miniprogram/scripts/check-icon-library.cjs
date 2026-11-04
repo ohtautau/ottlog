@@ -137,7 +137,7 @@ module.exports = async function checkIconLibrary({ page, origin, out, width, exp
   const travelSource = await option('旅行').locator('.library-icon').getAttribute('src');
   await option('旅行').click();
   await expect(memoEntry().locator('.library-icon')).toHaveAttribute('src', travelSource);
-  await page.getByPlaceholder('准备记下什么？', { exact: true }).fill(memoTitle);
+  await page.getByPlaceholder('准备记什么？', { exact: true }).fill(memoTitle);
   await page.locator('.memo-body-input').fill('出门前检查行李，沿途多留一点时间。');
   await memoEditor().getByRole('button', { name: '创建便签', exact: true }).click();
   await expect(memoEditor()).toHaveCount(0);

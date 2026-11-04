@@ -1,3 +1,4 @@
+import { useMessageNotice } from './message-notice';
 import { useEffect, useRef, useState } from 'react';
 import { Text, View } from '@tarojs/components';
 import ActionButton from './ui-button';
@@ -39,6 +40,7 @@ export default function CalendarMonthNavigation({ month, onMonthChange, currentM
   }
   const close = useEditorCloseGuard({ scope: open ? `calendar-month:${scopeKey}:${prefix}` : '', hasChanges: JSON.stringify([year, number]) !== initial.current,
     blocked: disabled, onSave: submit, onClose: () => { setOpen(false); setError(''); } });
+  useMessageNotice(error);
   return <>
     <View className={`calendar-month-navigation ${className}`}>
       <ChoicePopover ariaLabel={`选择${prefix}年月`} open={open} onOpenChange={next => next ? start() : close.requestClose()} disabled={disabled} triggerAppearance='quiet' triggerSize='compact'
@@ -50,7 +52,7 @@ export default function CalendarMonthNavigation({ month, onMonthChange, currentM
           <ScheduleNumberInput ariaLabel={`${prefix}日历年份`} type='number' disabled={disabled} maxlength={4} value={year} onInput={event => setYear(event.detail.value.replace(/\D/g, '').slice(0, 4))} /><Text>年</Text>
           <ScheduleNumberInput ariaLabel={`${prefix}日历月份`} type='number' disabled={disabled} maxlength={2} value={number} onInput={event => setNumber(event.detail.value.replace(/\D/g, '').slice(0, 2))} /><Text>月</Text>
         </NumericInputRow>
-        {!!error && <View className='calendar-month-error' role='alert'>{error}</View>}
+
       </ChoicePopover>
       <View className='calendar-month-buttons'>
         <ActionButton appearance='icon' size='compact' ariaLabel={previousLabel || `${prefix}上个月`} disabled={disabled || month <= minMonth} onClick={() => step(-1)}>‹</ActionButton>

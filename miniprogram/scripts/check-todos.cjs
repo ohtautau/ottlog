@@ -214,7 +214,7 @@ assert.equal(followingCycle.dueDate, '2026-09-29');
 assert.deepEqual(followingCycle.nextTasks, original.tasks[0].nextTasks, 'Actions survive repeated cycles');
 assert.equal(followingCycleState.tasks.filter(item => item.generatedFrom === cycle.id && item.title === '第二步').length, 0);
 assert.equal(cycle.subtasks[0].completed, false, 'Recurring checklist starts unchecked');
-assert.equal(cycle.reminderAt, undefined, 'A one-time subscription is never inherited');
+assert.equal(cycle.reminderAt, '2026-09-22T00:00:00.000Z', 'Reminder interval follows the next task; delivery authorization remains server-owned');
 assert.equal(cycle.dueDate, '2026-09-22');
 assert.equal(JSON.stringify(original), snapshot);
 assert.equal(completeTodo(done, 'task-a', now), done, 'Completing an already completed task is idempotent');
@@ -259,7 +259,7 @@ assert.equal(filled.tasks.length, MAX_TODO_TASKS);
 assert.ok(twoSpaces.tasks.every(before => filled.tasks.some(after => before.id === after.id)), 'Generated work never truncates old records');
 assert.equal(completeTodo(full, 'filler-0', now).tasks.length, MAX_TODO_TASKS, 'Completion without generation still works at capacity');
 
-console.log('PASS todos: priority defaults, version 1 compatibility, immutable saves, optional-field validation, monthly anchors, calendar boundaries, overdue cycles, retired next-step preservation, duplicate prevention, one-time reminder isolation and atomic capacity checks.');
+console.log('PASS todos: priority defaults, version 1 compatibility, immutable saves, optional-field validation, monthly anchors, calendar boundaries, overdue cycles, retired next-step preservation, duplicate prevention, reminder interval inheritance and atomic capacity checks.');
 
 const { moveTodo, sortTodosByTime, sortTodos, getTodoSortMode, orderTodos, applyTodoSort, retryTodoMove } = load('todo-data');
 const board = state(task({ id: 'a', dueDate: '' }), task({ id: 'b', dueDate: '2026-12-16', dueTime: '12:00' }), task({ id: 'c', dueDate: '2026-12-16', dueTime: '08:00' }), task({ id: 'd', dueDate: '2026-12-16' }));

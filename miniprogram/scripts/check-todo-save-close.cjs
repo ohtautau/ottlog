@@ -47,7 +47,7 @@ module.exports = async function checkTodoSaveClose({ page, origin, out, width, e
   await title().fill('提醒任务失败后重试');
   await page.evaluate(() => { window.__miniFixture.failToolWrites = ['todos']; });
   await save();
-  await expect(page.locator('.app-message')).toContainText('本机存储不可用');
+  await expect(page.locator('.operation-toast')).toContainText('本机存储不可用');
   await expect(editor()).toBeVisible();
   await expect(title()).toHaveValue('提醒任务失败后重试');
   expect(await read(), 'Failed storage must not close or overwrite the persisted record').toEqual(beforeFailure);
