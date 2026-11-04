@@ -21,12 +21,21 @@ if(mode==='任务')await page.getByRole('textbox',{name:'任务名称',exact:tru
 if(mode==='便签')await page.getByPlaceholder('准备记什么？',{exact:true}).fill('图片便签');
 const body=mode==='任务'?page.getByRole('textbox',{name:'任务备注',exact:true}):mode==='便签'?page.getByRole('textbox',{name:'便签内容',exact:true}):page.getByRole('textbox',{name:'记录内容',exact:true});
 await body.fill('原正文保留');const attach=mode==='记录'?'正记录附件':mode==='任务'?'任务附件':'编辑附件';
+if(mode==='任务'){
+ const cancelled=page.waitForEvent('filechooser');await button(attach).click();await (await cancelled).element().evaluate(input=>input.dispatchEvent(new Event('cancel')));await expect(button(attach)).toBeEnabled();await expect(page.locator('.operation-toast')).toHaveCount(0);
+ const invalid=page.waitForEvent('filechooser');await button(attach).click();await (await invalid).setFiles({name:'broken.png',mimeType:'image/png',buffer:Buffer.from('invalid PNG')});await expect(page.locator('.operation-toast')).toContainText('无法读取图片');await expect(page.locator('.memo-image img')).toHaveCount(0);await expect(body).toHaveValue('原正文保留');await expect(button(attach)).toBeEnabled();
+ const oversize=page.waitForEvent('filechooser');await button(attach).click();await (await oversize).setFiles({name:'oversize.png',mimeType:'image/png',buffer:Buffer.alloc(12*1024*1024+1)});await expect(page.locator('.operation-toast')).toContainText('12MB');await expect(button(attach)).toBeEnabled();
+}
+
 await upload(attach,'png');const thumbnails=page.locator('.entry-composer .memo-image img');await expect(thumbnails).toHaveCount(1);
 const alpha=await thumbnails.first().evaluate(async img=>{if(!img.complete)await new Promise((resolve,reject)=>{img.onload=resolve;img.onerror=reject;});if(!img.naturalWidth)throw Error('image not loaded');const c=document.createElement('canvas');c.width=img.naturalWidth;c.height=img.naturalHeight;const x=c.getContext('2d');x.drawImage(img,0,0);return {corner:x.getImageData(0,0,1,1).data[3],center:x.getImageData(32,32,1,1).data[3],background:getComputedStyle(img).backgroundColor};});expect(alpha.corner).toBe(0);expect(alpha.center).toBe(255);expect(alpha.background).toBe('rgba(0, 0, 0, 0)');
 await upload(attach,'jpeg');await expect(thumbnails).toHaveCount(2);await expect(body).toHaveValue('原正文保留');
 await expect.poll(()=>saved(mode).find(r=>r.images?.length===2)?.id).toBeTruthy();const record=saved(mode).find(r=>r.images?.length===2),id=record.id,remaining=record.images[1].id;
 await page.screenshot({path:`${out}/${width}-${mode}.png`});await button('移除图片 1').click();await expect(thumbnails).toHaveCount(1);await expect.poll(()=>saved(mode).find(r=>r.id===id)?.images?.map(i=>i.id)).toEqual([remaining]);
 await page.keyboard.press('Escape');await expect(page.locator('.entry-composer')).toHaveCount(0);expect(saved(mode).find(r=>r.id===id)).toBeTruthy();
+await page.goto(origin+(mode==='任务'?'/todos':mode==='便签'?'/memos':'/domains'));
+if(mode==='任务')await page.locator('.todo-task-content').filter({hasText:'图片任务'}).first().click();else if(mode==='便签')await page.locator('.memo-note-open').filter({hasText:'图片便签'}).first().click();else await page.locator('.domains-recent-records .domain-record-plain').filter({hasText:'原正文保留'}).first().click();
+await expect(page.locator('.memo-image img')).toHaveCount(1);expect(saved(mode).find(r=>r.id===id).images[0].id).toBe(remaining);await page.keyboard.press('Escape');await page.goto(origin+'/today');
 results.push({width,mode,id,alpha,status:'passed'});
 }
 await page.close();

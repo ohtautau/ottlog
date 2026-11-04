@@ -1,6 +1,9 @@
 # Ottlog 设计与交互
 
-2026-11-04 第六项清单候选：任务与便签创建／已有编辑／今日入口共用纯UI EditorChecklist，已填行右侧唯一拖动柄，末尾空行×仅取消新增，可由左下共用子任务符号恢复。排序沿useHandleSort及父自动保存；owner＋父ID＋子项稳定ID隔离。便签可选checklist与原子任务同形，无字段不迁移、不补默认数组，异常旧字段清单只读并保留；纯清单算内容，不投影为任务。模型／类型／build:tools通过，3017浏览器脚本尚未实跑，细节见docs/development.md及.tmp/editor-checklist-result.json。保留第五项媒体修复。
+2026-11-04本轮补充：习惯首项“今日”沿原时段／自由／提醒布局，其后“全部”及领域分类用简单完整网格；视图键独立命名，不能写入习惯领域。领域最近正负记录沿共用容器16px对称水平内距，分割线两侧间隔同源，空栏与实际记录沿同一边界。便签筛选及非默认排序共用AppliedOptions、20px左右内距、无擦除入口。记录附件左右列各左下一个，附到该列最新有效记录；编辑框与格言沿共用紧凑框，标题行位置及正文边界统一。普通校验提示沿现有5秒OperationToast，不生成撤销；真实任务操作仍保留原撤销和失败重试。网页专注反馈槽固定40px，慢速同步状态不再挤压番茄或按钮，原生几何不改。
+
+
+2026-11-04 第六项清单候选：任务与便签创建／已有编辑／今日入口共用纯UI EditorChecklist，已填行右侧唯一拖动柄，末尾空行×仅取消新增，可由左下共用子任务符号恢复。排序沿useHandleSort及父自动保存；owner＋父ID＋子项稳定ID隔离。便签可选checklist与原子任务同形，无字段不迁移、不补默认数组，异常旧字段清单只读并保留；纯清单算内容，不投影为任务。模型／类型／build:tools及Windows隔离3017浏览器清单键盘／鼠标／CDP触摸、失败重试与重开检查通过，微信原生／真机交互尚未验收，细节见docs/development.md及.tmp/editor-checklist-result.json。保留第五项媒体修复。
 
 
 2026-11-04 第五项媒体候选：三创建附件回填区分交互disabled与mediaWritable；自身选图busy不撤销权限，owner／record／权限撤销作废晚到结果。记录附件沿左右列各左下入口指向该列末条稳定ID，不做便签清单或子任务拖动。取original，PNG／WebP不走原生JPEG压缩；透明缩略背景透明，历史已压平黑像素不自动修复。162af67已补原生超限PNG／WebP的本编辑器Canvas 2D受控保alpha缩放，逐档PNG导出并校验180KiB，仍超限提示；owner／record／权限及清理守卫保持。模型通过不代表微信真机alpha／WebP加载实测，真机边界仍待验收；验证见docs/development.md、.tmp/media-insertion-result.json与.tmp/native-alpha-result.json。
