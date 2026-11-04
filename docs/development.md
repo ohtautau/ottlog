@@ -3031,3 +3031,11 @@ node scripts/check-panel-queue-editor.mjs
 node scripts/check-media-insertion.mjs
 ```
 新增脚本覆盖1440／390、今日任务／纯清单便签创建及原记录编辑、相同DOM、末尾×与恢复、输入回车／上下焦点及IME、真实鼠标与CDP触屏长按／普通滑动／取消／多指、边界滚动、勾选排序保存重载、真实filechooser透明PNG及alpha、失败同父ID重试、运行中owner切换。**仅语法检查，所有浏览器断言仍待实跑，脚本存在不等于通过**。原生真机焦点、触屏及嵌套滚动仍需真机验收；第五项原生超限透明图缩放仍未实现，保守拒绝策略保持。现有editor-refinements脚本仅将旧任务专属输入类选择器换为共用类，未放宽断言。没有启动3017服务、改真实API／数据／系统／.git，也未提交、推送、发布或部署。
+
+### 2026-11-04 第七项 native-alpha（候选，未发布）
+
+完成第五项原生超限 PNG/WebP 的受控缩放：MarkdownNoteEditor 独有稳定 ID 的原生 Canvas type=2d，固定1px、透明、不可交互、不使用 display:none，不参与页面布局。仅插图时 SelectorQuery 选择本编辑器真实 node，由 node.createImage 加载原图，clearRect/drawImage 后 canvasToTempFilePath 传 canvas node、fileType=png 及相同有界源/目标尺寸。1280／960／720／512／360／256 按比例降采样，PNG签名及180KiB验证通过才沿原附件队列回填；仍超限明确提示。每步SDK等待最多15秒，成功／失败／取消均释放画布至1×1并解除图片回调。owner／record／权限撤销及卸载沿既有generation检查，处理器在异步阶段间额外检查，不接受晚到结果。12MiB源／24Mi像素／16384单边／六图／900KiB存档守卫及JPEG流程未改；web继续原canvas保alpha。未用OffscreenCanvas导出、不存在的compressImage格式参数或PNG编解码库。
+
+契约依据：本地Taro4.2.1 canvas/index.d.ts明确声明Canvas node/createImage与canvasToTempFilePath.Option.canvas及png；官方 https://docs.taro.zone/en/docs/apis/canvas/canvasToTempFilePath 及 https://docs.taro.zone/docs/apis/canvas/createOffscreenCanvas 本次在线抓取超时，未将页面内容冒充已读取。浏览器工具与ui-preview组件alias补Canvas导出，web不挂载原生画布。
+
+实际通过：check-native-alpha.cjs（SDK stub选择指定真实node对象、PNG导出参数、六档尺寸及字节重试、加载／导出／读文件／非PNG失败、取消／超时／尺寸清理）；check-media-insertion.cjs（新增卸载晚到结果与busy清理，既有owner／record／权限撤销后恢复、自busy与两图回填）；check-media-fields、check-editor-checklist、check-handle-sort；miniprogram typecheck、web build:tools、git diff --check。这里的“真实node对象”是stub返回的同一对象身份，不是真实微信Canvas。没有Windows/HTMLCanvas像素实测、浏览器视觉或微信真机alpha验收。正常小程序build、ES2019与包预算由协调端最终统一执行，本轮未跑；真实设备加载WebP、透明像素及键盘／滚轮／页面几何仍待协调端验收。未写真实业务数据／API／系统／.git，未提交、推送或部署。结果见.tmp/native-alpha-result.json。

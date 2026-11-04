@@ -1,7 +1,7 @@
 import { showAppMessage } from '../lib/app-dialog';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import Taro from '@tarojs/taro';
-import { Image, RichText, Text, Textarea, View } from '@tarojs/components';
+import { Canvas, Image, RichText, Text, Textarea, View } from '@tarojs/components';
 import ActionButton, { ChoiceButton } from './ui-button';
 import { imageUrl } from '../api';
 import { createMarkdownRenderer } from '../lib/markdown';
@@ -10,6 +10,7 @@ import type { MemoImage } from '../lib/tool-records';
 import './markdown-note-editor.css';
 import EditorFieldsLayout from './editor-fields-layout';
 
+let canvasSequence = 0;
 const renderMarkdown = createMarkdownRenderer(imageUrl,{attachmentImages:true});
 const notify = (error: unknown) => { void showAppMessage({ title: error instanceof Error ? error.message : '操作失败，请重试', icon: 'none' }); };
 
@@ -24,6 +25,8 @@ export default function MarkdownNoteEditor({ value, images: savedImages, onChang
   const [localPreview, setLocalPreview] = useState(defaultPreview), [imageBusy, setImageBusy] = useState(false);
   const [focused, setFocused] = useState(autoFocus);
   useEffect(() => { if (autoFocus !== undefined) setFocused(autoFocus); }, [autoFocus]);
+  const canvasId = useRef('');
+  if (!canvasId.current) canvasId.current = `native-alpha-${++canvasSequence}`;
   const mounted = useRef(true), operating = useRef(false);
   const identity = useRef({ owner, recordId, generation: 0 });
   if (identity.current.owner !== owner || identity.current.recordId !== recordId) identity.current = { owner, recordId, generation: identity.current.generation + 1 };
@@ -50,7 +53,7 @@ export default function MarkdownNoteEditor({ value, images: savedImages, onChang
     try {
       const chosen = await Taro.chooseMedia({ count: 1, mediaType: ['image'], sourceType: ['album', 'camera'], sizeType: ['original'] });
       if (!chosen.tempFiles.length || !isCurrent()) return;
-      const image = await readMemoImage(chosen.tempFiles[0].tempFilePath, chosen.tempFiles[0].size);
+      const image = await readMemoImage(chosen.tempFiles[0].tempFilePath, chosen.tempFiles[0].size, { canvasId: canvasId.current, isCurrent });
       if (!isCurrent()) return;
       const latest = current.current, next = [...latest.images, image];
       if (next.length > MAX_MEMO_IMAGES) throw new Error(`最多插入 ${MAX_MEMO_IMAGES} 张图片`);
@@ -66,6 +69,7 @@ export default function MarkdownNoteEditor({ value, images: savedImages, onChang
   const handledInsertion = useRef(insertionSignal);
   useEffect(() => { if (handledInsertion.current !== insertionSignal) { handledInsertion.current = insertionSignal; void insertImage(); } }, [insertionSignal]);
   return <EditorFieldsLayout topSpace={false} className={`markdown-note-editor${density === 'compact' ? ' is-compact' : ''}${format === 'plain' ? ' is-plain' : ''}${minimal ? ' is-minimal' : ''} ${className}`}>
+    {Taro.getEnv() !== Taro.ENV_TYPE.WEB && <Canvas id={canvasId.current} type='2d' style={{ position: 'fixed', width: '1px', height: '1px', left: '-2px', top: '0', opacity: 0, pointerEvents: 'none' }} />}
     {showingPreview ? <View className='memo-body-preview' onClick={minimal && !locked ? () => { setPreview(false); setFocused(true); } : undefined}>{value ? <RichText nodes={markdown} selectable /> : !images.length && <Text className='tool-muted'>{emptyPreviewPlaceholder}</Text>}</View> : <Textarea className={`memo-body-input ${inputClassName}`} ariaLabel={ariaLabel} data-editor-list={navigationId} data-editor-row={recordId} onConfirm={onConfirm} confirmType={onConfirm ? 'done' : undefined} confirmHold={!!onConfirm} autoHeight={minimal} focus={focused} onFocus={onFocus} onBlur={() => {setFocused(false);onBlur?.();}} disabled={locked} value={value} placeholder={placeholder} maxlength={Math.max(maxLength, value.length)} fixed cursorSpacing={96} adjustPosition onInput={event => onChange(event.detail.value)} showConfirmBar={false} />}
     <View className='memo-editor-toolbar'>{format === 'markdown' && <View className='memo-editor-modes'><ChoiceButton className={!preview ? 'is-active' : ''} aria-pressed={!preview} disabled={locked} onClick={() => setPreview(false)}>书写</ChoiceButton><ChoiceButton className={preview ? 'is-active' : ''} aria-pressed={preview} disabled={locked} onClick={() => setPreview(true)}>预览</ChoiceButton></View>}<Text className='memo-body-count'>{value.length} / {maxLength}{images.length ? ` · ${images.length} 张图片` : ''}</Text>{showImageInsertion && <ActionButton className='memo-insert-image' ariaLabel='插入图片' disabled={locked || images.length >= MAX_MEMO_IMAGES || !canInsertImage} loading={imageBusy} onClick={() => { void insertImage(); }}><View className='memo-image-mark' aria-hidden />{imageBusy ? '处理中' : '图片'}</ActionButton>}</View>
     {!!images.length && <View className={`memo-images${showingPreview ? ' is-preview' : ''}`}>{images.map((image, index) => <View className='memo-image' key={image.id}><Image src={image.dataUrl} mode={showingPreview ? 'aspectFit' : 'aspectFill'} ariaLabel={`${ariaLabel}图片 ${index + 1}`} onClick={() => { void previewMemoImages(images, index).catch(notify); }} />{!showingPreview && <ActionButton appearance='icon' context='overlay' className='memo-image-remove' ariaLabel={`移除图片 ${index + 1}`} disabled={locked} onClick={() => onImagesChange(images.filter(item => item.id !== image.id))}>×</ActionButton>}</View>)}</View>}

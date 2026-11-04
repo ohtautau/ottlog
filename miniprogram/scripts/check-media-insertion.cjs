@@ -19,6 +19,7 @@ setup();chosen=Promise.resolve({tempFiles:[{tempFilePath:'png',size:100}]});let 
 read=Promise.resolve({id:'two',dataUrl:'data:image/jpeg;base64,/9j/AAAA'});await insert();await tick();assert.deepEqual(props.images.map(i=>i.id),['one','two']);
 const remove=all(render()).find(n=>n.props?.ariaLabel==='移除图片 1');remove.props.onClick();assert.deepEqual(props.images.map(i=>i.id),['two']);
 for(const invalidation of ['owner','record','permission']){setup();pending=deferred();read=pending.promise;await insert();await tick();if(invalidation==='owner')props.owner='b';else if(invalidation==='record')props.recordId='new';else props.canInsertImage=false;render();props.canInsertImage=true;render();pending.resolve({id:'late'});await tick();assert.equal(changes.length,0,invalidation);}
+setup();pending=deferred();read=pending.promise;await insert();await tick();for(const slot of slots)slot?.cleanup?.();pending.resolve({id:'unmounted-late'});await tick();assert.equal(changes.length,0);assert.equal(props.disabled,false);
 setup();chosen=Promise.reject({errMsg:'chooseMedia:fail cancel'});await insert();await tick();assert.equal(changes.length,0);assert.equal(notifications.length,0);
 setup();chosen=Promise.resolve({tempFiles:[{tempFilePath:'bad',size:10}]});read=Promise.reject(Error('bad image'));await insert();await tick();assert.equal(changes.length,0);assert.equal(notifications.length,1);
 console.log('PASS media: real shared async editor self-busy, two images, delete, owner/record/revoked-ready invalidation, cancel/bad image; native PNG original and source limit');

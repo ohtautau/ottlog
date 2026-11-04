@@ -124,3 +124,6 @@ export function RichText({ nodes, ...props }) { return <div {...domProps(props)}
 export const Swiper = basic('div'), SwiperItem = basic('div');
 export const Navigator = ({ url, children, ...props }) => <a {...domProps(props)} href={websiteRoute(url)}>{children}</a>;
 export function Switch({ checked, disabled, onChange, color, ...props }) { return <input {...domProps(props)} role='switch' type='checkbox' checked={checked} disabled={disabled} onChange={event => onChange?.({ detail: { value: event.target.checked } })} style={{ width: 40, minHeight: 30, accentColor: color }} />; }
+
+// Native attachment canvas is never mounted on web; keep shared imports compatible.
+export const Canvas = basic('canvas');

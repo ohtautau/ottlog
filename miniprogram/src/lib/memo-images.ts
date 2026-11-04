@@ -1,4 +1,5 @@
 import Taro from '@tarojs/taro';
+import { nativeAlphaImage, type NativeAlphaRequest } from './native-alpha-canvas';
 import { toolId, type Memo, type MemoImage, type MemoState } from './tool-records';
 
 import { MAX_NOTE_IMAGE_BYTES as MAX_IMAGE_BYTES, isNoteImage, noteStateFits } from './note-image-data';
@@ -14,7 +15,7 @@ const MAX_SOURCE_PIXELS = 24 * 1024 * 1024;
 const readBase64 = (path: string) => new Promise<string>((resolve, reject) => Taro.getFileSystemManager().readFile({ filePath: path, encoding: 'base64', success: result => resolve(String(result.data)), fail: reject }));
 const imageMime = (data: string) => data.startsWith('/9j/') ? 'jpeg' : data.startsWith('iVBORw0KGgo') ? 'png' : data.startsWith('UklGR') ? 'webp' : '';
 const fits = (data: string) => Math.floor(data.length * 3 / 4) - (data.endsWith('==') ? 2 : data.endsWith('=') ? 1 : 0) <= MAX_IMAGE_BYTES;
-export async function readMemoImage(path: string, sourceBytes?: number): Promise<MemoImage> {
+export async function readMemoImage(path: string, sourceBytes?: number, nativeRequest?: NativeAlphaRequest): Promise<MemoImage> {
   if (!sourceBytes || sourceBytes > MAX_SOURCE_IMAGE_BYTES) throw new Error('图片原文件过大或大小不可用，请选择 12MB 以内的图片');
   const info = await Taro.getImageInfo({ src: path });
   if (!(info.width > 0 && info.height > 0) || info.width * info.height > MAX_SOURCE_PIXELS || Math.max(info.width, info.height) > 16384) throw new Error('图片尺寸过大，请裁剪后再插入');
@@ -24,7 +25,11 @@ export async function readMemoImage(path: string, sourceBytes?: number): Promise
   // PNG/WebP may contain alpha. Never send them through native compressImage,
   // whose contract supplies no alpha-preserving output format selection.
   if (mime !== 'jpeg' && fits(original) && longSide <= 1280) return { id: toolId(), dataUrl: `data:image/${mime};base64,${original}` };
-  if (mime !== 'jpeg' && Taro.getEnv() !== Taro.ENV_TYPE.WEB) throw new Error('透明格式图片需在 1280 像素及 180KB 以内，请保留透明格式缩小后重试');
+  if (mime !== 'jpeg' && Taro.getEnv() !== Taro.ENV_TYPE.WEB) {
+    if (!nativeRequest) throw new Error('当前原生 Canvas 不可用，无法保留透明度缩放');
+    const data = await nativeAlphaImage(path, info.width, info.height, nativeRequest, readBase64, fits);
+    return { id: toolId(), dataUrl: `data:image/png;base64,${data}` };
+  }
   for (const [size, quality] of [[1280, 75], [960, 55], [720, 40]]) {
     const ratio = Math.min(1, size / longSide);
     const compressed = await Taro.compressImage({ src: path, quality, compressedWidth: Math.max(1, Math.round(info.width * ratio)), compressedHeight: Math.max(1, Math.round(info.height * ratio)) });

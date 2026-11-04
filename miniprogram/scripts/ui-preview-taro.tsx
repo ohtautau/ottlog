@@ -318,6 +318,7 @@ const basic = (tag: string) => function Element({ children, onTap, onLongPress, 
   return React.createElement(tag, { ...props, 'aria-label': ariaLabel || props['aria-label'], key: catchMove ? 'catch-view' : 'view', onClick: props.onClick || onTap,
     onContextMenu: onLongPress ? (event: React.MouseEvent) => { event.preventDefault(); onLongPress(event); } : undefined }, children);
 };
+export const Canvas = basic('canvas');
 export const View = basic('div');
 export function ScrollView({ children, scrollY, scrollX, scrollIntoView, scrollTop, scrollLeft, onScroll, scrollWithAnimation, enhanced, bounces, showScrollbar, lowerThreshold = 50, onScrollToLower, ...props }: any) {
   const element = useRef<HTMLDivElement>(null);
