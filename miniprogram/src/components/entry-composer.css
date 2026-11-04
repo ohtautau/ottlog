@@ -1,4 +1,8 @@
-.entry-overlay { z-index: 101; }
+.entry-overlay { position:fixed;inset:0;z-index:101;display:flex;align-items:flex-end;justify-content:center; }
+.entry-overlay > .todo-backdrop { position:absolute;inset:0;background:rgba(4,10,16,.7); }
+.entry-composer.todo-sheet { position:relative;display:flex;flex-direction:column;min-height:0;overflow:hidden; }
+.entry-composer .todo-sheet-scroll { flex:1;height:0;min-height:0; }
+@media (min-width:600px) { .entry-overlay { align-items:center;padding:16PX; } }
 .entry-type-heading { flex:none;padding:16PX var(--task-detail-inset) 0; }
 .entry-composer.todo-sheet { height: min(660PX,calc(100% - 24PX)); max-height: calc(100% - 24PX); }
 .entry-modes { display: flex; flex: 1; min-width: 0; align-items: stretch; gap: 4PX; padding: 4PX; border: 1rpx solid #3b505c; border-radius: 14rpx; background: #13232e; }
