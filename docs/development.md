@@ -3048,3 +3048,13 @@ node scripts/check-media-insertion.mjs
 AGENTS／Design顶部第五项已按162af67更新受控原生Canvas PNG保alpha缩放；此前第五／六项段落中的未实现描述为当时状态，已由第七项替代。真机WebP加载、透明像素、触屏／键盘／页面几何仍待验收，不将SDK stub或协调端检查算作本机实测。
 
 本机实际通过：源码113份CSS、check-weapp-styles-test、check-native-alpha、check-media-insertion、check-media-fields、check-editor-checklist、check-handle-sort、check-todo-autosave、check-todo-undo、check-todo-panel-source、check-entry-tags、check-progress-draft、check-progress-pairs、check-unified-notification、miniprogram typecheck、web build:tools、git diff --check。正常npm run build:weapp在项目配置检查通过后，Taro初始化创建沙箱外 /home/ubuntu/.taro4.0 报ENOENT，未进入编译；未修改HOME或绕过沙箱。单独预算检查因无dist/app.json报ENOENT，产物WXSS／ES2019／包预算均未验证。未安装依赖，未运行浏览器／微信编译器或真机，未改业务／API／部署／.git；Windows最终构建、预算、验收及部署由协调端完成。详情见.tmp/final-ui-compat-result.json。
+
+### 2026-11-04 focus-save-jitter 小型修复
+
+按最终QA的延迟PUT复现根因，网页desktop两层覆盖不再把focus-feedback-slot设为auto或短屏24px上限，统一与原生共用槽一样固定40px（height/min/max）。空／同步／失败均占相同空间，长反馈仍沿原ScrollView滚动、重新同步按钮及真实错误保留。未改专注状态、实时保存、backgroundSettings快照、deadline、活动窗口或清单／媒体守卫。375×667及原生既有40px和短屏控制规则未改。
+
+新增check-focus-save-jitter.cjs检查8种宽高下反馈槽源样式覆盖、滚动／重试及113份源CSS的WXSS约束；这是源样式合同，不是DOM几何实测。check-focus-activity-habit.mjs增加pomodoro隔离PUT延迟800ms、四列逐个真实鼠标wheel、浏览器requestAnimationFrame内120帧采样，覆盖feedback／clock／stage／tomato／actions等几何1px断言，关闭后保留375×667番茄>=110px及主要按钮视窗断言。
+
+本机实际通过：上述源样式检查、check-weapp-styles-test、check-focus-recommendation、check-habits-focus、miniprogram typecheck、web build:tools、浏览器脚本语法与git diff --check。未安装／运行浏览器或微信编译器；宽窄屏实际几何、延迟PUT+真实触摸四列、运行deadline、失败重试及真机仍交Windows协调端验收。现有脚本deadline比较仍发生于idle，不能算运行中deadline验收。结果见.tmp/focus-save-jitter-result.json。未改API／业务数据／.git／部署、未提交或推送。
+
+Windows隔离候选：`cd web`，设置`OTTLOG_PARITY_ORIGIN=http://127.0.0.1:3017`后运行`node scripts/check-focus-activity-habit.mjs`及`node scripts/check-focus-layout-spacing.mjs`；脚本存在及构建成功不代表浏览器通过。

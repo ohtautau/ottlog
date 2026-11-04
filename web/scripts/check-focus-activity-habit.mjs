@@ -10,7 +10,7 @@ try{for(const viewport of [{width:2412,height:1080},{width:1440,height:900},{wid
  const page=await browser.newPage({viewport,hasTouch:true}),stamp=new Date().toISOString(),errors=[];
  page.on('pageerror',e=>errors.push(e.message));
  const states={pomodoro:{version:1,settings:{focus:25,shortBreak:5,longBreak:15,longEvery:4},mode:'focus',selection:{title:'隔离事项',taskId:null},active:null,completedFocusCount:4,sessions:[{id:'finished',taskId:null,title:'隔离事项',mode:'focus',completed:true,durationSeconds:1500,plannedSeconds:1500,startedAt:stamp,endedAt:stamp}]},todos:{version:1,tasks:[],categories:[],sort:'created'},memos:{version:1,notes:[1,2].map(i=>({id:`memo-${i}`,title:`几何便签${i}`,body:'正文摘要与标题分隔',tags:['标签'],images:[{id:'pixel',dataUrl:'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+aN1cAAAAASUVORK5CYII='}],pinned:i===1,color:'blue',createdAt:stamp,updatedAt:stamp}))}};
- await page.route('**/api/**',async route=>{const req=route.request(),p=new URL(req.url()).pathname,key=p.match(/^\/api\/personal-tools\/([^/]+)$/)?.[1];if(p.startsWith('/api/account/'))return route.fulfill({json:{authenticated:true,userName:'layout-fixture',csrfToken:'isolated'}});if(key){if(req.method()==='PUT')states[key]=req.postDataJSON().data;return route.fulfill({json:{data:states[key]??null}});}return route.fulfill({json:{enabled:false,reminders:[]}});});
+ await page.route('**/api/**',async route=>{const req=route.request(),p=new URL(req.url()).pathname,key=p.match(/^\/api\/personal-tools\/([^/]+)$/)?.[1];if(p.startsWith('/api/account/'))return route.fulfill({json:{authenticated:true,userName:'layout-fixture',csrfToken:'isolated'}});if(key){if(req.method()==='PUT'){if(key==='pomodoro')await new Promise(resolve=>setTimeout(resolve,800));states[key]=req.postDataJSON().data;}return route.fulfill({json:{data:states[key]??null}});}return route.fulfill({json:{enabled:false,reminders:[]}});});
  states.reminders={version:1,items:[{id:'habit-fixture',title:'隔离习惯',group:'其它',kind:'walk',note:'',minutes:5,enabled:true}],done:{},reflections:[]};
  const button=name=>page.getByRole('button',{name,exact:true});
  const geometry=async()=>{await expect.poll(()=>page.locator('.focus-timer-stage').evaluate(stage=>{const s=stage.getBoundingClientRect(),t=stage.querySelector('.focus-tomato-scene').getBoundingClientRect();return t.height>0&&t.top>=s.top-1&&t.bottom<=s.bottom+1&&t.left>=s.left-1&&t.right<=s.right+1&&Math.abs((t.top+t.bottom-s.top-s.bottom)/2)<2;})).toBe(true);if(viewport.width===375&&page.viewportSize().height===667)expect((await page.locator('.focus-tomato-scene').boundingBox()).width).toBeGreaterThanOrEqual(110);const actions=await page.locator('.focus-action-area').boundingBox();expect(actions.y+actions.height).toBeLessThanOrEqual(viewport.height);};
@@ -21,15 +21,20 @@ try{for(const viewport of [{width:2412,height:1080},{width:1440,height:900},{wid
  await button('专注更多操作').click();await button('休息建议').click();await suggestions();
  await button('专注更多操作').click();await button('调整时长').click();
  const settings=page.getByRole('dialog',{name:'调整时长',exact:true});await expect(settings).toBeVisible();
- const sample=()=>page.evaluate(()=>Object.fromEntries(['.focus-page-toolbar','.focus-clock-card','.focus-timer-stage','.focus-toolbar'].map(selector=>{const n=document.querySelector(selector),r=n.getBoundingClientRect();return [selector,[r.x,r.y,r.width,r.height,n.scrollTop]];})));
+ const sample=()=>page.evaluate(()=>Object.fromEntries(['.focus-page-toolbar','.focus-clock-card','.focus-timer-stage','.focus-toolbar','.focus-feedback-slot','.focus-tomato-scene','.focus-action-area'].map(selector=>{const n=document.querySelector(selector),r=n.getBoundingClientRect();return [selector,[r.x,r.y,r.width,r.height,n.scrollTop]];})));
  const before=await sample(),old=states.pomodoro.settings.focus,deadline=states.pomodoro.active?.deadline;
- const wheel=settings.locator('.browser-wheel-scroll').first();await wheel.hover();
- const samples=[];const sampling=(async()=>{for(let i=0;i<35;i++){samples.push(await sample());await page.waitForTimeout(50);}})();
- await page.mouse.wheel(0,84);await sampling;
+ const samples=[];
+ await expect(settings.locator('.browser-wheel-scroll')).toHaveCount(4);
+ for(const wheel of await settings.locator('.browser-wheel-scroll').all()){
+  await wheel.hover();
+  const sampling=page.evaluate(async()=>{const frames=[];for(let i=0;i<120;i++){await new Promise(requestAnimationFrame);frames.push(Object.fromEntries(['.focus-page-toolbar','.focus-clock-card','.focus-timer-stage','.focus-toolbar','.focus-feedback-slot','.focus-tomato-scene','.focus-action-area'].map(selector=>{const n=document.querySelector(selector),r=n.getBoundingClientRect();return [selector,[r.x,r.y,r.width,r.height,n.scrollTop]];})));}return frames;});
+  await page.mouse.wheel(0,84);samples.push(...await sampling);
+ }
  await expect.poll(()=>states.pomodoro.settings.focus).not.toBe(old);
  for(const result of samples)for(const key of Object.keys(before))for(let i=0;i<5;i++)expect(Math.abs(result[key][i]-before[key][i])).toBeLessThanOrEqual(1);
  expect(states.pomodoro.active?.deadline).toBe(deadline);
- await expect(button('关闭节奏设置')).toBeEnabled();await button('关闭节奏设置').click();
+ await expect(button('关闭节奏设置')).toBeEnabled();await button('关闭节奏设置').click();await geometry();
+ expect((await page.locator('.focus-feedback-slot').boundingBox()).height).toBe(40);
  await page.waitForTimeout(5500);await expect(page.getByRole('dialog',{name:'休息建议',exact:true})).toHaveCount(0);
  await page.goto(origin+'/memos');await page.goto(origin+'/pomodoro');await expect(page.getByRole('dialog',{name:'休息建议',exact:true})).toHaveCount(0);
  await page.goto(origin+'/daily');

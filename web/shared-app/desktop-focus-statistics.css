@@ -92,9 +92,10 @@
   }
   .tool-app-root .focus-page .focus-end-slot:has(> .focus-end-space) { display: none; }
   .tool-app-root .focus-page .focus-feedback-slot {
-    height: auto;
+    /* Reserve the same space for empty, syncing and failed feedback. */
+    height: 40px;
     max-height: 40px;
-    min-height: 0;
+    min-height: 40px;
     margin: 0;
     overflow-y: auto;
   }
@@ -348,7 +349,6 @@
 @media (min-width: 900px) and (max-height: 700px) {
   .tool-app-root .focus-page .focus-core.core-screen > .core-content { gap: 6px; }
   .tool-app-root .focus-page .focus-core .focus-clock-card { padding: 10px 16px; gap: 8px 20px; }
-  .tool-app-root .focus-page .focus-feedback-slot { max-height: 24px; }
   .tool-app-root .focus-settings-overlay { padding: 12px; }
   .tool-app-root .focus-settings { height: auto; max-height: calc(100dvh - 24px); }
   .tool-app-root .focus-settings-grid { gap: 0; }

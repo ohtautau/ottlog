@@ -358,7 +358,7 @@
   .tool-app-root .focus-timer-stage { flex: none; height: 300px; min-height: 300px; align-items: center; }
   .tool-app-root .focus-purpose-slot { width: 100%; max-width: 640px; margin-inline: auto; }
   .tool-app-root .focus-action-area { max-width: 640px; margin-inline: auto; }
-  .tool-app-root .focus-feedback-slot { height: auto; min-height: 0; max-height: 100px; }
+  .tool-app-root .focus-feedback-slot { height: 40px; min-height: 40px; max-height: 40px; }
 
   /* Charts remain readable at real pixel sizes. Thirty-day series retain their
      explicit internal horizontal scrolling and exact clickable points. */
