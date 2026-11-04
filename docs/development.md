@@ -3010,3 +3010,24 @@ $env:OTTLOG_PARITY_ORIGIN="http://127.0.0.1:3017"
 node scripts/check-media-insertion.mjs
 ```
 新增脚本只做语法检查，服务器未安装或运行浏览器。脚本用真实filechooser上传canvas几何透明四角PNG和JPEG，隔离全部/api，检查三创建即时缩略、真实图loaded／像素alpha、透明CSS、两图自动保存、单删及ID／正文保持，保存页面截图供角落露卡片色审核。**尚未实跑，不算UI验收**。脚本尚未覆盖关闭重开已有记录、坏图／超限／取消／延迟／owner变化的浏览器路径、左右各两条的真实上传、存储失败同ID重试与预览原图；这些仅部分由模型覆盖，需协调端补足。原生大透明图缩放和真机alpha必须单列未完成，不能用构建／模型冒充。
+
+
+### 2026-11-04 第六项 editor-checklist（候选，未提交／未部署）
+
+TaskDetailEditor 与 MemoEditorFields 使用同一 EditorChecklist（含Input、完成框、原位占位、目标反馈和跟手行），今日 EntryComposer 沿同一编辑器接入。父组件保留保存、同ID重试、账号store及撤销；清单不生成任务或四象限条目。任务保留subtasks，便签增加可选checklist（id/title/completed），普通标题／正文／标签／优先度／置顶／图片字段沿原路径。无清单的旧便签不在读取、追加空行或输入空字符时写默认数组；异常旧字段不参与编辑，不替换原字段；其它字段编辑仍由原记录spread保留它。
+
+已填行右侧只有拖动柄，无删除×；末尾空行×只取消空行，左下原子任务符号恢复。正文回车／上下键切换真实输入焦点，组合输入跳过；清空真实项后失焦沿不可见空字符判断清理。柄方向键排序，触摸长按400ms、鼠标按柄拖动；复用useHandleSort，包括原隐式capture由子元素转柄的lost守卫。本轮仅为该底座增加IME／修饰键排序守卫，不复制习惯拖动业务。清单有自己的真实ScrollView（最多35vh，按实际行数定高），边缘滚动由原控制器驱动；父滚动仍沿原编辑框。取消、普通滑动、多指、Escape、窗口失焦、隐藏、owner／record／子项ID变化及卸载不提交预览。提交一次父onChange，实际队列／失败重试不在清单组件内另建。
+
+纯清单便签通过创建及已有编辑的非空判断；卡片无正文／图片时显示真实“清单 完成数/总数”，滑动快照同源摘要。旧便签validator保持兼容，API generic JSON和账号store未改。第五项mediaWritable／imageBusy隔离及透明图片代码保持。
+
+实际通过：新增check-editor-checklist.cjs（真实组件确定性hooks：稳定ID、完成／标题排序、末尾×与恢复、回车焦点状态、空字符清理、不补默认字段、忙状态、晚到旧owner回调、record隔离、异常字段只读、纯清单校验／存储）；check-handle-sort.cjs（真实控制器原生／网页模拟事件、长按／普通滑动、鼠标／触摸、异步测量、capture交接、取消／多指／owner／keys／卸载）；check-todo-autosave、check-todo-undo、check-todo-panel-source、check-entry-tags、check-progress-draft、check-progress-pairs；第五项check-media-insertion与check-media-fields；miniprogram typecheck、web build:tools、脚本语法及git diff --check。没有安装浏览器或执行浏览器验收。
+
+Windows新隔离3017候选（全部/api由脚本拦截，不访问真实账号）：
+```powershell
+cd web
+$env:OTTLOG_PARITY_ORIGIN="http://127.0.0.1:3017"
+node scripts/check-editor-checklist.mjs
+node scripts/check-panel-queue-editor.mjs
+node scripts/check-media-insertion.mjs
+```
+新增脚本覆盖1440／390、今日任务／纯清单便签创建及原记录编辑、相同DOM、末尾×与恢复、输入回车／上下焦点及IME、真实鼠标与CDP触屏长按／普通滑动／取消／多指、边界滚动、勾选排序保存重载、真实filechooser透明PNG及alpha、失败同父ID重试、运行中owner切换。**仅语法检查，所有浏览器断言仍待实跑，脚本存在不等于通过**。原生真机焦点、触屏及嵌套滚动仍需真机验收；第五项原生超限透明图缩放仍未实现，保守拒绝策略保持。现有editor-refinements脚本仅将旧任务专属输入类选择器换为共用类，未放宽断言。没有启动3017服务、改真实API／数据／系统／.git，也未提交、推送、发布或部署。

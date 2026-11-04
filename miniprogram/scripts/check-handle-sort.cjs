@@ -64,3 +64,11 @@ for(const cancel of [f=>f.emit('lostpointercapture',{target:f.grip,pointerId:7})
  cancel(f);f.pointer('pointerup',{clientY:125});f.flush();assert.deepEqual(f.commits,[],'real grip loss/blur/cancel/owner/queue/close/unmount cancels');assert.equal(f.timers(),0);f.unmount();
 }
 console.log('PASS web handle sorting: child-to-grip capture handoff, unrelated losses, mouse/touch release with asynchronous measurement, real capture loss and cancellation guards.');
+// Shared checklist and display queue both retain handle keyboard ordering.
+{
+ const f=fixture(true),key=extra=>f.emit('keydown',{target:f.child,key:'ArrowDown',preventDefault(){},stopImmediatePropagation(){},...extra});
+ for(const extra of [{isComposing:true},{keyCode:229},{altKey:true},{ctrlKey:true},{metaKey:true}])key(extra);
+ assert.deepEqual(f.commits,[],'IME and modified arrows never reorder');key({});assert.deepEqual(f.commits,[[0,1]]);f.unmount();
+ const edge=fixture();edge.start();edge.hold();edge.move(155);edge.render();assert.ok(edge.hook.scrollTop>0,'active edge sets real ScrollView scroll target');edge.hook.cancel();assert.deepEqual(edge.commits,[],'edge preview cancellation never commits');edge.unmount();
+}
+console.log('PASS shared handle keyboard IME/modifier guards and boundary scroll preview cancellation.');

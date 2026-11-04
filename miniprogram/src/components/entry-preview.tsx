@@ -1,3 +1,4 @@
+import { checklistSummary } from '../lib/editor-checklist-data';
 import { MEMO_TITLE_PLACEHOLDER } from './editor-copy';
 import { OTHER_DOMAIN_NAME, domainDisplayName } from '../lib/domain-fallback';
 import { Image, Text, View } from '@tarojs/components';
@@ -29,7 +30,7 @@ export default function EntryPreview({ draft, domains }: { draft: EntryDraft; do
   return <EditorFieldsLayout className={`entry-preview${task ? '' : ' memo-editor-fields'}`} style={task ? undefined : memoSurfaceStyle()}>
     {task && <View className='entry-preview-task-schedule'><View className='entry-preview-domain'><Text>{'日期 · 提醒 · 重复'}</Text></View></View>}
     <EntityTitleRow className='todo-title-row'><Text className='entry-preview-title'>{trimTextEnd(task ? draft.task.title : draft.memo.title) || (task ? '准备做什么？' : MEMO_TITLE_PLACEHOLDER)}</Text><View className='entry-preview-priority'><PriorityFlag color={task ? todoQuadrant(draft.task).color : memoPriorityColor(draft.memo.priority)} outlined={task ? todoQuadrant(draft.task).id === 'later' : !draft.memo.priority || draft.memo.priority === 'none'} /></View></EntityTitleRow>
-    {note(task ? draft.task.description : draft.memo.body, task ? '有什么需要补充的？' : '写下内容…', task ? draft.task.images : draft.memo.images)}
+    {note(task ? draft.task.description : draft.memo.body, task ? '有什么需要补充的？' : checklistSummary(draft.memo.checklist) || '写下内容…', task ? draft.task.images : draft.memo.images)}
     {task ? <View className='entry-preview-subtasks'>{(draft.task.subtasks || []).map(step => <View className='entry-preview-step' key={step.id}><Text>{trimTextEnd(step.title) || '子任务'}</Text></View>)}</View> : <><MemoPinRow><View className={`memo-pin-setting${draft.memo.pinned ? ' is-active' : ''}`}><PinSymbol /></View></MemoPinRow></>}
     <View className={task ? 'todo-tags-row' : 'memo-tags-field'}>{!!draft.tagsText && <Text>{draft.tagsText}</Text>}</View>
   </EditorFieldsLayout>;

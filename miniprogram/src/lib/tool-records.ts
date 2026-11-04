@@ -42,7 +42,7 @@ export const memoColors = { blue: { label: '雾蓝', value: '#94b6e2', surface: 
 export type MemoColor = keyof typeof memoColors;
 export type MemoPriority = 'high' | 'medium' | 'low' | 'none';
 export type MemoImage = { id: string; dataUrl: string };
-export type Memo = { id: string; title: string; body: string; color: MemoColor; tags: string[]; priority?: MemoPriority; images?: MemoImage[]; iconId?: string; pinned: boolean; createdAt: string; updatedAt: string };
+export type Memo = { checklist?: TodoSubtask[]; id: string; title: string; body: string; color: MemoColor; tags: string[]; priority?: MemoPriority; images?: MemoImage[]; iconId?: string; pinned: boolean; createdAt: string; updatedAt: string };
 export type MemoState = { version: 1; notes: Memo[] };
 export const initialMemoState: MemoState = { version: 1, notes: [] };
 /** Missing priorities in existing records are read as none without migrating them. */

@@ -1,3 +1,4 @@
+import { checklistItems, checklistSummary } from '../../lib/editor-checklist-data';
 import AppliedOptions from '../../components/applied-options';
 import { useMessageNotice } from '../../components/message-notice';
 import ActionMenu from '../../components/action-menu';
@@ -33,7 +34,7 @@ import { isMemoImage, memoStateFits, withMemo } from '../../lib/memo-images';
 import { resumeEditorInput } from '../../lib/resume-editor-input';
 import { showAppMessage } from '../../lib/app-dialog';
 import { ChoicePopover } from '../../components/form-options';
-import { TaskTagSymbol, TaskAttachmentSymbol } from '../../components/task-detail-editor';
+import { TaskTagSymbol, TaskAttachmentSymbol, TaskChecklistSymbol } from '../../components/task-detail-editor';
 import './index.css';
 
 const sortLabels = ['最近修改', '最近创建', '标题顺序'];
@@ -50,6 +51,7 @@ export default function Memos() {
   const route = useRouter();
   const { value, setValue, ready, status, retry, owner } = usePersonalToolState('memos', initialMemoState);
   const valid = isMemoState(value), state = valid ? value : initialMemoState, writable = ready && valid;
+  const [checklistSignal,setChecklistSignal]=useState(0);
   const [search, setSearch] = useState('');
   const [sort, setSort] = useState(0);
   const [tagFilters, setTagFilters] = useState<string[]>([]);
@@ -153,7 +155,7 @@ export default function Memos() {
     setBusy(true); setAutosaveError('');
     try {
       if (parsedTags.length > 5 || parsedTags.some(tag => tag.length > 20)) throw new Error('最多 5 个标签，每个不超过 20 个字');
-      if (!captured.title && !captured.body.trim() && !captured.images?.length) throw new Error('请写下内容或插入图片');
+      if (!captured.title && !captured.body.trim() && !captured.images?.length && !checklistItems(captured.checklist).length) throw new Error('请写下内容或插入图片');
       if (captured.title.length > 80 || captured.body.length > 6000) throw new Error('便签标题最多 80 字，内容最多 6000 字');
       await change(previous => {
         const existing = previous.notes.find(note => note.id === captured.id);
@@ -252,7 +254,7 @@ export default function Memos() {
         <CardGroupContent className='floating-create-content'>{!ready ? <View className='memo-list-empty'><View className='memo-empty-paper' aria-hidden /><Text className='memo-empty-title'>正在读取便签…</Text></View> : !valid ? <View className='memo-list-empty'><Text className='memo-empty-title'>暂时无法显示便签</Text><Text>当前数据格式暂不兼容，原始数据已保留。</Text><ActionButton className='button-label tool-secondary' onClick={retry}>重新读取</ActionButton></View> : filtered.length ? <View className='memo-list'>{filtered.map(note => {
           const photos = note.images?.filter(isMemoImage) ?? [];
           const title = noteTitle(note);
-          return <MemoCard key={note.id} title={title} body={note.body ? excerpt(note.body) : photos.length ? `${photos.length} 张图片` : '暂无正文'} selected={selected.includes(note.id)} selecting={managing} priority={memoPriority(note)} images={photos}
+          return <MemoCard key={note.id} title={title} body={note.body ? excerpt(note.body) : photos.length ? `${photos.length} 张图片` : checklistSummary(note.checklist) || '暂无正文'} selected={selected.includes(note.id)} selecting={managing} priority={memoPriority(note)} images={photos}
               onOpen={() => { if (writable && !busy && !imageBusy && !deletionRef.current) { if(managing)toggleSelected(note.id);else edit(note); } }}
               metadata={<>{note.pinned && <Text className='memo-note-pinned'>置顶</Text>}{note.tags.slice(0, 2).map(tag => <Text className='memo-note-tag' key={tag}>{tagLabel(tag)}</Text>)}{note.tags.length > 2 && <Text>＋{note.tags.length - 2}</Text>}{!!photos.length && !!note.body && <Text className='memo-note-photo-count'>{photos.length} 图</Text>}<Text className='memo-note-date'>{noteDate(sort === 1 ? note.createdAt : note.updatedAt)}</Text></>} actions={<>
               {!managing && <ChoiceButton iconOnly size='compact' className='button-label memo-note-pin' ariaLabel={`${note.pinned ? '取消置顶' : '置顶'}便签：${title}`} aria-pressed={note.pinned} disabled={!writable || busy} onClick={() => { void pin(note); }}><PinSymbol /></ChoiceButton>}
@@ -267,8 +269,8 @@ export default function Memos() {
       heading={<ActionMenu ariaLabel='更多便签操作' open={moreOpen} onOpenChange={setMoreOpen} panelWidth={180}>
         <ActionButton appearance='quiet' intent='danger' onClick={() => { setMoreOpen(false); requestDelete(draft); }}>删除便签</ActionButton>
       </ActionMenu>}
-      footer={<SheetActions className='document-autosave-footer'><View className='document-autosave-tools'><ActionButton appearance='icon' ariaLabel='便签标签' onClick={() => setEditorTagsOpen(!editorTagsOpen)}><TaskTagSymbol /></ActionButton><ActionButton appearance='icon' ariaLabel='便签附件' disabled={imageBusy} onClick={() => setImageSignal(value => value + 1)}><TaskAttachmentSymbol /></ActionButton><ChoiceButton iconOnly ariaLabel={draft.pinned ? '取消置顶便签' : '置顶便签'} selected={draft.pinned} onClick={() => { setAutosaveError(''); const next = { ...draft, pinned: !draft.pinned }; currentDraft.current = next; setDraft(next); }}><PinSymbol /></ChoiceButton><EditorPreviewButton selected={memoPreview} onChange={setMemoPreview} disabled={imageBusy} label='便签 Markdown 预览' /></View>{autosaveError && <View className='document-autosave-status'><ActionButton appearance='quiet' disabled={busy} onClick={() => { setAutosaveError(''); void save(); }}>重试</ActionButton></View>}</SheetActions>}>
-      <MemoEditorFields onTags={() => setEditorTagsOpen(true)} preview={memoPreview} onPreviewChange={setMemoPreview} minimal showTags={editorTagsOpen} insertionSignal={imageSignal} draft={draft} onChange={value => { setAutosaveError(''); currentDraft.current = value; setDraft(value); }} tagsText={tags} onTagsChange={value => { setAutosaveError(''); tagsRef.current = value; setTags(value); }} tagOptions={existingTags} disabled={!writable} owner={owner} onBusyChange={setImageBusy} />
+      footer={<SheetActions className='document-autosave-footer'><View className='document-autosave-tools'><ActionButton appearance='icon' ariaLabel='便签标签' onClick={() => setEditorTagsOpen(!editorTagsOpen)}><TaskTagSymbol /></ActionButton><ActionButton appearance='icon' ariaLabel='添加子任务' disabled={!writable || imageBusy} onClick={()=>setChecklistSignal(value=>value+1)}><TaskChecklistSymbol /></ActionButton><ActionButton appearance='icon' ariaLabel='便签附件' disabled={imageBusy} onClick={() => setImageSignal(value => value + 1)}><TaskAttachmentSymbol /></ActionButton><ChoiceButton iconOnly ariaLabel={draft.pinned ? '取消置顶便签' : '置顶便签'} selected={draft.pinned} onClick={() => { setAutosaveError(''); const next = { ...draft, pinned: !draft.pinned }; currentDraft.current = next; setDraft(next); }}><PinSymbol /></ChoiceButton><EditorPreviewButton selected={memoPreview} onChange={setMemoPreview} disabled={imageBusy} label='便签 Markdown 预览' /></View>{autosaveError && <View className='document-autosave-status'><ActionButton appearance='quiet' disabled={busy} onClick={() => { setAutosaveError(''); void save(); }}>重试</ActionButton></View>}</SheetActions>}>
+      <MemoEditorFields checklistSignal={checklistSignal} onTags={() => setEditorTagsOpen(true)} preview={memoPreview} onPreviewChange={setMemoPreview} minimal showTags={editorTagsOpen} insertionSignal={imageSignal} draft={draft} onChange={value => { setAutosaveError(''); currentDraft.current = value; setDraft(value); }} tagsText={tags} onTagsChange={value => { setAutosaveError(''); tagsRef.current = value; setTags(value); }} tagOptions={existingTags} disabled={!writable} owner={owner} onBusyChange={setImageBusy} />
     </DocumentEditorSheet>}
     <AppDialog open={!!currentDeletion} title='删除便签' ariaLabel='删除便签确认' closeLabel='关闭便签删除确认' onClose={closeDelete} busy={busy || !!currentDeletion?.pending} error={deleteError} actions={<ActionButton appearance='danger' size='large' width='fill' disabled={busy} loading={busy} onClick={() => { void remove(); }}>{currentDeletion?.pending ? '重试删除' : '删除'}</ActionButton>}>
       <Text>删除「{currentDeletion?.notes.length === 1 ? noteTitle(currentDeletion.notes[0]) : `所选 ${currentDeletion?.notes.length || 0} 张便签`}」？</Text>
