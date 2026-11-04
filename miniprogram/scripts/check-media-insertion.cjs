@@ -20,7 +20,10 @@ read=Promise.resolve({id:'two',dataUrl:'data:image/jpeg;base64,/9j/AAAA'});await
 const remove=all(render()).find(n=>n.props?.ariaLabel==='移除图片 1');remove.props.onClick();assert.deepEqual(props.images.map(i=>i.id),['two']);
 for(const invalidation of ['owner','record','permission']){setup();pending=deferred();read=pending.promise;await insert();await tick();if(invalidation==='owner')props.owner='b';else if(invalidation==='record')props.recordId='new';else props.canInsertImage=false;render();props.canInsertImage=true;render();pending.resolve({id:'late'});await tick();assert.equal(changes.length,0,invalidation);}
 setup();pending=deferred();read=pending.promise;await insert();await tick();for(const slot of slots)slot?.cleanup?.();pending.resolve({id:'unmounted-late'});await tick();assert.equal(changes.length,0);assert.equal(props.disabled,false);
-setup();chosen=Promise.reject({errMsg:'chooseMedia:fail cancel'});await insert();await tick();assert.equal(changes.length,0);assert.equal(notifications.length,0);
-setup();chosen=Promise.resolve({tempFiles:[{tempFilePath:'bad',size:10}]});read=Promise.reject(Error('bad image'));await insert();await tick();assert.equal(changes.length,0);assert.equal(notifications.length,1);
+for(const cancellation of [{errMsg:'chooseMedia:fail cancel'},Error('cancel'),{errMsg:'chooseMedia:fail',message:'cancel'}]){
+setup();chosen=Promise.reject(cancellation);await insert();await tick();assert.equal(changes.length,0);assert.equal(notifications.length,0);assert.equal(props.disabled,false,'cancel clears parent busy');assert.equal(all(render()).find(n=>n.props?.ariaLabel==='插入图片').props.disabled,false,'cancel unlocks image button');
+chosen=Promise.resolve({tempFiles:[{tempFilePath:'retry',size:100}]});read=Promise.resolve({id:'after-cancel',dataUrl:'data:image/png;base64,iVBORw0KGgoAAAAA'});await insert();await tick();assert.equal(changes.length,1,'can insert after cancel');assert.equal(props.disabled,false);
+}
+setup();chosen=Promise.resolve({tempFiles:[{tempFilePath:'bad',size:10}]});read=Promise.reject(Error('bad image'));await insert();await tick();assert.equal(changes.length,0);assert.equal(notifications.length,1);assert.equal(props.disabled,false,'error clears busy');
 console.log('PASS media: real shared async editor self-busy, two images, delete, owner/record/revoked-ready invalidation, cancel/bad image; native PNG original and source limit');
 })().catch(e=>{console.error(e);process.exitCode=1;});

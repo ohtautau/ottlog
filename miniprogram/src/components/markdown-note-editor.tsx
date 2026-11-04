@@ -60,7 +60,9 @@ export default function MarkdownNoteEditor({ value, images: savedImages, onChang
       latest.checkImages(next);
       latest.onImagesChange(next);
     } catch (error) {
-      if (isCurrent() && !/cancel/i.test(String((error as { errMsg?: string })?.errMsg || ''))) notify(error);
+      const detail = error as { errMsg?: string; message?: string } | null;
+      const cancelled = /cancel/i.test([detail?.errMsg, detail?.message].filter(Boolean).join(' '));
+      if (isCurrent() && !cancelled) notify(error);
     } finally {
       operating.current = false;
       if (mounted.current) { setImageBusy(false); busyCallback.current?.(false); }

@@ -3039,3 +3039,12 @@ node scripts/check-media-insertion.mjs
 契约依据：本地Taro4.2.1 canvas/index.d.ts明确声明Canvas node/createImage与canvasToTempFilePath.Option.canvas及png；官方 https://docs.taro.zone/en/docs/apis/canvas/canvasToTempFilePath 及 https://docs.taro.zone/docs/apis/canvas/createOffscreenCanvas 本次在线抓取超时，未将页面内容冒充已读取。浏览器工具与ui-preview组件alias补Canvas导出，web不挂载原生画布。
 
 实际通过：check-native-alpha.cjs（SDK stub选择指定真实node对象、PNG导出参数、六档尺寸及字节重试、加载／导出／读文件／非PNG失败、取消／超时／尺寸清理）；check-media-insertion.cjs（新增卸载晚到结果与busy清理，既有owner／record／权限撤销后恢复、自busy与两图回填）；check-media-fields、check-editor-checklist、check-handle-sort；miniprogram typecheck、web build:tools、git diff --check。这里的“真实node对象”是stub返回的同一对象身份，不是真实微信Canvas。没有Windows/HTMLCanvas像素实测、浏览器视觉或微信真机alpha验收。正常小程序build、ES2019与包预算由协调端最终统一执行，本轮未跑；真实设备加载WebP、透明像素及键盘／滚轮／页面几何仍待协调端验收。未写真实业务数据／API／系统／.git，未提交、推送或部署。结果见.tmp/native-alpha-result.json。
+
+
+### 2026-11-04 最终UI兼容收尾（基于162af67）
+
+源码checkStyles逐文件扫描全部113份CSS，仅ActionMenu有两处裸结构伪类，已按实际同源子元素改为 `> text:last-child` 与 `> view:first-child`，无新增节点或几何变化；节奏、清单等其余源码检查通过，未放宽check-weapp-styles。MarkdownNoteEditor合并errMsg/message识别取消；真实错误继续统一通知，owner／record／权限generation守卫未改。回归覆盖原生errMsg取消、网页Error('cancel')、errMsg不含cancel但message含cancel，均无通知、恢复busy且可再次插图；坏图仍通知并恢复busy。
+
+AGENTS／Design顶部第五项已按162af67更新受控原生Canvas PNG保alpha缩放；此前第五／六项段落中的未实现描述为当时状态，已由第七项替代。真机WebP加载、透明像素、触屏／键盘／页面几何仍待验收，不将SDK stub或协调端检查算作本机实测。
+
+本机实际通过：源码113份CSS、check-weapp-styles-test、check-native-alpha、check-media-insertion、check-media-fields、check-editor-checklist、check-handle-sort、check-todo-autosave、check-todo-undo、check-todo-panel-source、check-entry-tags、check-progress-draft、check-progress-pairs、check-unified-notification、miniprogram typecheck、web build:tools、git diff --check。正常npm run build:weapp在项目配置检查通过后，Taro初始化创建沙箱外 /home/ubuntu/.taro4.0 报ENOENT，未进入编译；未修改HOME或绕过沙箱。单独预算检查因无dist/app.json报ENOENT，产物WXSS／ES2019／包预算均未验证。未安装依赖，未运行浏览器／微信编译器或真机，未改业务／API／部署／.git；Windows最终构建、预算、验收及部署由协调端完成。详情见.tmp/final-ui-compat-result.json。

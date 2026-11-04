@@ -3,7 +3,7 @@
 2026-11-04 第六项清单候选：任务与便签创建／已有编辑／今日入口共用纯UI EditorChecklist，已填行右侧唯一拖动柄，末尾空行×仅取消新增，可由左下共用子任务符号恢复。排序沿useHandleSort及父自动保存；owner＋父ID＋子项稳定ID隔离。便签可选checklist与原子任务同形，无字段不迁移、不补默认数组，异常旧字段清单只读并保留；纯清单算内容，不投影为任务。模型／类型／build:tools通过，3017浏览器脚本尚未实跑，细节见docs/development.md及.tmp/editor-checklist-result.json。保留第五项媒体修复。
 
 
-2026-11-04 第五项媒体候选：三创建附件回填区分交互disabled与mediaWritable；自身选图busy不撤销权限，owner／record／权限撤销作废晚到结果。记录附件沿左右列各左下入口指向该列末条稳定ID，不做便签清单或子任务拖动。取original，PNG／WebP不走原生JPEG压缩；透明缩略背景透明，历史已压平黑像素不自动修复。原生超限透明图缩放尚未实现，保守拒绝并提示；验证边界见docs/development.md与.tmp/media-insertion-result.json。
+2026-11-04 第五项媒体候选：三创建附件回填区分交互disabled与mediaWritable；自身选图busy不撤销权限，owner／record／权限撤销作废晚到结果。记录附件沿左右列各左下入口指向该列末条稳定ID，不做便签清单或子任务拖动。取original，PNG／WebP不走原生JPEG压缩；透明缩略背景透明，历史已压平黑像素不自动修复。162af67已补原生超限PNG／WebP的本编辑器Canvas 2D受控保alpha缩放，逐档PNG导出并校验180KiB，仍超限提示；owner／record／权限及清理守卫保持。模型通过不代表微信真机alpha／WebP加载实测，真机边界仍待验收；验证见docs/development.md、.tmp/media-insertion-result.json与.tmp/native-alpha-result.json。
 
 2026-11-04专注建议与习惯后续：完成／休息页移除inline活动条，11项只读建议共用独立深色浅绿窗口，桌面三列／手机两列、窗内滚动；专注完成按owner与完成ID在当前UI会话自动一次，隐藏页面不抢焦点，三点→休息建议可重开，不创建业务数据。长／短休息选择留在专注页，原生自动休息保持。专注三点“设置”仅此入口改“调整时长”及时间线稿；实时保存设置期间背景时长／轮次读取打开快照，运行deadline仍实时走，关窗一次反映新设置，滚轮保留用户手势提交守卫。习惯完成只打卡，不自动打开打卡留言；领域详情仍沿原toggle，手动记录与日志保留。
 
