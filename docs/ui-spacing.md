@@ -11,3 +11,5 @@
 验收沿 `miniprogram/scripts/check-layout-spacing.cjs`：检查选项窗内容左右和底部16px，并在滚动到底时检查最后一组与外框至少15px（包含边线取整）。此断言同时用于小程序浏览器适配和网页生产镜像检查。`--controls-refinement` 四尺寸还验证卡组内距、日历间距和选中前后位置。视觉检查不能替代原生微信／真机验收。
 
 2026-11-04 修复：EditorHeading／PopoverHeading 共用16px顶部内距与40px标题内容下限，标题仍居中；右侧操作区使用上下边界对齐，不用transform，避免嵌套ChoicePopover的fixed层被缩进标题按钮并裁切。无标题操作菜单保持原内距。分类勾号放在选项按钮内部，与名称共用选中背景及按钮右内距；领域选项沿同一选中色变量。
+
+2026-11-04显示队列：主列表与末行“添加”共用entity-choice-options大框，当前行背景包含手柄区域，不改成逐项小框。四位置编辑列表用16px左右内距、0行间gap、每行至少40px，位置名600字重／正文色，选择入口相隔12px；四行同用来源真实旗帜色或分类LibraryIcon。队列滚动复用ChoicePopover已有ScrollView（bodyScroll仅提供ID／位置／回调），不嵌套新的滚动层。

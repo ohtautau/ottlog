@@ -1,8 +1,9 @@
+import { focusActivities } from '../../lib/focus-activities';
 import useSettledAutosave from '../../lib/use-settled-autosave';
 import ActionMenu from '../../components/action-menu';
 import { isWebTool } from '../../lib/tool-platform';
 import { requestFocusNotificationPermission } from '../../lib/desktop-notifications';
-import { advanceWithBreakChoice, pendingFocusCompletion, startChosenBreak } from '../../lib/focus-completion';
+import { advanceWithBreakChoice, pendingFocusCompletion, recommendedBreakMode, startChosenBreak } from '../../lib/focus-completion';
 import { ChoicePopover, SingleChoiceField } from '../../components/form-options';
 import WheelPicker, { NumberWheelPicker, wheelNumbers } from '../../components/wheel-picker';
 import SheetActions from '../../components/sheet-actions';
@@ -106,6 +107,7 @@ export default function Pomodoro() {
   const canPickHabit = habitsReady && habitOwner === owner && !!habitState && (!!habits.length || !!chosen.habitId);
   const sourceMenuOpen = !!owner && sourceMenuOwner === owner && ready && valid && currentMode === 'focus';
   const completedRounds = state.completedFocusCount ?? state.sessions.filter(session => session.mode === 'focus' && session.completed).length;
+  const recommendedBreak = recommendedBreakMode(completedRounds,state.settings.longEvery);
   const round = completedRounds % state.settings.longEvery + 1;
   const toolbarSummary = pomodoroToolbarSummary(state.sessions, Date.now());
 
@@ -128,9 +130,13 @@ export default function Pomodoro() {
       });
     };
     const timer = setTimeout(measure, 60);
+    // Observe geometry, not countdown ticks. The stage owns the available space.
+    const stage = isWebTool ? document.querySelector('.focus-timer-stage') : null;
+    const observer = stage && typeof ResizeObserver !== 'undefined' ? new ResizeObserver(measure) : null;
+    if (stage) observer?.observe(stage);
     Taro.onWindowResize?.(measure);
-    return () => { current = false; clearTimeout(timer); Taro.offWindowResize?.(measure); };
-  }, [visible, ready, valid, owner, domains, chosenDomainId]);
+    return () => { current = false; clearTimeout(timer); observer?.disconnect(); Taro.offWindowResize?.(measure); };
+  }, [visible, ready, valid, owner, domains, chosenDomainId, currentMode, !!completedFocus, active?.id, active?.running]);
   useEffect(() => { mounted.current = true; return () => { mounted.current = false; }; }, []);
   useEffect(() => { if (!visible) return; const timer = setInterval(() => setNow(Date.now()), 1000); return () => clearInterval(timer); }, [visible]);
   useEffect(() => { setWheelMoving(false); setDraft(null); setSettingsDraft(null); setSettingsError(''); setDurationDraft(null); setDurationOverride(null); setDurationError(''); setHabitPickerOwner(null); setTodoPickerOwner(null); setSourceMenuOwner(null); setMessage(''); setReminderMessage(''); announced.current = ''; }, [owner]);
@@ -346,12 +352,12 @@ export default function Pomodoro() {
     {!ready ? <View className='tool-empty'><Text>{status || '正在恢复你的计时…'}</Text><ActionButton className="button-label tool-secondary" onClick={retry}>重新读取</ActionButton></View> : !valid ? <View className='tool-empty'>当前计时数据格式暂不兼容，请到网页查看。原始数据已保留。</View> : <>
         <PageToolbar className='focus-page-toolbar' leading={!!owner && <PageToolbarSummary countLabel={`今日完成 ${toolbarSummary.completedToday}`} recentTitle={toolbarSummary.recentTitle} recentLabel='最近专注' />} manage={owner && <ActionMenu ariaLabel='专注更多操作' open={settingsMenuOpen} onOpenChange={setSettingsMenuOpen} disabled={busy || notificationBusy}><ActionButton appearance='quiet' disabled={busy || notificationBusy} onClick={() => {setSettingsMenuOpen(false);openSettings();}}>设置</ActionButton></ActionMenu>} />
         <CategoryRow className='focus-toolbar' contentClassName='focus-modes' ariaLabel='计时模式'>{timerModes.map(mode => <CategoryButton key={mode.id} disabled={busy || notificationBusy || (!!active && mode.id !== currentMode)} className={'button-label ' + (currentMode === mode.id ? 'is-active' : '')} onClick={() => { if (!active) void update(previous => ({ ...previous, mode: mode.id })); }}>{mode.label}</CategoryButton>)}</CategoryRow>
-        <FocusProgress progress={completedFocus ? 100 : progress} resting={!completedFocus && currentMode !== 'focus'} />
+        <FocusProgress resetKey={JSON.stringify([owner,currentMode,active?.id ?? completedFocus?.id ?? 'idle'])} progress={completedFocus ? 100 : progress} resting={!completedFocus && currentMode !== 'focus'} />
         <View className={`focus-clock-card ${currentMode !== 'focus' ? 'is-break' : ''}`}>
           <View className='focus-clock-top'><View className='focus-live'><View className={active?.running ? 'focus-live-dot is-running' : 'focus-live-dot'} /><Text>{completedFocus ? '专注已完成' : active?.running ? '正在计时' : active ? '已暂停' : '准备就绪'}</Text></View><View className='focus-rounds'>{Array.from({ length: state.settings.longEvery }, (_, index) => <View key={index} className={index < round - 1 ? 'focus-round is-complete' : index === round - 1 ? 'focus-round is-current' : 'focus-round'} />)}<Text>第 {round} / {state.settings.longEvery} 轮</Text></View></View>
           <View className='focus-domain-row'><DomainChoiceField key={`${owner}:${visible}:${domainOwner}:${!!domains}:${active?.id || 'draft'}`} ariaLabel='选择番茄钟所属领域' domains={domains || []} value={chosenDomainId} optionPrefix='专注领域：' disabled={!visible || !owner || !domains || busy || notificationBusy || hasVolatilePersonalTool('pomodoro', owner)} onChange={selectDomain} /></View>
           <View className='focus-timer-stage'><TomatoClock progress={progress} resting={currentMode !== 'focus'} time={completedFocus ? '00:00' : clockLabel(remaining)} label={completedFocus ? '专注已完成' : `${modeInfo.label}时间`} size={clockSize} onEditTime={!completedFocus && !active && !busy && !notificationBusy ? openDuration : undefined} /></View>
-          <View className='focus-purpose-slot'>{currentMode === 'focus' && <>
+          <View className='focus-purpose-slot'>{currentMode === 'focus' && !completedFocus ? <>
             <View className='focus-purpose'>
               <Input className='focus-purpose-input' ariaLabel='正在做什么' cursorSpacing={80} adjustPosition maxlength={100} value={chosen.title} placeholder='正在做什么？' onFocus={() => setSourceMenuOwner(null)} onInput={event => editSelection(active ? { ...chosen, title: event.detail.value } : { ...chosen, taskId: null, habitId: null, title: event.detail.value })} />
               <ChoicePopover ariaLabel='选择专注事项来源' open={sourceMenuOpen} onOpenChange={open => setSourceMenuOwner(open ? owner : null)} disabled={busy || notificationBusy} trigger={null} triggerIconOnly triggerSize='compact' triggerClassName='focus-source-toggle' triggerSelected={!!chosen.habitId || !!chosen.taskId || sourceMenuOpen} panelClassName='focus-source-menu' panelWidth={104} bodySpacing='tight' preferredSide='above'>
@@ -361,9 +367,9 @@ export default function Pomodoro() {
                 </View>
               </ChoicePopover>
             </View>
-          </>}</View>
+          </> : <ScrollView className='focus-activity-rail' scrollX enhanced showScrollbar={false} ariaLabel='休息活动提示'><View className='focus-activity-options'>{focusActivities.map(activity => <Text key={activity} className='focus-activity'>{activity}</Text>)}</View></ScrollView>}</View>
           <View className={`focus-action-area${completedFocus ? ' is-completed' : ''}`}>
-          {completedFocus ? <View className='focus-completion-actions' role='status'><Text>专注已完成</Text><View className='focus-completion-row'><ActionButton appearance='primary' size='large' disabled={busy || notificationBusy} onClick={()=>chooseBreak('shortBreak')}>开始短休息</ActionButton><ActionButton size='large' disabled={busy || notificationBusy} onClick={()=>chooseBreak('longBreak')}>开始长休息</ActionButton></View></View> : <View className='focus-primary-actions'>
+          {completedFocus ? <View className='focus-completion-actions' role='status'><Text>专注已完成</Text><View className='focus-completion-row'><ActionButton appearance={recommendedBreak==='shortBreak' ? 'primary' : 'secondary'} size='large' disabled={busy || notificationBusy} onClick={()=>chooseBreak('shortBreak')}>开始短休息</ActionButton><ActionButton appearance={recommendedBreak==='longBreak' ? 'primary' : 'secondary'} size='large' disabled={busy || notificationBusy} onClick={()=>chooseBreak('longBreak')}>开始长休息</ActionButton></View></View> : <View className='focus-primary-actions'>
             <ActionButton appearance='primary' size='large' width='fill' disabled={busy || notificationBusy} className='button-label focus-start' onClick={active ? togglePause : begin}>{active ? active.running ? '暂停' : '继续' : `开始${modeInfo.label}`}</ActionButton>
           </View>}
           <View className='focus-end-slot'>{active && !active.running ? <ActionButton size='large' width='fill' disabled={busy || notificationBusy} className='button-label focus-end' onClick={() => { void end(); }}>结束</ActionButton> : <View className='focus-end-space' aria-hidden />}</View>

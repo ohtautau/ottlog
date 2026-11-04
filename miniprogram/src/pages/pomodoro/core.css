@@ -7,7 +7,7 @@
 .focus-page .focus-core .focus-round { flex-shrink: 0; width: 6PX; height: 6PX; }
 .focus-page .focus-core .focus-round::before { width: 3PX; left: 1.5PX; }
 .focus-domain-row { flex: none; width: 100%; margin-top: 8PX; }
-.focus-timer-stage { display: flex; flex: 1; min-height: 0; width: 100%; align-items: flex-end; justify-content: center; overflow: hidden; margin: 4PX 0 12PX; }
+.focus-timer-stage { display: flex; flex: 1; min-height: 0; width: 100%; align-items: center; justify-content: center; overflow: visible; margin: 4PX 0 12PX; }
 .focus-action-area { flex: none; width: 100%; margin-top: 12PX; }
 .focus-purpose-slot { flex: none; height: 52PX; margin-top: 12PX; }
 .focus-page .focus-core .focus-purpose { box-sizing: border-box; display: flex; align-items: center; gap: 6PX; height: 52PX; margin: 0; padding: 4PX 4PX 4PX 10PX; border: 1PX solid #3f5962; border-radius: 10PX; background: #13242d; }
@@ -38,3 +38,8 @@
 @media (max-width: 599px) and (max-height: 700px) {
   .focus-page .focus-core .focus-clock-card { padding: 10PX 10PX 12PX; }
 }
+
+.focus-activity-rail { width: 100%; min-width: 0; height: 52PX; }
+.focus-activity-options { display: inline-flex; align-items: center; gap: 16PX; height: 52PX; white-space: nowrap; }
+.focus-activity { flex: none; color: #b9d7c9; font-size: 14PX; line-height: 40PX; }
+.focus-timer-stage > .focus-tomato-scene { flex: none; }

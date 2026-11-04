@@ -27,7 +27,7 @@ export function PopoverActions({ children, className = '', layout = 'end', separ
 }
 
 /** Anchored app-owned options; opening and dismissing only changes editor UI. */
-export function ChoicePopover({ ariaLabel, open, onOpenChange, trigger, anchorId, triggerId, renderLayer = true, layerClassName = '', disabled = false, className = '', triggerClassName = '', panelClassName = '', panelWidth = 440, heightMode = 'measured', bodySpacing = 'compact', showIndicator = true, triggerAppearance, triggerSize, triggerWidth, triggerIconOnly = false, triggerSelected, placement = 'anchor', align = 'end', preferredSide = 'auto', maxHeightRatio = .65, contentKey = '', menuLabels, menuLeadingWidth = 0, heading, footer, children }: {
+export function ChoicePopover({ ariaLabel, open, onOpenChange, trigger, anchorId, triggerId, renderLayer = true, layerClassName = '', disabled = false, className = '', triggerClassName = '', panelClassName = '', panelWidth = 440, heightMode = 'measured', bodySpacing = 'compact', showIndicator = true, triggerAppearance, triggerSize, triggerWidth, triggerIconOnly = false, triggerSelected, placement = 'anchor', align = 'end', preferredSide = 'auto', maxHeightRatio = .65, contentKey = '', menuLabels, menuLeadingWidth = 0, bodyScroll, heading, footer, children }: {
   ariaLabel: string; open: boolean; onOpenChange: (open: boolean) => void; trigger?: ReactNode; disabled?: boolean;
   /** Render only the layer, beside an editor's scroll area, using an existing trigger. */
   anchorId?: string;
@@ -44,7 +44,7 @@ export function ChoicePopover({ ariaLabel, open, onOpenChange, trigger, anchorId
   /** Prefer a side only when its available space contains the complete panel. */
   preferredSide?: 'auto' | 'above' | 'below';
   menuLabels?: readonly string[]; menuLeadingWidth?: number;
-  maxHeightRatio?: number; contentKey?: string; heading?: ReactNode; footer?: ReactNode; children: ReactNode;
+  maxHeightRatio?: number; contentKey?: string; bodyScroll?: {id:string;top:number;onScroll:(top:number)=>void}; heading?: ReactNode; footer?: ReactNode; children: ReactNode;
 }) {
   // Plain operation menus fit their labels; composed forms retain their own width.
   const actionChildren = Children.toArray(children);
@@ -108,7 +108,7 @@ export function ChoicePopover({ ariaLabel, open, onOpenChange, trigger, anchorId
       <View className='form-popover-backdrop' onClick={event => { event.stopPropagation(); onOpenChange(false); }} />
       <View id={`${id}-panel`} className={`form-popover-panel floating-window body-${bodySpacing}${!heading && !footer && measuredLabels.length ? ' is-action-menu' : ''}${heading || footer ? ' has-chrome' : ''}${position ? ' is-positioned' : ''}${heightMode === 'content' ? ' is-content-height' : ''}${placement === 'center' ? ' is-centered' : ''} ${panelClassName}`} role='dialog' ariaLabel={ariaLabel} style={position ? { left: `${position.left}px`, top: position.bottom === undefined ? `${position.top}px` : 'auto', ...(position.bottom === undefined ? {} : { bottom: `${position.bottom}px` }), width: `${position.width}px`, ...(menuLabels?.length ? { maxWidth: `${position.width}px` } : {}), maxHeight: `${position.maxHeight}px`, ...(heightMode === 'measured' && (heading || footer) ? { height: `${position.height}px` } : {}) } : { visibility: 'hidden' }} onClick={event => event.stopPropagation()}>
         {!!heading && <View className='form-popover-heading'>{heading}</View>}
-        <ScrollView scrollY className='form-popover-scroll' showScrollbar={false}><View className='form-popover-body'>{children}</View></ScrollView>
+        <ScrollView id={bodyScroll?.id} scrollTop={bodyScroll?.top} onScroll={bodyScroll?event=>bodyScroll.onScroll(event.detail.scrollTop):undefined} scrollY className='form-popover-scroll' showScrollbar={false}><View className='form-popover-body'>{children}</View></ScrollView>
         {!!footer && <View className='form-popover-footer'>{footer}</View>}
       </View>
     </View> : null;

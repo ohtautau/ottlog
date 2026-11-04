@@ -17,3 +17,9 @@ export function startChosenBreak(state:PomodoroState,mode:'shortBreak'|'longBrea
   const started=startTimer({...state,mode},now,automaticBreakId(focusId),state.selection);
   return started.active ? {...started,active:{...started.active,rootRunId:completed.rootRunId || focusId,originFocusId:focusId}} : state;
 }
+
+/** Read-only recommendation from completed rounds, never the upcoming UI round.
+ * Callers use the existing normalized settings/count (or the legacy session fallback). */
+export function recommendedBreakMode(completedRounds:number,longEvery:number):'shortBreak'|'longBreak' {
+  return completedRounds>0 && completedRounds%longEvery===0 ? 'longBreak' : 'shortBreak';
+}

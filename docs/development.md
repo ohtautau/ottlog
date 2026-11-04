@@ -2834,3 +2834,72 @@ T25 的宽屏遮挡来自标签的行内 Text 继承父层行框而增加实际�
 - 网页 WheelColumn 仅由 wheel／pointer 操作启动滚动选择，停稳时读取最终 scrollTop，程序性定位／CSS snap／布局 scroll 不提交；手指或鼠标仍按住时不得结束滑动。PickerView 聚合多列滑动状态，未变的索引不发 change。SilentWheelColumn 的原生静音／轻震动与共享 28px／84px 几何保持。
 - `node web/scripts/check-wheel-events.cjs` 对旧处理器可确定复现合成的非用户 scroll 将 30 提交为 29，并验证修复后的事件边界。此证据不能证明历史线上事件来源；协调端此前在公开资源的 API 全拦截夹具中未复现初始化偏移，真实设置已为 29 的历史原因仍未确认，不覆盖用户偏好或活动计时。
 - 真实浏览器回归：独立 QA 站点启动后，在 web 运行 `OTTLOG_PARITY_ORIGIN=http://127.0.0.1:3017 node scripts/check-editor-refinements.mjs`，涵盖 1440／390／375、格言中文多行／长正文／新建／菜单／关闭保存，以及节奏 30 的打开重开、点击、resize、其它列、真实 wheel 和拖动。所有 API 被夹具拦截，禁止指向正式站点。本机未执行这些浏览器断言，不宣称原生或线上验收通过。
+
+### 2026-11-04 专注休息推荐与进度重置边界
+
+网页完成提示仅用既有 completedRounds 与 settings.longEvery 派生推荐：完成数大于零且整除间隔时高亮长休息，否则高亮短休息。两个按钮显式使用 primary／secondary，仍可任选，不保存推荐、不自动启动；下一轮 round 只用于原轮次展示。原 normalize 与旧 sessions 回退、原生自动休息策略保持。
+
+FocusProgress 接收仅用于渲染的 resetKey，由 owner、完整模式（focus／shortBreak／longBreak）和 active／已完成 ID 构成，边界变化时重建根节点；同一轮暂停／继续及进度更新保留 DOM、原 width 动画和减少动效规则。未新增存档字段或计时副作用。
+
+实际通过：node miniprogram/scripts/check-focus-recommendation.cjs、node miniprogram/scripts/check-habits-focus.cjs、miniprogram 的 npm run typecheck、web 的 npm run build:tools、定向 UI 脚本语法检查。新增 web/scripts/check-focus-recommendation.mjs，协调端在独立候选站点运行：cd web && OTTLOG_PARITY_ORIGIN=http://127.0.0.1:3017 node scripts/check-focus-recommendation.mjs。夹具拦截所有 API，覆盖 1440／390、完成 1／3／4／8 轮及间隔 1、两种动作、实际 DOM 宽度与动画、同轮平滑、两种休息模式切换和减少动效。本机未运行浏览器、原生或线上检查，未部署、未修改账号数据或用户偏好。
+
+### 2026-11-04 专注活动、番茄几何、重复入口与便签内距
+
+完成／休息在原52px purpose slot内显示focus-activities.ts的11项静态活动提示，单行横滑；普通专注保持事项输入。提示不创建业务任务，不参与计时或医疗说明。stage改为真实空间居中，保持原PNG与480:430比例；模式、完成与运行边界重新测量，网页ResizeObserver监听stage，原生保持窗口resize。倒计时秒数不触发测量，不改deadline、settings或自动休息模型。
+
+重复快捷条移至模式栏下的日历区顶部，删除内部重复标题，旧interval仅显示实际值。readOnly日期使用点击守卫而非disabled，保持亮度、标记及月份浏览；busy／moving及有效日期范围仍沿禁用语义。MemoCard共用--memo-card-inset:20PX对称边界，正文及元信息间距8px；移除桌面不同padding与强制最小卡高。置顶、多选圈、缩略图仍在同一卡片flex内容内，外部CardGroupContent及卡距保持。
+
+实际通过：推荐、日程、习惯专注、专注提醒模型检查，miniprogram TypeScript、web build:tools及两份UI脚本语法。浏览器执行交协调端；服务器未安装浏览器系统库，未执行本轮浏览器断言，未部署、未验收原生真机。之前recommendation/progress未提交改动包含在同一补丁内。
+
+协调端在3017候选资源更新后运行（全部业务API使用隔离夹具）：
+
+```sh
+cd web
+OTTLOG_PARITY_ORIGIN=http://127.0.0.1:3017 node scripts/check-focus-recommendation.mjs
+OTTLOG_PARITY_ORIGIN=http://127.0.0.1:3017 node scripts/check-focus-layout-spacing.mjs
+```
+
+第一份覆盖推荐边界、progress模式／run重置与同轮动画；第二份覆盖1440×900、840×900、768×900、390×844、375×667的活动可达、stage完整居中、视口变化、普通／完成／短长休息、重复快捷条位置／只读日期颜色及选择守卫、带图片便签padding与置顶／多选几何。浏览器结果仍待协调端提供，脚本断言本身不是验收证据。
+
+
+### 2026-11-04 撤销提示按自身高度下移（澄清）
+
+保留 focus-layout-spacing-20261104 其他未提交修复。OperationToast 的共用 CSS 保留原 floating-create-clearance 底部基准，以 transform-box:border-box 与 translateY(min(100%, max(0px, 基准−安全边界))) 精确下移自身实际高度；100% 为提示条 border box 高度，不是宽度或固定56px。底部安全边界为 env(safe-area-inset-bottom)+16px，达到边界时夹取，因此长提示可能少移一条高度。基准低于边界时先抬至边界。换行、宽度变化与旋转由 CSS 同帧重算，无隐藏首帧、轮询、JS 测量或位置动画；不增加原生 tab 栏高度。浮动创建按钮1/16位置、提示内容、任务名、5秒期限、owner／保存成功／busy及撤销逻辑不变。
+
+已有 check-focus-layout-spacing.mjs 新增真实夹具任务的完成提示与撤销，覆盖原五尺寸短／长任务名、旋转后的实际 boundingClientRect／transform 高度关系、34px模拟安全区+16px边距及强制夹取、完整可见与按钮实际可点。API 全部由夹具拦截，不连接真实账号。实际通过 miniprogram npm run typecheck、web npm run build:tools、定向脚本 node --check 和 git diff --check。本机尝试运行 layout UI 脚本，但 Playwright 浏览器未安装，在启动时失败；浏览器／原生真机验收仍待协调端。未提交、未部署；协调端审核并准备新候选后另行授权受限 broker。
+
+全部候选 UI 命令（在 web 目录）：
+```sh
+OTTLOG_PARITY_ORIGIN=http://127.0.0.1:3017 node scripts/check-focus-recommendation.mjs
+OTTLOG_PARITY_ORIGIN=http://127.0.0.1:3017 node scripts/check-focus-layout-spacing.mjs
+```
+
+
+### 2026-11-04 显示队列手柄排序与四位置紧凑显示
+
+保留本轮全部未提交专注推荐／动画、活动提示、番茄几何、重复栏／亮度、便签内距和撤销位置修复。TodoPanelPicker的queue模式只渲染已加入队列，末行“添加”锚定共用ChoicePopover；主行调用原onChange切换当前来源、整行高亮，添加层调用onQueueChange增减且至少一项，无勾号／箭头／主行删除。旧非queue模式保留原选择行为，不自动填充候选。
+
+useHandleSort为轻量共享手柄排序控制器：鼠标按柄、触屏400ms长按，普通滑动超过8px取消待激活；固定跟手行、原位占位和目标边界反馈，松手测量最终位置，仅一次调用原保存队列。沿ChoicePopover原ScrollView测量／滚动边界；多指、越界、Escape、失焦、隐藏、关闭、owner／可用分类／队列变化和卸载释放计时器／捕获／原生滚动锁且不保存。手柄可用ArrowUp／ArrowDown，不显示额外排序按钮。队列失败保留输入与原保存队列的同目标重试；父级增加来源队列基线比较，远端已改队列时拒绝旧重试覆盖，分类有效性继续由setTodoPanelQueue校验。远端离线及上传失败仍走原store待同步／重试机制，不新增持久层或撤销事件。
+
+四位置行沿todoPanelPresentation展示当前真实颜色PriorityFlag或分类LibraryIcon，名称改正文色与600字重，共用字体、16px容器内距、40px行下限、0行间gap、12px名称入口gap。队列手柄布局不受这组样式影响。
+
+实际本地验证：check-handle-sort.cjs确定性触摸控制器检查、check-todo-panel-source.cjs（分类／队列／循环／删除守卫／无撤销模型）、check-focus-recommendation.cjs、check-todo-schedule.cjs、check-habits-focus.cjs、check-pomodoro-reminders.cjs、小程序typecheck、web build:tools及三份本轮定向UI脚本语法通过。控制器检查涵盖上下实际落点、单次提交、长按前滚动、多指、越界、隐藏／关闭／owner／队列变化／卸载清理；它不是微信原生验收证据。
+
+新增web/scripts/check-panel-queue-editor.mjs在3017隔离候选上拦截全部API，覆盖1440／390：默认单项＋添加、分类及优先级增减、当前整行高亮无勾号、每行唯一手柄无箭头、真实鼠标和CDP触屏长按拖动、普通滑动不排序、Escape及多指取消、长队列边界滚动、键盘、实际本机存储失败及同目标重试、刷新、原象限循环、无撤销、owner变化清理，以及四位置40px紧凑布局与真实图标。服务器本轮不安装或运行浏览器，Windows协调端执行；浏览器、原生微信及真机结果待回传，脚本内容不当作通过证据。旧大脚本已失效的箭头断言未执行。
+
+协调端在web目录运行（PowerShell）：
+```powershell
+$env:OTTLOG_PARITY_ORIGIN="http://127.0.0.1:3017"
+node scripts/check-focus-recommendation.mjs
+node scripts/check-focus-layout-spacing.mjs
+node scripts/check-panel-queue-editor.mjs
+```
+
+交接状态与全部本轮命令保留在.tmp/focus-layout-spacing-result.json，完整未提交补丁含新增文件导出到.tmp/focus-layout-spacing.patch。未提交、未部署，未调用旧broker，未改API、真实数据、系统配置或.git；协调端审核／提交／候选测试，部署另按当前授权处理。
+
+
+### 2026-11-04 panel-queue-editor-20261104 超时后收尾复核
+
+本轮保留并核对全部26个未提交文件（19个已跟踪修改、7个新增），未重做功能、未修改业务源码。重新实际运行并通过：miniprogram 的 `npm run typecheck`、web 的 `npm run build:tools`、三份 UI 脚本 `node --check`、`node miniprogram/scripts/check-todo-panel-source.cjs`、`node miniprogram/scripts/check-handle-sort.cjs` 及 `git diff --check`。todo-panel-source 原模型检查保持通过，队列默认／分类／循环／删除守卫／撤销兼容沿原模型。其他历史检查不作为本轮重新执行证据。
+
+AGENTS 实现规则顶部补充简短队列／四位置规则；`.tmp/focus-layout-spacing-result.json` 更新本轮真实检查、全部文件清单与三份 UI 命令。浏览器未运行、依赖未安装、未部署、未写入 .git、未访问真实数据；Windows UI／原生微信仍待协调端验收。协调端在 web 目录设置 `$env:OTTLOG_PARITY_ORIGIN="http://127.0.0.1:3017"` 后依次执行 `node scripts/check-focus-recommendation.mjs`、`node scripts/check-focus-layout-spacing.mjs`、`node scripts/check-panel-queue-editor.mjs`，全部业务 API 必须沿脚本隔离夹具拦截。旧 patch 不作为本轮完整交接来源，以当前工作区及 JSON 文件清单为准。

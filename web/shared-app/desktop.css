@@ -207,7 +207,7 @@
     align-items: stretch;
     gap: 14px;
   }
-  .tool-app-root .memo-note { min-height: 146px; padding: 14px 8px 14px 14px; align-items: stretch; }
+  .tool-app-root .memo-note { min-height: 0; align-items: stretch; }
   .tool-app-root .memo-note-open { align-items: flex-start; }
   .tool-app-root .memo-note-copy { align-self: stretch; }
   .tool-app-root .memo-note-title-row { align-items: flex-start; flex-wrap: wrap; gap: 4px 10px; }
