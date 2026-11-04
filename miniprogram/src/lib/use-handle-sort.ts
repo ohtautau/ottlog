@@ -41,7 +41,8 @@ export function useHandleSort(keys:readonly string[], enabled:boolean, owner:str
   const moving=(e:PointerEvent)=>{if(e.pointerId!==pointer)return;move(e);if(session.current?.active){e.preventDefault();if(capture&&!capture.hasPointerCapture(e.pointerId))capture.setPointerCapture(e.pointerId);}};
   const end=(e:PointerEvent)=>{if(e.pointerId!==pointer)return;if(session.current?.active){session.current.point=e;finish();}else cancel();release();};
   const abort=()=>{cancel();release();};
-  const lost=()=>{if(pointer!==undefined)abort();};
+  // Ignore implicit capture handed off from a child to this grip.
+  const lost=(e:PointerEvent)=>{if(pointer!==undefined&&e.pointerId===pointer&&e.target===capture)abort();};
   const key=(e:KeyboardEvent)=>{if(e.key==='Escape'&&session.current){e.preventDefault();e.stopImmediatePropagation();abort();return;}const handle=(e.target as HTMLElement).closest(`#${id} .handle-sort-grip`);if(!handle||!latest.current.enabled)return;const from=Number(handle.getAttribute('data-sort-index')),to=from+(e.key==='ArrowUp'?-1:e.key==='ArrowDown'?1:0);if(to!==from){e.preventDefault();if(to>=0&&to<latest.current.keys.length)latest.current.commit(from,to);}};
   const scroll=(e:globalThis.TouchEvent)=>{if(session.current?.active)e.preventDefault();};
   document.addEventListener('pointerdown',down,true);document.addEventListener('pointermove',moving,{passive:false});document.addEventListener('pointerup',end);document.addEventListener('pointercancel',abort);document.addEventListener('keydown',key,true);document.addEventListener('touchmove',scroll,{passive:false});window.addEventListener('blur',abort);document.addEventListener('visibilitychange',abort);document.addEventListener('lostpointercapture',lost);

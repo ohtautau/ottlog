@@ -2903,3 +2903,11 @@ node scripts/check-panel-queue-editor.mjs
 本轮保留并核对全部26个未提交文件（19个已跟踪修改、7个新增），未重做功能、未修改业务源码。重新实际运行并通过：miniprogram 的 `npm run typecheck`、web 的 `npm run build:tools`、三份 UI 脚本 `node --check`、`node miniprogram/scripts/check-todo-panel-source.cjs`、`node miniprogram/scripts/check-handle-sort.cjs` 及 `git diff --check`。todo-panel-source 原模型检查保持通过，队列默认／分类／循环／删除守卫／撤销兼容沿原模型。其他历史检查不作为本轮重新执行证据。
 
 AGENTS 实现规则顶部补充简短队列／四位置规则；`.tmp/focus-layout-spacing-result.json` 更新本轮真实检查、全部文件清单与三份 UI 命令。浏览器未运行、依赖未安装、未部署、未写入 .git、未访问真实数据；Windows UI／原生微信仍待协调端验收。协调端在 web 目录设置 `$env:OTTLOG_PARITY_ORIGIN="http://127.0.0.1:3017"` 后依次执行 `node scripts/check-focus-recommendation.mjs`、`node scripts/check-focus-layout-spacing.mjs`、`node scripts/check-panel-queue-editor.mjs`，全部业务 API 必须沿脚本隔离夹具拦截。旧 patch 不作为本轮完整交接来源，以当前工作区及 JSON 文件清单为准。
+
+### 2026-11-04 短堆叠屏专注补充
+
+仅共享 focus CSS 的 max-width:599px 且 max-height:700px 分支压缩卡内留白、领域选择40px、活动横滑36px及事项槽40px（输入与来源按钮保持40px），隐藏底部重复完成文案与空结束位；真实暂停通过同源 is-paused／is-visible class 将继续和结束并排，按钮均至少40px。非短屏几何、全站header／导航、stage实测缩放、计时／个人设置及原生自动休息策略保持。未固定番茄或场景高度。
+
+UI断言建议独立放在 `.tmp/short-focus-assertions.txt`，供协调端合并既有隔离夹具脚本：375×667完成／休息／普通focus的番茄宽至少110px、数字至少23px、stage内居中及暂停结束按钮可见可点。浏览器／截图与原生验收待协调端执行，未据CSS推算宣称通过；未部署或访问真实账号。
+
+本次实际通过：miniprogram `npm run typecheck`、web `npm run build:tools`、`git diff --check`。未修改协调端UI脚本，断言建议待合并运行。

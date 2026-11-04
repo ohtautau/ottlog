@@ -368,11 +368,11 @@ export default function Pomodoro() {
               </ChoicePopover>
             </View>
           </> : <ScrollView className='focus-activity-rail' scrollX enhanced showScrollbar={false} ariaLabel='休息活动提示'><View className='focus-activity-options'>{focusActivities.map(activity => <Text key={activity} className='focus-activity'>{activity}</Text>)}</View></ScrollView>}</View>
-          <View className={`focus-action-area${completedFocus ? ' is-completed' : ''}`}>
-          {completedFocus ? <View className='focus-completion-actions' role='status'><Text>专注已完成</Text><View className='focus-completion-row'><ActionButton appearance={recommendedBreak==='shortBreak' ? 'primary' : 'secondary'} size='large' disabled={busy || notificationBusy} onClick={()=>chooseBreak('shortBreak')}>开始短休息</ActionButton><ActionButton appearance={recommendedBreak==='longBreak' ? 'primary' : 'secondary'} size='large' disabled={busy || notificationBusy} onClick={()=>chooseBreak('longBreak')}>开始长休息</ActionButton></View></View> : <View className='focus-primary-actions'>
+          <View className={`focus-action-area${completedFocus ? ' is-completed' : ''}${active && !active.running ? ' is-paused' : ''}`}>
+          {completedFocus ? <View className='focus-completion-actions' role='status'><Text className='focus-completion-label'>专注已完成</Text><View className='focus-completion-row'><ActionButton appearance={recommendedBreak==='shortBreak' ? 'primary' : 'secondary'} size='large' disabled={busy || notificationBusy} onClick={()=>chooseBreak('shortBreak')}>开始短休息</ActionButton><ActionButton appearance={recommendedBreak==='longBreak' ? 'primary' : 'secondary'} size='large' disabled={busy || notificationBusy} onClick={()=>chooseBreak('longBreak')}>开始长休息</ActionButton></View></View> : <View className='focus-primary-actions'>
             <ActionButton appearance='primary' size='large' width='fill' disabled={busy || notificationBusy} className='button-label focus-start' onClick={active ? togglePause : begin}>{active ? active.running ? '暂停' : '继续' : `开始${modeInfo.label}`}</ActionButton>
           </View>}
-          <View className='focus-end-slot'>{active && !active.running ? <ActionButton size='large' width='fill' disabled={busy || notificationBusy} className='button-label focus-end' onClick={() => { void end(); }}>结束</ActionButton> : <View className='focus-end-space' aria-hidden />}</View>
+          <View className={`focus-end-slot${active && !active.running ? ' is-visible' : ''}`}>{active && !active.running ? <ActionButton size='large' width='fill' disabled={busy || notificationBusy} className='button-label focus-end' onClick={() => { void end(); }}>结束</ActionButton> : <View className='focus-end-space' aria-hidden />}</View>
           </View>
         </View>
     </>}
