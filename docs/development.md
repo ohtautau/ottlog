@@ -2993,3 +2993,20 @@ $env:OTTLOG_PARITY_ORIGIN="http://127.0.0.1:3017"
 node scripts/check-editor-polish.mjs
 ```
 脚本拦截全部/api请求；1440／2412／390／375覆盖三模式同框与顶部1px几何、彩色收集箱、提示、格言与单条记录正文／元信息／footer边界、自动保存与本机失败保留／重试、删除、筛选排序条、习惯今日／全部／同名领域无写入、完成与归档、排序保存及换owner重载隔离。服务器只语法检查，未安装／运行浏览器。异步选图回填、真实长按拖排、运行中owner变化、加载／错误／附件场景顶部基线及原生滚动仍需协调端补充实测；脚本内容不等于UI通过。本轮未访问真实账号／数据、未改API／.git／系统、未提交／部署。
+
+
+### 2026-11-04 第五项 media-insertion（部分完成，未提交）
+
+保留已有未提交源码；未改 API／真实账号／业务数据／系统／.git，未部署或发布，便签清单及子任务拖动不在本项。MemoEditorFields／ProgressEditorFields 接收独立 mediaWritable，EntryComposer 按真实来源就绪与 owner 提供，不含自身 imageBusy；普通输入仍按 disabled，附件回填走 mediaWritable。MarkdownNoteEditor 的 canInsertImage 撤销会增加 generation，即使随后恢复 ready 也不接收旧操作；owner／record 变化及卸载仍作废。已有任务补 deletion／draftOwner 权限，单条记录补保存／pending 权限。原正文、多图追加、移除及持久化队列保持。
+
+chooseMedia 改 original。原文件先限12MiB，尺寸限24Mi像素、单边16384；输出仍180KiB／六图及原900KiB工具空间验证。PNG／WebP 小于1280边且符合180KiB时原编码保存；网页缩放统一PNG，透明画布不填背景；JPEG沿原三档压缩。原生 compressImage 的本地SDK声明没有可选输出格式，未伪造format参数。官方微信文档本轮工具访问失败，不能据此宣称原生透明缩放已支持：原生超限PNG／WebP目前保守拒绝，**仍需后续完成受控、经契约核对的alpha缩放**。历史JPEG黑像素不可逆，不猜测或迁移。缩略容器移除强制深色底，112×96及预览上限不变。
+
+真实通过：check-media-insertion.cjs（真实异步MarkdownNoteEditor，self busy／两图／单删／取消／坏图／owner／record／权限撤销后恢复的晚到丢弃；真实readMemoImage原生PNG不压缩与原文件限额）；check-media-fields.cjs（真实ProgressEditorFields，左右各两条、旧焦点、末条稳定ID、对侧／较早记录隔离、自busy回填、普通输入仍拦截、权限失效拒绝）；原check-editor-polish／check-progress-draft／check-progress-pairs；miniprogram typecheck、web build:tools、脚本语法和git diff --check。字段夹具首次断言把原空附件数组误认作undefined失败，已修断言后通过。
+
+Windows协调端新隔离3017候选命令：
+```powershell
+cd web
+$env:OTTLOG_PARITY_ORIGIN="http://127.0.0.1:3017"
+node scripts/check-media-insertion.mjs
+```
+新增脚本只做语法检查，服务器未安装或运行浏览器。脚本用真实filechooser上传canvas几何透明四角PNG和JPEG，隔离全部/api，检查三创建即时缩略、真实图loaded／像素alpha、透明CSS、两图自动保存、单删及ID／正文保持，保存页面截图供角落露卡片色审核。**尚未实跑，不算UI验收**。脚本尚未覆盖关闭重开已有记录、坏图／超限／取消／延迟／owner变化的浏览器路径、左右各两条的真实上传、存储失败同ID重试与预览原图；这些仅部分由模型覆盖，需协调端补足。原生大透明图缩放和真机alpha必须单列未完成，不能用构建／模型冒充。

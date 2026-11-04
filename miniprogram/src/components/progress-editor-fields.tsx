@@ -18,11 +18,11 @@ export function ProgressRecordField({ slot, kind, pairIndex = 0, children }: { s
 const filled=(record:RecordItem)=>hasSubtaskText(record.content)||!!record.images?.length;
 
 /** Each sign has one trailing input, stable record IDs and its own attachment target. */
-export default function ProgressEditorFields({ draft,onChange,state,disabled,owner,onBusyChange,autoFocus,actions }: {
-  draft:ProgressDraft;onChange:(draft:ProgressDraft)=>void;state:DomainState;disabled:boolean;owner:string;
+export default function ProgressEditorFields({ draft,onChange,state,disabled,mediaWritable = !disabled,owner,onBusyChange,autoFocus,actions }: {
+  draft:ProgressDraft;onChange:(draft:ProgressDraft)=>void;state:DomainState;disabled:boolean;mediaWritable?:boolean;owner:string;
   onBusyChange:(busy:boolean)=>void;autoFocus?:boolean;actions?:ReactNode;
 }) {
-  const current=useRef({draft,disabled,owner});current.current={draft,disabled,owner};
+  const current=useRef({draft,disabled,mediaWritable,owner});current.current={draft,disabled,mediaWritable,owner};
   const autoFocusTaken=useRef(false);
   const known=useRef(new Set(progressRows(draft).filter(row=>filled(row.record)).map(row=>row.record.id)));
   const [spares,setSpares]=useState(()=>({positive:newProgressInput(),negative:newProgressInput()}));
@@ -37,8 +37,8 @@ export default function ProgressEditorFields({ draft,onChange,state,disabled,own
     return {kind,items,placeholder,visible:[...items.map(row=>row.record),...(total<MAX_PROGRESS_PAIRS*2?[placeholder]:[])]};
   });
   function emit(next:ProgressDraft){current.current.draft=next;onChange(next);}
-  function change(kind:RecordKind,record:RecordItem){
-    if(current.current.disabled)return;
+  function change(kind:RecordKind,record:RecordItem,media=false){
+    if(media ? !current.current.mediaWritable : current.current.disabled)return;
     const existing=progressRows(current.current.draft).some(row=>row.record.id===record.id);
     if(!existing && !filled(record)){setSpares(previous=>({...previous,[kind]:record}));return;}
     const clean=!hasSubtaskText(record.content)?{...record,content:''}:record;
@@ -82,9 +82,9 @@ export default function ProgressEditorFields({ draft,onChange,state,disabled,own
       {visible.map((record,index)=>{const empty=record.id===placeholder.id;return <ProgressRecordField key={record.id} slot={kind} kind={kind} pairIndex={index}>
         <MarkdownNoteEditor minimal format='plain' density='compact' showImageInsertion={false} insertionSignal={insertions[record.id]||0} navigationId={navigationId}
           onFocus={()=>{autoFocusTaken.current=true;setFocused(record.id);}} onBlur={()=>leave(record.id)} onConfirm={()=>move(record.id,1)} autoFocus={focused===record.id || !focused&&!autoFocusTaken.current&&!!autoFocus&&kind==='positive'&&index===0}
-          value={record.content} images={record.images} owner={owner} recordId={record.id} disabled={disabled} canInsertImage={!disabled} onBusyChange={onBusyChange} maxLength={MAX_DOMAIN_RECORD_LENGTH}
+          value={record.content} images={record.images} owner={owner} recordId={record.id} disabled={disabled} canInsertImage={mediaWritable} onBusyChange={onBusyChange} maxLength={MAX_DOMAIN_RECORD_LENGTH}
           ariaLabel={index===0 ? kind==='positive'?'记录内容':'第二条记录内容' : `第 ${index+1} 条${kind==='negative'?'负':'正'}记录内容`} placeholder={RECORD_CONTENT_PLACEHOLDER}
-          onChange={content=>change(kind,{...record,content})} onImagesChange={images=>change(kind,{...record,images})} checkImages={images=>checkImages(kind,record,images)}/>
+          onChange={content=>change(kind,{...record,content})} onImagesChange={images=>change(kind,{...record,images},true)} checkImages={images=>checkImages(kind,record,images)}/>
         <View className='progress-record-tools'>{!empty&&<ActionButton appearance='icon' size='compact' intent='danger' ariaLabel={`删除第 ${index+1} 条${kind==='negative'?'负':'正'}记录`} disabled={disabled} onClick={()=>{emit(clearProgressInput(current.current.draft,record.id));setFocused('');}}>×</ActionButton>}
 
         </View>

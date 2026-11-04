@@ -72,7 +72,7 @@ async function chooseMedia({ count = 1 } = {}) {
     const input = document.createElement('input'); input.type = 'file'; input.accept = 'image/jpeg,image/png,image/webp'; input.multiple = count > 1;
     input.oncancel = () => { input.remove(); reject(new Error('cancel')); };
     input.onchange = async () => {
-      try { const selected = [...input.files].slice(0, count); const tempFiles = await Promise.all(selected.map(file => new Promise((done, fail) => { const reader = new FileReader(); reader.onerror = fail; reader.onload = () => done({ tempFilePath: String(reader.result), size: file.size }); reader.readAsDataURL(file); }))); resolve({ tempFiles }); }
+      try { const selected = [...input.files].slice(0, count); const tempFiles = await Promise.all(selected.map(file => new Promise((done, fail) => { if (file.size > 12 * 1024 * 1024) { fail(new Error('图片原文件过大，请选择 12MB 以内的图片')); return; } const reader = new FileReader(); reader.onerror = fail; reader.onload = () => done({ tempFilePath: String(reader.result), size: file.size }); reader.readAsDataURL(file); }))); resolve({ tempFiles }); }
       catch (error) { reject(error); } finally { input.remove(); }
     }; input.click();
   });
@@ -93,8 +93,9 @@ export const Taro = {
   vibrateShort: () => Promise.resolve(), setKeepScreenOn: () => Promise.resolve(), stopPullDownRefresh: () => Promise.resolve(),
   setClipboardData: async ({ data }) => { await navigator.clipboard.writeText(data); },
   chooseMedia,
+  getEnv: () => 'WEB', ENV_TYPE: { WEB: 'WEB' },
   getImageInfo: async ({ src }) => { const img = await loadImage(src); return { width: img.naturalWidth, height: img.naturalHeight }; },
-  compressImage: async ({ src, compressedWidth, compressedHeight, quality }) => { const img = await loadImage(src); const canvas = document.createElement('canvas'); canvas.width = compressedWidth; canvas.height = compressedHeight; canvas.getContext('2d').drawImage(img, 0, 0, canvas.width, canvas.height); return { tempFilePath: canvas.toDataURL('image/jpeg', quality / 100) }; },
+  compressImage: async ({ src, compressedWidth, compressedHeight, quality }) => { const img = await loadImage(src); const canvas = document.createElement('canvas'); canvas.width = compressedWidth; canvas.height = compressedHeight; canvas.getContext('2d').drawImage(img, 0, 0, canvas.width, canvas.height); return { tempFilePath: canvas.toDataURL(/^data:image\/(png|webp)/i.test(imageSource(src) || '') ? 'image/png' : 'image/jpeg', quality / 100) }; },
   env: { USER_DATA_PATH: '/browser-temp' },
   getFileSystemManager: () => ({
     readFile: ({ filePath, success, fail }) => { const data = imageSource(filePath); if (data?.startsWith('data:image/')) success({ data: data.slice(data.indexOf(',') + 1) }); else fail(new Error('图片不可用')); },

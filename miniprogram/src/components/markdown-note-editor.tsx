@@ -27,6 +27,10 @@ export default function MarkdownNoteEditor({ value, images: savedImages, onChang
   const mounted = useRef(true), operating = useRef(false);
   const identity = useRef({ owner, recordId, generation: 0 });
   if (identity.current.owner !== owner || identity.current.recordId !== recordId) identity.current = { owner, recordId, generation: identity.current.generation + 1 };
+  const permission = useRef(canInsertImage);
+  // Revocation invalidates the operation even if readiness later returns.
+  if (permission.current && !canInsertImage) identity.current = { owner, recordId, generation: identity.current.generation + 1 };
+  permission.current = canInsertImage;
   const images = savedImages?.filter(isMemoImage) || [], locked = disabled || imageBusy;
   const current = useRef({ images, canInsertImage, disabled, onImagesChange, checkImages });
   current.current = { images, canInsertImage, disabled, onImagesChange, checkImages };
@@ -44,9 +48,9 @@ export default function MarkdownNoteEditor({ value, images: savedImages, onChang
     const isCurrent = () => mounted.current && identity.current === captured && current.current.canInsertImage;
     operating.current = true; setImageBusy(true); busyCallback.current?.(true);
     try {
-      const chosen = await Taro.chooseMedia({ count: 1, mediaType: ['image'], sourceType: ['album', 'camera'], sizeType: ['compressed'] });
+      const chosen = await Taro.chooseMedia({ count: 1, mediaType: ['image'], sourceType: ['album', 'camera'], sizeType: ['original'] });
       if (!chosen.tempFiles.length || !isCurrent()) return;
-      const image = await readMemoImage(chosen.tempFiles[0].tempFilePath);
+      const image = await readMemoImage(chosen.tempFiles[0].tempFilePath, chosen.tempFiles[0].size);
       if (!isCurrent()) return;
       const latest = current.current, next = [...latest.images, image];
       if (next.length > MAX_MEMO_IMAGES) throw new Error(`最多插入 ${MAX_MEMO_IMAGES} 张图片`);

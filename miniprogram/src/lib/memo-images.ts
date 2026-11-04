@@ -8,17 +8,30 @@ export function withMemo(state: MemoState, note: Memo): MemoState {
   return { ...state, notes: [note, ...state.notes.filter(item => item.id !== note.id)] };
 }
 export const isMemoImage = isNoteImage;
-export async function readMemoImage(path: string): Promise<MemoImage> {
+// Bound source reads and decoded dimensions before any canvas/compression work.
+export const MAX_SOURCE_IMAGE_BYTES = 12 * 1024 * 1024;
+const MAX_SOURCE_PIXELS = 24 * 1024 * 1024;
+const readBase64 = (path: string) => new Promise<string>((resolve, reject) => Taro.getFileSystemManager().readFile({ filePath: path, encoding: 'base64', success: result => resolve(String(result.data)), fail: reject }));
+const imageMime = (data: string) => data.startsWith('/9j/') ? 'jpeg' : data.startsWith('iVBORw0KGgo') ? 'png' : data.startsWith('UklGR') ? 'webp' : '';
+const fits = (data: string) => Math.floor(data.length * 3 / 4) - (data.endsWith('==') ? 2 : data.endsWith('=') ? 1 : 0) <= MAX_IMAGE_BYTES;
+export async function readMemoImage(path: string, sourceBytes?: number): Promise<MemoImage> {
+  if (!sourceBytes || sourceBytes > MAX_SOURCE_IMAGE_BYTES) throw new Error('图片原文件过大或大小不可用，请选择 12MB 以内的图片');
   const info = await Taro.getImageInfo({ src: path });
+  if (!(info.width > 0 && info.height > 0) || info.width * info.height > MAX_SOURCE_PIXELS || Math.max(info.width, info.height) > 16384) throw new Error('图片尺寸过大，请裁剪后再插入');
+  const original = await readBase64(path), mime = imageMime(original);
+  if (!mime) throw new Error('暂不支持这张图片，请选择 JPG、PNG 或 WebP 图片');
   const longSide = Math.max(info.width, info.height);
+  // PNG/WebP may contain alpha. Never send them through native compressImage,
+  // whose contract supplies no alpha-preserving output format selection.
+  if (mime !== 'jpeg' && fits(original) && longSide <= 1280) return { id: toolId(), dataUrl: `data:image/${mime};base64,${original}` };
+  if (mime !== 'jpeg' && Taro.getEnv() !== Taro.ENV_TYPE.WEB) throw new Error('透明格式图片需在 1280 像素及 180KB 以内，请保留透明格式缩小后重试');
   for (const [size, quality] of [[1280, 75], [960, 55], [720, 40]]) {
     const ratio = Math.min(1, size / longSide);
     const compressed = await Taro.compressImage({ src: path, quality, compressedWidth: Math.max(1, Math.round(info.width * ratio)), compressedHeight: Math.max(1, Math.round(info.height * ratio)) });
-    const data = await new Promise<string>((resolve, reject) => Taro.getFileSystemManager().readFile({ filePath: compressed.tempFilePath, encoding: 'base64', success: result => resolve(String(result.data)), fail: reject }));
-    if (data.length > Math.ceil(MAX_IMAGE_BYTES / 3) * 4) continue;
-    const mime = data.startsWith('/9j/') ? 'jpeg' : data.startsWith('iVBORw0KGgo') ? 'png' : data.startsWith('UklGR') ? 'webp' : '';
-    if (!mime) throw new Error('暂不支持这张图片，请选择 JPG、PNG 或 WebP 图片');
-    return { id: toolId(), dataUrl: `data:image/${mime};base64,${data}` };
+    const data = await readBase64(compressed.tempFilePath), outputMime = imageMime(data);
+    if (!fits(data)) continue;
+    if (!outputMime || mime !== 'jpeg' && outputMime === 'jpeg') throw new Error('图片透明格式未能保留，请缩小原图后重试');
+    return { id: toolId(), dataUrl: `data:image/${outputMime};base64,${data}` };
   }
   throw new Error('图片压缩后仍过大，请裁剪后再插入');
 }

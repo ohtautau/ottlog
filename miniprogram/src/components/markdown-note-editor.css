@@ -14,7 +14,7 @@
 .memo-body-count{flex:1;min-width:0;color:#8fa6b2;font-size:min(21rpx,14PX);line-height:1.5;text-align:right;overflow-wrap:anywhere}
 .memo-images{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12rpx;margin:0}
 .memo-image{position:relative;min-width:0}
-.memo-image image{display:block;width:100%;height:180rpx;border-radius:14rpx;background:#12212c}
+.memo-image image{display:block;width:100%;height:180rpx;border-radius:14rpx;background:transparent}
 .memo-image-remove{position:absolute;right:4rpx;top:4rpx;width:40PX;margin:0}
 .memo-images.is-preview{display:flex;flex-direction:column}
 .memo-images.is-preview image{height:auto;min-height:100rpx}

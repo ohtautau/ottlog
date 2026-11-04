@@ -16,9 +16,9 @@ import MarkdownNoteEditor from './markdown-note-editor';
 import { PinSymbol } from './manage-symbol';
 
 /** Memo-specific controls used by the shared creator and the original-record editor. */
-export default function MemoEditorFields({ draft, onChange, tagsText, onTagsChange, tagOptions, disabled, owner, onBusyChange, autoFocus, minimal = false, showTags = true, insertionSignal = 0, preview, onPreviewChange, actions, onTags }: {
+export default function MemoEditorFields({ draft, onChange, tagsText, onTagsChange, tagOptions, disabled, mediaWritable = !disabled, owner, onBusyChange, autoFocus, minimal = false, showTags = true, insertionSignal = 0, preview, onPreviewChange, actions, onTags }: {
   draft: Memo; onChange: (next: Memo) => void; tagsText: string; onTagsChange: (text: string) => void;
-  tagOptions: readonly string[]; disabled: boolean; owner: string; onBusyChange?: (busy: boolean) => void;
+  tagOptions: readonly string[]; disabled: boolean; mediaWritable?: boolean; owner: string; onBusyChange?: (busy: boolean) => void;
   onTags?:()=>void; actions?:ReactNode; autoFocus?: boolean; minimal?: boolean; showTags?: boolean; insertionSignal?: number; preview?:boolean; onPreviewChange?:(value:boolean)=>void;
 }) {
   const memoSource = usePersonalToolState('memos', initialMemoState);
@@ -28,12 +28,12 @@ export default function MemoEditorFields({ draft, onChange, tagsText, onTagsChan
   const [imageBusy, setImageBusy] = useState(false);
   const [titleFocused, setTitleFocused] = useState(autoFocus);
   useEffect(() => { if (autoFocus !== undefined) setTitleFocused(autoFocus); }, [autoFocus]);
-  const current = useRef({ draft, owner, onChange, disabled });
-  current.current = { draft, owner, onChange, disabled };
+  const current = useRef({ draft, owner, onChange, disabled, mediaWritable });
+  current.current = { draft, owner, onChange, disabled, mediaWritable };
   useEffect(() => { setPriorityOpen(false); }, [owner, draft.id]);
 
-  function change(patch: Partial<Memo>) {
-    const now = current.current; if (now.disabled) return;
+  function change(patch: Partial<Memo>, media = false) {
+    const now = current.current; if (media ? !now.mediaWritable : now.disabled) return;
     const next = { ...now.draft, ...patch }; current.current.draft = next; now.onChange(next);
   }
   const locked = disabled || imageBusy;
@@ -45,9 +45,9 @@ export default function MemoEditorFields({ draft, onChange, tagsText, onTagsChan
     <MemoFieldsLayout title={<>
         <EntityTitleInput className='memo-title-input' ariaLabel='便签标题' focus={titleFocused} onBlur={() => setTitleFocused(false)} disabled={locked} value={draft.title} placeholder={MEMO_TITLE_PLACEHOLDER} maxlength={Math.max(80, draft.title.length)} cursorSpacing={96} adjustPosition onInput={event => change({ title: event.detail.value })} />
         {!actions && <PrioritySelect className='memo-priority-field' ariaLabel={`选择便签优先度：${habitPriorityLabels[priority]}`} triggerClassName='memo-priority-trigger' open={priorityOpen} onOpenChange={setPriorityOpen} disabled={locked} options={habitPriorities.map(value => ({ value, label: habitPriorityLabels[value], ariaLabel: `优先度${habitPriorityLabels[value]}`, color: memoPriorityColor(value), outlined: value === 'none' }))} value={priority} onChange={value => change({ priority: value })} />}
-      </>} body={<MarkdownNoteEditor value={draft.body} images={draft.images} onChange={body => change({ body })} onImagesChange={images => change({ images })}
+      </>} body={<MarkdownNoteEditor value={draft.body} images={draft.images} onChange={body => change({ body })} onImagesChange={images => change({ images }, true)}
         owner={owner} recordId={draft.id} disabled={locked} maxLength={6000} ariaLabel='便签内容' placeholder={minimal ? '备注' : '写下内容…'} minimal={minimal} preview={preview} onPreviewChange={onPreviewChange} emptyPreviewPlaceholder='备注' insertionSignal={insertionSignal} showImageInsertion={!minimal}
-        canInsertImage={memoSource.ready && memoSource.owner === owner && isMemoState(memoSource.value)}
+        canInsertImage={mediaWritable && memoSource.ready && memoSource.owner === owner && isMemoState(memoSource.value)}
         onBusyChange={value => { setImageBusy(value); onBusyChange?.(value); }}
         checkImages={images => { if (!isMemoState(memoSource.value) || !memoStateFits(withMemo(memoSource.value, { ...draft, images }))) throw new Error('便签空间不足，请先移除一些图片或整理旧便签'); }} />}
       pin={<ChoiceButton iconOnly size='compact' className={`button-label memo-pin-setting${draft.pinned ? ' is-active' : ''}`} ariaLabel={draft.pinned ? '取消置顶便签' : '置顶便签'} aria-pressed={draft.pinned} disabled={locked} onClick={() => change({ pinned: !current.current.draft.pinned })}><PinSymbol /></ChoiceButton>}
