@@ -246,12 +246,11 @@ export function completeTodo(state: TodoState, taskId: string, now = new Date())
   if (!task || task.completedAt) return state;
   const timestamp = now.toISOString();
   const generated: Todo[] = [];
-  // Each open-to-completed transition generates a fresh set. Older clients may
-  // leave completionGeneration on reopened tasks, so completedAt is the guard.
+  // Only recurrence generates new work. Legacy nextTasks remain compatible data;
+  // older completion markers do not prevent an explicit reopened completion.
   const nextTasks = task.nextTasks || [];
-  if (nextTasks.some(child => !child.title.trim())) throw new Error('请先填写下一步任务名称');
-  // Check capacity before marking completion or constructing either branch.
-  ensureRoom(state, Number(!!task.recurrence) + Number(nextTasks.length > 0));
+  // Check capacity before marking completion or constructing the recurring task.
+  ensureRoom(state, Number(!!task.recurrence));
   const occupied = new Set(state.tasks.map(item => item.id));
   const base: Todo = {
     ...task, completedAt: null, createdAt: timestamp, updatedAt: timestamp,
@@ -265,13 +264,6 @@ export function completeTodo(state: TodoState, taskId: string, now = new Date())
       ...base, id: generatedId(task, 'cycle', now, occupied), dueDate: nextRecurrenceDate(task, now),
       recurrence: { ...task.recurrence, ...(['month', 'year'].includes(task.recurrence.unit) ? { anchorDay: monthlyAnchor(task, anchor) } : {}) },
       nextTasks: nextTasks.map(child => ({ ...child })), subtasks: task.subtasks?.map(child => ({ ...child, completed: false })),
-    });
-  }
-  if (nextTasks.length) {
-    generated.push({
-      ...base, id: generatedId(task, 'next', now, occupied), title: nextTasks[0].title.trim(),
-      recurrence: undefined, subtasks: [],
-      nextTasks: nextTasks.slice(1).map(child => ({ ...child })),
     });
   }
   const completed = { ...task, completedAt: timestamp, updatedAt: timestamp, completionGeneration: timestamp };

@@ -50,14 +50,14 @@ function requestInputFocus(node) {
   const active = document.activeElement;
   // Shared forms request initial focus after opening. Keep a user's newer field
   // selection when that delayed request arrives during typing or pasting.
-  if (active !== node && active?.matches('input,textarea,select,[contenteditable="true"]')) return false;
+  if (active !== node && active?.matches('input,textarea,select,[contenteditable="true"]') && !(node.dataset.focusGroup && active.dataset.focusGroup === node.dataset.focusGroup)) return false;
   node.focus(); return true;
 }
 export function Input({ onInput, onConfirm, maxlength, password, type, confirmType, cursorSpacing, adjustPosition, focus, selectionStart, selectionEnd, ...props }) {
   const ref = useRef();
   useEffect(() => { if (!focus || !ref.current || !requestInputFocus(ref.current)) return; if (selectionStart >= 0 && selectionEnd >= 0) ref.current.setSelectionRange(selectionStart, selectionEnd); }, [focus, selectionStart, selectionEnd]);
   const numeric = type === 'number' || type === 'digit';
-  return <input {...domProps(props)} ref={ref} maxLength={maxlength} type={password ? 'password' : numeric ? 'text' : type || 'text'} inputMode={numeric ? type === 'digit' ? 'decimal' : 'numeric' : undefined} onChange={event => onInput?.({ detail: { value: event.target.value } })} onKeyDown={event => { props.onKeyDown?.(event); if (event.key === 'Enter' && !event.nativeEvent.isComposing) onConfirm?.({ detail: { value: event.target.value } }); }} />;
+  return <input {...domProps(props)} ref={ref} maxLength={maxlength} type={password ? 'password' : numeric ? 'text' : type || 'text'} inputMode={numeric ? type === 'digit' ? 'decimal' : 'numeric' : undefined} onChange={event => onInput?.({ detail: { value: event.target.value } })} onKeyDown={event => { props.onKeyDown?.(event); if (event.key === 'Enter' && !event.nativeEvent.isComposing && event.keyCode !== 229 && !event.defaultPrevented) { event.preventDefault(); onConfirm?.({ detail: { value: event.target.value } }); } }} />;
 }
 export function Textarea({ onInput, onConfirm, maxlength, autoHeight, showConfirmBar, fixed, focus, confirmType, cursorSpacing, adjustPosition, disableDefaultPadding, placeholderStyle, ...props }) {
   const ref = useRef();
@@ -72,29 +72,53 @@ export function PickerViewColumn({ children }) { return <>{children}</>; }
 function WheelColumn({ column, selected, rowHeight, onSelect, onStart, onEnd }) {
   const items = React.Children.toArray(column.props.children), ref = useRef(), moving = useRef(false), timer = useRef(), drag = useRef(), suppressClick = useRef(false), current = useRef(selected);
   const [scrolling, setScrolling] = useState(false);
+  const pointerHeld = useRef(false);
   const label = column.props.ariaLabel || column.props['aria-label'];
   function begin() { if (!moving.current) { moving.current = true; setScrolling(true); onStart?.(); } }
-  function settle() { clearTimeout(timer.current); timer.current = setTimeout(() => { moving.current = false; setScrolling(false); const index = Math.min(items.length - 1, Math.max(0, current.current)); if (ref.current) ref.current.scrollTop = index * rowHeight; onEnd?.(); }, 150); }
-  useLayoutEffect(() => { current.current = selected; if (ref.current && !moving.current) ref.current.scrollTop = selected * rowHeight; }, [selected, items.length, rowHeight]);
-  useEffect(() => () => { clearTimeout(timer.current); onEnd?.(); }, []);
-  function pick(index) { const bounded = Math.max(0, Math.min(items.length - 1, index)); current.current = bounded; onSelect(bounded); if (ref.current) ref.current.scrollTop = bounded * rowHeight; }
+  const latest = useRef({ onSelect, onEnd }); latest.current = { onSelect, onEnd };
+  const bounded = index => Math.max(0, Math.min(items.length - 1, index));
+  function align(index) { if (ref.current) ref.current.scrollTop = index * rowHeight; }
+  function settle() {
+    clearTimeout(timer.current);
+    timer.current = setTimeout(() => {
+      if (!moving.current || pointerHeld.current) return;
+      // Read the final physical position, not an earlier scroll event or parent render.
+      const index = bounded(Math.round(ref.current.scrollTop / rowHeight));
+      current.current = index; align(index);
+      moving.current = false; setScrolling(false);
+      if (index !== selected) latest.current.onSelect(index); latest.current.onEnd?.();
+    }, 150);
+  }
+  useLayoutEffect(() => { if (!moving.current) { current.current = selected; align(selected); } }, [selected, items.length, rowHeight]);
+  useEffect(() => () => { clearTimeout(timer.current); latest.current.onEnd?.(); }, []);
+  function pick(index) {
+    clearTimeout(timer.current); const next = bounded(index);
+    current.current = next; align(next); latest.current.onSelect(next);
+    if (moving.current) { moving.current = false; setScrolling(false); latest.current.onEnd?.(); }
+  }
   return <div className='browser-wheel-column' style={{ '--browser-wheel-row': `${rowHeight}px` }}>
     <div className='browser-wheel-scroll' role='listbox' aria-label={label} aria-activedescendant={`${label}-${selected}`} data-moving={scrolling} tabIndex={0} ref={ref}
       onKeyDown={event => { const step = ({ ArrowDown: 1, ArrowUp: -1, PageDown: 5, PageUp: -5 })[event.key]; if (step !== undefined || event.key === 'Home' || event.key === 'End') { event.preventDefault(); pick(event.key === 'Home' ? 0 : event.key === 'End' ? items.length - 1 : current.current + step); } }}
       onWheel={() => { begin(); settle(); }}
-      onScroll={event => { const index = Math.min(items.length - 1, Math.max(0, Math.round(event.currentTarget.scrollTop / rowHeight))); if (index !== current.current) { begin(); current.current = index; onSelect(index); } if (moving.current) settle(); }}
-      onPointerDown={event => { suppressClick.current = false; begin(); if (event.pointerType !== 'mouse' || event.button !== 0) return; drag.current = { y: event.clientY, top: event.currentTarget.scrollTop, moved: false }; }}
+      onScroll={() => {
+        // Layout, controlled value alignment and CSS snap also dispatch scroll.
+        // Only a wheel/pointer gesture may publish a new value, once it settles.
+        if (moving.current) settle();
+        else align(current.current);
+      }}
+      onPointerDown={event => { pointerHeld.current = true; suppressClick.current = false; begin(); if (event.pointerType !== 'mouse' || event.button !== 0) return; drag.current = { y: event.clientY, top: event.currentTarget.scrollTop, moved: false }; }}
       onPointerMove={event => { if (!drag.current) return; const delta = drag.current.y - event.clientY; if (Math.abs(delta) > 3) { drag.current.moved = true; if (!event.currentTarget.hasPointerCapture(event.pointerId)) event.currentTarget.setPointerCapture(event.pointerId); } if (drag.current.moved) event.currentTarget.scrollTop = drag.current.top + delta; }}
-      onPointerUp={event => { if (event.currentTarget.hasPointerCapture(event.pointerId)) event.currentTarget.releasePointerCapture(event.pointerId); suppressClick.current = !!drag.current?.moved; if (suppressClick.current) event.preventDefault(); drag.current = null; settle(); }}
-      onPointerCancel={() => { drag.current = null; settle(); }}>
+      onPointerUp={event => { pointerHeld.current = false; if (event.currentTarget.hasPointerCapture(event.pointerId)) event.currentTarget.releasePointerCapture(event.pointerId); suppressClick.current = !!drag.current?.moved; if (suppressClick.current) event.preventDefault(); drag.current = null; settle(); }}
+      onPointerCancel={() => { pointerHeld.current = false; drag.current = null; settle(); }}>
       {items.map((item, index) => <div id={`${label}-${index}`} role='option' aria-selected={selected === index} key={item.key || index} className='browser-wheel-option' onClick={() => { if (!suppressClick.current) pick(index); suppressClick.current = false; }}>{item}</div>)}
     </div><div className='browser-wheel-indicator' aria-hidden />
   </div>;
 }
 export function PickerView({ children, value = [], onChange, onPickStart, onPickEnd, indicatorStyle, indicatorClass, maskStyle, maskClass, immediateChange, ...props }) {
   const latest = useRef(value); useLayoutEffect(() => { latest.current = value; }, [value]);
+  const activeColumns = useRef(new Set());
   const height = Number(indicatorStyle?.match(/height:\s*(\d+)px/)?.[1] || 32);
-  return <div {...domProps(props)} style={{ ...props.style, display: 'flex' }}>{React.Children.map(children, (column, index) => <WheelColumn column={column} selected={value[index] || 0} rowHeight={height} onStart={() => onPickStart?.({})} onEnd={() => onPickEnd?.({})} onSelect={selected => { const next = [...latest.current]; next[index] = selected; latest.current = next; onChange?.({ detail: { value: next } }); }} />)}</div>;
+  return <div {...domProps(props)} style={{ ...props.style, display: 'flex' }}>{React.Children.map(children, (column, index) => <WheelColumn column={column} selected={value[index] || 0} rowHeight={height} onStart={() => { const wasMoving = activeColumns.current.size > 0; activeColumns.current.add(index); if (!wasMoving) onPickStart?.({}); }} onEnd={() => { const wasMoving = activeColumns.current.delete(index); if (wasMoving && !activeColumns.current.size) onPickEnd?.({}); }} onSelect={selected => { if (latest.current[index] === selected) return; const next = [...latest.current]; next[index] = selected; latest.current = next; onChange?.({ detail: { value: next } }); }} />)}</div>;
 }
 export function RichText({ nodes, ...props }) { return <div {...domProps(props)} dangerouslySetInnerHTML={{ __html: typeof nodes === 'string' ? nodes : '' }} />; }
 export const Swiper = basic('div'), SwiperItem = basic('div');

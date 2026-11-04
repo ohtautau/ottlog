@@ -21,6 +21,7 @@ import { AppDialogHost } from '../../components/app-dialog';
 import DocumentEditorSheet from '../../components/document-editor-sheet';
 import ActionMenu from '../../components/action-menu';
 import EditorFieldsLayout from '../../components/editor-fields-layout';
+import EditorHeading from '../../components/editor-heading';
 import './index.css';
 
 export default function MottosPage() {
@@ -155,11 +156,11 @@ export default function MottosPage() {
         </CardGroupContent>
     </ScrollView>}
     {!!status && <View className='mottos-status'><View className='mottos-status-dot' /><Text>{status}</Text></View>}
-    {editor && <DocumentEditorSheet compact title={editor.original===null ? '创建格言' : '编辑格言'} onClose={()=>{void closeEditor();}}
-      heading={<ActionMenu ariaLabel='格言更多操作' open={more} onOpenChange={setMore} disabled={busy}>
+    {editor && <DocumentEditorSheet compact title={editor.original===null ? '新建格言' : '编辑格言'} onClose={()=>{void closeEditor();}}
+      heading={<EditorHeading className='motto-editor-heading' title={editor.original===null ? '新建格言' : '编辑格言'} actions={<ActionMenu ariaLabel='格言更多操作' open={more} onOpenChange={setMore} disabled={busy}>
 
         {editor.original===null && <ActionButton appearance='quiet' onClick={()=>{setMore(false);setDraft('');draftRef.current='';}}>清空输入</ActionButton>}{editor.original!==null && <ActionButton appearance='quiet' intent='danger' disabled={busy} onClick={()=>{setMore(false);void commit(true);}}>删除格言</ActionButton>}
-      </ActionMenu>}
+      </ActionMenu>} />}
       footer={<SheetActions className='document-autosave-footer'><View className='document-autosave-status'>{message ? <><View role='alert'>{message}</View><ActionButton appearance='quiet' disabled={busy} onClick={()=>{setMessage('');void commit();}}>重试</ActionButton></> : busy ? <Text>保存中…</Text> : null}</View></SheetActions>}>
       <EditorFieldsLayout><Textarea className='mottos-input compact-motto-input' ariaLabel='格言内容' placeholder='想留给自己的一句话…' value={draft} disabled={busy || !!editorPending.current} maxlength={MAX_MOTTO_LENGTH} autoHeight cursorSpacing={96} adjustPosition fixed showConfirmBar={false} onInput={event=>{draftRef.current=event.detail.value;setDraft(event.detail.value);setMessage('');}} />
       <View className='mottos-editor-meta'><Text>{draft.length} / {MAX_MOTTO_LENGTH}</Text></View></EditorFieldsLayout>

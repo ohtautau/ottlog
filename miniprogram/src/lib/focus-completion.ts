@@ -2,11 +2,14 @@ import { advanceTimer, automaticBreakId, finishTimer, startTimer, type PomodoroS
 
 /** Desktop focus expiry records one session and waits for an explicit rest choice. */
 export function advanceWithBreakChoice(state:PomodoroState,now:number):PomodoroState {
-  return state.active?.mode==='focus' ? finishTimer(state,now) : advanceTimer(state,now);
+  const next=state.active?.mode==='focus' ? finishTimer(state,now) : advanceTimer(state,now);
+  return next!==state && state.active?.mode==='focus' ? {...next,mode:'focus'} : next;
 }
+/** Session evidence also accepts legacy states parked on a rest tab; reads never migrate them.
+ * Hosts display this prompt only on the focus tab. */
 export function pendingFocusCompletion(state:PomodoroState) {
   const latest=state.sessions[0];
-  return !state.active && state.mode!=='focus' && latest?.mode==='focus' && latest.completed ? latest : null;
+  return !state.active && latest?.mode==='focus' && latest.completed ? latest : null;
 }
 export function startChosenBreak(state:PomodoroState,mode:'shortBreak'|'longBreak',now:number,focusId:string):PomodoroState {
   const completed=pendingFocusCompletion(state);

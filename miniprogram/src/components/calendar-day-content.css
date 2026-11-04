@@ -1,4 +1,4 @@
-.calendar-date-circle { position: relative; display: flex; align-items: center; justify-content: center; flex: none; box-sizing: border-box; width: 24PX; height: 24PX; border: 1PX solid transparent; border-radius: 50%; }
+.calendar-date-circle { position: relative; display: flex; align-items: center; justify-content: center; flex: none; box-sizing: border-box; width: var(--calendar-day-circle-size,24PX); height: var(--calendar-day-circle-size,24PX); border: 1PX solid transparent; border-radius: 50%; }
 .calendar-date-note { margin-top:4PX;display: block; flex: none; box-sizing: border-box; width: 100%; min-width: 0; height: 12PX; font-size: 10PX; font-weight: 400; line-height: 12PX; text-align: center; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: #94acae; }
 .calendar-date-note.is-holiday { color: #d6c18c; }
 .calendar-date-overlay { position: fixed; inset: 0; z-index: 500; display: flex; align-items: center; justify-content: center; }

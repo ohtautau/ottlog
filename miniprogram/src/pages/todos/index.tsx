@@ -16,19 +16,17 @@ import { useTodoDrag } from '../../components/todo-drag';
 import { SelectChevron } from '../../components/select-trigger';
 import TodoScheduleSheet, {ScheduleSymbol} from '../../components/todo-schedule-sheet';
 import type { TodoSchedule } from '../../lib/todo-schedule';
-import TodoEditorFields from '../../components/todo-editor-fields';
 import TaskDetailEditor from '../../components/task-detail-editor';
 import TodoCategoryField from '../../components/todo-category-field';
 import TodoPanelPicker from '../../components/todo-panel-picker';
 import { getTodoPanelSource, todoPanelPresentation, todoMatchesPanel, setTodoPanelSource, moveTodoToPanel, retryTodoPanelMove, cycleTodoPanelSource, getTodoPanelQueue, setTodoPanelQueue } from '../../lib/todo-panel-source';
 import { autoSaveTodo, todoEditSnapshot } from '../../lib/todo-autosave';
-import { ChoicePopover, TagChoiceRow, PopoverHeading } from '../../components/form-options';
-import TagTextInput from '../../components/tag-text-input';
+import { ChoicePopover, PopoverHeading } from '../../components/form-options';
+import EditorTagField from '../../components/editor-tag-field';
 import PrioritySelect from '../../components/priority-select';
 import MarkdownNoteEditor from '../../components/markdown-note-editor';
 import { noteStateFits } from '../../lib/note-image-data';
 import LibraryIcon from '../../components/library-icon';
-import { scheduleSummary } from '../../lib/todo-schedule';
 import FloatingCreateButton from '../../components/floating-create-button';
 import PageToolbar, { PageToolbarSummary } from '../../components/page-toolbar';
 import { useEntryTags } from '../../lib/use-entry-tags';
@@ -66,7 +64,7 @@ export default function Todos() {
   const [editing, setEditing] = useState(false);
   const [autosaveError, setAutosaveError] = useState('');
   const [priorityOpen, setPriorityOpen] = useState(false), [moreOpen, setMoreOpen] = useState(false), [tagsOpen, setTagsOpen] = useState(false);
-  const [imageSignal, setImageSignal] = useState(0), [nextStepsOpen, setNextStepsOpen] = useState(false);
+  const [imageSignal, setImageSignal] = useState(0);
   const persistedDraft = useRef<Todo | null>(null), savingDraft = useRef<Promise<boolean> | null>(null);
   const liveDraft = useRef(draft), liveTags = useRef(''); liveDraft.current = draft;
   const [tagsText, setTagsText] = useState('');
@@ -181,7 +179,7 @@ export default function Todos() {
   function openEditor(task: Todo, existing: boolean) {
     if (!writable || operating.current || moveBlocked || sorter.suppressClick()) return;
     draftOwner.current = owner;
-    persistedDraft.current = existing ? cloneTask(task) : null; setAutosaveError(''); setPriorityOpen(false); setMoreOpen(false); setTagsOpen(false); setNextStepsOpen(false);
+    persistedDraft.current = existing ? cloneTask(task) : null; setAutosaveError(''); setPriorityOpen(false); setMoreOpen(false); setTagsOpen(false);
     setEditing(existing); setDraft(cloneTask(task));
     setTagsText((task.tags || []).join('，'));
     setScheduleOpen(false);
@@ -384,20 +382,18 @@ export default function Todos() {
       category={<TodoCategoryField value={draft.categoryId} owner={owner} disabled={imageBusy || busy || !writable} onChange={categoryId => { const task = liveDraft.current; if (task && draftOwner.current === currentOwner.current) editDraft({ ...task, categoryId }); }} />}
       priority={<PrioritySelect ariaLabel='任务优先级' open={priorityOpen} onOpenChange={setPriorityOpen} disabled={imageBusy} optionsAriaLabel='任务优先级' options={todoQuadrants.map((q, index) => ({ value: q.id, label: ['高','中','低','无'][index], ariaLabel: q.title, color: q.color, outlined: q.id === 'later' }))} value={todoQuadrant(draft).id} onChange={id => { const q = todoQuadrants.find(q => q.id === id); if (q) editDraft({ ...draft, important: q.important, urgent: q.urgent }); }} />}
       more={<ActionMenu ariaLabel='更多任务操作' open={moreOpen} onOpenChange={setMoreOpen} panelWidth={200} layerClassName='task-detail-popover-layer'>
-        <ActionButton appearance='quiet' onClick={() => { setMoreOpen(false); setNextStepsOpen(!nextStepsOpen); }}>后续任务</ActionButton>
         <ActionButton appearance='quiet' disabled={!savedDraft} onClick={() => { setMoreOpen(false); void closeEditor().then(closed => { if (closed) void openPomodoro({ task: draft.id, event: draft.title, minutes: '25' }); }); }}>为任务专注</ActionButton>
 
         <ActionButton appearance='quiet' intent='danger' onClick={() => { setMoreOpen(false); requestDelete(); }}>删除任务</ActionButton>
       </ActionMenu>}
-      onToggleComplete={() => { void persistDraft().then(saved => { if (saved && liveDraft.current) void toggle(liveDraft.current); }); }} onSchedule={() => setScheduleOpen(true)} scheduleOpen={scheduleOpen} scheduleLabel={draft.dueDate || draft.reminderAt || draft.recurrence ? scheduleSummary(draft, today) : '日期&提醒'}
+      onToggleComplete={() => { void persistDraft().then(saved => { if (saved && liveDraft.current) void toggle(liveDraft.current); }); }} onSchedule={() => setScheduleOpen(true)} scheduleOpen={scheduleOpen} scheduleLabel='日期 · 提醒 · 重复'
       reminderAction={<ActionButton appearance='icon' size='compact' ariaLabel={`微信提醒：${reminderLabel}`} aria-pressed={reminderLocked} disabled={!canAuthorize||reminderLocked||busy||imageBusy} onClick={()=>{void authorizeReminder();}}><ScheduleSymbol kind='reminder'/></ActionButton>}
       onTags={() => setTagsOpen(true)} onAttachment={() => setImageSignal(value => value + 1)}
       notes={(preview,onPreviewChange) => <MarkdownNoteEditor className='task-detail-note' value={draft.description} images={draft.images} preview={preview} onPreviewChange={onPreviewChange} minimal emptyPreviewPlaceholder='备注' insertionSignal={imageSignal} onChange={description => editDraft({ ...draft, description })} onImagesChange={images => editDraft({ ...draft, images })} owner={owner} recordId={draft.id} disabled={!writable || draftOwner.current !== owner || !!deletion} maxLength={10000} ariaLabel='任务备注' placeholder='备注' showImageInsertion={false} canInsertImage={writable} onBusyChange={setImageBusy} checkImages={images => { if (!noteStateFits({ ...state, tasks: [{ ...draft, images }, ...state.tasks.filter(task => task.id !== draft.id)] })) throw new Error('任务空间不足，请整理图片'); }} />}
-      nextSteps={nextStepsOpen ? <View className='task-detail-next-steps'><TodoEditorFields nextStepsOnly draft={draft} onChange={editDraft} tagsText={tagsText} onTagsChange={setTagsText} tagOptions={existingTags} disabled={imageBusy} owner={owner} today={today} scheduleOpen={false} onSchedule={() => setScheduleOpen(true)} /></View> : undefined}
     />}
     <View id='task-tags-anchor' className='task-detail-hidden-anchor' aria-hidden />
     <ChoicePopover anchorId='task-tags-anchor' ariaLabel='任务标签' open={!!draft && tagsOpen} onOpenChange={setTagsOpen} placement='center' panelWidth={360} layerClassName='task-detail-popover-layer' heading={<PopoverHeading title='标签' />}>
-      <TagChoiceRow options={existingTags.map(tag => ({ value: tag, label: tag }))} value={parseTags(tagsText)} onChange={tags => editTags(tags.join('，'))} customInputPlacement='inline' customInput={<TagTextInput ariaLabel='任务标签' value={tagsText} onInput={event => editTags(event.detail.value)} />} />
+      <EditorTagField text={tagsText} onChange={editTags} options={existingTags} disabled={imageBusy} label='任务标签' />
     </ChoicePopover>
     {draft && scheduleOpen && writable && draftOwner.current === owner && <TodoScheduleSheet key={`${owner}:${draft.id}`} value={draft} today={today} busy={imageBusy||!!deletion} saveError={autosaveError} onRetry={()=>{setAutosaveError('');void persistDraft();}} onChange={applySchedule} onClose={() => setScheduleOpen(false)} />}
     {deletion?.owner === owner && <AppDialog title='删除这件任务？' closeLabel='关闭任务删除确认' onClose={closeDelete} busy={busy || !!deletion.pending} error={deleteError} actions={<ActionButton appearance='danger' size='large' width='fill' loading={busy} disabled={busy} onClick={() => { void remove(); }}>{deletion.pending ? '重试删除' : '删除'}</ActionButton>}><Text>{trimTextEnd(deletion.task.title)}</Text></AppDialog>}

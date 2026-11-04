@@ -28,3 +28,6 @@
 .memo-note.is-selected { border-color:#b9dbca; }
 .memo-selection-mark { width:24PX;height:24PX;margin:8PX;border:2PX solid #8da6af;border-radius:50%;display:flex;align-items:center;justify-content:center;box-sizing:border-box; }
 .memo-note.is-selected .memo-selection-mark { border-color:#b9dbca;color:#b9dbca; }
+
+.memo-selection-toggle { padding:0!important;margin:0!important; }
+.memo-selection-toggle .memo-selection-mark { margin:0; }

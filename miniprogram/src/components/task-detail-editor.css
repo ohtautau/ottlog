@@ -52,3 +52,10 @@ page { --task-detail-surface:#192933;--task-detail-ink:#e9eee7;--task-detail-mut
   .task-detail-overlay { align-items:center;padding:16PX; }
   .task-detail-panel { --popup-actions-bottom-space:var(--floating-window-bottom-space);--popup-actions-safe-area:0PX;width:680PX;max-width:100%;height:min(640PX,calc(100vh - 32PX));max-height:calc(100vh - 32PX);border-radius:16PX;box-shadow:0 24PX 90PX #04091188; }
 }
+
+.task-detail-tools,.document-autosave-tools { --editor-icon-size:24PX;--editor-icon-stroke:2PX; }
+.task-detail-tools > button,.document-autosave-tools > button { display:flex;align-items:center;justify-content:center;box-sizing:border-box;width:40PX;height:40PX;min-height:40PX;padding:8PX; }
+.task-detail-symbol { width:var(--editor-icon-size,24PX);height:var(--editor-icon-size,24PX); }
+.task-detail-attachment-symbol { width:14PX;height:22PX; }
+.task-detail-tools .todo-schedule-symbol.is-reminder { box-sizing:border-box;width:20PX;height:20PX;margin:0 2PX 3PX;border:var(--editor-icon-stroke,2PX) solid currentColor;border-radius:10PX 10PX 4PX 4PX; }
+.task-detail-tools .todo-schedule-symbol.is-reminder::after { left:6PX;bottom:-5PX;width:4PX;border-top:2PX solid currentColor; }

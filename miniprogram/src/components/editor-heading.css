@@ -1,5 +1,5 @@
 page,:root { --editor-heading-horizontal-space: 32rpx; }
-.editor-heading { display: flex; align-items: center; justify-content: space-between; flex-shrink: 0; min-width: 0; gap: 8PX; padding: 18rpx var(--editor-heading-horizontal-space) 6rpx; }
+.editor-heading { display: flex; align-items: center; justify-content: space-between; flex-shrink: 0; min-width: 0; gap: 8PX; padding: var(--editor-heading-top-space,16PX) var(--editor-heading-horizontal-space) 8PX; }
 .editor-heading.is-embedded { margin-left: calc(0PX - var(--editor-heading-inset,32rpx)); margin-right: calc(0PX - var(--editor-heading-inset,32rpx)); }
 .editor-heading-copy { flex: 1; min-width: 0; }
 .editor-heading .editor-heading-title { display: block; min-width: 0; color: var(--editor-heading-color,#f3eddf); font-size: 30rpx; font-weight: 600; line-height: 1.4; overflow-wrap: anywhere; }
@@ -7,12 +7,12 @@ page,:root { --editor-heading-horizontal-space: 32rpx; }
 .editor-heading-description { margin-top: 4PX; }
 .editor-heading-actions { display: flex; align-items: center; flex: none; gap: 2PX; margin-right: -14rpx; }
 .editor-heading-actions > .ui-button { flex: none; margin: 0; }
-.editor-heading.is-prompt { padding: 8PX 16PX 4PX; }
+.editor-heading.is-prompt { padding: var(--editor-heading-top-space,16PX) 16PX 8PX; }
 .editor-heading.is-prompt .editor-heading-title { font-size: 18PX; }
 .editor-heading.is-prompt .editor-heading-actions { margin-right: 0; }
 
 /* Actions cannot change the centre of popup titles. */
 .editor-heading.is-titled { position:relative;justify-content:center; }
-.editor-heading.is-titled .editor-heading-copy { flex:1;padding-left:44PX;padding-right:44PX;text-align:center; }
-.editor-heading.is-titled .editor-heading-actions { position:absolute;right:var(--editor-heading-horizontal-space,16PX);top:50%;transform:translateY(-50%);margin:0; }
+.editor-heading.is-titled .editor-heading-copy { display:flex;flex-direction:column;justify-content:center;min-height:40PX;flex:1;padding-left:44PX;padding-right:44PX;text-align:center; }
+.editor-heading.is-titled .editor-heading-actions { position:absolute;right:var(--editor-heading-horizontal-space,16PX);top:var(--editor-heading-top-space,16PX);bottom:8PX;margin:0; }
 .editor-heading.is-titled.is-prompt .editor-heading-actions { right:16PX; }

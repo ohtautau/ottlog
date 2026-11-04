@@ -27,7 +27,7 @@ type Props = {
   disabled?: boolean; autoFocus?: boolean; ariaLabel?: string;
   category: ReactNode; priority: ReactNode; more?: ReactNode; onMore?: () => void;
   onSchedule: () => void; scheduleLabel?: string; scheduleOpen?: boolean;
-  onToggleComplete?: () => void; notes: ReactNode | ((preview:boolean,onPreviewChange:(value:boolean)=>void)=>ReactNode); nextSteps?: ReactNode;
+  onToggleComplete?: () => void; notes: ReactNode | ((preview:boolean,onPreviewChange:(value:boolean)=>void)=>ReactNode);
   reminderAction?:ReactNode; tagsAction?: ReactNode; attachmentAction?: ReactNode; onTags?: () => void; onAttachment?: () => void;
   pending?: boolean; error?: string; onRetry?: () => void;
   topBar?: ReactNode; panelClassName?: string;
@@ -35,8 +35,8 @@ type Props = {
 
 /** Shared task presentation only; the caller owns autosave, identity and menus. */
 export default function TaskDetailEditor({ draft, onChange, onClose, disabled = false, autoFocus = false,
-  ariaLabel = '编辑任务', category, priority, more, onMore, onSchedule, scheduleLabel = '日期和提醒', scheduleOpen,
-  onToggleComplete, notes, nextSteps, reminderAction, tagsAction, attachmentAction, onTags, onAttachment, pending = false, error, onRetry, topBar, panelClassName = '',
+  ariaLabel = '编辑任务', category, priority, more, onMore, onSchedule, scheduleLabel = '日期 · 提醒 · 重复', scheduleOpen,
+  onToggleComplete, notes, reminderAction, tagsAction, attachmentAction, onTags, onAttachment, pending = false, error, onRetry, topBar, panelClassName = '',
 }: Props) {
   const [notePreview,setNotePreview] = useState(false);
   const [showChecklist, setShowChecklist] = useState(!!draft.subtasks?.length);
@@ -48,7 +48,7 @@ export default function TaskDetailEditor({ draft, onChange, onClose, disabled = 
   useEffect(() => {
     if (typeof document === 'undefined') return;
     const arrow = (event: KeyboardEvent) => {
-      if (event.isComposing || event.altKey || event.ctrlKey || event.metaKey || !['ArrowUp', 'ArrowDown'].includes(event.key)) return;
+      if (event.isComposing || event.keyCode === 229 || event.altKey || event.ctrlKey || event.metaKey || !['ArrowUp', 'ArrowDown'].includes(event.key)) return;
       const target = event.target as HTMLElement;
       if (target?.getAttribute('data-subtask-editor') !== inputPrefix.current) return;
       event.preventDefault(); moveRef.current(target.getAttribute('data-subtask-id') || '', event.key === 'ArrowUp' ? -1 : 1);
@@ -109,11 +109,10 @@ export default function TaskDetailEditor({ draft, onChange, onClose, disabled = 
           {(showChecklist || !!subtasks.length) && <View className='task-detail-checklist'>
             {rows.map((item, index) => <View className={`task-detail-subtask${item.completed ? ' is-completed' : ''}`} key={item.id}>
               <ActionButton appearance='icon' size='compact' className='task-detail-subtask-check' ariaLabel={`${item.completed ? '重新打开' : '完成'}子任务 ${index + 1}`} disabled={disabled || item.id === placeholderId} onClick={() => changeSubtasks(items => items.map(row => row.id === item.id ? { ...row, completed: !row.completed } : row))}><View className={`task-detail-check${item.completed ? ' is-checked' : ''}`} aria-hidden>{item.completed && <View />}</View></ActionButton>
-              <Input className='task-detail-subtask-input' data-subtask-editor={inputPrefix.current} data-subtask-id={item.id} ariaLabel={`子任务 ${index + 1}`} placeholder={item.id === placeholderId ? '换行即可添加子任务' : '子任务'} value={item.title} disabled={disabled || item.id === placeholderId && subtasks.length >= 50} maxlength={100} focus={focusedSubtask === item.id} onFocus={() => setFocusedSubtask(item.id)} onBlur={() => leaveSubtask(item.id)} cursorSpacing={96} adjustPosition confirmType='next' onConfirm={() => moveFocus(item.id, 1)} onInput={event => changeTitle(item.id, event.detail.value)} />
+              <Input className='task-detail-subtask-input' data-focus-group={inputPrefix.current} data-subtask-editor={inputPrefix.current} data-subtask-id={item.id} ariaLabel={`子任务 ${index + 1}`} placeholder={item.id === placeholderId ? '换行即可添加子任务' : '子任务'} value={item.title} disabled={disabled || item.id === placeholderId && subtasks.length >= 50} maxlength={100} focus={focusedSubtask === item.id} onFocus={() => setFocusedSubtask(item.id)} onBlur={() => leaveSubtask(item.id)} cursorSpacing={96} adjustPosition confirmType='next' onConfirm={() => moveFocus(item.id, 1)} onInput={event => changeTitle(item.id, event.detail.value)} />
               {item.id !== placeholderId && <ActionButton appearance='icon' size='compact' intent='danger' ariaLabel={`删除子任务 ${index + 1}`} disabled={disabled} onClick={() => changeSubtasks(items => items.filter(row => row.id !== item.id))}>×</ActionButton>}
             </View>)}
           </View>}
-          {nextSteps}
           <SelectedTagList tags={draft.tags || []} disabled={disabled} onEdit={onTags} />
         </View>
       </ScrollView>

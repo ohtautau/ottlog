@@ -35,3 +35,23 @@ assert.equal(focus.advanceWithBreakChoice(complete,160001),complete);
 for(const mode of ['shortBreak','longBreak']){const rest=focus.startChosenBreak(complete,mode,170000,'focus-1');assert.equal(rest.active.mode,mode);assert.equal(rest.active.totalSeconds,mode==='shortBreak'?120:420);assert.equal(rest.active.originFocusId,'focus-1');assert.equal(focus.startChosenBreak(rest,mode,170001,'focus-1'),rest);assert.equal(rest.sessions.length,1);}
 assert.equal(focus.startChosenBreak(complete,'shortBreak',170000,'wrong-id'),complete);
 console.log('PASS calendar projections (monthly/leap/weekday/far future), invisible subtasks, cyclic display and silent changes, durable explicit break choices.');
+
+assert.equal(complete.mode,'focus');
+assert.equal(focus.advanceWithBreakChoice(started,100001),started);
+assert.equal(focus.advanceWithBreakChoice(timer.pauseTimer(started,110000),200000).active.running,false);
+const reloaded=timer.normalizePomodoroState(JSON.parse(JSON.stringify(complete)));
+assert.equal(focus.pendingFocusCompletion(reloaded).id,'focus-1');
+for(const mode of ['shortBreak','longBreak']) {
+ const legacy={...reloaded,mode},before=JSON.stringify(legacy);
+ assert.equal(focus.pendingFocusCompletion(legacy).id,'focus-1');
+ assert.equal(focus.advanceWithBreakChoice(legacy,200000),legacy);
+ assert.equal(JSON.stringify(legacy),before);
+ const chosen=focus.startChosenBreak({...legacy,mode:'focus'},mode,200000,'focus-1');
+ const paused=timer.pauseTimer(chosen,201000),resumed=timer.resumeTimer(paused,202000);
+ assert.equal(timer.remainingSeconds(resumed.active,203000),chosen.active.totalSeconds-2);
+ const ended=focus.advanceWithBreakChoice(resumed,1000000);
+ assert.equal(ended.mode,'focus');assert.equal(focus.pendingFocusCompletion(ended),null);
+ assert.equal(ended.completedFocusCount,1);assert.equal(ended.sessions.length,2);
+}
+assert.equal(timer.advanceTimer(started,160000).active.mode,'shortBreak');
+console.log('PASS focus completion/reload, legacy read-only compatibility, explicit rest durations/pause/resume, no duplicate rounds, native automatic rest.');

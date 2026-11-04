@@ -184,7 +184,7 @@ export default function Memos() {
       await change(previous => ({...previous,notes:previous.notes.map(note=>target.ids.includes(note.id)?{...note,pinned:target.pinned,updatedAt:target.updatedAt}:note)}));
       if(currentOwner.current!==target.owner)return;
       if(hasVolatilePersonalTool('memos',target.owner))throw new Error('置顶尚未保存，请重试');
-      batchPin.current=null;setSelected([]);
+      batchPin.current=null;
     }catch(error){if(currentOwner.current===target.owner)setBatchError(error instanceof Error?error.message:'置顶失败，请重试');}
     finally{if(mounted.current&&currentOwner.current===target.owner)setBusy(false);}
   }
@@ -252,7 +252,7 @@ export default function Memos() {
               onOpen={() => { if (writable && !busy && !imageBusy && !deletionRef.current) { if(managing)toggleSelected(note.id);else edit(note); } }}
               metadata={<>{note.pinned && <Text className='memo-note-pinned'>置顶</Text>}{note.tags.slice(0, 2).map(tag => <Text className='memo-note-tag' key={tag}>{tagLabel(tag)}</Text>)}{note.tags.length > 2 && <Text>＋{note.tags.length - 2}</Text>}{!!photos.length && !!note.body && <Text className='memo-note-photo-count'>{photos.length} 图</Text>}<Text className='memo-note-date'>{noteDate(sort === 1 ? note.createdAt : note.updatedAt)}</Text></>} actions={<>
               {!managing && <ChoiceButton iconOnly size='compact' className='button-label memo-note-pin' ariaLabel={`${note.pinned ? '取消置顶' : '置顶'}便签：${title}`} aria-pressed={note.pinned} disabled={!writable || busy} onClick={() => { void pin(note); }}><PinSymbol /></ChoiceButton>}
-              {managing && <View className='memo-selection-mark' aria-hidden>{selected.includes(note.id) && <CheckSymbol />}</View>}
+              {managing && <ActionButton appearance='icon' className='memo-selection-toggle' ariaLabel={`选择圆圈：${title}`} aria-pressed={selected.includes(note.id)} disabled={!writable || busy || imageBusy || !!currentDeletion} onClick={event => { event.stopPropagation(); toggleSelected(note.id); }}><View className='memo-selection-mark' aria-hidden>{selected.includes(note.id) && <CheckSymbol />}</View></ActionButton>}
             </>} />;
         })}</View> : !state.notes.length && !filterCount ? <EmptyState kind='memos' /> : <View className='memo-list-empty'><View className='memo-empty-paper' aria-hidden /><Text className='memo-empty-title'>没有符合条件的便签</Text>{!!filterCount && <ActionButton className='button-label tool-secondary' onClick={clearFilters}>清除筛选</ActionButton>}</View>}</CardGroupContent>
       </ScrollView>
@@ -264,7 +264,7 @@ export default function Memos() {
         <ActionButton appearance='quiet' intent='danger' onClick={() => { setMoreOpen(false); requestDelete(draft); }}>删除便签</ActionButton>
       </ActionMenu>}
       footer={<SheetActions className='document-autosave-footer'><View className='document-autosave-tools'><ActionButton appearance='icon' ariaLabel='便签标签' onClick={() => setEditorTagsOpen(!editorTagsOpen)}><TaskTagSymbol /></ActionButton><ActionButton appearance='icon' ariaLabel='便签附件' disabled={imageBusy} onClick={() => setImageSignal(value => value + 1)}><TaskAttachmentSymbol /></ActionButton><ChoiceButton iconOnly ariaLabel={draft.pinned ? '取消置顶便签' : '置顶便签'} selected={draft.pinned} onClick={() => { setAutosaveError(''); const next = { ...draft, pinned: !draft.pinned }; currentDraft.current = next; setDraft(next); }}><PinSymbol /></ChoiceButton><EditorPreviewButton selected={memoPreview} onChange={setMemoPreview} disabled={imageBusy} label='便签 Markdown 预览' /></View>{autosaveError && <View className='document-autosave-status' role='alert'><Text>{autosaveError}</Text><ActionButton appearance='quiet' disabled={busy} onClick={() => { setAutosaveError(''); void save(); }}>重试</ActionButton></View>}</SheetActions>}>
-      <MemoEditorFields preview={memoPreview} onPreviewChange={setMemoPreview} minimal showTags={editorTagsOpen} insertionSignal={imageSignal} draft={draft} onChange={value => { setAutosaveError(''); currentDraft.current = value; setDraft(value); }} tagsText={tags} onTagsChange={value => { setAutosaveError(''); tagsRef.current = value; setTags(value); }} tagOptions={existingTags} disabled={!writable} owner={owner} onBusyChange={setImageBusy} />
+      <MemoEditorFields onTags={() => setEditorTagsOpen(true)} preview={memoPreview} onPreviewChange={setMemoPreview} minimal showTags={editorTagsOpen} insertionSignal={imageSignal} draft={draft} onChange={value => { setAutosaveError(''); currentDraft.current = value; setDraft(value); }} tagsText={tags} onTagsChange={value => { setAutosaveError(''); tagsRef.current = value; setTags(value); }} tagOptions={existingTags} disabled={!writable} owner={owner} onBusyChange={setImageBusy} />
     </DocumentEditorSheet>}
     <AppDialog open={!!currentDeletion} title='删除便签' ariaLabel='删除便签确认' closeLabel='关闭便签删除确认' onClose={closeDelete} busy={busy || !!currentDeletion?.pending} error={deleteError} actions={<ActionButton appearance='danger' size='large' width='fill' disabled={busy} loading={busy} onClick={() => { void remove(); }}>{currentDeletion?.pending ? '重试删除' : '删除'}</ActionButton>}>
       <Text>删除「{currentDeletion?.notes.length === 1 ? noteTitle(currentDeletion.notes[0]) : `所选 ${currentDeletion?.notes.length || 0} 张便签`}」？</Text>

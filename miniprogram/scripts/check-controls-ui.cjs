@@ -12,7 +12,7 @@ module.exports=async({page,origin,out,width,expect})=>{
  await expect(entry().getByRole('textbox',{name:'便签标题',exact:true})).toBeEnabled();
  const edges=await entry().evaluate(node=>['.memo-title-input','.memo-body-input'].map(selector=>{const n=node.querySelector(selector),s=getComputedStyle(n),r=n.getBoundingClientRect();return r.x+parseFloat(s.paddingLeft)+parseFloat(s.borderLeftWidth);}));expect(edges[0]).toBeCloseTo(edges[1],0);
  const modes=await entry().locator('.entry-type-heading').boundingBox(),menu=await button('更多编辑操作').boundingBox();expect(menu.y).toBeGreaterThanOrEqual(modes.y+modes.height);
- await expect(button('便签 Markdown 预览')).toHaveText('MD');await close();
+ await expect(button('便签 Markdown 预览').locator('.editor-preview-symbol')).toHaveCount(1);await close();
  await button('创建记录').click();await expect(button('创建类型：便签')).toHaveAttribute('aria-pressed','true');await button('创建类型：记录').click();await close();
  await button('创建记录').click();await expect(button('创建类型：记录')).toHaveAttribute('aria-pressed','true');await button('选择记录领域').click();
  const title=page.locator('.form-popover-panel .editor-heading-title');const titleBox=await title.boundingBox(),panelBox=await page.locator('.form-popover-panel').boundingBox();expect(titleBox.x+titleBox.width/2).toBeCloseTo(panelBox.x+panelBox.width/2,0);

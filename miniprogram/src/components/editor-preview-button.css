@@ -1,8 +1,3 @@
-.editor-preview-toggle.is-selected { --control-text:#d3efdf;--control-feedback-background:#304c42;background:#304c42!important;color:#d3efdf; }
-.editor-preview-symbol { position:relative;display:flex;align-items:center;gap:3PX;width:27PX;height:22PX; }
-.editor-preview-m { position:relative;box-sizing:border-box;flex:none;width:12PX;height:18PX;border-left:2PX solid currentColor;border-right:2PX solid currentColor; }
-.editor-preview-m > view { position:absolute;top:0;width:2PX;height:10PX;background:currentColor;transform-origin:top; }
-.editor-preview-m > view:first-child { left:0;transform:rotate(-24deg); }
-.editor-preview-m > view:last-child { right:0;transform:rotate(24deg); }
-.editor-preview-d { box-sizing:border-box;flex:none;width:12PX;height:18PX;border:2PX solid currentColor;border-radius:0 8PX 8PX 0; }
-.editor-preview-label { position:absolute;width:1PX;height:1PX;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap; }
+.editor-preview-toggle.is-selected { color:#d3efdf;--control-text:#d3efdf; }
+.editor-preview-symbol { position:relative;display:block;box-sizing:border-box;width:24PX;height:16PX;border:2PX solid currentColor;border-radius:50%;pointer-events:none; }
+.editor-preview-symbol > view { position:absolute;left:7PX;top:3PX;box-sizing:border-box;width:6PX;height:6PX;border:2PX solid currentColor;border-radius:50%; }

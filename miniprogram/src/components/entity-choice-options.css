@@ -2,7 +2,7 @@
 .entity-choice-options { display:flex;flex-direction:column;gap:0;margin:0;padding:4PX;border:1PX solid #405662;border-radius:12PX;background:#20333e; }
 .entity-choice-search { padding:0; }
 .entity-choice-option { display:flex;align-items:center;justify-content:flex-start;gap:10PX;width:100%;min-width:0;margin:0;text-align:left; }
-.entity-choice-option.is-selected { --control-text:#d3efdf;--control-font-weight:600; }
+.entity-choice-option.is-selected { --control-feedback-background:var(--control-selected-background);--control-text:#d3efdf;--control-font-weight:600; }
 .entity-choice-icon { flex:none;width:24PX;height:24PX; }
 .entity-choice-label { flex:1;min-width:0;overflow-wrap:anywhere; }
 .entity-choice-check { flex:none;margin-left:auto; }

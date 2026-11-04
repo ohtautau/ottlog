@@ -16,8 +16,8 @@ export function MemoCard({ title, body, priority = 'none', metadata, images = []
     <View className='memo-note-title-row'><Text className='memo-note-title'>{title}</Text></View>
     <Text className='memo-note-body'>{body}</Text><View className='memo-note-meta'>{metadata}</View>
   </View>{!!images.length && <View className='memo-note-images'><Image src={images[0].dataUrl} mode='aspectFill' /></View>}</>;
-  return <View className={`memo-note${selecting ? ' is-selecting' : ''}${selected ? ' is-selected' : ''}`} style={memoSurfaceStyle()}><HabitPriorityCorner priority={priority} color={memoPriorityColor(priority)} />
-    {onOpen ? <Button className='memo-note-open' hoverClass='none' ariaLabel={`${selecting ? '选择' : '编辑'}便签：${title}`} aria-pressed={selecting ? !!selected : undefined} onClick={onOpen}>{content}</Button> : <View className='memo-note-open'>{content}</View>}
+  return <View className={`memo-note${selecting ? ' is-selecting' : ''}${selected ? ' is-selected' : ''}`} style={memoSurfaceStyle()} onClick={selecting ? onOpen : undefined}><HabitPriorityCorner priority={priority} color={memoPriorityColor(priority)} />
+    {onOpen ? <Button className='memo-note-open' hoverClass='none' ariaLabel={`${selecting ? '选择' : '编辑'}便签：${title}`} aria-pressed={selecting ? !!selected : undefined} onClick={event => { event.stopPropagation(); onOpen(); }}>{content}</Button> : <View className='memo-note-open'>{content}</View>}
     {actions && <View className='memo-note-actions'>{actions}</View>}
   </View>;
 }

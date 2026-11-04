@@ -6,7 +6,6 @@
 .todo-category-option-row { display: flex; align-items: center; gap: 2PX; min-width: 0; }
 .todo-category-option-row > .todo-category-option { display: flex; flex: 1; justify-content: flex-start; gap: 10PX; min-width: 0; margin: 0; text-align: left; }
 .todo-category-option-row > .ui-button:not(.todo-category-option) { flex: none; margin: 0; }
-.todo-category-option.is-selected { --control-text:#d3efdf;--control-font-weight:600; }
 .todo-category-option > text { min-width: 0; overflow-wrap: anywhere; }
 .todo-category-selected { flex: none; margin-left: auto; }
 .todo-category-empty { padding: 12PX; color: #9fb3bc; text-align: center; }
@@ -20,6 +19,6 @@
 .todo-category-error { padding: 0 16PX 8PX; color: #efb7a2; font-size: 13PX; }
 .todo-category-icons.icon-library-overlay { z-index: 270; }
 
-.todo-category-selection-slot { display:flex;align-items:center;justify-content:center;flex:none;width:24PX;min-height:40PX; }
+.todo-category-selection-slot { margin-left:auto;display:flex;align-items:center;justify-content:center;flex:none;width:24PX;height:24PX; }
 .todo-category-create-row { border-top:1PX solid #3b505a;margin-top:4PX; }
 .todo-category-create-row > button { display:flex;align-items:center;justify-content:flex-start;gap:10PX;width:100%;margin:0; }

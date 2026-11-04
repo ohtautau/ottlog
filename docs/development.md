@@ -2821,3 +2821,16 @@ T25 的宽屏遮挡来自标签的行内 Text 继承父层行框而增加实际�
 实际验证：`typecheck`、`check-habits-focus.cjs`、`check-pomodoro-reminders.cjs`、`check-pomodoro-cross-client.cjs`、相关脚本语法及 `git diff --check` 通过。`--pomodoro`、`test:toolbars`、`test:home-navigation` 三套浏览器回归在 360×844／375×667／430×844／768×1024 通过，覆盖独立窗口 8px 定位、纯图标入口、四优先度筛选、搜索／最近／关联、时间无效输入与取消、本次覆盖、已开始禁改、实际按钮边界不变及结束位同尺寸、34px 模拟安全区、暂停时长排除、自动短／长休息、原截止时间恢复、删除取消／外部关闭／本机失败同 ID 重试、账号隔离与微信提醒授权／拒绝／部分授权及取消。将模拟系统 Modal 设为不可用后结束／重置／删除仍通过，普通路径的调用列表为空；未调用真实账号或日常数据库。
 
 375px 暂停、来源及节奏窗口截图已目视。最终截图输出 `miniprogram/test-results/ui-preview-pomodoro-controls-final`，功能栏与往返输出 `ui-preview-pomodoro-toolbars`／`ui-preview-pomodoro-navigation`，日志 `pomodoro-controls-final-ui.log`／`pomodoro-toolbars.log`／`pomodoro-navigation.log`。`build:weapp` 通过，主包 **1,469,500 字节**、专注分包 **68,847 字节**，17 页启动、依赖边界、项目转换配置及原主包 <1.5 MB 预算通过，日志 `pomodoro-controls-build.log`。未运行无关全量 `verify`；微信开发者工具、原生键盘和真机未实测。本轮仅修改小程序及规则文档，未部署。
+
+## 2026-11-04 网页专注完成与共用选择窗修复
+
+网页到期沿原finishTimer记录一次后保持focus，完成提示仅在focus标签显示；旧完成记录仍按sessions识别，休息标签正常显示设置时长，读取不改写历史，返回focus仍可显式选择休息。选择沿原startTimer启动并保留来源ID。小程序advanceTimer自动休息不变。完成按钮使用命名等分行，占满动作区，完成时不保留结束占位。标题与分类整行规则见ui-spacing.md。
+
+实际验证：check-editor-refinements.cjs、check-habits-focus.cjs、check-pomodoro-reminders.cjs、小程序TypeScript、网页生产构建与最终工具资产构建通过。网页定向脚本增加1440×900、390×844、375×667下完成/切模式/重载/旧记录、按钮几何、分类菜单文字与可点击编辑、整行勾号背景和两类标题顶距检查；当前环境Chromium因缺少libatk-1.0.so.0无法启动，未宣称浏览器验收通过。协调端在隔离3017站点运行：cd web && OTTLOG_PARITY_ORIGIN=http://127.0.0.1:3017 node scripts/check-editor-refinements.mjs（全部API拦截）。小程序build:weapp在Taro写入沙箱外~/.taro4.0时失败，待可写构建环境复核。本轮未部署、未改API或真实业务数据。
+
+### 2026-11-04 本轮收尾：格言正文与滚轮事件边界
+
+- 格言继续使用 DocumentEditorSheet、EditorHeading 与 compact-editor 的 24px 边界：新建／编辑标题居中、正文透明且可独立滚动、字数弱化，三点菜单沿共用图标。450ms 自动保存、关闭刷新、删除确认、失败重试和原 120 字校验不变。
+- 网页 WheelColumn 仅由 wheel／pointer 操作启动滚动选择，停稳时读取最终 scrollTop，程序性定位／CSS snap／布局 scroll 不提交；手指或鼠标仍按住时不得结束滑动。PickerView 聚合多列滑动状态，未变的索引不发 change。SilentWheelColumn 的原生静音／轻震动与共享 28px／84px 几何保持。
+- `node web/scripts/check-wheel-events.cjs` 对旧处理器可确定复现合成的非用户 scroll 将 30 提交为 29，并验证修复后的事件边界。此证据不能证明历史线上事件来源；协调端此前在公开资源的 API 全拦截夹具中未复现初始化偏移，真实设置已为 29 的历史原因仍未确认，不覆盖用户偏好或活动计时。
+- 真实浏览器回归：独立 QA 站点启动后，在 web 运行 `OTTLOG_PARITY_ORIGIN=http://127.0.0.1:3017 node scripts/check-editor-refinements.mjs`，涵盖 1440／390／375、格言中文多行／长正文／新建／菜单／关闭保存，以及节奏 30 的打开重开、点击、resize、其它列、真实 wheel 和拖动。所有 API 被夹具拦截，禁止指向正式站点。本机未执行这些浏览器断言，不宣称原生或线上验收通过。

@@ -22,7 +22,7 @@ export default function TodoScheduleSheet({value,today,busy,onChange,onClose,sav
   const [initial]=useState(()=>copyTodoSchedule(value));
   const published=useRef(JSON.stringify(copyTodoSchedule(value)));
   const originalReminder = localReminderParts(initial.reminderAt);
-  const [mode,setMode] = useState<'due'|'reminder'>('due');
+  const [mode,setMode] = useState<'due'|'reminder'|'repeat'>('due');
   const [date,setDate] = useState(initial.dueDate), [month,setMonth] = useState(() => safeCalendarMonth(initial.dueDate,today));
   const [hasTime,setHasTime] = useState(!!initial.dueTime), [hour,setHour] = useState(initial.dueTime?.slice(0,2)||'09'), [minute,setMinute] = useState(initial.dueTime?.slice(3)||'00');
   const [hasReminder,setHasReminder] = useState(!!initial.reminderAt), [reminderExact,setReminderExact] = useState(initial.reminderAt);
@@ -54,10 +54,10 @@ export default function TodoScheduleSheet({value,today,busy,onChange,onClose,sav
     const cancel=(event:KeyboardEvent)=>{if(event.key==='Escape'&&!event.defaultPrevented&&!moreOpen){event.preventDefault();event.stopImmediatePropagation();requestClose();}};
     document.addEventListener('keydown',cancel);return()=>document.removeEventListener('keydown',cancel);
   });
-  function changeMode(next:'due'|'reminder') {
+  function changeMode(next:'due'|'reminder'|'repeat') {
     if(blocked)return;
     setMode(next);setError('');
-    const selected=next==='due'?date:hasReminder?reminderDate:'';
+    const selected=next==='reminder'?(hasReminder?reminderDate:''):date;
     if(selected)setMonth(safeCalendarMonth(selected,today));
   }
   function changeReminder(day:string,h=reminderHour,m=reminderMinute) {
@@ -67,7 +67,7 @@ export default function TodoScheduleSheet({value,today,busy,onChange,onClose,sav
     }catch(reason){setError(reason instanceof Error?reason.message:'请选择有效提醒时间');}
   }
   function selectDate(day:string) {
-    if(blocked||!selectableCalendarDate(day))return;
+    if(blocked||mode==='repeat'||!selectableCalendarDate(day))return;
     if(mode==='reminder')changeReminder(day);
     else {setDate(day);setMonth(safeCalendarMonth(day,today));if(!hasReminder)setReminderDate(day);setError('');}
   }
@@ -85,7 +85,7 @@ export default function TodoScheduleSheet({value,today,busy,onChange,onClose,sav
   function clearClock(){if(blocked)return;if(mode==='reminder')unsetReminder();else{setHasTime(false);setError('');}}
   function clear(){if(blocked)return;setDate('');setHasTime(false);setHasReminder(false);setReminderExact(undefined);setRepeat(undefined);setMoreOpen(false);setError('');}
   function repeatWithAnchor(rule:TodoRecurrence):TodoRecurrence{return repeat?.unit===rule.unit?{...repeat,...rule}:{...rule};}
-  function chooseRepeat(rule?:TodoRecurrence){setRepeat(rule?repeatWithAnchor(rule):undefined);setError('');}
+  function chooseRepeat(rule?:TodoRecurrence){if(blocked)return;setRepeat(rule?repeatWithAnchor(rule):undefined);setError('');}
   const marks=useMemo(()=>scheduleCalendarMarks({dueDate:hasTime?date||today:date,dueTime:hasTime?`${hour}:${minute}`:undefined,reminderAt,
     recurrence:repeat?{...repeat,interval:repeat.interval,...(date!==initial.dueDate?{anchorDay:undefined}:{})}:undefined},month),[date,hasTime,hour,minute,reminderAt,repeat,month,today,initial.dueDate]);
   const activeHour=mode==='due'?hour:reminderHour, activeMinute=mode==='due'?minute:reminderMinute, activeTime=mode==='due'?hasTime:hasReminder;
@@ -93,15 +93,15 @@ export default function TodoScheduleSheet({value,today,busy,onChange,onClose,sav
     <View className='todo-schedule-backdrop' catchMove onClick={requestClose}/>
     <View className={`todo-schedule-sheet is-overview has-inline-time${moving&&!busy?' is-wheel-moving':''}`} role='dialog' ariaLabel='日期、提醒和重复'>
       <View className='todo-schedule-top-actions'><ActionButton appearance='icon' ariaLabel='关闭日期设置' disabled={blocked} onClick={requestClose}>×</ActionButton><ActionMenu ariaLabel='日期更多操作' open={moreOpen} onOpenChange={setMoreOpen} disabled={blocked}><ActionButton appearance='quiet' ariaLabel='清除日期设置' disabled={blocked} onClick={clear}>重置</ActionButton></ActionMenu></View>
-      <View className='todo-schedule-mode-heading'><View className='todo-schedule-modes'><ChoiceButton variant='category' ariaLabel='编辑任务日期' selected={mode==='due'} disabled={blocked} onClick={()=>changeMode('due')}>待办日期</ChoiceButton><ChoiceButton variant='category' ariaLabel='编辑提醒日期' selected={mode==='reminder'} disabled={blocked} onClick={()=>changeMode('reminder')}>提醒</ChoiceButton></View></View>
+      <View className='todo-schedule-mode-heading'><View className='todo-schedule-modes'><ChoiceButton variant='category' ariaLabel='编辑任务日期' selected={mode==='due'} disabled={blocked} onClick={()=>changeMode('due')}>待办日期</ChoiceButton><ChoiceButton variant='category' ariaLabel='编辑提醒日期' selected={mode==='reminder'} disabled={blocked} onClick={()=>changeMode('reminder')}>提醒</ChoiceButton><ChoiceButton variant='category' ariaLabel='编辑重复' selected={mode==='repeat'} disabled={blocked} onClick={()=>changeMode('repeat')}>重复</ChoiceButton></View></View>
       <ScrollView scrollY className='todo-schedule-scroll' showScrollbar={false} enhanced bounces={false}><View className='todo-schedule-body'>
-        <View className='todo-schedule-calendar-pane'><ScheduleCalendar month={month} onMonthChange={setMonth} selectedDate={mode==='due'?date:hasReminder?reminderDate:''} today={today} busy={blocked} onSelect={selectDate} onClear={clearDate} reminder={mode==='reminder'} reminderBase={date} marks={marks}/><View className='todo-schedule-legend'><Text className='due-mark'>● 待办</Text><Text className='reminder-mark'>● 提醒</Text><Text className='repeat-mark'>● 重复</Text></View></View>
+        <View className='todo-schedule-calendar-pane'><ScheduleCalendar readOnly={mode==='repeat'} month={month} onMonthChange={setMonth} selectedDate={mode==='reminder'?(hasReminder?reminderDate:''):date} today={today} busy={blocked} onSelect={selectDate} onClear={clearDate} reminder={mode==='reminder'} reminderBase={date} marks={marks}/><View className='todo-schedule-legend'><Text className='due-mark'>● 待办</Text><Text className='reminder-mark'>● 提醒</Text><Text className='repeat-mark'>● 重复</Text></View></View>
         <View className='todo-schedule-controls'>
-          <View className='todo-schedule-inline-heading'><ScheduleSymbol kind='time'/><Text>{mode==='due'?'任务时间':'提醒时间'}</Text><Text className='todo-schedule-clock-value'>{activeTime?`${activeHour}:${activeMinute}`:'未设置'}</Text><ActionButton appearance='icon' ariaLabel={mode==='due'?'清除任务时间':'清除提醒时间'} disabled={blocked||!activeTime} onClick={clearClock}>×</ActionButton></View>
-          <TimeWheelPicker key={mode} label={mode==='due'?'任务':'提醒'} hour={activeHour} minute={activeMinute} disabled={busy} onMovingChange={setMoving} onChange={changeClock}/>
+          {mode!=='repeat'&&<><View className='todo-schedule-inline-heading'><ScheduleSymbol kind='time'/><Text>{mode==='due'?'任务时间':'提醒时间'}</Text><Text className='todo-schedule-clock-value'>{activeTime?`${activeHour}:${activeMinute}`:'未设置'}</Text><ActionButton appearance='icon' ariaLabel={mode==='due'?'清除任务时间':'清除提醒时间'} disabled={blocked||!activeTime} onClick={clearClock}>×</ActionButton></View>
+          <TimeWheelPicker key={mode} label={mode==='due'?'任务':'提醒'} hour={activeHour} minute={activeMinute} disabled={busy} onMovingChange={setMoving} onChange={changeClock}/></>}
 
-          <View className='todo-schedule-repeat-heading'><ScheduleSymbol kind='repeat'/><Text>重复</Text>{repeat&&repeat.interval!==1&&<Text>{recurrenceLabel(repeat)}</Text>}</View>
-          <ChoiceShortcutRail label='重复快捷方式' options={repeatChoices} value={repeat?repeat.interval===1?repeat.unit:'custom':'none'} disabled={blocked} onChange={unit=>chooseRepeat(unit==='none'?undefined:{unit:unit as TodoRecurrence['unit'],interval:1})}/>
+          {mode==='repeat'&&<><View className='todo-schedule-repeat-heading'><ScheduleSymbol kind='repeat'/><Text>重复</Text>{repeat&&repeat.interval!==1&&<Text>{recurrenceLabel(repeat)}</Text>}</View>
+          <ChoiceShortcutRail label='重复快捷方式' options={repeatChoices} value={repeat?repeat.interval===1?repeat.unit:'custom':'none'} disabled={blocked} onChange={unit=>chooseRepeat(unit==='none'?undefined:{unit:unit as TodoRecurrence['unit'],interval:1})}/></>}
 
         </View>
       </View></ScrollView>

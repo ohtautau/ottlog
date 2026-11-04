@@ -1,3 +1,5 @@
+import useSettledAutosave from '../../lib/use-settled-autosave';
+import ActionMenu from '../../components/action-menu';
 import { isWebTool } from '../../lib/tool-platform';
 import { requestFocusNotificationPermission } from '../../lib/desktop-notifications';
 import { advanceWithBreakChoice, pendingFocusCompletion, startChosenBreak } from '../../lib/focus-completion';
@@ -16,7 +18,6 @@ import { Input, ScrollView, Text, View } from '@tarojs/components';
 import ActionButton, { ChoiceButton } from '../../components/ui-button';
 import PageScroll from '../../components/page-scroll';
 import PageToolbar, { CategoryButton, CategoryRow, PageToolbarSummary } from '../../components/page-toolbar';
-import ManageSymbol from '../../components/manage-symbol';
 import pomodoroToolbarSummary from '../../lib/pomodoro-toolbar-summary';
 import { hasVolatilePersonalTool, syncPersonalTool, usePersonalToolState } from '../../lib/use-personal-tool-state';
 import { initialTodoState, isTodoState, toolId, type Todo } from '../../lib/tool-records';
@@ -79,7 +80,6 @@ export default function Pomodoro() {
   const [reminderConfig, setReminderConfig] = useState<Awaited<ReturnType<typeof getPomodoroReminderConfig>> | null>(null);
   const [reminderMessage, setReminderMessage] = useState('');
   const [message, setMessage] = useState('');
-  const settingsInitial = useRef('');
   const durationInitial = useRef('');
   const announced = useRef('');
   const requestApplied = useRef(false);
@@ -88,7 +88,7 @@ export default function Pomodoro() {
   const mounted = useRef(true);
   const ownerRef = useRef(owner); ownerRef.current = owner;
   const active = state.active;
-  const completedFocus=isWebTool ? pendingFocusCompletion(state) : null;
+  const completedFocus=isWebTool && state.mode==='focus' ? pendingFocusCompletion(state) : null;
   const advanceForPage=isWebTool ? advanceWithBreakChoice : advanceTimer;
   const runId = active?.rootRunId || active?.id || '';
   const runRef = useRef(runId); runRef.current = runId;
@@ -296,23 +296,32 @@ export default function Pomodoro() {
       catch { if (mounted.current && ownerRef.current === owner) setReminderMessage('计时已结束；微信提醒取消尚未确认，请联网重新同步。'); }
     }
   }
+  const [settingsMenuOpen,setSettingsMenuOpen]=useState(false);
+  const settingsAutosave=useSettledAutosave({
+    owner:settingsOwner===owner && ready && valid ? owner || '' : '',
+    value:settingsDraft ? {fields:settingsDraft,transition:transitionDraft} : null,
+    blocked:wheelMoving || busy || notificationBusy,
+    onError:setSettingsError,
+    persist:async (target,account) => {
+      if(account!==ownerRef.current || account!==owner || notificationOperation.current || operation.current)return false;
+      for(const field of settingsFields) if(!/^[1-9]\d{0,2}$/.test(target.fields[field.key]) || Number(target.fields[field.key])>field.max)return false;
+      const settings={...Object.fromEntries(settingsFields.map(field=>[field.key,Number(target.fields[field.key])])),transitionMode:target.transition} as TimerSettings;
+      const saved=await update(previous=>({...previous,settings:{...previous.settings,...settings}}));
+      return !!saved && ownerRef.current===account;
+    },
+  });
+  function closeSettings(){if(!settingsError && !wheelMoving && !operation.current && !notificationOperation.current){setSettingsDraft(null);setSettingsError('');}}
+  useEffect(()=>{if(!settingsDraft || typeof document==='undefined')return;const escape=(event:KeyboardEvent)=>{if(event.key==='Escape'&&!event.defaultPrevented){event.preventDefault();closeSettings();}};document.addEventListener('keydown',escape);return()=>document.removeEventListener('keydown',escape);});
   function openSettings() {
     if (!ready || !valid || !owner || operation.current || notificationOperation.current) return;
     setTodoPickerOwner(null); setHabitPickerOwner(null); setSourceMenuOwner(null); setDurationDraft(null);
     setSettingsOwner(owner);
     const fields = Object.fromEntries(settingsFields.map(field => [field.key, String(state.settings[field.key])])) as Record<DurationSetting, string>;
     const transition = state.settings.transitionMode || 'autoBreak';
-    settingsInitial.current = JSON.stringify({ fields, transition });
+    settingsAutosave.reset(owner,{fields,transition});
     setSettingsDraft(fields);
     setTransitionDraft(transition); setSettingsError('');
   }
-  const settingsClose = useEditorCloseGuard({
-    scope: settingsDraft && settingsOwner === owner && ready && valid ? `${owner}:settings` : '',
-    hasChanges: !!settingsDraft && JSON.stringify({ fields: settingsDraft, transition: transitionDraft }) !== settingsInitial.current,
-    blocked: busy || notificationBusy || wheelMoving,
-    onSave: saveSettings,
-    onClose: () => { if (!operation.current && !notificationOperation.current) { setSettingsDraft(null); setSettingsError(''); } },
-  });
   const durationClose = useEditorCloseGuard({
     scope: durationDraft?.owner === owner && !active && ready && valid ? `${owner}:duration:${currentMode}` : '',
     hasChanges: !!durationDraft && durationDraft.value !== durationInitial.current,
@@ -320,16 +329,6 @@ export default function Pomodoro() {
     onSave: saveDuration,
     onClose: () => { setDurationDraft(null); setDurationError(''); },
   });
-  async function saveSettings() {
-    if (!settingsDraft || settingsOwner !== ownerRef.current || notificationOperation.current || operation.current || wheelMoving) return;
-    for (const field of settingsFields) if (!/^[1-9]\d{0,2}$/.test(settingsDraft[field.key]) || Number(settingsDraft[field.key]) > field.max) { setSettingsError(`${field.label}请填写 1 至 ${field.max} 的整数。`); return; }
-    setSettingsError('');
-    const settings = { ...Object.fromEntries(settingsFields.map(field => [field.key, Number(settingsDraft[field.key])])), transitionMode: transitionDraft } as TimerSettings;
-    const saved = await update(previous => ({ ...previous, settings: { ...previous.settings, ...settings } }));
-    if (ownerRef.current !== owner || !mounted.current) return;
-    if (saved) { setSettingsDraft(null); setMessage(''); }
-    else setSettingsError('暂时未能保存，请重试。');
-  }
   function openDuration() {
     if (!ready || !valid || !owner || active || busy || notificationBusy) return;
     setSettingsDraft(null); setTodoPickerOwner(null); setHabitPickerOwner(null); setSourceMenuOwner(null);
@@ -345,7 +344,7 @@ export default function Pomodoro() {
 
   return <><PageScroll animateScroll={false} snapSections={[]}><View className='tool-page focus-page core-page' onClick={() => { if (sourceMenuOpen) setSourceMenuOwner(null); }}><CoreScreen className='focus-core'>
     {!ready ? <View className='tool-empty'><Text>{status || '正在恢复你的计时…'}</Text><ActionButton className="button-label tool-secondary" onClick={retry}>重新读取</ActionButton></View> : !valid ? <View className='tool-empty'>当前计时数据格式暂不兼容，请到网页查看。原始数据已保留。</View> : <>
-        <PageToolbar className='focus-page-toolbar' leading={!!owner && <PageToolbarSummary countLabel={`今日完成 ${toolbarSummary.completedToday}`} recentTitle={toolbarSummary.recentTitle} recentLabel='最近专注' />} manage={<ActionButton appearance='icon' size='compact' disabled={busy || notificationBusy} className='focus-settings-toggle' ariaLabel='调整节奏' onClick={openSettings}><ManageSymbol /></ActionButton>} />
+        <PageToolbar className='focus-page-toolbar' leading={!!owner && <PageToolbarSummary countLabel={`今日完成 ${toolbarSummary.completedToday}`} recentTitle={toolbarSummary.recentTitle} recentLabel='最近专注' />} manage={owner && <ActionMenu ariaLabel='专注更多操作' open={settingsMenuOpen} onOpenChange={setSettingsMenuOpen} disabled={busy || notificationBusy}><ActionButton appearance='quiet' disabled={busy || notificationBusy} onClick={() => {setSettingsMenuOpen(false);openSettings();}}>设置</ActionButton></ActionMenu>} />
         <CategoryRow className='focus-toolbar' contentClassName='focus-modes' ariaLabel='计时模式'>{timerModes.map(mode => <CategoryButton key={mode.id} disabled={busy || notificationBusy || (!!active && mode.id !== currentMode)} className={'button-label ' + (currentMode === mode.id ? 'is-active' : '')} onClick={() => { if (!active) void update(previous => ({ ...previous, mode: mode.id })); }}>{mode.label}</CategoryButton>)}</CategoryRow>
         <FocusProgress progress={completedFocus ? 100 : progress} resting={!completedFocus && currentMode !== 'focus'} />
         <View className={`focus-clock-card ${currentMode !== 'focus' ? 'is-break' : ''}`}>
@@ -363,8 +362,8 @@ export default function Pomodoro() {
               </ChoicePopover>
             </View>
           </>}</View>
-          <View className='focus-action-area'>
-          {completedFocus ? <View className='focus-completion-actions' role='status'><Text>专注已完成</Text><View><ActionButton appearance='primary' size='large' disabled={busy || notificationBusy} onClick={()=>chooseBreak('shortBreak')}>开始短休息</ActionButton><ActionButton size='large' disabled={busy || notificationBusy} onClick={()=>chooseBreak('longBreak')}>开始长休息</ActionButton></View></View> : <View className='focus-primary-actions'>
+          <View className={`focus-action-area${completedFocus ? ' is-completed' : ''}`}>
+          {completedFocus ? <View className='focus-completion-actions' role='status'><Text>专注已完成</Text><View className='focus-completion-row'><ActionButton appearance='primary' size='large' disabled={busy || notificationBusy} onClick={()=>chooseBreak('shortBreak')}>开始短休息</ActionButton><ActionButton size='large' disabled={busy || notificationBusy} onClick={()=>chooseBreak('longBreak')}>开始长休息</ActionButton></View></View> : <View className='focus-primary-actions'>
             <ActionButton appearance='primary' size='large' width='fill' disabled={busy || notificationBusy} className='button-label focus-start' onClick={active ? togglePause : begin}>{active ? active.running ? '暂停' : '继续' : `开始${modeInfo.label}`}</ActionButton>
           </View>}
           <View className='focus-end-slot'>{active && !active.running ? <ActionButton size='large' width='fill' disabled={busy || notificationBusy} className='button-label focus-end' onClick={() => { void end(); }}>结束</ActionButton> : <View className='focus-end-space' aria-hidden />}</View>
@@ -379,23 +378,22 @@ export default function Pomodoro() {
     </CoreScreen></View></PageScroll>
     {todoPickerOwner === owner && !!owner && ready && valid && canPickTodo && currentMode === 'focus' && <TodoSelectionSheet key={owner} items={todos} sessions={state.sessions} selectedId={chosen.taskId} onSelect={selectTodo} onClose={() => setTodoPickerOwner(null)} />}
     {habitPickerOwner === owner && !!owner && ready && valid && canPickHabit && currentMode === 'focus' && <HabitSelectionSheet key={owner} items={habits} sessions={state.sessions} selectedId={chosen.habitId} onSelect={selectHabit} onClose={() => setHabitPickerOwner(null)} />}
-    {settingsDraft && settingsOwner === owner && ready && valid && <View className='focus-settings-overlay'><View className='focus-settings-backdrop' catchMove onClick={event => { event.stopPropagation(); settingsClose.requestClose(); }} /><View className='focus-settings'>
-      <EditorHeading className='focus-settings-heading' titleClassName='focus-settings-title' title='调整节奏' actions={<ActionButton appearance='icon' className='button-label' ariaLabel='关闭节奏设置' disabled={busy} onClick={settingsClose.requestClose}>×</ActionButton>} />
+    {settingsDraft && settingsOwner === owner && ready && valid && <View className='focus-settings-overlay'><View className='focus-settings-backdrop' catchMove onClick={event => { event.stopPropagation(); closeSettings(); }} /><View className='focus-settings'>
+      <EditorHeading className='focus-settings-heading' titleClassName='focus-settings-title' title='调整节奏' actions={<ActionButton appearance='icon' className='button-label' ariaLabel='关闭节奏设置' disabled={busy || notificationBusy || wheelMoving} onClick={closeSettings}>×</ActionButton>} />
       <ScrollView scrollY className='focus-settings-scroll' enhanced bounces={false} showScrollbar={false}><EditorFieldsLayout className='focus-settings-fields'>
-        <View className='focus-settings-grid'>{settingsFields.map(field => <FilterFieldHeading key={field.key} label={field.label} />)}</View>
-        <WheelPicker label='专注节奏' disabled={busy} onMovingChange={setWheelMoving}
+        <View className='focus-rhythm-columns'><View className='focus-settings-grid'>{settingsFields.map(field => <FilterFieldHeading key={field.key} label={field.label} />)}</View>
+        <WheelPicker label='专注节奏' disabled={notificationBusy} onMovingChange={setWheelMoving}
           columns={settingsFields.map(field => ({ label: field.suffix, ariaLabel: field.key === 'longEvery' ? '长休息间隔' : `${field.label}时长`, values: wheelNumbers(1, field.max), value: settingsDraft[field.key] }))}
-          onChange={values => { setSettingsDraft(Object.fromEntries(settingsFields.map((field, index) => [field.key, values[index]])) as Record<DurationSetting, string>); setSettingsError(''); }} />
-        <View className='focus-transition-picker'><FilterFieldHeading label='时间结束后' />{isWebTool ? <Text className='tool-muted'>专注完成后通知，并选择短休息或长休息</Text> : <SingleChoiceField ariaLabel='时间结束后' options={transitionOptions} value={transitionDraft} onChange={setTransitionDraft} disabled={busy} width='fill' />}</View>
-        {!!settingsError && <Text className='focus-settings-error'>{settingsError}</Text>}
+          onChange={values => { setSettingsDraft(Object.fromEntries(settingsFields.map((field, index) => [field.key, values[index]])) as Record<DurationSetting, string>); setSettingsError(''); }} /></View>
+        {!isWebTool && <View className='focus-transition-picker'><FilterFieldHeading label='时间结束后' /><SingleChoiceField ariaLabel='时间结束后' options={transitionOptions} value={transitionDraft} onChange={setTransitionDraft} disabled={notificationBusy || wheelMoving} width='fill' /></View>}
+        {!!settingsError && <View className='focus-settings-error' role='alert'><Text>{settingsError}</Text><ActionButton appearance='quiet' disabled={busy || notificationBusy || wheelMoving} onClick={() => {setSettingsError('');void settingsAutosave.retry();}}>重试</ActionButton></View>}
       </EditorFieldsLayout></ScrollView>
-      <SheetActions className='focus-settings-actions'><ActionButton appearance='primary' disabled={busy || notificationBusy || wheelMoving} loading={busy} className='button-label tool-primary' onClick={() => { void saveSettings(); }}>保存节奏</ActionButton></SheetActions>
     </View></View>}
     {durationDraft?.owner === owner && !active && ready && valid && <View className='focus-quick-overlay'><SheetBackdrop onClose={durationClose.requestClose} /><View className='focus-quick-window floating-window' role='dialog' ariaLabel='本次计时时长'>
       <EditorHeading className='focus-settings-heading' titleClassName='focus-settings-title' title='本次时长' actions={<ActionButton appearance='icon' ariaLabel='关闭时长设置' disabled={busy || notificationBusy} onClick={durationClose.requestClose}>×</ActionButton>} />
       <View className='focus-quick-body'><NumberWheelPicker label='本次计时分钟' unit='分钟' value={durationDraft.value} max={currentMode === 'shortBreak' ? 60 : 120} disabled={busy || notificationBusy} onMovingChange={setWheelMoving} onChange={value => { setDurationDraft({ ...durationDraft, value }); setDurationError(''); }} />{!!durationError && <Text className='focus-settings-error'>{durationError}</Text>}</View>
       <SheetActions><ActionButton appearance='primary' disabled={wheelMoving || busy || notificationBusy} onClick={saveDuration}>确认</ActionButton></SheetActions>
     </View></View>}
-    {settingsClose.dialog}{durationClose.dialog}
+    {durationClose.dialog}
   </>;
 }

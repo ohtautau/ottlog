@@ -1,5 +1,6 @@
 import { GoalHistoryCard } from '../../components/data-card-views';
 import EmptyState from '../../components/empty-state';
+import ActionMenu from '../../components/action-menu';
 import CardGroupContent from '../../components/card-group-content';
 import { trimTextEnd } from '../../lib/text-whitespace';
 import { showAppMessage } from '../../lib/app-dialog';
@@ -10,7 +11,7 @@ import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import Taro, { useDidHide, useDidShow, useRouter } from '@tarojs/taro';
 import { Button, ScrollView, Text, Textarea, View } from '@tarojs/components';
 import ActionButton from '../../components/ui-button';
-import { EditSymbol, DeleteSymbol, CompletedGoalsHistorySymbol } from '../../components/manage-symbol';
+import { EditSymbol, CompletedGoalsHistorySymbol } from '../../components/manage-symbol';
 import PageToolbar from '../../components/page-toolbar';
 import DomainDefinitionEditor from '../../components/domain-definition-editor';
 import useDomainDefinition from '../../lib/use-domain-definition';
@@ -71,6 +72,7 @@ function Sheet({ title, type, onClose, children }: { title: string; type: Editor
 }
 
 export default function Domains() {
+  const [menuOpen,setMenuOpen]=useState(false);
   const route = useRouter();
   const uncategorizedRoute = route.params.uncategorized === '1';
   const domainTool = usePersonalToolState('domains', initialDomainState);
@@ -260,10 +262,10 @@ export default function Domains() {
 
   return <>
     <PageScroll><View className='tool-page domains-page domain-detail-page'>
-      <PageToolbar className='domain-detail-toolbar' leading={<BackButton ariaLabel='返回领域列表' disabled={blocked || habitBusy || habitArchive.busy} onClick={() => void Taro.switchTab({ url: '/pages/domains/index' })} />} manage={writable && selectedDomain && <View className='domain-detail-actions'>
-        <ActionButton appearance='icon' size='compact' width='content' ariaLabel={`编辑${selectedDomain.name}领域`} disabled={blocked || habitBusy || habitArchive.busy || selectedDomain.id === uncategorizedDomain(sourceState).id} onClick={() => definition.openEdit(selectedDomain.id)}><EditSymbol /></ActionButton>
-        <ActionButton appearance='icon' size='compact' width='content' intent='danger' ariaLabel={`删除${selectedDomain.name}领域`} disabled={blocked || habitBusy || habitArchive.busy || selectedDomain.id === uncategorizedDomain(sourceState).id} onClick={() => definition.openDelete(selectedDomain.id)}><DeleteSymbol /></ActionButton>
-      </View>}  />
+      <PageToolbar className='domain-detail-toolbar' leading={<BackButton ariaLabel='返回领域列表' disabled={blocked || habitBusy || habitArchive.busy} onClick={() => void Taro.switchTab({ url: '/pages/domains/index' })} />} manage={writable && selectedDomain && <ActionMenu ariaLabel='领域更多操作' open={menuOpen} onOpenChange={setMenuOpen} disabled={blocked || habitBusy || habitArchive.busy || selectedDomain.id === uncategorizedDomain(sourceState).id}>
+        <ActionButton appearance='quiet' size='compact' width='content' ariaLabel={`编辑${selectedDomain.name}领域`} disabled={blocked || habitBusy || habitArchive.busy || selectedDomain.id === uncategorizedDomain(sourceState).id} onClick={() => {setMenuOpen(false);definition.openEdit(selectedDomain.id);}}>编辑</ActionButton>
+        <ActionButton appearance='quiet' size='compact' width='content' intent='danger' ariaLabel={`删除${selectedDomain.name}领域`} disabled={blocked || habitBusy || habitArchive.busy || selectedDomain.id === uncategorizedDomain(sourceState).id} onClick={() => {setMenuOpen(false);definition.openDelete(selectedDomain.id);}}>删除</ActionButton>
+      </ActionMenu>}  />
       {!ready && <View className='tool-status'>{status}<ActionButton className='tool-secondary button-label' onClick={retry}>重新读取</ActionButton></View>}
       {ready && !valid && <View className='notice'>暂时无法读取这份领域数据，已有内容已保留。<ActionButton className='tool-secondary button-label' onClick={retry}>重新读取</ActionButton></View>}
       {ready && valid && !selectedDomain && <View className='tool-empty'>领域不存在或已删除</View>}

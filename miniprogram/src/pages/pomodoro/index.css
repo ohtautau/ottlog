@@ -56,9 +56,10 @@
   .focus-source-trigger { min-height: 44rpx; padding: 6rpx 10rpx; gap: 8rpx; font-size: 18rpx; }
 }
 
-.focus-completion-actions { display:flex;flex-direction:column;align-items:center;gap:8PX;color:#b9dbca;font-size:16PX;font-weight:600; }
-.focus-completion-actions > view { display:flex;align-items:center;justify-content:center;gap:12PX;width:100%; }
-.focus-completion-actions button { flex:1;margin:0; }
+.focus-completion-actions { display:flex;flex-direction:column;align-items:center;gap:8PX;flex:1;min-width:0;width:100%;color:#b9dbca;font-size:16PX;font-weight:600; }
+.focus-completion-row { display:flex;align-items:center;justify-content:center;gap:12PX;width:100%; }
+.focus-completion-row .ui-button { flex:1 1 0;min-width:0;width:0;margin:0;min-height:48PX;box-sizing:border-box; }
+.focus-action-area.is-completed .focus-end-slot { display:none; }
 
 /* Column headings follow the exact four-column wheel geometry. */
 .focus-settings-grid .filter-field-label-row { justify-content:center;text-align:center; }
@@ -66,3 +67,6 @@
 .focus-settings-fields { padding:8PX var(--compact-editor-inset,24PX) 16PX;gap:12PX; }
 .focus-transition-picker { display:flex;flex-direction:column;gap:8PX;margin-top:12PX; }
 .focus-settings-actions { padding-left:var(--compact-editor-inset,24PX);padding-right:var(--compact-editor-inset,24PX);padding-top:16PX; }
+
+.focus-rhythm-columns { position:relative; }
+.focus-rhythm-columns::after { content:'';position:absolute;inset:0;pointer-events:none;background:linear-gradient(to right,transparent calc(25% - .5PX),#3a4e59 calc(25% - .5PX),#3a4e59 calc(25% + .5PX),transparent calc(25% + .5PX),transparent calc(50% - .5PX),#3a4e59 calc(50% - .5PX),#3a4e59 calc(50% + .5PX),transparent calc(50% + .5PX),transparent calc(75% - .5PX),#3a4e59 calc(75% - .5PX),#3a4e59 calc(75% + .5PX),transparent calc(75% + .5PX)); }

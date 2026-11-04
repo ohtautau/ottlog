@@ -1,5 +1,6 @@
+import SelectedTagList from './selected-tag-list';
+import EditorTagField from './editor-tag-field';
 import {View} from '@tarojs/components';
-import { showAppMessage } from '../lib/app-dialog';
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { EntityTitleInput } from './entity-title-field';
 import { ChoiceButton } from './ui-button';
@@ -8,20 +9,16 @@ import { initialMemoState, isMemoState, memoPriorityColor, type Memo } from '../
 import { parseTodoTags } from '../lib/todo-data';
 import { habitPriorities, habitPriorityLabels } from '../lib/habit-metadata';
 import { memoStateFits, withMemo } from '../lib/memo-images';
-import { TagChoiceRow } from './form-options';
 import PrioritySelect from './priority-select';
 import MemoFieldsLayout from './memo-fields-layout';
 import MarkdownNoteEditor from './markdown-note-editor';
-import TagTextInput from './tag-text-input';
 import { PinSymbol } from './manage-symbol';
 
-const notify = (error: unknown) => { void showAppMessage({ title: error instanceof Error ? error.message : '操作失败，请重试', icon: 'none' }); };
-
 /** Memo-specific controls used by the shared creator and the original-record editor. */
-export default function MemoEditorFields({ draft, onChange, tagsText, onTagsChange, tagOptions, disabled, owner, onBusyChange, autoFocus, minimal = false, showTags = true, insertionSignal = 0, preview, onPreviewChange, actions }: {
+export default function MemoEditorFields({ draft, onChange, tagsText, onTagsChange, tagOptions, disabled, owner, onBusyChange, autoFocus, minimal = false, showTags = true, insertionSignal = 0, preview, onPreviewChange, actions, onTags }: {
   draft: Memo; onChange: (next: Memo) => void; tagsText: string; onTagsChange: (text: string) => void;
   tagOptions: readonly string[]; disabled: boolean; owner: string; onBusyChange?: (busy: boolean) => void;
-  actions?:ReactNode; autoFocus?: boolean; minimal?: boolean; showTags?: boolean; insertionSignal?: number; preview?:boolean; onPreviewChange?:(value:boolean)=>void;
+  onTags?:()=>void; actions?:ReactNode; autoFocus?: boolean; minimal?: boolean; showTags?: boolean; insertionSignal?: number; preview?:boolean; onPreviewChange?:(value:boolean)=>void;
 }) {
   const memoSource = usePersonalToolState('memos', initialMemoState);
   // Editors mount after the page's onShow, so initialize their read-only source.
@@ -42,11 +39,6 @@ export default function MemoEditorFields({ draft, onChange, tagsText, onTagsChan
   const priority = draft.priority || 'none';
   const selectedTags = parseTodoTags(tagsText);
 
-  function selectTags(next: string[]) {
-    if (next.length > 5) { notify(new Error('最多 5 个标签')); return; }
-    onTagsChange(next.join('，'));
-  }
-
   return <>
     {actions && <View className='entry-pane-heading'><View/><View className='entry-pane-actions'><PrioritySelect className='memo-priority-field' ariaLabel={`选择便签优先度：${habitPriorityLabels[priority]}`} triggerClassName='memo-priority-trigger' open={priorityOpen} onOpenChange={setPriorityOpen} disabled={locked} options={habitPriorities.map(value => ({ value, label: habitPriorityLabels[value], ariaLabel: `优先度${habitPriorityLabels[value]}`, color: memoPriorityColor(value), outlined: value === 'none' }))} value={priority} onChange={value => change({ priority: value })} />{actions}</View></View>}
     <MemoFieldsLayout title={<>
@@ -58,6 +50,6 @@ export default function MemoEditorFields({ draft, onChange, tagsText, onTagsChan
         onBusyChange={value => { setImageBusy(value); onBusyChange?.(value); }}
         checkImages={images => { if (!isMemoState(memoSource.value) || !memoStateFits(withMemo(memoSource.value, { ...draft, images }))) throw new Error('便签空间不足，请先移除一些图片或整理旧便签'); }} />}
       pin={<ChoiceButton iconOnly size='compact' className={`button-label memo-pin-setting${draft.pinned ? ' is-active' : ''}`} ariaLabel={draft.pinned ? '取消置顶便签' : '置顶便签'} aria-pressed={draft.pinned} disabled={locked} onClick={() => change({ pinned: !current.current.draft.pinned })}><PinSymbol /></ChoiceButton>}
-      tags={showTags && <TagChoiceRow className='memo-tags-field' options={tagOptions.map(tag => ({ value: tag, label: tag }))} value={selectedTags} frequentValues={tagOptions.slice(0, 4)} onChange={selectTags} ariaLabel='选择现有标签' disabled={locked} contentKey={tagsText} customInput={<TagTextInput ariaLabel='便签标签' value={tagsText} placeholder='输入标签，用符号分隔' maxlength={Math.max(104, tagsText.length)} cursorSpacing={96} adjustPosition disabled={locked} onInput={event => onTagsChange(event.detail.value)} />} />} />
+      tags={<><SelectedTagList tags={selectedTags} disabled={locked} onEdit={onTags} />{showTags && <EditorTagField className='memo-tags-field' text={tagsText} onChange={onTagsChange} options={tagOptions} disabled={locked} label='便签标签' />}</>} />
   </>;
 }

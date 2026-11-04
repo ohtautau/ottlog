@@ -351,7 +351,7 @@
   .tool-app-root .focus-page .focus-feedback-slot { max-height: 24px; }
   .tool-app-root .focus-settings-overlay { padding: 12px; }
   .tool-app-root .focus-settings { height: auto; max-height: calc(100dvh - 24px); }
-  .tool-app-root .focus-settings-grid { gap: 8px 20px; }
+  .tool-app-root .focus-settings-grid { gap: 0; }
   .tool-app-root .statistics-content { gap: 8px 12px; }
   .tool-app-root .statistics-content > :is(.statistics-insights,.activity-analysis,.statistics-habits,.statistics-domains,.statistics-growth,.focus-history-card,.focus-reminders) { padding: 12px; }
 }

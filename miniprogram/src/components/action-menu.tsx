@@ -2,9 +2,11 @@ import { Children, cloneElement, isValidElement, type ComponentProps, type React
 import { Text, View } from '@tarojs/components';
 import { ChoicePopover } from './form-options';
 import { DeleteSymbol, EditSymbol, MoreSymbol, default as ManageSymbol, RestoreDefaultsSymbol } from './manage-symbol';
+import SortSymbol from './sort-symbol';
 import './action-menu.css';
 
 function OptionSymbol({ label }: { label:string }) {
+  if (/排序/.test(label))return <SortSymbol/>;
   if (/设置/.test(label))return <ManageSymbol/>;
   if (/删除/.test(label)) return <DeleteSymbol />;
   if (/编辑/.test(label)) return <EditSymbol />;

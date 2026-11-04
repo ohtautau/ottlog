@@ -5,7 +5,7 @@ import Taro, { useDidHide, useDidShow } from '@tarojs/taro';
 import { takeHomeCreation, type HomeCreationRequest } from '../../lib/home-creation-navigation';
 import { moveAdjacentItem } from '../../lib/card-order';
 import { ScrollView, Text, View } from '@tarojs/components';
-import ActionButton, { ChoiceButton } from '../../components/ui-button';
+import ActionButton from '../../components/ui-button';
 import PageScroll from '../../components/page-scroll';
 import DomainDefinitionEditor from '../../components/domain-definition-editor';
 import useDomainDefinition from '../../lib/use-domain-definition';
@@ -14,7 +14,7 @@ import DomainRecentRecords from '../../components/domain-recent-records';
 import DomainRecordEditor from '../../components/domain-record-editor';
 import FloatingCreateButton from '../../components/floating-create-button';
 import CardCreateButton from '../../components/card-create-button';
-import SortSymbol from '../../components/sort-symbol';
+import ActionMenu from '../../components/action-menu';
 import { CardMoveActions } from '../../components/card-corner-actions';
 import PageToolbar, { PageToolbarSummary } from '../../components/page-toolbar';
 import { DomainProgressSummary } from '../../components/domain-progress';
@@ -32,6 +32,7 @@ function recordDate(stamp: string) {
   return `${date.getFullYear()}.${String(date.getMonth() + 1).padStart(2, '0')}.${String(date.getDate()).padStart(2, '0')}`;
 }
 export default function Domains() {
+  const [menuOpen,setMenuOpen]=useState(false);
   const now = new Date(usePageNow());
   const domainTool = usePersonalToolState('domains', initialDomainState);
   const { value, setValue, ready, owner, status, retry } = domainTool;
@@ -112,7 +113,7 @@ export default function Domains() {
   const createCard = <DomainEntryCard create className='domain-create-shell'><CardCreateButton className='domain-create-card' ariaLabel='创建领域' disabled={createDisabled} onClick={definition.openCreate} /></DomainEntryCard>;
   return <>
     <PageScroll snapSections={[]} scrollY={false}><View className='tool-page domains-page domains-list'><View className='domains-index'>
-      <PageToolbar className='domains-page-toolbar' leading={writable && toolbarSummary && <PageToolbarSummary countLabel={`今日记录 ${toolbarSummary.createdToday}`} recentTitle={toolbarSummary.recentShortTermGoal?.content} recentLabel='最近完成短期目标' />} sort={<ChoiceButton iconOnly size='compact' disabled={!writable || blocked} ariaLabel='排序领域' selected={sorting} onClick={() => setSorting(!sorting)}><SortSymbol /></ChoiceButton>} />
+      <PageToolbar className='domains-page-toolbar' leading={writable && toolbarSummary && <PageToolbarSummary countLabel={`今日记录 ${toolbarSummary.createdToday}`} recentTitle={toolbarSummary.recentShortTermGoal?.content} recentLabel='最近完成短期目标' />} sort={writable && <ActionMenu ariaLabel='领域更多操作' open={menuOpen} onOpenChange={setMenuOpen} disabled={blocked}><ActionButton appearance='quiet' disabled={blocked} onClick={() => { setMenuOpen(false);setSorting(!sorting); }}>排序</ActionButton></ActionMenu>} />
       {!ready && <View className='tool-status'>{status}<ActionButton className='tool-secondary button-label' onClick={retry}>重新读取</ActionButton></View>}
       {ready && !valid && <View className='notice'>领域数据暂不可用<ActionButton className='tool-secondary button-label' onClick={retry}>重新读取</ActionButton></View>}
       {writable && <DomainRecentRecords key={owner} state={state} disabled={blocked} onEdit={item => { if (!saving.current && !definition.busy) setRecordEditor({ ...item, owner }); }} />}
