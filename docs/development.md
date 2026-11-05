@@ -3126,3 +3126,20 @@ Windows隔离3017：设置OTTLOG_PARITY_ORIGIN=http://127.0.0.1:3017后，`cd we
 本机通过：check-custom-rest-activities、check-focus-recommendation、web/check-wheel-events、check-personal-tools、check-personal-tool-auto-sync、check-followup-autosave、check-habits-focus、check-weapp-styles-test、check-focus-save-jitter、miniprogram typecheck、web build:tools及浏览器候选脚本语法。WXSS为源码约束，未运行原生编译产物检查或微信真机。未操作.git、API、部署或真实账号数据，未安装浏览器／大依赖。
 
 Windows隔离3017候选：`cd web`，设置`OTTLOG_PARITY_ORIGIN=http://127.0.0.1:3017`，运行`node scripts/check-custom-rest-activities-20261105.mjs`。脚本拦截全部/api，覆盖1440/390×440/375×667、15项管理、新增选图库图标、503后同ID重试、删默认及自定义、全删空态后重开／刷新／再添加、少于3项、运行deadline与未知字段保留、3卡刷新无PUT及footer至少16px。另运行既有check-rest-suggestions-20261105.mjs与check-focus-live-settings.mjs。本机仅语法检查，未启动浏览器；**脚本准备不等于验收通过**。owner切换／退出、延迟GET及管理期间到期还须协调端按同样API夹具人工或追加浏览器情景验收（底层队列模型通过不能替代UI实测），各窗键盘／触屏与footer实际边界亦待实跑。结果见.tmp/custom-rest-activities-20261105-result.json。
+
+### 2026-11-05 Windows最终候选协调验收
+
+运行时源码cb9afaf00c0c35204330bb299329fac84de76b23，隔离镜像ottlog-web:20261105T042903Z-89ef65f3c7f3。候选只绑定服务器回环8109，通过临时3017检查，所有业务API由隔离夹具拦截。六组真实Chromium检查通过：
+
+- check-rest-suggestions-20261105：1440、375×667、390×844、390×440，三卡／换组无PUT、56px刷新及底距、滚轮无移动／tap／2px触摸／缩放与重排不改25，主动键盘选26可保存重开；三模式快捷符号固定在横滑区外。
+- check-focus-live-settings：1440鼠标与390 CDP触摸四列实际改值，800ms延迟保存时背景几何差≤1px，运行deadline和totalSeconds保持；完成一次通知窗口与owner清理通过。
+- check-editor-sort-followup-20261105：1440／390／375，即时字段及方向排序、云端503和本机存储失败原目标重试、清除保留全部页签、提醒独立、便签清除无业务写入。
+- check-habit-detail-calendar-20261105：1440／390／375×667／390×440，两宿主42格共用层、补记保存重开再撤销、真实本机失败且云未确认时原目标重试、未来／归档禁写、20条日志及更多、4px农历间距、任务／提醒／重复时间标签回归。
+- check-custom-rest-activities-20261105：1440／390×440／375×667，默认15项、新增选图库、503同ID重试、删除默认及自定义、全部删空重开后仍空、再添加、少于三项、保留运行deadline和未知字段。
+- check-rest-activity-lifecycle-20261105：1440／390×440，管理新增草稿时实际计时到期不抢窗；到期后提交保留完成记录和设置；迟到PUT只属于原owner，迟到GET不把旧配置附到新账号，退出关闭窗口且不写游客数据。截图保留忽略目录，不提交业务夹具产物。
+
+实际浏览器暴露并修正：内层option的隐式触控capture移交到列时会冒泡lostpointercapture，只有列确实失去capture才取消；390×440固定建议窗需真实视口高度；提醒独立后矮屏主列表曾被挤到零高度，已采用两列各自滚动；习惯名称左对齐、移除多余标题下线及备注高光。新增建议的同步失败文案独立传入共用syncPersonalTool，避免误报“任务／开启提醒”。
+
+模型check-custom-rest-activities、check-habit-detail-calendar、check-editor-sort-followup、check-focus-recommendation、check-personal-tool-auto-sync及web/check-wheel-events通过。正常miniprogram typecheck、build:weapp通过：115份源／17份产物WXSS、15页（5主＋10分包）、21份ES2019脚本、主包1,401,022字节＜1.5MB、全部媒体138,608字节＜200KiB。小程序未发布；微信原生／真机滚轮、软键盘及alpha／WebP仍未实测。
+
+真实账号此前只读核对focus26／shortBreak6／longBreak15，无active；历史25→26的实际用户触发没有完整复现，不将事件模型等同于历史根因实证。候选已验证无意图手势不提交且允许主动选26；按用户原要求恢复focus25会单独备份并只改该字段，发布和真实账号结果由下方最终发布记录补充。以上隔离验收没有修改真实业务数据或API容器。

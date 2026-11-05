@@ -1,5 +1,7 @@
 # 共用间距约定
 
+2026-11-05：休息建议的网格内距由滚动内容View拥有，刷新按钮独立放在SheetActions，底部至少16px；网页固定窗口的max-height用真实100dvh，不能使用经过小程序构建转换的页面内容高度。习惯详情复用compact-editor的24px边界与680px上限，CalendarMonthView拥有日期格几何，页面不再各复制一套日历间距。网页≤899px宽且≤600px高时，习惯主列表与提醒并排独立滚动，避免固定提醒把主列表挤到零高度；不缩小操作触控区。
+
 新增或调整界面优先复用现有容器，不为每个页面复制 padding。
 
 - 卡片组：`CardGroupContent` 与 `card-group-heading` 共用 `--card-group-inset=16px`。容器可以没有边框或背景，但内部安全距离始终存在。ScrollView 内放容器，不向原生 ScrollView 加 padding，不用负边距扩宽列表。
