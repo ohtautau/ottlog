@@ -5,6 +5,7 @@ if(!/^http:\/\/(127\.0\.0\.1|localhost):3017$/.test(origin))throw Error('Use iso
 const browser=await chromium.launch();
 try{for(const [width,height] of [[1440,900],[390,844],[390,440]])for(const restMode of ['短休息','长休息'])for(const outcome of ['immediate','expiry']){
  const context=await browser.newContext({viewport:{width,height}}),page=await context.newPage(),errors=[];
+ const fixedNow=Date.now();await page.clock.setFixedTime(fixedNow);
  const initialCount=restMode==='长休息'?4:1;
  const selection={taskId:null,title:''},stamp=new Date(Date.now()-1500000).toISOString();
  let state={version:1,settings:{focus:25,shortBreak:6,longBreak:15,longEvery:4,transitionMode:'manual'},mode:'focus',selection,active:null,sessions:[{...selection,id:'fixture-focus',mode:'focus',durationSeconds:1500,plannedSeconds:1500,startedAt:stamp,endedAt:new Date().toISOString(),completed:true,unknownSession:'keep'}],completedFocusCount:initialCount,unknown:{keep:true}};
@@ -15,11 +16,14 @@ try{for(const [width,height] of [[1440,900],[390,844],[390,440]])for(const restM
   return route.fulfill({json:{enabled:false,items:[],reminders:[]}});
  });
  const button=name=>page.getByRole('button',{name,exact:true}),dialog=page.getByRole('dialog',{name:'休息建议',exact:true});
+ const geometry=async()=>{await expect.poll(()=>page.evaluate(()=>{const stage=document.querySelector('.focus-timer-stage').getBoundingClientRect(),tomato=document.querySelector('.focus-tomato-scene').getBoundingClientRect(),actions=document.querySelector('.focus-action-area').getBoundingClientRect();return stage.height>0&&tomato.top>=stage.top-1&&tomato.bottom<=stage.bottom+1&&actions.bottom<=innerHeight&&[...document.querySelectorAll('.focus-action-area button')].every(n=>{const b=n.getBoundingClientRect();return b.height>=40&&n.contains(document.elementFromPoint(b.x+b.width/2,b.y+b.height/2));});}))).toBe(true);};
  const awayAndBack=async()=>{await page.goto(origin+'/memos');await page.goto(origin+'/pomodoro');};
- const expire=async()=>{state.active.deadline=Date.now()-1;await page.evaluate(()=>window.dispatchEvent(new Event('focus')));};
+ const navigateTool=async(label,path)=>{if(width<900)await button('展开网站导航').click();const nav=page.getByRole('navigation',{name:width<900?'日常工具导航':'日常工具',exact:true});await nav.getByRole('link',{name:label,exact:true}).click();await page.waitForURL(origin+path);};
+ const expire=async()=>{await page.clock.setFixedTime(state.active.deadline+1);await page.evaluate(()=>window.dispatchEvent(new Event('focus')));};
  await page.goto(origin+'/pomodoro');await expect(dialog).toBeVisible();await button('关闭休息建议').click();
  await expect(page.locator('.focus-completion-label')).toHaveCount(0);
  await expect(page.locator('.focus-completion-actions')).not.toContainText('专注已完成');
+ await geometry();
  const a=await button('开始短休息').boundingBox(),b=await button('开始长休息').boundingBox();expect(Math.abs(a.width-b.width)).toBeLessThanOrEqual(1);expect(Math.abs(a.height-b.height)).toBeLessThanOrEqual(1);
  // Recommended rest must retain primary styling, the other secondary.
  await expect(button('开始'+restMode)).toHaveClass(/ui-button-primary/);
@@ -27,15 +31,18 @@ try{for(const [width,height] of [[1440,900],[390,844],[390,440]])for(const restM
  for(const mode of ['短休息','长休息','专注'])await button(mode).click();
  expect(state.sessions[0].restStartedId).toBeUndefined();await expect(button('开始'+restMode)).toBeVisible();
  await button('开始'+restMode).click();await expect(button('暂停')).toBeVisible();
+ await geometry();
  await expect.poll(()=>state.active?.mode).toBe(restMode==='短休息'?'shortBreak':'longBreak');
  const restId=state.active.id;expect(state.sessions.find(s=>s.id==='fixture-focus').restStartedId).toBe(restId);
  const deadline=state.active.deadline;
- if(outcome==='immediate'){await button('暂停').click();await button('结束').click();}
+ if(outcome==='immediate'){await button('暂停').click();await button('结束').click();expect(state.sessions).toHaveLength(1);}
  else{await awayAndBack();await expect(button('暂停')).toBeVisible();expect(state.active.deadline).toBe(deadline);await page.goto(origin+'/memos');await expire();await expect.poll(()=>state.active,{timeout:15000}).toBeNull();await page.goto(origin+'/pomodoro');}
- await expect(button('开始专注')).toBeVisible();await awayAndBack();await page.reload();
+ await expect(button('开始专注')).toBeVisible();await geometry();await awayAndBack();await page.reload();
  await expect(button('开始专注')).toBeVisible();await expect(page.locator('.focus-completion-actions')).toHaveCount(0);await expect(page.locator('.focus-clock-card')).toContainText('25:00');await expect(dialog).toHaveCount(0);
  expect(state.completedFocusCount).toBe(initialCount);expect(state.unknown).toEqual({keep:true});expect(state.sessions.find(s=>s.id==='fixture-focus').unknownSession).toBe('keep');expect(state.settings.focus).toBe(25);
- await button('开始专注').click();await expect(button('暂停')).toBeVisible();await expire();await expect(dialog).toBeVisible({timeout:15000});await expect.poll(()=>state.completedFocusCount).toBe(initialCount+1);await button('关闭休息建议').click();
- await awayAndBack();await expect(button('开始短休息')).toBeVisible();await expect(dialog).toHaveCount(0);expect(errors).toEqual([]);
+ await button('开始专注').click();await expect(button('暂停')).toBeVisible();await expect.poll(()=>state.active?.mode).toBe('focus');await expire();await expect(dialog).toBeVisible({timeout:15000});await expect.poll(()=>state.completedFocusCount).toBe(initialCount+1);await button('关闭休息建议').click();
+ // A client navigation stays in the same UI session; a full document reload
+ // deliberately starts a new suggestion session, unlike a completed rest above.
+ await navigateTool('便签','/memos');await navigateTool('专注','/pomodoro');await expect(button('开始短休息')).toBeVisible();await expect(dialog).toHaveCount(0);expect(errors).toEqual([]);
  await context.close();console.log('PASS rest return candidate',width,height,restMode,outcome);
 }}finally{await browser.close();}
