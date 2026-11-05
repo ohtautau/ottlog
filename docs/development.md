@@ -3151,3 +3151,13 @@ Windows隔离3017候选：`cd web`，设置`OTTLOG_PARITY_ORIGIN=http://127.0.0.
 明确授权的真实账号修正：读取最新pomodoro两次一致后另留私密备份，只将settings.focus26改25；两域名完整记录均与目标一致，复原该单字段后的全部对象与原记录相等，shortBreak6、longBreak15、active及所有其它字段保持。备份与凭据不进入Git。
 
 随后正式域名https://ohtautau.com及https://api.ohtautau.com登录／八类工具读数一致、CSRF及读者权限隔离通过。1440／390px各10个真实页面（根地址、今日、任务、习惯、领域、便签、专注、格言、个人文章、统计）均无横向溢出、坏图或pageerror。两宽度再只读打开建议管理，实际15项、三卡与换组、新增入口和focus25均通过。自动完成建议可能在首次进入新UI会话正常弹出，检查先按正常关闭再检验菜单，没有强制点击。全部业务写入被拦截，实际业务写入尝试0、前后八类数据哈希一致。报告保留web/test-results/public-release/report.json（忽略）。本轮只恢复一次明确指定focus25，其余真实内容未改；没有宣称微信原生／真机交互已完成验收。
+
+### 2026-11-05 休息返回完成状态修复（源码候选，未部署）
+
+仅删除pomodoro完成动作块中focus-completion-label的重复Text；番茄内部／状态显示、通知、两个等宽休息按钮、高亮及原CSS几何留白保持。源码根因：pendingFocusCompletion原先只看sessions[0]为completed focus且active为空；finishTimer有意不记0秒结束，因此已开始休息后立即结束仍可能重新显示上一专注的选择。正常休息会有历史，不能把0秒复现说成用户唯一实际触发。
+
+FocusSession新增可选restStartedId，在共用startTimer真正开始休息时与active原子写入对应focus；startChosenBreak、直接短／长休息入口及原生advanceTimer自动休息共用。证据随原owner工具队列持久化，同focus ID已处理后不能再次startChosenBreak；切模式不写证据。pendingFocusCompletion共用只读unhandledFocusCompletion，兼容旧originFocusId或automaticBreakId休息历史，读取不补字段。不产生0秒历史，不清历史、不改设置／计数算法／运行deadline／建议或未知字段；下一focus使用自己的ID。原自动一次建议、管理草稿到期及滚轮capture代码未改。
+
+本机实际通过：新增check-focus-rest-return（两种休息完整／0秒／1ms／1秒结束、暂停、归一化存储重开、离页等价快照与晚到期、共享手动／明确选择／原生自动入口、旧休息证据只读、切页签、新focus、同ID重试、未知字段／真实时长／计数／deadline及state-local owner证据）；check-editor-refinements、check-habits-focus、check-focus-recommendation、check-custom-rest-activities、check-followup-autosave、check-personal-tools、check-personal-tool-auto-sync、check-pomodoro-cross-client、web/check-wheel-events.cjs、check-focus-save-jitter（115份源CSS WXSS约束）、check-weapp-styles-test、miniprogram typecheck、web build:tools及新浏览器脚本语法检查。旧cross-client首次因退役web模型路径ENOENT失败，现按build-tool-app实际共享入口读取模型并保留原断言；首次误用wheel-events.mjs失败，正确.cjs通过。没有将这些初次失败计为通过。
+
+Windows协调候选：OTTLOG_PARITY_ORIGIN=http://127.0.0.1:3017，在web运行node scripts/check-focus-rest-return-20261105.mjs；全/api拦截，1440×900／390×844／390×440，真实休息按钮、短长推荐高亮与等宽同高、切模式未ack、暂停结束、休息中路由重开及离页模拟deadline到期、存储reload、25:00／开始专注、下一focus到期建议及同UI会话不重复。即时结束精确0秒由模型保证，浏览器点击耗时不承诺0秒。另运行既有check-rest-activity-lifecycle-20261105.mjs（管理草稿到期与owner）、check-focus-live-settings.mjs及check-custom-rest-activities-20261105.mjs。新脚本仅语法检查，未运行Chromium／3017；浏览器真实几何和操作、正常小程序构建／产物WXSS及微信真机均待协调端。模型快照不能替代路由或后台实测。未安装依赖、访问凭据／真实账号或改API／系统／镜像／部署／.git。结果见.tmp/focus-rest-return-20261105-result.json。

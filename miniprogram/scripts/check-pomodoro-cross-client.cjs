@@ -12,7 +12,11 @@ function load(file) {
   return exports;
 }
 const mini = load(path.resolve(__dirname, '../src/lib/pomodoro-data.ts'));
-const web = load(path.resolve(__dirname, '../../web/src/app/pomodoro/pomodoro-data.ts'));
+// Web now bundles the same model through the shared mini-program page entry.
+const buildSource = fs.readFileSync(path.resolve(__dirname, '../../web/scripts/build-tool-app.mjs'), 'utf8');
+assert.match(buildSource, /miniprogram\/src/);
+assert.match(buildSource, /'pomodoro'/);
+const web = load(path.resolve(__dirname, '../src/lib/pomodoro-data.ts'));
 const serialized = value => JSON.parse(JSON.stringify(value));
 const roundTrip = value => mini.normalizePomodoroState(serialized(web.normalizePomodoroState(serialized(value))));
 const at = Date.parse('2026-09-15T01:00:00Z');

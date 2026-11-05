@@ -8,6 +8,8 @@ export type ActiveTimer = {
   rootRunId?: string; originFocusId?: string;
 };
 export type FocusSession = {
+  /** Durable evidence of an actually started rest; absent on untouched legacy sessions. */
+  restStartedId?: string;
   id: string; mode: TimerMode; durationSeconds: number; plannedSeconds: number;
   startedAt: string; endedAt: string; completed: boolean; taskId: string | null; habitId?: string | null; title: string; domainId?: string | null;
   rootRunId?: string; originFocusId?: string;
@@ -165,13 +167,26 @@ export function resumeTimer(state: PomodoroState, now: number): PomodoroState {
   return { ...state, active: { ...state.active, running: true, deadline: now + state.active.remainingSeconds * 1000 } };
 }
 
+/** Read-only legacy evidence: a rest may survive only as an origin link or stable break id. */
+export function unhandledFocusCompletion(state: PomodoroState): FocusSession | null {
+  const latest = state.sessions[0];
+  if (state.active || latest?.mode !== 'focus' || !latest.completed) return null;
+  if (typeof latest.restStartedId === 'string' && latest.restStartedId) return null;
+  if (state.sessions.some(row => row.mode !== 'focus' &&
+    (row.originFocusId === latest.id || row.id === automaticBreakId(latest.id)))) return null;
+  return latest;
+}
+
 export function startTimer(state: PomodoroState, now: number, id: string, linked: TimerSelection, minutes?: number): PomodoroState {
   if (state.active) return state;
+  const completed = state.mode === 'focus' ? null : unhandledFocusCompletion(state);
   // A one-round override uses the existing active duration; regular settings stay intact.
   const max = state.mode === 'shortBreak' ? 60 : 120;
   const totalSeconds = (Number.isInteger(minutes) && minutes! >= 1 && minutes! <= max ? minutes! : state.settings[state.mode]) * 60;
   const nextSelection = selection({ ...state.selection, ...linked, habitId: linked.habitId ?? null });
-  return { ...state, selection: nextSelection, active: { id, rootRunId: id, mode: state.mode, totalSeconds, remainingSeconds: totalSeconds, running: true, deadline: now + totalSeconds * 1000, startedAt: new Date(now).toISOString(), selection: state.mode === "focus" ? nextSelection : { taskId: null, habitId: null, title: "", ...(nextSelection.domainId === undefined ? {} : { domainId: nextSelection.domainId }) } } };
+  return { ...state,
+    ...(completed ? { sessions: state.sessions.map(row => row.id === completed.id ? { ...row, restStartedId: id } : row) } : {}),
+    selection: nextSelection, active: { id, rootRunId: completed?.rootRunId || completed?.id || id, ...(completed ? { originFocusId: completed.id } : {}), mode: state.mode, totalSeconds, remainingSeconds: totalSeconds, running: true, deadline: now + totalSeconds * 1000, startedAt: new Date(now).toISOString(), selection: state.mode === "focus" ? nextSelection : { taskId: null, habitId: null, title: "", ...(nextSelection.domainId === undefined ? {} : { domainId: nextSelection.domainId }) } } };
 }
 
 export function durationLabel(seconds: number): string {
