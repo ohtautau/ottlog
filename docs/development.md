@@ -3143,3 +3143,11 @@ Windows隔离3017候选：`cd web`，设置`OTTLOG_PARITY_ORIGIN=http://127.0.0.
 模型check-custom-rest-activities、check-habit-detail-calendar、check-editor-sort-followup、check-focus-recommendation、check-personal-tool-auto-sync及web/check-wheel-events通过。正常miniprogram typecheck、build:weapp通过：115份源／17份产物WXSS、15页（5主＋10分包）、21份ES2019脚本、主包1,401,022字节＜1.5MB、全部媒体138,608字节＜200KiB。小程序未发布；微信原生／真机滚轮、软键盘及alpha／WebP仍未实测。
 
 真实账号此前只读核对focus26／shortBreak6／longBreak15，无active；历史25→26的实际用户触发没有完整复现，不将事件模型等同于历史根因实证。候选已验证无意图手势不提交且允许主动选26；按用户原要求恢复focus25会单独备份并只改该字段，发布和真实账号结果由下方最终发布记录补充。以上隔离验收没有修改真实业务数据或API容器。
+
+### 2026-11-05 最终发布与真实账号只读复核
+
+服务器Codex通过固定候选broker实际发布89ef65f3c7f3，verify及rollback-check通过，QA容器已清理并保持空闲。回滚备份为`/home/ubuntu/ottlog/backups/api-edge-20261105T043854Z`，上一网页12bcd2268ef4；API原image、容器ID、启动时间及业务卷／授权覆盖链保持。协调端关闭临时3017隧道，正式服务不依赖电脑连接。
+
+明确授权的真实账号修正：读取最新pomodoro两次一致后另留私密备份，只将settings.focus26改25；两域名完整记录均与目标一致，复原该单字段后的全部对象与原记录相等，shortBreak6、longBreak15、active及所有其它字段保持。备份与凭据不进入Git。
+
+随后正式域名https://ohtautau.com及https://api.ohtautau.com登录／八类工具读数一致、CSRF及读者权限隔离通过。1440／390px各10个真实页面（根地址、今日、任务、习惯、领域、便签、专注、格言、个人文章、统计）均无横向溢出、坏图或pageerror。两宽度再只读打开建议管理，实际15项、三卡与换组、新增入口和focus25均通过。自动完成建议可能在首次进入新UI会话正常弹出，检查先按正常关闭再检验菜单，没有强制点击。全部业务写入被拦截，实际业务写入尝试0、前后八类数据哈希一致。报告保留web/test-results/public-release/report.json（忽略）。本轮只恢复一次明确指定focus25，其余真实内容未改；没有宣称微信原生／真机交互已完成验收。
