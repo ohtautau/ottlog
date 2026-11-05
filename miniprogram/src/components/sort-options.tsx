@@ -1,3 +1,4 @@
+import BackSymbol from './back-symbol';
 import type { ReactNode } from 'react';
 import { Text, View } from '@tarojs/components';
 import { ChoicePopover, PopoverHeading, PopoverActions } from './form-options';
@@ -7,18 +8,18 @@ import useEditorCloseGuard from '../lib/use-editor-close-guard';
 import './sort-options.css';
 
 /** Sorting windows share their chrome, spacing and control sizes. State stays with the page. */
-export function SortPopover({ ariaLabel, open, onOpenChange, selected, disabled, saving = false, hasChanges = false, confirmDisabled = false, confirmLabel = '排序', onConfirm, panelClassName = '', triggerClassName = '', contentKey = '', children, iconOnly = true }: {
+export function SortPopover({ ariaLabel, open, onOpenChange, selected, disabled, saving = false, hasChanges = false, confirmDisabled = false, confirmLabel = '排序', onConfirm, panelClassName = '', triggerClassName = '', contentKey = '', children, iconOnly = true, immediate = false }: {
   ariaLabel: string; open: boolean; onOpenChange: (open: boolean) => void; selected?: boolean; disabled?: boolean;
-  saving?: boolean; hasChanges?: boolean; confirmDisabled?: boolean; confirmLabel?: string; onConfirm: () => boolean | void | Promise<boolean | void>;
+  immediate?: boolean; saving?: boolean; hasChanges?: boolean; confirmDisabled?: boolean; confirmLabel?: string; onConfirm: () => boolean | void | Promise<boolean | void>;
   panelClassName?: string; triggerClassName?: string; contentKey?: string; children: ReactNode; iconOnly?: boolean;
 }) {
-  const closeGuard = useEditorCloseGuard({ scope: open ? ariaLabel : '', hasChanges, blocked: saving, onSave: onConfirm, onClose: () => onOpenChange(false) });
+  const closeGuard = useEditorCloseGuard({ scope: open ? ariaLabel : '', hasChanges: !immediate && hasChanges, blocked: saving, onSave: onConfirm, onClose: () => onOpenChange(false) });
   return <><ChoicePopover ariaLabel={ariaLabel} open={open} onOpenChange={next => { if (next) onOpenChange(true); else closeGuard.requestClose(); }} disabled={disabled}
     triggerIconOnly={iconOnly} triggerSize='compact' showIndicator={!iconOnly} triggerSelected={selected ?? open}
     trigger={iconOnly ? <SortSymbol /> : <Text>排序</Text>} triggerClassName={triggerClassName}
     panelClassName={`sort-popover ${panelClassName}`} panelWidth={320} bodySpacing='tight' maxHeightRatio={.8} contentKey={contentKey}
-    heading={<PopoverHeading className='sort-panel-heading' title='排序' actions={<ActionButton appearance='icon' size='compact' ariaLabel={`关闭${ariaLabel.replace(/^排序(.+)$/, '$1排序')}`} disabled={saving} onClick={closeGuard.requestClose}>×</ActionButton>} />}
-    footer={<PopoverActions layout='fill' className='sort-panel-footer'><ActionButton appearance='primary' size='compact' width='fill' disabled={saving || confirmDisabled} loading={saving} onClick={() => { void onConfirm(); }}>{confirmLabel}</ActionButton></PopoverActions>}>
+    heading={<PopoverHeading className='sort-panel-heading' title='排序' actions={<ActionButton appearance='icon' size='compact' ariaLabel={`关闭${ariaLabel.replace(/^排序(.+)$/, '$1排序')}`} disabled={saving} onClick={closeGuard.requestClose}>{immediate ? <BackSymbol /> : '×'}</ActionButton>} />}
+    footer={!immediate && <PopoverActions layout='fill' className='sort-panel-footer'><ActionButton appearance='primary' size='compact' width='fill' disabled={saving || confirmDisabled} loading={saving} onClick={() => { void onConfirm(); }}>{confirmLabel}</ActionButton></PopoverActions>}>
     <View className='sort-panel-content'>{children}</View>
   </ChoicePopover>{closeGuard.dialog}</>;
 }

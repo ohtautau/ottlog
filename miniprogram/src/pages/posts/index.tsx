@@ -65,7 +65,7 @@ export default function PostsPage() {
     </View>
     <PageToolbar className='posts-toolbar'
       reset={<ToolbarResetButton ariaLabel='恢复文章默认方式' onReset={() => { setFilter({ ...defaultPostFilter }); setDraft(''); setPageSize(10); setVisible(10); setExpanded(false); setSortOpen(false); }} />}
-      sort={<SortPopover ariaLabel='排序文章' open={sortOpen} onOpenChange={setSortOpen} iconOnly={false} confirmLabel='完成' onConfirm={() => setSortOpen(false)}>
+      sort={<SortPopover immediate ariaLabel='排序文章' open={sortOpen} onOpenChange={setSortOpen} iconOnly={false} confirmLabel='完成' onConfirm={() => setSortOpen(false)}>
         <SortOptions options={sorts.map(item => ({ value: item.value, label: item.name }))} value={filter.sort} onChange={sort => update({ sort })} />
         <SortDirection value={filter.direction} onChange={direction => update({ direction })} />
       </SortPopover>}

@@ -19,7 +19,8 @@ const { orderedHabits, saveHabitOrder } = load(path.join(__dirname, '../src/lib/
 const { toggleReminderDone, localDate, isReminderState } = load(path.join(__dirname, '../src/lib/reminder-data.ts'));
 const { legacyHabitDomains, saveDomainHabit } = load(path.join(__dirname, '../src/lib/domain-data.ts'));
 const initialDomainState = require('./fixtures/starter-data.cjs').domainState({ legacyHabitDomains });
-const webHabits = load(path.join(__dirname, '../../web/src/app/daily/reminders.ts'));
+// Browser tools now build the same mini-program source, with no separate normalizer.
+const webHabits = load(path.join(__dirname, '../src/lib/reminder-data.ts'));
 const custom = { id: 'custom', title: '一个习惯', note: '', kind: 'plant', group: '自定义领域', domainId: 'custom-domain', minutes: 0, enabled: true, priority: 'medium', createdAt: 12345 };
 const roundTrip = cleanState(webHabits.cleanState(cleanState({ version: 1, items: [custom], done: {} })));
 assert.deepEqual(roundTrip.items[0], custom, 'Web normalization retains domain names, bindings, priority and creation time');
@@ -39,7 +40,7 @@ const renamedDomains = initialDomainState.domains.map(domain => domain.id === 'm
 const bound = alignHabitDomain({ id: 'legacy', title: '呼吸', group: '精神', kind: 'breathe' }, initialDomainState.domains);
 assert.equal(bound.domainId, 'mind');
 assert.equal(alignHabitDomain(bound, renamedDomains).group, '内心');
-assert.equal(alignHabitDomain(bound, renamedDomains.filter(domain => domain.id !== 'mind')).group, '未分类');
+assert.equal(alignHabitDomain(bound, renamedDomains.filter(domain => domain.id !== 'mind')).group, '其它');
 assert.equal(alignHabitDomain({ ...bound, group: '内心', domainId: undefined }, renamedDomains).domainId, 'mind');
 const createdAt = new Date('2026-10-04T01:00:00Z');
 const withHabit = saveDomainHabit(initialDomainState, 'work', '优先推进', undefined, { priority: 'high' }, createdAt);

@@ -3089,3 +3089,18 @@ Windows隔离候选：`cd web`，设置`OTTLOG_PARITY_ORIGIN=http://127.0.0.1:30
 - node scripts/check-focus-live-settings.mjs：已有运行deadline/真实触屏与鼠标滚轮候选验证。
 
 上述浏览器脚本仅语法检查，尚未实跑；浏览器缩放/触摸/短屏、运行deadline、微信原生及真机验收仍待协调端，模型不替代实测。本轮未写.git、部署、系统、API或真实业务数据；未提交/推送。结果见.tmp/rest-suggestions-20261105-result.json。
+
+
+### 2026-11-05 D–H 编辑返回、即时排序和习惯提醒（候选，未部署）
+
+保留前一轮rest-suggestions及滚轮源码，不重做A/B/C，不访问真实账号／凭据，不改API／.git或安装依赖。BackSymbol／EditorBackButton只在逐项确认的宿主显式接入，不按文案推断。宿主审查：调整时长、日期设置、习惯页与领域详情内实时保存的习惯详情、即时保存的象限显示编辑改返回；即时SortPopover按immediate显式显示返回。任务／便签／记录／格言紧凑自动保存编辑本来无X，不新增。手动习惯编辑、文章编辑、领域定义／目标、格言轮播设置、本次时长、留言及筛选的手动提交流程保持；休息建议关闭、清除时间、子项／附件删除X保持。原关闭回调、owner、滑动、失败及busy检查保留。
+
+AppliedOptions增加可选onClear／disabled，文字flex:1可换行、末尾X固定40px触控、左右20px。便签移除ToolbarResetButton，X清除search/tagFilters/sort并关闭展开窗，不改业务数据和多选。习惯同用该行显示实际排序／方向和搜索、状态、时段、优先度；X恢复默认筛选和priority desc，保留今日／全部／领域视图。无显式排序时只在呈现计算priority desc，不写迁移；已有排序／拖动保持。提醒仍由longestUncheckedHabits独立提供，全部视图都渲染同一HabitListSection，桌面简单网格保留右栏；状态行拥有独立网格行，窄屏沿原纵向框架。
+
+便签、习惯、公开／个人文章SortPopover显式immediate，不显示确认按钮或未保存确认；FilterPopover不变。习惯点击选项与方向沿原persistSort同owner队列保存，失败保留sortPending原目标及窗内／窗外重试，正常成功无保存提示，窗口可保持展开选方向。实际拖动仍沿原松手持久化。
+
+本机通过：typecheck、web build:tools、check-editor-sort-followup（实际共用组件的元素／事件模型和宿主源码合同）、check-weapp-styles-test、check-focus-save-jitter（114源CSS的WXSS约束）、check-habit-order、check-habit-edit、check-habits-focus、check-post-filter、check-followup-autosave、check-todo-autosave、check-todo-schedule、check-editor-checklist、check-media-insertion、check-focus-recommendation及web/check-wheel-events。旧check-habit-order最初因已移除的独立网页normalizer路径失败，改用网页构建实际共用源；随后旧“未分类”断言按现行“其它”修正，通过。模型不代表浏览器几何、原生编译或真机通过。
+
+Windows协调候选：设置OTTLOG_PARITY_ORIGIN=http://127.0.0.1:3017，执行web/scripts/check-editor-sort-followup-20261105.mjs及check-editor-polish.mjs。两脚本全部API隔离，前者覆盖1440/390/375、默认实际顺序、即时字段与方向持久化、失败原目标重试、X保留全部页签、提醒数量独立和便签无业务写入；后者去完成按钮／无X／隐藏提醒的旧断言。仅语法检查，未启动浏览器或3017，未声称Windows或真机验收通过；公开／个人文章浏览器实际排序、领域页签和更多窄短屏仍需协调端验收。没有证据复现历史25→26；取消／失焦误提交模型修复保持，真实focus25字段仍由根协调端验收后单独处理。
+
+结果见.tmp/editor-sort-followup-20261105-result.json。

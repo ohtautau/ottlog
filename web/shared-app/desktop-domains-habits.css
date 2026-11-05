@@ -176,7 +176,7 @@
     --habit-list-offset: 0px;
     display: grid;
     grid-template-columns: minmax(0, 1fr) clamp(240px, 24vw, 320px);
-    grid-template-rows: auto minmax(0, 1fr);
+    grid-template-rows: auto auto auto minmax(0, 1fr);
     flex: 1;
     height: 0;
     min-height: 0;
@@ -184,10 +184,10 @@
     overflow: hidden;
   }
   .tool-app-root .daily-habit-sections > .daily-core-filter-scroll { grid-column: 1; grid-row: 1; margin: 0; }
-  .tool-app-root .daily-habit-sections > .daily-sort-retry { grid-column: 1 / -1; grid-row: 1; z-index: 2; background: #192633; }
+  .tool-app-root .daily-habit-sections > .daily-sort-retry { grid-column: 1; grid-row: 3; z-index: 2; background: #192633; }
   .tool-app-root .daily-core .daily-habit-pages {
     grid-column: 1;
-    grid-row: 2;
+    grid-row: 4;
     flex: 1;
     width: 100%;
     height: 100%;
@@ -213,7 +213,7 @@
   .tool-app-root .daily-core .daily-time-period-empty { min-height: 96px; height: 100%; }
   .tool-app-root .daily-core .daily-neglected {
     grid-column: 2;
-    grid-row: 1 / 3;
+    grid-row: 1 / 5;
     width: 100%;
     min-height: 0;
     margin: 0;
@@ -300,5 +300,5 @@
  .tool-app-root .domain-detail-page .domain-records { grid-column:1;grid-row:5; }
 }
 @media(min-width:900px) {
-  .tool-app-root .daily-core .daily-habit-sections.is-simple-grid { grid-template-columns:minmax(0,1fr); }
+  .tool-app-root .daily-habit-sections > .applied-options { grid-column:1;grid-row:2; }
 }

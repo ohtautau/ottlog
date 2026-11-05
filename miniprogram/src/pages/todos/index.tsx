@@ -1,3 +1,4 @@
+import EditorBackButton from '../../components/editor-back-button';
 import { useMessageNotice } from '../../components/message-notice';
 import ActionMenu from '../../components/action-menu';
 import { AddSymbol } from '../../components/create-button';
@@ -379,7 +380,7 @@ export default function Todos() {
     {sorter.deleteZone}
     {taskUndo.notice && <OperationToast message={taskUndo.notice.message} busy={taskUndo.busy} onUndo={taskUndo.notice.undo ? () => { void taskUndo.undo(); } : undefined} />}
     {panelEditorOpen && <View className='todo-panel-editor-overlay'><SheetBackdrop onClose={()=>setPanelEditorOpen(false)} /><View className='todo-panel-editor' role='dialog' ariaLabel='编辑象限显示'>
-      <EditorHeading title='编辑象限显示' actions={<ActionButton appearance='icon' ariaLabel='关闭象限显示编辑' onClick={()=>setPanelEditorOpen(false)}>×</ActionButton>} />
+      <EditorHeading title='编辑象限显示' actions={<EditorBackButton appearance='icon' ariaLabel='关闭象限显示编辑' onClick={()=>setPanelEditorOpen(false)} />} />
       <View className='todo-panel-editor-rows'>{todoQuadrants.map((slot,index)=> <View className='todo-panel-editor-row' key={slot.id}><Text>{['左上','右上','左下','右下'][index]}</Text><TodoPanelPicker queue={getTodoPanelQueue(state,slot.id as TodoPanelId)} onQueueChange={async queue=>{const baseline=getTodoPanelQueue(state,slot.id as TodoPanelId);await change(previous=>{const current=getTodoPanelQueue(previous,slot.id as TodoPanelId);if(JSON.stringify(current)!==JSON.stringify(baseline)&&JSON.stringify(current)!==JSON.stringify(queue))throw new Error('显示队列已变化，请重新打开后调整');return setTodoPanelQueue(previous,slot.id as TodoPanelId,queue);});if(hasVolatilePersonalTool('todos',owner))throw new Error('队列尚未保存，请重试');}} owner={owner} categories={state.categories} value={getTodoPanelSource(state,slot.id as TodoPanelId)} trigger={<><TodoPanelSourceIcon panel={todoPanelPresentation(state,slot.id as TodoPanelId)}/><Text>{todoPanelPresentation(state,slot.id as TodoPanelId).title}</Text></>} disabled={!writable || busy} ariaLabel={`更换${slot.title}区域显示`} onChange={async source=>{await change(previous=>setTodoPanelSource(previous,slot.id as TodoPanelId,source));if(hasVolatilePersonalTool('todos',owner))throw new Error('显示方式尚未保存，请重试');}} /></View>)}</View>
     </View></View>}
     {draft && <TaskDetailEditor owner={owner} draft={draft} onChange={editDraft} onClose={() => { void closeEditor(); }} disabled={imageBusy || !!deletion || !writable || draftOwner.current !== owner} pending={busy} error={autosaveError} onRetry={() => { setAutosaveError(''); void persistDraft(); }}

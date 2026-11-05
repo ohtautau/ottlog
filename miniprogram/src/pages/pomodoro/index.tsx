@@ -1,3 +1,4 @@
+import EditorBackButton from '../../components/editor-back-button';
 import { RefreshSymbol } from '../../components/manage-symbol';
 import { useMessageNotice } from '../../components/message-notice';
 import { selectFocusActivities, claimFocusSuggestions, resetFocusSuggestionsOwner } from '../../lib/focus-activities';
@@ -416,7 +417,7 @@ export default function Pomodoro() {
     {todoPickerOwner === owner && !!owner && ready && valid && canPickTodo && currentMode === 'focus' && <TodoSelectionSheet key={owner} items={todos} sessions={state.sessions} selectedId={chosen.taskId} onSelect={selectTodo} onClose={() => setTodoPickerOwner(null)} />}
     {habitPickerOwner === owner && !!owner && ready && valid && canPickHabit && currentMode === 'focus' && <HabitSelectionSheet key={owner} items={habits} sessions={state.sessions} selectedId={chosen.habitId} onSelect={selectHabit} onClose={() => setHabitPickerOwner(null)} />}
     {settingsDraft && settingsOwner === owner && ready && valid && <View className='focus-settings-overlay'><View className='focus-settings-backdrop' catchMove onClick={event => { event.stopPropagation(); closeSettings(); }} /><View className='focus-settings' role='dialog' ariaLabel='调整时长'>
-      <EditorHeading className='focus-settings-heading' titleClassName='focus-settings-title' title='调整时长' actions={<ActionButton appearance='icon' className='button-label' ariaLabel='关闭节奏设置' disabled={busy || notificationBusy || wheelMoving} onClick={closeSettings}>×</ActionButton>} />
+      <EditorHeading className='focus-settings-heading' titleClassName='focus-settings-title' title='调整时长' actions={<EditorBackButton appearance='icon' className='button-label' ariaLabel='关闭节奏设置' disabled={busy || notificationBusy || wheelMoving} onClick={closeSettings} />} />
       <ScrollView scrollY className='focus-settings-scroll' enhanced bounces={false} showScrollbar={false}><EditorFieldsLayout className='focus-settings-fields'>
         <View className='focus-rhythm-columns'><View className='focus-settings-grid'>{settingsFields.map(field => <FilterFieldHeading key={field.key} label={field.label} />)}</View>
         <WheelPicker label='专注节奏' disabled={notificationBusy} onMovingChange={setWheelMoving}
