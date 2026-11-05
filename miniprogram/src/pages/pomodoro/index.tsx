@@ -79,7 +79,7 @@ export default function Pomodoro() {
     const expected=owner;
     if(!ready||!valid||!owner||owner==='guest'||busy||!restPool.writable)throw new Error('休息建议暂不可编辑');
     await setValue(previous=>{if(!mounted.current||ownerRef.current!==expected||!isPomodoroState(previous))throw new Error('账号或数据已变化');return changeRestActivities(previous,change);});
-    await syncPersonalTool('pomodoro',expected);
+    await syncPersonalTool('pomodoro',expected,'休息建议尚未同步到账号，请联网后重试');
     if(!mounted.current||ownerRef.current!==expected)throw new Error('账号已变化');
   }
   const [suggestionsOwner,setSuggestionsOwner]=useState<string|null>(null);
@@ -135,12 +135,12 @@ export default function Pomodoro() {
   const suggestionId = isWebTool ? pendingFocusCompletion(state)?.id :
     state.active?.originFocusId && state.sessions.find(session=>session.id===state.active?.originFocusId && session.mode==='focus' && session.completed)?.id;
   useEffect(()=>{
-    if(!visible || !ready || !valid || !owner || !suggestionId || settingsDraft) return;
+    if(!visible || !ready || !valid || !owner || !suggestionId || settingsDraft || restManaging) return;
     const show=()=>{if(isWebTool && document.visibilityState==='hidden')return;
       if(claimFocusSuggestions(owner,suggestionId))openSuggestions(owner);};
     show();
     if(isWebTool){document.addEventListener('visibilitychange',show);return()=>document.removeEventListener('visibilitychange',show);}
-  },[visible,ready,valid,owner,suggestionId,!!settingsDraft]);
+  },[visible,ready,valid,owner,suggestionId,!!settingsDraft,restManaging]);
   const modalOpen=!!settingsDraft || suggestionsOwner===owner && !!owner;
   useEffect(()=>{
     if(!isWebTool || !modalOpen)return;

@@ -94,12 +94,13 @@
 .habit-calendar-editor .habit-detail-body { display:flex;flex-direction:column;box-sizing:border-box;height:auto;min-height:0;padding:4PX var(--compact-editor-inset) 16PX; }
 .habit-calendar-editor .editor-heading { --editor-heading-horizontal-space:24PX; }
 .habit-calendar-editor .editor-heading-title,.habit-calendar-editor .habit-detail-header-title { font-size:var(--compact-editor-title-size); }
-.habit-calendar-editor .habit-detail-header-title,.habit-calendar-editor .habit-detail-title-content { text-align:center; }
-.habit-calendar-editor .habit-detail-note.tool-input { padding:4PX 0;border:0;border-radius:0;background:transparent;box-shadow:none; }
+.habit-calendar-editor .habit-detail-header-title,.habit-calendar-editor .habit-detail-title-content { text-align:left; }
+.habit-calendar-editor .habit-detail-note.tool-input { padding:4PX 0;border:0;border-radius:0;background:transparent;box-shadow:none;font-size:16PX;line-height:24PX; }
 .habit-calendar-editor .daily-detail-scroll,.habit-calendar-editor .domain-sheet-scroll { flex:1;min-height:0;height:0;max-height:none; }
 .habit-calendar-editor .sheet-actions { flex:none;padding-left:var(--compact-editor-inset);padding-right:var(--compact-editor-inset); }
 .habit-calendar-editor .habit-calendar.is-detail .habit-calendar-panel { padding:0;border:0;background:transparent; }
 .habit-calendar-editor .habit-calendar.is-detail .habit-calendar-stats { padding:6PX 0; }
 .habit-calendar-editor .habit-detail-header-priority { width:40PX; }
 
-.habit-calendar-editor .habit-detail-header-title { justify-content:center; }
+.habit-calendar-editor .habit-detail-header-title { justify-content:flex-start; }
+.habit-calendar-editor .habit-detail-header { border-bottom:0; }

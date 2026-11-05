@@ -31,11 +31,11 @@ export function subscribePersonalToolEdits(key: PersonalToolKey, owner: string, 
 }
 
 /** A reminder must never be scheduled against an edit that only exists locally. */
-export async function syncPersonalTool(key: PersonalToolKey, owner: string): Promise<void> {
+export async function syncPersonalTool(key: PersonalToolKey, owner: string, pendingMessage = '任务还未同步到账号，请联网同步后再开启提醒'): Promise<void> {
   if (!owner || owner === 'guest') throw new Error('请先从今日右上角登录，再开启微信提醒');
   await store.flush(key, owner);
   const current = store.cache(toolCacheKey(owner, key));
-  if (!current || current.pending) throw new Error('任务还未同步到账号，请联网同步后再开启提醒');
+  if (!current || current.pending) throw new Error(pendingMessage);
 }
 
 export function usePersonalToolState<T>(key: PersonalToolKey, initial: T): {
