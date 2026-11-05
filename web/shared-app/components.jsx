@@ -135,7 +135,11 @@ function WheelColumn({ column, selected, rowHeight, onSelect, onStart, onEnd }) 
         else if (!moving.current) align(latest.current.selected);
       }}
       onPointerCancel={cancelGesture}
-      onLostPointerCapture={() => { if (pointerHeld.current) cancelGesture(); }}
+      onLostPointerCapture={event => {
+        // Touch starts with implicit capture on the inner option. Taking capture
+        // on the scroll column emits a bubbling loss for that old target.
+        if (pointerHeld.current && !event.currentTarget.hasPointerCapture(event.pointerId)) cancelGesture();
+      }}
       onBlur={cancelGesture}>
       {items.map((item, index) => <div id={`${label}-${index}`} role='option' aria-selected={selected === index} key={item.key || index} className='browser-wheel-option' onClick={() => { if (!suppressClick.current) pick(index); suppressClick.current = false; }}>{item}</div>)}
     </div><div className='browser-wheel-indicator' aria-hidden />

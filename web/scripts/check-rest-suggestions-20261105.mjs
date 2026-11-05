@@ -6,7 +6,7 @@ const browser=await chromium.launch();
 try{for(const [width,height] of [[1440,900],[375,667],[390,844],[390,440]]){
  const context=await browser.newContext({viewport:{width,height},hasTouch:true}),page=await context.newPage();
  const stamp=new Date().toISOString(),writes=[],errors=[];
- const task={id:'schedule',title:'日程夹具',description:'',categoryId:'',important:true,urgent:true,tags:[],subtasks:[],completedAt:null,createdAt:stamp,updatedAt:stamp};
+ const task={id:'schedule',title:'日程夹具',description:'',categoryId:'',dueDate:'',important:true,urgent:true,tags:[],subtasks:[],completedAt:null,createdAt:stamp,updatedAt:stamp};
  const states={todos:{version:1,tasks:[task],categories:[],sort:'custom'},pomodoro:{version:1,settings:{focus:25,shortBreak:5,longBreak:15,longEvery:4},mode:'focus',selection:{title:'',taskId:null},active:null,sessions:[],completedFocusCount:0}};
  page.on('pageerror',e=>errors.push(e.message));
  await page.route('**/api/**',route=>{
@@ -53,9 +53,9 @@ await page.setViewportSize({width:width+1,height});await page.setViewportSize({w
   const row=page.locator('.choice-shortcut-row').first(),icon=row.locator('.choice-shortcut-leading'),rail=row.locator('.choice-shortcut-rail');
   await expect(icon.locator('.is-'+kind)).toBeVisible();const before=await icon.boundingBox();
   await rail.evaluate(n=>n.scrollLeft=n.scrollWidth);const after=await icon.boundingBox();
-  if(width<500)expect(await rail.evaluate(n=>n.scrollLeft)).toBeGreaterThan(0);
+  if(await rail.evaluate(n=>n.scrollWidth>n.clientWidth+1))expect(await rail.evaluate(n=>n.scrollLeft)).toBeGreaterThan(0);
   expect(after.x).toBeCloseTo(before.x,1);expect(after.y).toBeCloseTo(before.y,1);
-  expect(await row.evaluate(n=>{const a=n.querySelector('.choice-shortcut-leading').getBoundingClientRect(),b=n.querySelector('button').getBoundingClientRect();return Math.abs((a.top+a.bottom-b.top-b.bottom)/2)<2;})).toBe(true);
+  expect(await row.evaluate(n=>{const a=n.querySelector('.choice-shortcut-leading .todo-schedule-symbol').getBoundingClientRect(),b=n.querySelector('button').getBoundingClientRect();return Math.abs((a.top+a.bottom-b.top-b.bottom)/2)<2;})).toBe(true);
  }
  expect(writes.length).toBe(scheduleWrites);expect(errors).toEqual([]);await context.close();
 }}finally{await browser.close();}

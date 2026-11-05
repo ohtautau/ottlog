@@ -16,7 +16,7 @@ try{for(const width of [1440,390]){
  await button('专注更多操作').click();await button('调整时长').click();const dialog=page.getByRole('dialog',{name:'调整时长',exact:true});await expect(dialog).toBeVisible();
  const geometry=()=>page.evaluate(()=>['.focus-page-toolbar','.focus-clock-card','.focus-timer-stage','.focus-toolbar'].map(s=>{const n=document.querySelector(s),r=n.getBoundingClientRect();return [r.x,r.y,r.width,r.height,n.scrollTop];}));
  await page.waitForTimeout(400);const before=await geometry(),settingsBefore={...states.pomodoro.settings},samples=[];
- let sampling=true;const collect=(async()=>{while(sampling){samples.push(await geometry());await page.waitForTimeout(40);}})();
+ let sampling=true;const collect=(async()=>{while(sampling){try{samples.push(await geometry());await page.waitForTimeout(40);}catch(error){if(page.isClosed())break;throw error;}}})();
  const cdp=await context.newCDPSession(page),keys=['focus','shortBreak','longBreak','longEvery'];
  for(let i=0;i<4;i++){
   const wheel=dialog.locator('.browser-wheel-scroll').nth(i),box=await wheel.boundingBox(),old=states.pomodoro.settings[keys[i]];
@@ -29,7 +29,7 @@ try{for(const width of [1440,390]){
   await expect.poll(()=>states.pomodoro.settings[keys[i]],{timeout:8000}).not.toBe(old);
   expect(states.pomodoro.active.deadline).toBe(deadline);expect(states.pomodoro.active.totalSeconds).toBe(1500);
  }
- sampling=false;await collect;
+ sampling=false;await collect;expect(samples.length).toBeGreaterThan(0);
  for(const sample of samples)for(let i=0;i<before.length;i++)for(let j=0;j<5;j++)expect(Math.abs(sample[i][j]-before[i][j])).toBeLessThanOrEqual(1);
  await expect(button('关闭节奏设置')).toBeEnabled();await button('关闭节奏设置').click();expect(states.pomodoro.active.deadline).toBe(deadline);
  // Expire this actual running session through the normal foreground monitor.

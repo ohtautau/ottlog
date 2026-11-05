@@ -1,4 +1,6 @@
 /* Browser-only presentation. Data, timer sizing and form actions stay shared. */
+/* Fixed windows use the real viewport, including screens shorter than the tool area. */
+.tool-app-root .focus-suggestions-window { max-height: calc(100dvh - 32px); }
 @media (min-width: 900px) {
   /* A measured, flexible clock uses the remaining stage rather than a fixed
      590px card. Its neighbouring controls retain their full desktop targets. */

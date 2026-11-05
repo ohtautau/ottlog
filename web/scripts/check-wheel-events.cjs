@@ -51,9 +51,18 @@ for(const type of ['touch','mouse']){
  assert.equal(h.writes.length,count,'micro gesture cannot change 25');
  h.handlers.onPointerDown({pointerType:type,button:0,clientY:100,currentTarget:h.node});
  h.handlers.onPointerMove({clientY:72,pointerId:1,currentTarget:h.node});
- h.handlers.onLostPointerCapture();h.flush();assert.equal(h.writes.length,count,'lost capture aborts');
+ h.handlers.onLostPointerCapture({pointerId:1,currentTarget:h.node});h.flush();assert.equal(h.writes.length,count,'lost capture aborts');
  h.handlers.onPointerDown({pointerType:type,button:0,clientY:100,currentTarget:h.node});
  h.handlers.onPointerMove({clientY:72,pointerId:1,currentTarget:h.node});
  h.handlers.onPointerUp({pointerId:1,currentTarget:h.node,preventDefault(){}});h.flush();
  assert.equal(h.writes.at(-1),26,'touch/mouse explicit drag selects 26');
 }
+
+// Implicit touch capture transfers from the inner option to the column. Its
+// bubbling lost-capture event must not discard the actual drag.
+h.render(25);h.render(24);const beforeTransfer=h.writes.length;
+h.handlers.onPointerDown({pointerType:'touch',button:0,clientY:100,currentTarget:h.node});
+h.handlers.onPointerMove({clientY:72,pointerId:1,currentTarget:h.node});
+h.handlers.onLostPointerCapture({pointerId:1,currentTarget:{hasPointerCapture:()=>true}});
+h.handlers.onPointerUp({pointerId:1,currentTarget:h.node,preventDefault(){}});h.flush();
+assert.equal(h.writes.length,beforeTransfer+1);assert.equal(h.writes.at(-1),26,'transfer preserves intentional touch selection');
