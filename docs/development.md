@@ -3171,3 +3171,11 @@ Windows协调候选：OTTLOG_PARITY_ORIGIN=http://127.0.0.1:3017，在web运行n
 check-rest-activity-lifecycle-20261105实际1440及390×440通过（管理草稿到期、迟到请求与owner／退出）；check-focus-live-settings实际1440鼠标和390触摸四列、延迟保存几何及运行deadline通过。共享模型零秒复现由修前true变为false，check-focus-rest-return、check-pomodoro-cross-client、check-focus-recommendation、check-personal-tool-auto-sync通过。正常小程序typecheck及build通过：115源／17产物WXSS、15页、21 ES2019、主包1,401,405字节、媒体138,608字节。首次默认沙箱构建创建dist目录遭EPERM，使用已授权工作区权限完成正常构建；未放宽检查。未发布小程序，微信原生／真机仍未验收。
 
 用户报告当前轮已经休息结束；仅有旧focus记录且无休息证据时，不在启动时猜测或迁移其它账号。协调端将先备份、核对该轮ID和无active，仅给此轮添加显式已处理标记（acknowledged前缀），不创建计时或历史，不改时长、次数、内容、自定义建议及未知数据；若当前轮变化则跳过。真实处理与上线结果另记发布记录。
+
+### 2026-11-05 休息返回最终发布
+
+服务器Codex通过固定broker实际发布39c5b60fa16e，verify／rollback-check／QA清理通过并空闲；备份`/home/ubuntu/ottlog/backups/api-edge-20261105T112849Z`可回滚至89ef65f3c7f3，未实际回滚。API原image／容器ID／启动时间2026-10-31T13:24:42.2266606Z及业务卷／覆盖链保持。临时3017通道已关闭。
+
+按用户已结束休息的明确说明，已单独备份并仅为所核对的那一轮旧focus添加restStartedId确认标记（acknowledged前缀）；两次最新读取一致、无active、轮ID相同才写入。去掉这一新增字段后的完整对象与原值一致，两域名完整目标核对通过。没有伪造休息session、改历史内容或再次重置个人时长，所有其它字段保留；备份／账号／业务ID仍只在忽略目录。
+
+随后正式HTTPS只读复核20个1440／390px页面、八类工具两域名同账号数据、匿名隔离／CSRF／读者权限、图片及pageerror均通过，专注页实际为准备就绪、25:00、开始专注且无冗余完成提示或旧休息选择；建议15项管理和时长设置仍可查看。所有业务写入被拦截，实际业务写入尝试0，前后八类哈希一致。报告web/test-results/public-release/report.json（忽略）。仅上述用户要求的单轮状态确认有真实写入，未改API容器、未发布小程序，也未宣称微信原生／真机验收通过。
