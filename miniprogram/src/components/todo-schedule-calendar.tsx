@@ -1,9 +1,9 @@
 import { ScheduleSymbol } from './schedule-symbol';
 import { useMemo } from 'react';
-import { Button, Text, View } from '@tarojs/components';
+import { Text, View } from '@tarojs/components';
 import ChoiceShortcutRail from './choice-shortcut-rail';
-import CalendarMonthNavigation from './calendar-month-navigation';
-import CalendarDayContent, { useCalendarDateDetails } from './calendar-day-content';
+import CalendarMonthView from './calendar-month-view';
+import { useCalendarDateDetails } from './calendar-day-content';
 import { calendarMonthDays, shiftCalendarMonth, shiftScheduleDate } from '../lib/todo-schedule';
 import { localToolDay } from '../lib/tool-records';
 import type { ScheduleDayMark } from '../lib/todo-schedule-preview';
@@ -36,12 +36,11 @@ export default function ScheduleCalendar({ month, onMonthChange, selectedDate, t
   const dualTimes = Object.values(marks).some(mark=>mark.dueTime&&mark.reminderTime&&mark.dueTime!==mark.reminderTime);
   return <>
     {!readOnly && <ChoiceShortcutRail leading={<ScheduleSymbol kind={reminder?'reminder':'date'}/>} label={reminder?'提醒快捷日期':'待办快捷日期'} options={quickDates.map(choice=>({...choice,ariaLabel:choice.value?`选择${prefix}${choice.label}`:reminder?'清除提醒日期':'选择无日期'}))} value={selectedDate} disabled={busy} onChange={day=>day?onSelect(day):onClear?.()}/>}
-    <CalendarMonthNavigation className='todo-schedule-month' month={month} onMonthChange={onMonthChange} currentMonth={safeCalendarMonth(today, today)} disabled={busy} prefix={prefix} />
-    <View className='todo-schedule-weekdays'>{['日', '一', '二', '三', '四', '五', '六'].map(day => <Text key={day}>{day}</Text>)}</View>
-    <View className={`todo-schedule-calendar${reminder ? ' editing-reminder' : ''}${dualTimes ? ' has-dual-times' : ''}`}>{days.map(day => <Button key={day.date} className={`button-label todo-schedule-day${day.inMonth ? '' : ' is-outside'}${day.date === selectedDate ? ' is-selected' : ''}${day.date === today ? ' is-today' : ''}${marks[day.date]?.due ? ' has-due' : ''}${marks[day.date]?.reminder ? ' has-reminder' : ''}${marks[day.date]?.repeat ? ' has-repeat' : ''}${marks[day.date]?.dueTime || marks[day.date]?.reminderTime ? ' has-day-time' : ''}`} ariaLabel={`选择${prefix}日期${day.date}`} aria-pressed={day.date === selectedDate} aria-readonly={readOnly || undefined} disabled={busy || !selectableCalendarDate(day.date)} onClick={() => { if (!busy && !readOnly && selectableCalendarDate(day.date)) onSelect(day.date); }} onLongPress={() => { if (!busy) showDate(day.date); }}>
-      <View className='todo-schedule-day-times' aria-hidden>{marks[day.date]?.dueTime && <Text className={marks[day.date]?.repeat ? 'repeat-time' : 'due-time'}>{marks[day.date].dueTime}</Text>}{marks[day.date]?.reminderTime && marks[day.date]?.reminderTime!==marks[day.date]?.dueTime && <Text className='reminder-time'>{marks[day.date].reminderTime}</Text>}</View>
-      <CalendarDayContent date={day.date} number={day.day} />
-    </Button>)}</View>
+    <CalendarMonthView navigation={{ className:'todo-schedule-month', month, onMonthChange, currentMonth:safeCalendarMonth(today,today), disabled:busy, prefix }} weekdayClassName='todo-schedule-weekdays' gridClassName={`todo-schedule-calendar${reminder ? ' editing-reminder' : ''}${dualTimes ? ' has-dual-times' : ''}`} days={days.map(day => ({
+      date:day.date, number:day.day, className:`button-label todo-schedule-day${day.inMonth ? '' : ' is-outside'}${day.date === selectedDate ? ' is-selected' : ''}${day.date === today ? ' is-today' : ''}${marks[day.date]?.due ? ' has-due' : ''}${marks[day.date]?.reminder ? ' has-reminder' : ''}${marks[day.date]?.repeat ? ' has-repeat' : ''}${marks[day.date]?.dueTime || marks[day.date]?.reminderTime ? ' has-day-time' : ''}`, ariaLabel:`选择${prefix}日期${day.date}`, pressed:day.date===selectedDate, readOnly,
+      disabled:busy || !selectableCalendarDate(day.date), onClick:()=>{if(!busy && !readOnly && selectableCalendarDate(day.date))onSelect(day.date);}, onLongPress:()=>{if(!busy)showDate(day.date);},
+      badge:(<View className='todo-schedule-day-times' aria-hidden>{marks[day.date]?.dueTime && <Text className={marks[day.date]?.repeat ? 'repeat-time' : 'due-time'}>{marks[day.date].dueTime}</Text>}{marks[day.date]?.reminderTime && marks[day.date]?.reminderTime!==marks[day.date]?.dueTime && <Text className='reminder-time'>{marks[day.date].reminderTime}</Text>}</View>)
+    }))} />
     {details}
   </>;
 }

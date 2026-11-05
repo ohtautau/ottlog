@@ -1,6 +1,6 @@
 /* One frame and type scale for task, note and progress creation/editing. */
 page { --compact-editor-inset:24PX;--compact-editor-title-size:22PX;--compact-editor-title-line:32PX;--task-detail-inset:var(--compact-editor-inset); }
-.task-detail-panel,.document-editor-sheet.is-compact-autosave,.entry-composer.is-autosave.todo-sheet { --compact-editor-height:min(72vh,720PX);--entity-title-inline-inset:0PX;box-sizing:border-box;width:100%;height:var(--compact-editor-height);max-height:calc(100vh - 24PX);background:#192933;border-radius:20PX 20PX 0 0; }
+.daily-detail-sheet.habit-calendar-editor.is-compact-detail,.domain-sheet.domain-sheet-habit-detail.habit-calendar-editor.is-compact-detail,.tool-app-root .daily-detail-sheet.habit-calendar-editor.is-compact-detail,.tool-app-root .domain-sheet.domain-sheet-habit-detail.habit-calendar-editor.is-compact-detail,.task-detail-panel,.document-editor-sheet.is-compact-autosave,.entry-composer.is-autosave.todo-sheet { --compact-editor-height:min(72vh,720PX);--entity-title-inline-inset:0PX;box-sizing:border-box;width:100%;height:var(--compact-editor-height);max-height:calc(100vh - 24PX);background:#192933;border-radius:20PX 20PX 0 0; }
 .document-editor-sheet.is-compact-autosave .memo-sheet-fields,.entry-composer.is-autosave .todo-sheet-fields { padding:4PX var(--compact-editor-inset) 24PX; }
 .document-editor-sheet.is-compact-autosave .document-autosave-heading,.entry-composer.is-autosave .entry-heading { padding-left:var(--compact-editor-inset);padding-right:var(--compact-editor-inset); }
 .document-editor-sheet.is-compact-autosave .document-autosave-footer,.entry-composer.is-autosave .entry-footer { padding-left:var(--compact-editor-inset);padding-right:var(--compact-editor-inset);border:0; }
@@ -9,7 +9,7 @@ page { --compact-editor-inset:24PX;--compact-editor-title-size:22PX;--compact-ed
 .entry-composer.is-autosave .entry-preview-note { min-height:40PX;height:auto;padding:4PX 0;border:0;border-radius:0;background:transparent;box-shadow:none; }
 .entry-composer.is-autosave .entry-preview .memo-editor-toolbar { display:none; }
 @media(min-width:900px) {
-  .task-detail-panel,.document-editor-sheet.is-compact-autosave,.entry-composer.is-autosave.todo-sheet { --compact-editor-height:min(640PX,calc(100vh - 32PX));position:relative;inset:auto;width:680PX;max-width:100%;max-height:calc(100vh - 32PX);border-radius:16PX; }
+  .daily-detail-sheet.habit-calendar-editor.is-compact-detail,.domain-sheet.domain-sheet-habit-detail.habit-calendar-editor.is-compact-detail,.tool-app-root .daily-detail-sheet.habit-calendar-editor.is-compact-detail,.tool-app-root .domain-sheet.domain-sheet-habit-detail.habit-calendar-editor.is-compact-detail,.task-detail-panel,.document-editor-sheet.is-compact-autosave,.entry-composer.is-autosave.todo-sheet { --compact-editor-height:min(640PX,calc(100vh - 32PX));position:relative;inset:auto;width:680PX;max-width:100%;max-height:calc(100vh - 32PX);border-radius:16PX; }
 }
 
 .entry-pane-heading { display:flex;align-items:center;justify-content:space-between;gap:8PX;min-height:64PX;padding:8PX 0 4PX; }

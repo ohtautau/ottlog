@@ -230,36 +230,6 @@
   .tool-app-root .daily-core .daily-message,
   .tool-app-root .daily-core .tool-status { flex: none; max-height: 64px; margin-top: 8px; padding: 8px; overflow-y: auto; }
 
-  /* Shared habit detail hosts use the same wide information/calendar layout.
-     Dates keep 40px targets; short displays scroll only the sheet body. */
-  .tool-app-root .daily-detail-sheet.habit-calendar-editor,
-  .tool-app-root .domain-sheet.domain-sheet-habit-detail.habit-calendar-editor {
-    width: min(100%, 1040px);
-    max-width: 1040px;
-    height: min(680px, calc(100dvh - 56px));
-    max-height: calc(100dvh - 56px);
-    margin: 0;
-    border-radius: var(--desktop-panel-radius);
-  }
-  .tool-app-root .habit-calendar-editor .habit-detail-body {
-    display: grid;
-    grid-template-columns: minmax(240px, .8fr) minmax(0, 1.25fr);
-    grid-template-rows: auto auto minmax(0, 1fr);
-    align-items: start;
-    gap: 12px 24px;
-    height: auto;
-    min-height: 100%;
-    padding: 12px 20px 20px;
-  }
-  .tool-app-root .habit-calendar-editor .habit-detail-domain-field { grid-column: 1; grid-row: 1; margin: 0; }
-  .tool-app-root .habit-calendar-editor .habit-detail-header { grid-column: 1; grid-row: 2; margin: 0; }
-  .tool-app-root .habit-calendar-editor .habit-detail-note-section { grid-column: 1; grid-row: 3; margin: 0; }
-  .tool-app-root .habit-calendar-editor .habit-calendar.is-detail { grid-column: 2; grid-row: 1 / 4; width: 100%; min-width: 0; margin: 0; }
-  .tool-app-root .habit-calendar-editor .habit-calendar.is-detail .habit-calendar-stats { padding-top: 0; padding-bottom: 8px; }
-  .tool-app-root .habit-calendar-editor .habit-calendar.is-detail .habit-calendar-panel { margin-top: 0; }
-  .tool-app-root .habit-calendar-editor .habit-calendar.is-detail .habit-calendar-log-scroll { height: 80px; min-height: 80px; }
-  .tool-app-root .habit-calendar-editor .habit-detail-body > .daily-message,
-  .tool-app-root .habit-calendar-editor .habit-detail-body > .domain-error { grid-column: 1 / -1; }
   .tool-app-root .daily-detail-sheet .daily-detail-scroll,
   .tool-app-root .daily-editor-sheet .daily-editor-scroll,
   .tool-app-root .domain-sheet .domain-sheet-scroll,

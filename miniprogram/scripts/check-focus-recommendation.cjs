@@ -29,7 +29,8 @@ const old=normalizePomodoroState({...initialPomodoroState,completedFocusCount:un
 const retained=normalizePomodoroState({...old,completedFocusCount:1008});assert.equal(recommend(retained.completedFocusCount,4),'longBreak');assert.equal(retained.sessions.length,4);
 
 const suggestions=load('focus-activities');
-assert.equal(suggestions.focusActivities.length,14);
+assert.equal(suggestions.focusActivities.length,15);
+assert.deepEqual(suggestions.focusActivities.find(item=>item.title==='洗杯子'),{title:'洗杯子',iconId:'clean'});
 assert.equal(suggestions.claimFocusSuggestions('owner-a','completion-1'),true);
 assert.equal(suggestions.claimFocusSuggestions('owner-a','completion-1'),false);
 assert.equal(suggestions.claimFocusSuggestions('owner-a','completion-2'),true);
@@ -46,4 +47,4 @@ for(const random of [()=>0,()=>1,()=>NaN,()=>-1,()=>Infinity,()=>0.5]){
   assert.equal(JSON.stringify(previous),before);previous=next;
  }
 }
-console.log('PASS 14-pool/3-card bounded sampling, extreme RNG, full previous-group exclusion, immutability');
+console.log('PASS 15-pool/3-card bounded sampling, extreme RNG, full previous-group exclusion, immutability');

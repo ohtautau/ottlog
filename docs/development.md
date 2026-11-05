@@ -3104,3 +3104,13 @@ AppliedOptions增加可选onClear／disabled，文字flex:1可换行、末尾X�
 Windows协调候选：设置OTTLOG_PARITY_ORIGIN=http://127.0.0.1:3017，执行web/scripts/check-editor-sort-followup-20261105.mjs及check-editor-polish.mjs。两脚本全部API隔离，前者覆盖1440/390/375、默认实际顺序、即时字段与方向持久化、失败原目标重试、X保留全部页签、提醒数量独立和便签无业务写入；后者去完成按钮／无X／隐藏提醒的旧断言。仅语法检查，未启动浏览器或3017，未声称Windows或真机验收通过；公开／个人文章浏览器实际排序、领域页签和更多窄短屏仍需协调端验收。没有证据复现历史25→26；取消／失焦误提交模型修复保持，真实focus25字段仍由根协调端验收后单独处理。
 
 结果见.tmp/editor-sort-followup-20261105-result.json。
+
+### 2026-11-05 第三批习惯详情／共用月历（候选，未部署）
+
+保留前两批源码。习惯页、领域详情沿同一habit-calendar正文及compact-editor框：桌面680px、原生72vh、24px边界、22px居中标题、透明备注、正文滚动及固定操作栏；移除网页1040px双栏覆盖。领域选择显式使用已有DomainChoiceField compact。第二批Back、busy及owner保存／重试回调未改，详情四统计仍在日历上，日志默认10条及独立滚动／更多保持；统计页不套详情框。
+
+CalendarMonthView纯展示层统一月份导航、星期、六行七列、52px日期格／28px圆圈，复用原CalendarDayContent的4px农历间距及导航14px回今天圆圈。宿主提供42天、状态、disabled、aria、点击／长按和time badge，不移动任务日程或习惯历史语义。任务时间、重复颜色、shortcut rail及habitCalendarDayEditable最近90天／未来／归档守卫保持。移除两宿主重复网格及日期按钮几何，禁用仅弱化单个日期。建议池增加洗杯子(clean)，共15项，仍3选并排除上一组，不新增媒体。
+
+本机实际通过：check-habit-detail-calendar（真实展示层元素／事件、42格与只读；真实ScheduleCalendar任务／提醒描述及时间／重复标记）、check-habit-calendar、check-habit-edit、check-calendar-date-label、check-todo-schedule、check-focus-recommendation、check-habits-focus、check-todo-autosave、check-editor-sort-followup；miniprogram typecheck、web build:tools、115份源码CSS的WXSS约束及check-weapp-styles-test。未运行退役全量路径、未安装浏览器、未改.git／部署／API／真实数据。
+
+Windows隔离3017：设置OTTLOG_PARITY_ORIGIN=http://127.0.0.1:3017后，`cd web`，运行`node scripts/check-habit-detail-calendar-20261105.mjs`。全部/api拦截，1440／390／375×667／390×440，两宿主标题备注／领域／图标旗帜与返回、42格、过去日补记持久化重开再撤销、忙时返回禁用、未来与归档禁写、月份切换／回本月、4px农历间距、日志更多及任务日期／提醒／重复共用层回归候选。仅语法检查，未运行浏览器，脚本通过与否须由协调端实跑记录。真实领域／图标／旗帜改选的保存重试、长标题展开、原生构建产物WXSS与微信真机交互尚待验收，不能由模型或构建代替。结果见.tmp/habit-detail-calendar-20261105-result.json。

@@ -1,0 +1,19 @@
+const assert=require('node:assert/strict'),fs=require('node:fs'),path=require('node:path'),ts=require('typescript');
+const root=path.join(__dirname,'../src/components');
+const react={createElement:(type,props,...children)=>({type,props:{...props,children:children.flat()}})};
+const code=ts.transpileModule(fs.readFileSync(path.join(root,'calendar-month-view.tsx'),'utf8'),{compilerOptions:{module:ts.ModuleKind.CommonJS,jsx:ts.JsxEmit.React}}).outputText,m={exports:{}};
+new Function('React','module','exports','require',code)(react,m,m.exports,dep=>dep==='@tarojs/components'?{Button:'Button',Text:'Text',View:'View'}:dep.endsWith('.css')?{}:{default:dep});
+const all=n=>!n||typeof n!=='object'?[]:[n,...(n.props?.children||[]).flatMap(all)];
+let clicked=0,long=0;const days=Array.from({length:42},(_,i)=>({date:`2026-11-${i}`,number:i,ariaLabel:`day ${i}`,disabled:i===41,pressed:i===1,onClick:()=>clicked++,onLongPress:()=>long++,badge:'time'}));
+const tree=m.exports.default({navigation:{month:'2026-11'},days}),nodes=all(tree),buttons=nodes.filter(n=>n.type==='Button');assert.equal(buttons.length,42);assert.equal(nodes.filter(n=>n.type==='Text').length,7);assert.equal(buttons[41].props.disabled,true);assert.equal(buttons[1].props['aria-pressed'],true);buttons[0].props.onClick();buttons[0].props.onLongPress();assert.equal(clicked,1);assert.equal(long,1);
+assert.equal(all(m.exports.default({navigation:{month:'2026-11'},days:days.map(d=>({...d,static:true}))})).filter(n=>n.type==='Button').length,0);
+for(const host of ['habit-calendar','todo-schedule-calendar']){const source=fs.readFileSync(path.join(root,host+'.tsx'),'utf8');assert(source.includes('<CalendarMonthView'));assert(!source.includes('<CalendarDayContent'));}
+const frame=fs.readFileSync(path.join(root,'compact-editor.css'),'utf8');assert(frame.includes('.daily-detail-sheet.habit-calendar-editor'));assert(frame.includes('width:680PX'));const css=fs.readFileSync(path.join(root,'calendar-month-view.css'),'utf8');assert(css.includes('repeat(6,52PX)'));assert(css.includes('--calendar-day-circle-size:28PX'));
+console.log('PASS shared month presentation: 42 interactive/static cells, seven weekdays, events/disabled/pressed/badge; two hosts and compact frame');
+const scheduleCode=ts.transpileModule(fs.readFileSync(path.join(root,'todo-schedule-calendar.tsx'),'utf8'),{compilerOptions:{module:ts.ModuleKind.CommonJS,jsx:ts.JsxEmit.React}}).outputText,sm={exports:{}};
+new Function('React','module','exports','require',scheduleCode)(react,sm,sm.exports,dep=>dep==='react'?{useMemo:f=>f()}:dep==='@tarojs/components'?{Text:'Text',View:'View'}:dep.endsWith('calendar-day-content')?{useCalendarDateDetails:()=>({showDate:()=>{},details:null})}:dep.endsWith('todo-schedule')?{calendarMonthDays:()=>Array.from({length:42},(_,i)=>({date:`2026-11-${String(i+1).padStart(2,'0')}`,day:i+1,inMonth:i<30})),shiftScheduleDate:()=>'',shiftCalendarMonth:m=>m}:dep.endsWith('tool-records')?{localToolDay:()=> '2026-11-05'}:{default:dep,ScheduleSymbol:'Symbol'});
+for(const reminder of [false,true])for(const readOnly of [false,true]){
+ let selected='';const tree=sm.exports.default({month:'2026-11',onMonthChange:()=>{},selectedDate:'2026-11-04',today:'2026-11-05',busy:false,readOnly,reminder,marks:{'2026-11-04':{due:true,repeat:true,dueTime:'09:00',reminderTime:'08:00'}},onSelect:d=>selected=d});
+ const view=all(tree).find(n=>n.props?.days);assert.equal(view.props.days.length,42);const day=view.props.days[3];assert(day.className.includes('has-repeat'));assert(day.className.includes('has-day-time'));assert.equal(day.pressed,true);assert(day.badge);day.onClick();assert.equal(selected,readOnly?'':'2026-11-04');
+}
+console.log('PASS actual ScheduleCalendar descriptors: task/reminder, read-only, 42 cells, time badges, repeat and selection state');

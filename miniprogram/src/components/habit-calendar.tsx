@@ -4,8 +4,8 @@ import SectionTitle from './section-title';
 import { useEffect, useMemo, useState, type ReactNode } from 'react';
 import { Button, Image, ScrollView, Text, View } from '@tarojs/components';
 import ActionButton from './ui-button';
-import CalendarMonthNavigation from './calendar-month-navigation';
-import CalendarDayContent, { useCalendarDateDetails } from './calendar-day-content';
+import CalendarMonthView from './calendar-month-view';
+import { useCalendarDateDetails } from './calendar-day-content';
 import { SelectChevron } from './select-trigger';
 import { habitMonthCalendar } from '../lib/habit-calendar';
 import { habitCalendarDayEditable } from '../lib/habit-calendar-edit';
@@ -21,11 +21,12 @@ import { habitPriorities, habitPriorityColors, habitPriorityLabels } from '../li
 import type { HabitDetailChange } from '../lib/habit-edit';
 import IconLibrarySheet from './icon-library-sheet';
 import PrioritySelect from './priority-select';
+import './compact-editor.css';
 import './habit-calendar.css';
 
 export function habitDetailSheetClass({ title, note }: { title: string; note: string }) {
   const longTitle = title.length > 32, longNote = note.length > 48 || note.includes('\n');
-  return `habit-calendar-editor${longTitle || longNote ? ' has-reading-summary' : ''}${longTitle ? ' has-long-title' : ''}${longNote ? ' has-long-note' : ''}`;
+  return `habit-calendar-editor is-compact-detail${longTitle || longNote ? ' has-reading-summary' : ''}${longTitle ? ' has-long-title' : ''}${longNote ? ' has-long-note' : ''}`;
 }
 
 export function HabitProgress({ days, streak, className = '' }: { days: number; streak: number; className?: string }) {
@@ -54,7 +55,7 @@ export function HabitDetailHeader({ item, domains, onChange, disabled = false, c
   const aligned = alignHabitDomain(item, domains);
   const selectedDomain = domains.find(domain => domain.id === aligned.domainId)?.id || '';
   const icon = <EntityIconPreview iconId={habitIconId(item)} backgroundImage={item.backgroundImage} className='habit-detail-header-art daily-detail-art' iconClassName='habit-icon' />;
-  return <><View className='habit-detail-domain-field'><DomainChoiceField domains={domains} value={selectedDomain} ariaLabel={onChange ? '选择习惯领域' : '习惯领域'} disabled={disabled} {...(onChange ? { onChange: value => onChange({ field: 'domain', value }) } : { readOnly: true as const })} /></View><EntityTitleRow className={`habit-detail-header ${className}`}>
+  return <><View className='habit-detail-domain-field'><DomainChoiceField compact domains={domains} value={selectedDomain} ariaLabel={onChange ? '选择习惯领域' : '习惯领域'} disabled={disabled} {...(onChange ? { onChange: value => onChange({ field: 'domain', value }) } : { readOnly: true as const })} /></View><EntityTitleRow className={`habit-detail-header ${className}`}>
     {onChange ? <ActionButton appearance='icon' ariaLabel='选择习惯图标' className='habit-detail-icon-picker' disabled={disabled} onClick={() => { setPriorityOpen(false); setIconPicker(true); }}>{icon}</ActionButton> : icon}
     <View className='habit-detail-header-copy'>
       <HabitDetailTitle title={item.title} className='habit-detail-header-title daily-detail-title'>
@@ -98,14 +99,12 @@ export default function HabitCalendar({ state, habitId, now, layout = 'page', de
     </View>
     <Text className='habit-calendar-streak-note'>{calendar.stats.streak ? `连续打卡截至${calendar.stats.daysSinceLast === 0 ? '今天' : '昨天'}` : '连续打卡可从今天或昨天接续'}</Text>
     <View className='habit-calendar-panel'>
-      <CalendarMonthNavigation className='habit-calendar-navigation' labelClassName='habit-calendar-month' month={month} onMonthChange={setMonth} currentMonth={currentMonth} minMonth='0000-01' maxMonth={currentMonth} disabled={disabled} prefix='打卡' scopeKey={habitId} previousLabel='查看上个月打卡' currentLabel='回到本月打卡' nextLabel='查看下个月打卡' />
-      <View className='habit-calendar-weekdays'>{['日', '一', '二', '三', '四', '五', '六'].map(day => <Text key={day}>{day}</Text>)}</View>
-      <View className='habit-calendar-grid'>{calendar.days.map(day => {
-        const className = `habit-calendar-day${day.inMonth ? '' : ' is-outside'}${day.completed ? ' is-completed' : ''}${day.today ? ' is-today' : ''}${day.future ? ' is-future' : ''}`;
-        const ariaLabel = `${day.day}${day.today ? ' 今天' : ''}${day.completed ? ' 已打卡' : day.future ? ' 尚未到来' : ' 未打卡'}`;
-        const content = <CalendarDayContent date={day.day} number={day.date} circleClass='habit-calendar-day-circle'>{day.completed && <View className='habit-calendar-check'><View className='daily-small-check' /></View>}</CalendarDayContent>;
-        return interactive ? <Button key={day.day} className={className} ariaLabel={ariaLabel} aria-pressed={day.completed} disabled={disabled || !enabled || !habitCalendarDayEditable(day.day, now)} hoverClass='habit-calendar-day-pressed' onClick={() => onDayToggle?.(day.day)} onLongPress={() => { if (!disabled) showDate(day.day); }}>{content}</Button> : <View key={day.day} className={className} ariaLabel={ariaLabel} onLongPress={() => showDate(day.day)}>{content}</View>;
-      })}</View>
+      <CalendarMonthView navigation={{className:'habit-calendar-navigation', labelClassName:'habit-calendar-month', month, onMonthChange:setMonth, currentMonth, minMonth:'0000-01', maxMonth:currentMonth, disabled, prefix:'打卡', scopeKey:habitId, previousLabel:'查看上个月打卡', currentLabel:'回到本月打卡', nextLabel:'查看下个月打卡'}} gridClassName='habit-calendar-grid' weekdayClassName='habit-calendar-weekdays' days={calendar.days.map(day => ({
+        date:day.day, number:day.date, className:`habit-calendar-day${day.inMonth ? '' : ' is-outside'}${day.completed ? ' is-completed' : ''}${day.today ? ' is-today' : ''}${day.future ? ' is-future' : ''}`,
+        ariaLabel:`${day.day}${day.today ? ' 今天' : ''}${day.completed ? ' 已打卡' : day.future ? ' 尚未到来' : ' 未打卡'}`, pressed:day.completed, static:!interactive,
+        disabled:disabled || !enabled || !habitCalendarDayEditable(day.day,now), onClick:()=>onDayToggle?.(day.day), onLongPress:()=>{if(!disabled)showDate(day.day);}, circleClass:'habit-calendar-day-circle',
+        children:day.completed && <View className='habit-calendar-check'><View className='daily-small-check' /></View>
+      }))} />
     </View>
 
     <View className='habit-calendar-log'><View className='habit-calendar-log-heading'><SectionTitle inRow>月打卡日志</SectionTitle><Text className='habit-calendar-log-count'>{calendar.logs.length} 条</Text>{layout === 'detail' && detailAction}</View>
