@@ -3161,3 +3161,13 @@ FocusSession新增可选restStartedId，在共用startTimer真正开始休息时
 本机实际通过：新增check-focus-rest-return（两种休息完整／0秒／1ms／1秒结束、暂停、归一化存储重开、离页等价快照与晚到期、共享手动／明确选择／原生自动入口、旧休息证据只读、切页签、新focus、同ID重试、未知字段／真实时长／计数／deadline及state-local owner证据）；check-editor-refinements、check-habits-focus、check-focus-recommendation、check-custom-rest-activities、check-followup-autosave、check-personal-tools、check-personal-tool-auto-sync、check-pomodoro-cross-client、web/check-wheel-events.cjs、check-focus-save-jitter（115份源CSS WXSS约束）、check-weapp-styles-test、miniprogram typecheck、web build:tools及新浏览器脚本语法检查。旧cross-client首次因退役web模型路径ENOENT失败，现按build-tool-app实际共享入口读取模型并保留原断言；首次误用wheel-events.mjs失败，正确.cjs通过。没有将这些初次失败计为通过。
 
 Windows协调候选：OTTLOG_PARITY_ORIGIN=http://127.0.0.1:3017，在web运行node scripts/check-focus-rest-return-20261105.mjs；全/api拦截，1440×900／390×844／390×440，真实休息按钮、短长推荐高亮与等宽同高、切模式未ack、暂停结束、休息中路由重开及离页模拟deadline到期、存储reload、25:00／开始专注、下一focus到期建议及同UI会话不重复。即时结束精确0秒由模型保证，浏览器点击耗时不承诺0秒。另运行既有check-rest-activity-lifecycle-20261105.mjs（管理草稿到期与owner）、check-focus-live-settings.mjs及check-custom-rest-activities-20261105.mjs。新脚本仅语法检查，未运行Chromium／3017；浏览器真实几何和操作、正常小程序构建／产物WXSS及微信真机均待协调端。模型快照不能替代路由或后台实测。未安装依赖、访问凭据／真实账号或改API／系统／镜像／部署／.git。结果见.tmp/focus-rest-return-20261105-result.json。
+
+### 2026-11-05 休息返回协调验收
+
+运行时源码f1ce5a2fb79a1d8ccb6d98295d9fe10b743841ad，候选ottlog-web:20261105T112408Z-39c5b60fa16e。Windows真实Chromium的check-focus-rest-return-20261105已通过12种组合（三宽高×短／长×立即结束／正常到期）：Date固定而真实浏览器定时器照常，实际点击暂停／结束精确0秒且未新增虚构历史；正常到期用clock移到原deadline之后，通过原后台监控完成；离页／硬刷新后25:00及开始专注、新focus能完成且保留建议。相同UI会话用真实网站导航检查不重复，完整document reload另算新建议会话，不能把两者混同。所有API为隔离夹具。
+
+浏览器另发现390×440原stage会缩至0而留下200px旧番茄，遮挡并挤出休息按钮；网页专注改为≤500px高紧凑网格（标题／模式同排，图与右侧选择分区，操作行独立），40px反馈槽不变。新断言检查番茄完整位于正高度stage内、按钮≥40px且视窗内、elementFromPoint实际命中按钮，12组合通过，无强制点击。正常宽屏和较高窄屏保留原布局，原生几何未改。
+
+check-rest-activity-lifecycle-20261105实际1440及390×440通过（管理草稿到期、迟到请求与owner／退出）；check-focus-live-settings实际1440鼠标和390触摸四列、延迟保存几何及运行deadline通过。共享模型零秒复现由修前true变为false，check-focus-rest-return、check-pomodoro-cross-client、check-focus-recommendation、check-personal-tool-auto-sync通过。正常小程序typecheck及build通过：115源／17产物WXSS、15页、21 ES2019、主包1,401,405字节、媒体138,608字节。首次默认沙箱构建创建dist目录遭EPERM，使用已授权工作区权限完成正常构建；未放宽检查。未发布小程序，微信原生／真机仍未验收。
+
+用户报告当前轮已经休息结束；仅有旧focus记录且无休息证据时，不在启动时猜测或迁移其它账号。协调端将先备份、核对该轮ID和无active，仅给此轮添加显式已处理标记（acknowledged前缀），不创建计时或历史，不改时长、次数、内容、自定义建议及未知数据；若当前轮变化则跳过。真实处理与上线结果另记发布记录。
