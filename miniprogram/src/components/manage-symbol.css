@@ -45,3 +45,6 @@
 .time-symbol > view + view { top:8PX;width:5PX;height:1.7PX; }
 .rest-symbol > view { position:absolute;top:3PX;left:5PX;width:2PX;height:14PX;background:currentColor;border-radius:2PX; }
 .rest-symbol > view + view { left:13PX; }
+
+.refresh-symbol { width:24PX;height:24PX;position:relative;display:block;box-sizing:border-box;border:2PX solid currentColor;border-right-color:transparent;border-radius:50%; }
+.refresh-symbol > view { position:absolute;right:-2PX;top:-2PX;width:8PX;height:8PX;border-right:2PX solid currentColor;border-bottom:2PX solid currentColor; }

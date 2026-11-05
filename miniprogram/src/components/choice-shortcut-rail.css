@@ -1,3 +1,7 @@
 .choice-shortcut-rail { width:100%;min-width:0;flex:none; }
 .choice-shortcut-track { display:flex;align-items:center;gap:8PX;padding:4PX 0 8PX; }
 .choice-shortcut-track > button { flex:none;min-width:72PX;margin:0;padding-left:12PX;padding-right:12PX;white-space:nowrap; }
+
+.choice-shortcut-row { display:flex;align-items:center;gap:8PX;min-width:0;width:100%; }
+.choice-shortcut-leading { flex:none;display:flex;align-items:center;padding-bottom:4PX; }
+.choice-shortcut-row .choice-shortcut-rail { flex:1;min-width:0;width:0; }

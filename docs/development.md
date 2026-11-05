@@ -3072,3 +3072,20 @@ AGENTS／Design顶部第五项已按162af67更新受控原生Canvas PNG保alpha�
 本机实际通过：上述源样式检查、check-weapp-styles-test、check-focus-recommendation、check-habits-focus、miniprogram typecheck、web build:tools、浏览器脚本语法与git diff --check。未安装／运行浏览器或微信编译器；宽窄屏实际几何、延迟PUT+真实触摸四列、运行deadline、失败重试及真机仍交Windows协调端验收。现有脚本deadline比较仍发生于idle，不能算运行中deadline验收。结果见.tmp/focus-save-jitter-result.json。未改API／业务数据／.git／部署、未提交或推送。
 
 Windows隔离候选：`cd web`，设置`OTTLOG_PARITY_ORIGIN=http://127.0.0.1:3017`后运行`node scripts/check-focus-activity-habit.mjs`及`node scripts/check-focus-layout-spacing.mjs`；脚本存在及构建成功不代表浏览器通过。
+
+### 2026-11-05 休息建议三选与网页滚轮候选
+
+休息建议共用14项只读池，新增敷面膜(shower)、洗脸(water)、刷牙(brush)，不新增媒体。selectFocusActivities用有界部分Fisher–Yates选3项，优先排除上一组，常量/非有限/极值随机源也不重试。每次开窗重选，刷新仅内存UI；原owner、可见及完成ID自动一次守卫不变。移除72vh固定高，三列紧凑网格（极窄两列），padding由ScrollView内View拥有；56px刷新按钮沿独立SheetActions和floating-window底距至少16px，不参与内容滚动。
+
+网页WheelColumn审查发现：原pointerDown无移动也begin，取消也settle；begin会关闭CSS snap并授权随后的scroll提交，故程序回填/吸附可被误认作用户变化。此次只在实际位移超过3px后授权拖动；网页触摸与鼠标共用受控位移及capture（touch-action:none避免浏览器pan取消指针），取消/失捕/blur还原受控值且不提交，pointerUp正常完成才停稳保存。settle读取最新受控selected，关闭/重开仍沿原账号设置；共用WheelPicker当前值拼装、autosave reset/blocked及settings合并路径未发现初始化写26，保留原实现，不重置25、不改active/deadline，原生SilentWheelColumn未改。**这是源码证据及事件模型验证，尚未复现用户实际25→26的Chromium触发条件，不宣称实际故障已验收修复。**
+
+日期/提醒/重复复用抽出的ScheduleSymbol及ChoiceShortcutRail.leading，符号固定在横滑区外，选项/日历/实时保存不变。旧11活动全列断言已改3选及刷新排除上一组。
+
+本机通过：check-focus-recommendation（14池/3选、极值随机、无修改、owner/完成ID）；web/check-wheel-events（真实WheelColumn确定性hooks/事件、无移动/微动/迟到scroll/取消/失捕/触屏与鼠标主动26、键盘/受控回填）；check-followup-autosave（失败同值重试/owner/deadline）；check-wheel-time-data、check-todo-schedule、check-habits-focus、check-focus-save-jitter（113源CSS）、check-weapp-styles-test；miniprogram typecheck、web build:tools及3份浏览器脚本语法。check-silent-wheel-feedback尝试启动浏览器因缺少Chromium可执行文件失败，没有安装浏览器，不作为通过证据。
+
+协调端更新隔离3017候选后，设OTTLOG_PARITY_ORIGIN=http://127.0.0.1:3017：
+- node scripts/check-rest-suggestions-20261105.mjs：全部API拦截；桌面/375×667/390/390×440，3卡/刷新无PUT/最后卡完整处于滚动内容视口/56px按钮/右下16px；无移动鼠标与tap、CDP微触摸、zoom/resize、其它列、25重开及主动26重开；三模式图标横滚固定。
+- node scripts/check-focus-activity-habit.mjs 与 check-focus-layout-spacing.mjs：旧全列断言更新为三选及刷新。
+- node scripts/check-focus-live-settings.mjs：已有运行deadline/真实触屏与鼠标滚轮候选验证。
+
+上述浏览器脚本仅语法检查，尚未实跑；浏览器缩放/触摸/短屏、运行deadline、微信原生及真机验收仍待协调端，模型不替代实测。本轮未写.git、部署、系统、API或真实业务数据；未提交/推送。结果见.tmp/rest-suggestions-20261105-result.json。

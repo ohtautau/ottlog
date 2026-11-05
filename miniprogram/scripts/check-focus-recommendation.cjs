@@ -29,10 +29,21 @@ const old=normalizePomodoroState({...initialPomodoroState,completedFocusCount:un
 const retained=normalizePomodoroState({...old,completedFocusCount:1008});assert.equal(recommend(retained.completedFocusCount,4),'longBreak');assert.equal(retained.sessions.length,4);
 
 const suggestions=load('focus-activities');
-assert.equal(suggestions.focusActivities.length,11);
+assert.equal(suggestions.focusActivities.length,14);
 assert.equal(suggestions.claimFocusSuggestions('owner-a','completion-1'),true);
 assert.equal(suggestions.claimFocusSuggestions('owner-a','completion-1'),false);
 assert.equal(suggestions.claimFocusSuggestions('owner-a','completion-2'),true);
 assert.equal(suggestions.claimFocusSuggestions('owner-b','completion-1'),true);
 assert.equal(suggestions.claimFocusSuggestions('owner-b',''),false);
 console.log('PASS suggestion UI completion/owner isolation, no storage');
+
+for(const random of [()=>0,()=>1,()=>NaN,()=>-1,()=>Infinity,()=>0.5]){
+ let previous=[];
+ for(let i=0;i<100;i++){
+  const before=JSON.stringify(previous), next=suggestions.selectFocusActivities(previous,random);
+  assert.equal(next.length,3);assert.equal(new Set(next.map(x=>x.title)).size,3);
+  assert(next.every(x=>!previous.some(y=>y.title===x.title)));
+  assert.equal(JSON.stringify(previous),before);previous=next;
+ }
+}
+console.log('PASS 14-pool/3-card bounded sampling, extreme RNG, full previous-group exclusion, immutability');

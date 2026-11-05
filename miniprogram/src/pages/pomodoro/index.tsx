@@ -1,5 +1,6 @@
+import { RefreshSymbol } from '../../components/manage-symbol';
 import { useMessageNotice } from '../../components/message-notice';
-import { focusActivities, claimFocusSuggestions, resetFocusSuggestionsOwner } from '../../lib/focus-activities';
+import { selectFocusActivities, claimFocusSuggestions, resetFocusSuggestionsOwner } from '../../lib/focus-activities';
 import useSettledAutosave from '../../lib/use-settled-autosave';
 import ActionMenu from '../../components/action-menu';
 import { isWebTool } from '../../lib/tool-platform';
@@ -66,6 +67,8 @@ export default function Pomodoro() {
   const [visible, setVisible] = useState(true);
   const [clockSize, setClockSize] = useState(200);
   const [draft, setDraft] = useState<{ owner: string; selection: TimerSelection } | null>(null);
+  const [suggestionCards,setSuggestionCards]=useState(()=>selectFocusActivities());
+  function openSuggestions(nextOwner:string){setSuggestionCards(previous=>selectFocusActivities(previous));setSuggestionsOwner(nextOwner);}
   const [suggestionsOwner,setSuggestionsOwner]=useState<string|null>(null);
   const [backgroundSettings,setBackgroundSettings]=useState<{owner:string;settings:TimerSettings}|null>(null);
   const [settingsDraft, setSettingsDraft] = useState<Record<DurationSetting, string> | null>(null);
@@ -121,7 +124,7 @@ export default function Pomodoro() {
   useEffect(()=>{
     if(!visible || !ready || !valid || !owner || !suggestionId || settingsDraft) return;
     const show=()=>{if(isWebTool && document.visibilityState==='hidden')return;
-      if(claimFocusSuggestions(owner,suggestionId))setSuggestionsOwner(owner);};
+      if(claimFocusSuggestions(owner,suggestionId))openSuggestions(owner);};
     show();
     if(isWebTool){document.addEventListener('visibilitychange',show);return()=>document.removeEventListener('visibilitychange',show);}
   },[visible,ready,valid,owner,suggestionId,!!settingsDraft]);
@@ -378,7 +381,7 @@ export default function Pomodoro() {
 
   return <><PageScroll scrollY={!modalOpen} animateScroll={false} snapSections={[]}><View className='tool-page focus-page core-page' onClick={() => { if (sourceMenuOpen) setSourceMenuOwner(null); }}><CoreScreen className='focus-core'>
     {!ready ? <View className='tool-empty'><Text>{status || '正在恢复你的计时…'}</Text><ActionButton className="button-label tool-secondary" onClick={retry}>重新读取</ActionButton></View> : !valid ? <View className='tool-empty'>当前计时数据格式暂不兼容，请到网页查看。原始数据已保留。</View> : <>
-        <PageToolbar className='focus-page-toolbar' leading={!!owner && <PageToolbarSummary countLabel={`今日完成 ${toolbarSummary.completedToday}`} recentTitle={toolbarSummary.recentTitle} recentLabel='最近专注' />} manage={owner && <ActionMenu ariaLabel='专注更多操作' open={settingsMenuOpen} onOpenChange={setSettingsMenuOpen} disabled={busy || notificationBusy}><ActionButton appearance='quiet' disabled={busy || notificationBusy} onClick={() => {setSettingsMenuOpen(false);openSettings();}}>调整时长</ActionButton><ActionButton appearance='quiet' onClick={()=>{setSettingsMenuOpen(false);setSuggestionsOwner(owner);}}>休息建议</ActionButton></ActionMenu>} />
+        <PageToolbar className='focus-page-toolbar' leading={!!owner && <PageToolbarSummary countLabel={`今日完成 ${toolbarSummary.completedToday}`} recentTitle={toolbarSummary.recentTitle} recentLabel='最近专注' />} manage={owner && <ActionMenu ariaLabel='专注更多操作' open={settingsMenuOpen} onOpenChange={setSettingsMenuOpen} disabled={busy || notificationBusy}><ActionButton appearance='quiet' disabled={busy || notificationBusy} onClick={() => {setSettingsMenuOpen(false);openSettings();}}>调整时长</ActionButton><ActionButton appearance='quiet' onClick={()=>{setSettingsMenuOpen(false);openSuggestions(owner);}}>休息建议</ActionButton></ActionMenu>} />
         <CategoryRow className='focus-toolbar' contentClassName='focus-modes' ariaLabel='计时模式'>{timerModes.map(mode => <CategoryButton key={mode.id} disabled={busy || notificationBusy || (!!active && mode.id !== currentMode)} className={'button-label ' + (currentMode === mode.id ? 'is-active' : '')} onClick={() => { if (!active) void update(previous => ({ ...previous, mode: mode.id })); }}>{mode.label}</CategoryButton>)}</CategoryRow>
         <FocusProgress resetKey={JSON.stringify([owner,currentMode,active?.id ?? completedFocus?.id ?? 'idle'])} progress={completedFocus ? 100 : progress} resting={!completedFocus && currentMode !== 'focus'} />
         <View className={`focus-clock-card ${currentMode !== 'focus' ? 'is-break' : ''}`}>
@@ -433,8 +436,9 @@ export default function Pomodoro() {
       <View className='focus-suggestions-window floating-window' role='dialog' ariaLabel='休息建议'>
         <EditorHeading title='休息建议' actions={<ActionButton appearance='icon' ariaLabel='关闭休息建议' onClick={()=>setSuggestionsOwner(null)}>×</ActionButton>} />
         <ScrollView scrollY enhanced bounces={false} showScrollbar={false} className='focus-suggestions-scroll'>
-          <View className='focus-suggestions-grid'>{focusActivities.map(activity=><View key={activity.title} className='focus-suggestion-card'><LibraryIcon name={activity.iconId}/><Text>{activity.title}</Text></View>)}</View>
+          <View className='focus-suggestions-grid'>{suggestionCards.map(activity=><View key={activity.title} className='focus-suggestion-card'><LibraryIcon name={activity.iconId}/><Text>{activity.title}</Text></View>)}</View>
         </ScrollView>
+        <SheetActions className='focus-suggestions-actions'><ActionButton appearance='primary' className='focus-suggestions-refresh' ariaLabel='换一组休息建议' onClick={()=>setSuggestionCards(previous=>selectFocusActivities(previous))}><RefreshSymbol/></ActionButton></SheetActions>
       </View>
     </View>}
     {durationClose.dialog}

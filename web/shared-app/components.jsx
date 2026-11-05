@@ -75,7 +75,7 @@ function WheelColumn({ column, selected, rowHeight, onSelect, onStart, onEnd }) 
   const pointerHeld = useRef(false);
   const label = column.props.ariaLabel || column.props['aria-label'];
   function begin() { if (!moving.current) { moving.current = true; setScrolling(true); onStart?.(); } }
-  const latest = useRef({ onSelect, onEnd }); latest.current = { onSelect, onEnd };
+  const latest = useRef({ onSelect, onEnd, selected }); latest.current = { onSelect, onEnd, selected };
   const bounded = index => Math.max(0, Math.min(items.length - 1, index));
   function align(index) { if (ref.current) ref.current.scrollTop = index * rowHeight; }
   function settle() {
@@ -86,11 +86,16 @@ function WheelColumn({ column, selected, rowHeight, onSelect, onStart, onEnd }) 
       const index = bounded(Math.round(ref.current.scrollTop / rowHeight));
       current.current = index; align(index);
       moving.current = false; setScrolling(false);
-      if (index !== selected) latest.current.onSelect(index); latest.current.onEnd?.();
+      if (index !== latest.current.selected) latest.current.onSelect(index); latest.current.onEnd?.();
     }, 150);
   }
   useLayoutEffect(() => { if (!moving.current) { current.current = selected; align(selected); } }, [selected, items.length, rowHeight]);
   useEffect(() => () => { clearTimeout(timer.current); latest.current.onEnd?.(); }, []);
+  function cancelGesture() {
+    clearTimeout(timer.current); pointerHeld.current = false; drag.current = null; suppressClick.current = true;
+    current.current = latest.current.selected; align(current.current);
+    if (moving.current) { moving.current = false; setScrolling(false); latest.current.onEnd?.(); }
+  }
   function pick(index) {
     clearTimeout(timer.current); const next = bounded(index);
     current.current = next; align(next); latest.current.onSelect(next);
@@ -106,10 +111,32 @@ function WheelColumn({ column, selected, rowHeight, onSelect, onStart, onEnd }) 
         if (moving.current) settle();
         else align(current.current);
       }}
-      onPointerDown={event => { pointerHeld.current = true; suppressClick.current = false; begin(); if (event.pointerType !== 'mouse' || event.button !== 0) return; drag.current = { y: event.clientY, top: event.currentTarget.scrollTop, moved: false }; }}
-      onPointerMove={event => { if (!drag.current) return; const delta = drag.current.y - event.clientY; if (Math.abs(delta) > 3) { drag.current.moved = true; if (!event.currentTarget.hasPointerCapture(event.pointerId)) event.currentTarget.setPointerCapture(event.pointerId); } if (drag.current.moved) event.currentTarget.scrollTop = drag.current.top + delta; }}
-      onPointerUp={event => { pointerHeld.current = false; if (event.currentTarget.hasPointerCapture(event.pointerId)) event.currentTarget.releasePointerCapture(event.pointerId); suppressClick.current = !!drag.current?.moved; if (suppressClick.current) event.preventDefault(); drag.current = null; settle(); }}
-      onPointerCancel={() => { pointerHeld.current = false; drag.current = null; settle(); }}>
+      onPointerDown={event => {
+        if (event.button != null && event.button !== 0) return;
+        if (moving.current) cancelGesture();
+        pointerHeld.current = true; suppressClick.current = false;
+        drag.current = { y: event.clientY, top: event.currentTarget.scrollTop, moved: false };
+      }}
+      onPointerMove={event => {
+        if (!drag.current || !pointerHeld.current) return;
+        const delta = drag.current.y - event.clientY;
+        if (Math.abs(delta) > 3 && !drag.current.moved) {
+          drag.current.moved = true; begin();
+          event.currentTarget.setPointerCapture(event.pointerId);
+        }
+        if (drag.current.moved) event.currentTarget.scrollTop = drag.current.top + delta;
+      }}
+      onPointerUp={event => {
+        const moved = !!drag.current?.moved;
+        pointerHeld.current = false; drag.current = null;
+        suppressClick.current = moved;
+        if (event.currentTarget.hasPointerCapture(event.pointerId)) event.currentTarget.releasePointerCapture(event.pointerId);
+        if (moved) { event.preventDefault(); settle(); }
+        else if (!moving.current) align(latest.current.selected);
+      }}
+      onPointerCancel={cancelGesture}
+      onLostPointerCapture={() => { if (pointerHeld.current) cancelGesture(); }}
+      onBlur={cancelGesture}>
       {items.map((item, index) => <div id={`${label}-${index}`} role='option' aria-selected={selected === index} key={item.key || index} className='browser-wheel-option' onClick={() => { if (!suppressClick.current) pick(index); suppressClick.current = false; }}>{item}</div>)}
     </div><div className='browser-wheel-indicator' aria-hidden />
   </div>;

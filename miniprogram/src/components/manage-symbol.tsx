@@ -43,3 +43,5 @@ export function SelectionSymbol() { return <View className='selection-symbol' ar
 
 export function TimeSymbol(){return <View className='time-symbol' aria-hidden><View/><View/></View>;}
 export function RestSymbol(){return <View className='rest-symbol' aria-hidden><View/><View/></View>;}
+
+export function RefreshSymbol(){return <View className='refresh-symbol' aria-hidden><View/></View>;}
