@@ -3114,3 +3114,13 @@ CalendarMonthView纯展示层统一月份导航、星期、六行七列、52px�
 本机实际通过：check-habit-detail-calendar（真实展示层元素／事件、42格与只读；真实ScheduleCalendar任务／提醒描述及时间／重复标记）、check-habit-calendar、check-habit-edit、check-calendar-date-label、check-todo-schedule、check-focus-recommendation、check-habits-focus、check-todo-autosave、check-editor-sort-followup；miniprogram typecheck、web build:tools、115份源码CSS的WXSS约束及check-weapp-styles-test。未运行退役全量路径、未安装浏览器、未改.git／部署／API／真实数据。
 
 Windows隔离3017：设置OTTLOG_PARITY_ORIGIN=http://127.0.0.1:3017后，`cd web`，运行`node scripts/check-habit-detail-calendar-20261105.mjs`。全部/api拦截，1440／390／375×667／390×440，两宿主标题备注／领域／图标旗帜与返回、42格、过去日补记持久化重开再撤销、忙时返回禁用、未来与归档禁写、月份切换／回本月、4px农历间距、日志更多及任务日期／提醒／重复共用层回归候选。仅语法检查，未运行浏览器，脚本通过与否须由协调端实跑记录。真实领域／图标／旗帜改选的保存重试、长标题展开、原生构建产物WXSS与微信真机交互尚待验收，不能由模型或构建代替。结果见.tmp/habit-detail-calendar-20261105-result.json。
+
+### 2026-11-05 第四批：账号自定义休息建议（候选，未部署）
+
+保留前三批及协调端lostpointercapture隐式触控capture守卫、网页真实100dvh建议窗覆盖。默认15项仅只读呈现；PomodoroState可选restActivities，首次显式新增／删除才物化完整列表，显式[]不补默认。稳定id/title/iconId，名称trim后1–30字、大小写不敏感唯一、合法图库、最多60项；异常字段或行内未知属性整池只读保留，normalize不擦除。updater仅替换restActivities，原timer/settings/selection/session及未知字段保留；新增同ID重试，删除同ID幂等。
+
+查看仍最多3卡及56px刷新、刷新不保存；ActionMenu→编辑复用entity-choice-options、LibraryIcon、EntityTitleInput、EditorHeading／EditorBackButton、24px正文与SheetActions 16px底部。图标库仅新增可选back属性，本宿主显示返回，其它宿主不变。删除AppDialog确认，失败原目标仍可重试，通知沿useMessageNotice→现有OperationToast。管理不停止计时，setValue后等待原syncPersonalTool队列确认，失败不关闭；组件代际／卸载与owner隔离保持。管理共用原focus-suggestions-window，因此网页真实视口覆盖同样生效，不修改共享dvh。无排序、颜色体系或后端变更。
+
+本机通过：check-custom-rest-activities、check-focus-recommendation、web/check-wheel-events、check-personal-tools、check-personal-tool-auto-sync、check-followup-autosave、check-habits-focus、check-weapp-styles-test、check-focus-save-jitter、miniprogram typecheck、web build:tools及浏览器候选脚本语法。WXSS为源码约束，未运行原生编译产物检查或微信真机。未操作.git、API、部署或真实账号数据，未安装浏览器／大依赖。
+
+Windows隔离3017候选：`cd web`，设置`OTTLOG_PARITY_ORIGIN=http://127.0.0.1:3017`，运行`node scripts/check-custom-rest-activities-20261105.mjs`。脚本拦截全部/api，覆盖1440/390×440/375×667、15项管理、新增选图库图标、503后同ID重试、删默认及自定义、全删空态后重开／刷新／再添加、少于3项、运行deadline与未知字段保留、3卡刷新无PUT及footer至少16px。另运行既有check-rest-suggestions-20261105.mjs与check-focus-live-settings.mjs。本机仅语法检查，未启动浏览器；**脚本准备不等于验收通过**。owner切换／退出、延迟GET及管理期间到期还须协调端按同样API夹具人工或追加浏览器情景验收（底层队列模型通过不能替代UI实测），各窗键盘／触屏与footer实际边界亦待实跑。结果见.tmp/custom-rest-activities-20261105-result.json。

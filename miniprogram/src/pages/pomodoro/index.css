@@ -85,3 +85,5 @@
 .focus-suggestions-refresh.ui-button { --control-primary-height:56PX;--control-radius:50%;--control-primary-background:#d5ebcf;--control-primary-text:#24372f;width:56PX;min-width:56PX;height:56PX;padding:0!important;display:flex;align-items:center;justify-content:center;margin:0;background-color:#d5ebcf;color:#24372f; }
 .focus-suggestion-card > text { text-align:center;overflow-wrap:anywhere; }
 @media(max-width:340px){.focus-suggestions-grid { grid-template-columns:repeat(2,minmax(0,1fr));padding-left:16PX;padding-right:16PX; }}
+.rest-manager-body { padding:16PX 24PX; }
+.rest-manager-body .entity-choice-option { min-height:40PX; }

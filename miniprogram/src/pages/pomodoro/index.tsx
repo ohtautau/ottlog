@@ -1,3 +1,6 @@
+import RestActivityManager from '../../components/rest-activity-manager';
+import { restActivityPool, changeRestActivities, type RestActivity } from '../../lib/rest-activities';
+import { EditSymbol } from '../../components/manage-symbol';
 import EditorBackButton from '../../components/editor-back-button';
 import { RefreshSymbol } from '../../components/manage-symbol';
 import { useMessageNotice } from '../../components/message-notice';
@@ -69,7 +72,16 @@ export default function Pomodoro() {
   const [clockSize, setClockSize] = useState(200);
   const [draft, setDraft] = useState<{ owner: string; selection: TimerSelection } | null>(null);
   const [suggestionCards,setSuggestionCards]=useState(()=>selectFocusActivities());
-  function openSuggestions(nextOwner:string){setSuggestionCards(previous=>selectFocusActivities(previous));setSuggestionsOwner(nextOwner);}
+  const restPool=restActivityPool(state);
+  const [restManaging,setRestManaging]=useState(false),[restMenu,setRestMenu]=useState(false);
+  function openSuggestions(nextOwner:string){setSuggestionCards(previous=>selectFocusActivities(previous,Math.random,restPool.items));setRestManaging(false);setSuggestionsOwner(nextOwner);}
+  async function mutateRest(change:{add:RestActivity}|{remove:string}) {
+    const expected=owner;
+    if(!ready||!valid||!owner||owner==='guest'||busy||!restPool.writable)throw new Error('休息建议暂不可编辑');
+    await setValue(previous=>{if(!mounted.current||ownerRef.current!==expected||!isPomodoroState(previous))throw new Error('账号或数据已变化');return changeRestActivities(previous,change);});
+    await syncPersonalTool('pomodoro',expected);
+    if(!mounted.current||ownerRef.current!==expected)throw new Error('账号已变化');
+  }
   const [suggestionsOwner,setSuggestionsOwner]=useState<string|null>(null);
   const [backgroundSettings,setBackgroundSettings]=useState<{owner:string;settings:TimerSettings}|null>(null);
   const [settingsDraft, setSettingsDraft] = useState<Record<DurationSetting, string> | null>(null);
@@ -119,7 +131,7 @@ export default function Pomodoro() {
   const round = completedRounds % displaySettings.longEvery + 1;
   const toolbarSummary = pomodoroToolbarSummary(state.sessions, Date.now());
 
-  useEffect(()=>{if(owner)resetFocusSuggestionsOwner(owner);setSuggestionsOwner(null);},[owner]);
+  useEffect(()=>{if(owner)resetFocusSuggestionsOwner(owner);setSuggestionsOwner(null);setRestManaging(false);setRestMenu(false);setSuggestionCards([]);},[owner]);
   const suggestionId = isWebTool ? pendingFocusCompletion(state)?.id :
     state.active?.originFocusId && state.sessions.find(session=>session.id===state.active?.originFocusId && session.mode==='focus' && session.completed)?.id;
   useEffect(()=>{
@@ -135,10 +147,10 @@ export default function Pomodoro() {
     const nodes=[document.documentElement,document.body,...Array.from(document.querySelectorAll<HTMLElement>('.app-page-scroll,.page-scroll,.tool-workspace'))];
     const saved=nodes.map(node=>({node,overflow:node.style.overflow,top:node.scrollTop}));
     nodes.forEach(node=>{node.style.overflow='hidden';});
-    const escape=(event:KeyboardEvent)=>{if(event.key==='Escape' && suggestionsOwner===owner)setSuggestionsOwner(null);};
+    const escape=(event:KeyboardEvent)=>{if(event.key==='Escape' && !restManaging && suggestionsOwner===owner)setSuggestionsOwner(null);};
     document.addEventListener('keydown',escape);
     return()=>{saved.forEach(({node,overflow,top})=>{node.style.overflow=overflow;node.scrollTop=top;});document.removeEventListener('keydown',escape);};
-  },[modalOpen,owner,suggestionsOwner]);
+  },[modalOpen,owner,suggestionsOwner,restManaging]);
   useDidShow(() => {
     setNow(Date.now()); setVisible(true);
     const entry = takePomodoroEntry();
@@ -433,13 +445,14 @@ export default function Pomodoro() {
       <SheetActions><ActionButton appearance='primary' disabled={wheelMoving || busy || notificationBusy} onClick={saveDuration}>确认</ActionButton></SheetActions>
     </View></View>}
     {suggestionsOwner===owner && !!owner && visible && <View className='focus-suggestions-overlay'>
-      <SheetBackdrop onClose={()=>setSuggestionsOwner(null)} />
+      <SheetBackdrop disabled={restManaging} onClose={()=>setSuggestionsOwner(null)} />
       <View className='focus-suggestions-window floating-window' role='dialog' ariaLabel='休息建议'>
-        <EditorHeading title='休息建议' actions={<ActionButton appearance='icon' ariaLabel='关闭休息建议' onClick={()=>setSuggestionsOwner(null)}>×</ActionButton>} />
+        {restManaging?<RestActivityManager key={owner} owner={owner} items={restPool.items} disabled={!ready||!valid||busy||!restPool.writable} onChange={mutateRest} onBack={()=>{setRestManaging(false);setSuggestionCards(previous=>selectFocusActivities(previous,Math.random,restPool.items));}}/>:<>
+        <EditorHeading title='休息建议' actions={<><ActionMenu ariaLabel='休息建议更多操作' open={restMenu} onOpenChange={setRestMenu}><ActionButton appearance='quiet' onClick={()=>{setRestMenu(false);setRestManaging(true);}}><EditSymbol/>编辑</ActionButton></ActionMenu><ActionButton appearance='icon' ariaLabel='关闭休息建议' onClick={()=>setSuggestionsOwner(null)}>×</ActionButton></>} />
         <ScrollView scrollY enhanced bounces={false} showScrollbar={false} className='focus-suggestions-scroll'>
-          <View className='focus-suggestions-grid'>{suggestionCards.map(activity=><View key={activity.title} className='focus-suggestion-card'><LibraryIcon name={activity.iconId}/><Text>{activity.title}</Text></View>)}</View>
+          <View className='focus-suggestions-grid'>{!restPool.items.length&&<View>{restPool.writable?'暂无休息建议，请从编辑添加':'休息建议格式不兼容，原数据已保留'}<ActionButton appearance='quiet' onClick={()=>setRestManaging(true)}>添加休息建议</ActionButton></View>}{suggestionCards.filter(card=>restPool.items.some(item=>item.title===card.title)).map(activity=><View key={activity.title} className='focus-suggestion-card'><LibraryIcon name={activity.iconId}/><Text>{activity.title}</Text></View>)}</View>
         </ScrollView>
-        <SheetActions className='focus-suggestions-actions'><ActionButton appearance='primary' className='focus-suggestions-refresh' ariaLabel='换一组休息建议' onClick={()=>setSuggestionCards(previous=>selectFocusActivities(previous))}><RefreshSymbol/></ActionButton></SheetActions>
+        <SheetActions className='focus-suggestions-actions'><ActionButton appearance='primary' className='focus-suggestions-refresh' ariaLabel='换一组休息建议' onClick={()=>setSuggestionCards(previous=>selectFocusActivities(previous,Math.random,restPool.items))}><RefreshSymbol/></ActionButton></SheetActions></>}
       </View>
     </View>}
     {durationClose.dialog}

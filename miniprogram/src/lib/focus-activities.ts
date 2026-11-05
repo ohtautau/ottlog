@@ -1,4 +1,4 @@
-/** Read-only suggestions; no business writes. */
+/** Default suggestions; opening does not materialize account data. */
 export const focusActivities = [
   {title:'拉伸',iconId:'stretch'}, {title:'准备补剂',iconId:'supplement'},
   {title:'准备蛋白粉',iconId:'water'}, {title:'喝咖啡',iconId:'coffee'},
@@ -21,14 +21,17 @@ export function resetFocusSuggestionsOwner(owner:string) {
 }
 
 /** Bounded partial Fisher–Yates: no retries, even for constant/extreme RNG. */
-export function selectFocusActivities(previous: readonly {title:string}[] = [], random:()=>number = Math.random) {
+export function selectFocusActivities(previous: readonly {title:string}[] = [], random:()=>number = Math.random, activities: readonly {title:string;iconId:string}[] = focusActivities) {
   const previousTitles = new Set(previous.map(item=>item.title));
-  const fresh = focusActivities.filter(item=>!previousTitles.has(item.title));
-  const pool = [...(fresh.length >= 3 ? fresh : focusActivities)];
-  for(let i=0;i<3;i++){
+  const fresh = activities.filter(item=>!previousTitles.has(item.title));
+  const pool = [...(fresh.length >= 3 ? fresh : [...fresh,...activities.filter(item=>previousTitles.has(item.title))])];
+  const freshCount=fresh.length;
+  for(let i=0;i<Math.min(3,pool.length);i++){
     const sample=random();
     const unit=Number.isFinite(sample)?Math.max(0,Math.min(1-Number.EPSILON,sample)):0;
-    const j=i+Math.floor(unit*(pool.length-i));
+    // For a small pool, exhaust unseen cards before filling from the old group.
+    const end=freshCount<3 && i<freshCount?freshCount:pool.length;
+    const j=i+Math.floor(unit*(end-i));
     [pool[i],pool[j]]=[pool[j],pool[i]];
   }
   return pool.slice(0,3);

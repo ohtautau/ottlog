@@ -16,6 +16,7 @@ export type PomodoroState = {
   version: 1; settings: TimerSettings; mode: TimerMode; selection: TimerSelection;
   active: ActiveTimer | null; sessions: FocusSession[];
   completedFocusCount?: number;
+  restActivities?: import('./rest-activities').RestActivity[];
 };
 export const timerModes: { id: TimerMode; label: string }[] = [
   { id: "focus", label: "专注" },

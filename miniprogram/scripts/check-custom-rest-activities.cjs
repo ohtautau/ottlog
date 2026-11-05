@@ -1,0 +1,15 @@
+const assert=require('node:assert/strict'),fs=require('node:fs'),path=require('node:path'),ts=require('typescript');
+const cache=new Map();function load(name){if(cache.has(name))return cache.get(name);const exports={};cache.set(name,exports);new Function('exports','require',ts.transpileModule(fs.readFileSync(path.join(__dirname,'../src/lib',name+'.ts'),'utf8'),{compilerOptions:{module:ts.ModuleKind.CommonJS}}).outputText)(exports,n=>load(n.replace('./','')));return exports;}
+const {restActivityPool:pool,changeRestActivities:change}=load('rest-activities'),{initialPomodoroState:initial,normalizePomodoroState:normalize,startTimer}=load('pomodoro-data'),{selectFocusActivities:sample}=load('focus-activities');
+const base={...startTimer(initial,Date.now(),'running',initial.selection),unknown:{keep:true}},snapshot=JSON.stringify(base);
+assert.equal(pool(base).items.length,15);assert.equal(Object.hasOwn(base,'restActivities'),false);
+assert.deepEqual(pool({restActivities:[]}),{items:[],writable:true});
+for(const bad of [null,{},'future',[{id:'x',title:'x',iconId:'invalid'}],[{id:'x',title:'x',iconId:'walk',future:1}]]){const state={...base,restActivities:bad};assert.equal(pool(state).writable,false);assert.deepEqual(normalize(state).restActivities,bad);assert.throws(()=>change(state,{remove:'x'}));}
+const item={id:'stable',title:' 自定义 ',iconId:'walk'},added=change(base,{add:item});assert.equal(added.restActivities.length,16);assert.equal(added.restActivities.at(-1).title,'自定义');assert.equal(change(added,{add:item}),added);
+for(const patch of [{id:'other',title:'自定义',iconId:'walk'},{id:'other',title:' ',iconId:'walk'},{id:'other',title:'合法名',iconId:'bad'},{id:'other',title:'字'.repeat(31),iconId:'walk'}])assert.throws(()=>change(added,{add:patch}));
+let empty=added;for(const row of added.restActivities)empty=change(empty,{remove:row.id});assert.deepEqual(empty.restActivities,[]);assert.deepEqual(change(empty,{remove:'stable'}).restActivities,[]);assert.equal(change(empty,{add:item}).restActivities.length,1);
+for(const key of Object.keys(base))assert.deepEqual(added[key],base[key]);assert.equal(JSON.stringify(base),snapshot);assert.equal(added.active.deadline,base.active.deadline);
+for(let n=0;n<16;n++)for(const rng of [()=>0,()=>1,()=>NaN,()=>Infinity]){const rows=pool(base).items.slice(0,n),selected=sample([],rng,rows);assert.equal(selected.length,Math.min(3,n));assert.equal(new Set(selected.map(x=>x.title)).size,selected.length);if(n>=6)assert(sample(selected,rng,rows).every(x=>!selected.some(y=>y.title===x.title)));}
+for(const n of [4,5]){const rows=pool(base).items.slice(0,n),first=sample([],()=>0,rows),next=sample(first,()=>0,rows);assert.equal(next.filter(x=>!first.some(y=>y.title===x.title)).length,n-3);}
+const sixty=Array.from({length:60},(_,i)=>({id:`id${i}`,title:`名称${i}`,iconId:'walk'}));assert.throws(()=>change({restActivities:sixty},{add:item}));
+console.log('PASS custom rest: defaults, empty, no migration, unknown preservation, validation, idempotent retries, sampling, timer fields');
