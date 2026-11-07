@@ -35,7 +35,14 @@ try{for(const viewport of [{width:1440,height:900},{width:390,height:844}]){
  const beforeGroups=writes.length,beforeQueue=structuredClone(state.panelQueues);
  await button('添加显示项').click();
  const addPanel=page.locator('.todo-panel-add-layer .form-popover-panel');
- for(const title of ['优先级','分类']){const heading=addPanel.getByRole('button',{name:title,exact:true});await expect(heading).toHaveAttribute('aria-expanded','true');const id=await heading.getAttribute('aria-controls');expect(id).toBeTruthy();await heading.click();await expect(heading).toHaveAttribute('aria-expanded','false');await expect(page.locator(`[id="${id}"]`)).toBeHidden();await heading.focus();await page.keyboard.press('Enter');await expect(heading).toHaveAttribute('aria-expanded','true');}
+ for(const title of ['优先级','分类']){
+  const heading=addPanel.getByRole('button',{name:title,exact:true});await expect(heading).toHaveAttribute('aria-expanded','true');
+  const id=await heading.getAttribute('aria-controls');expect(id).toBeTruthy();const expandedHeight=(await addPanel.boundingBox()).height;
+  await heading.click();await expect(heading).toHaveAttribute('aria-expanded','false');await expect(page.locator(`[id="${id}"]`)).toBeHidden();
+  await expect.poll(async()=>(await addPanel.boundingBox()).height).toBeLessThan(expandedHeight);
+  await heading.focus();await page.keyboard.press('Enter');await expect(heading).toHaveAttribute('aria-expanded','true');
+  await expect.poll(async()=>(await addPanel.boundingBox()).height).toBeCloseTo(expandedHeight,0);
+ }
  expect(writes.length).toBe(beforeGroups);expect(state.panelQueues).toEqual(beforeQueue);await noToast();await button('关闭添加显示项').click();
  // Trigger columns occupy all available space with aligned icons, labels and chevrons.
  const geometry=await positions.evaluateAll(nodes=>nodes.map(n=>{const r=n.getBoundingClientRect(),label=n.firstElementChild.getBoundingClientRect(),b=n.querySelector('.todo-panel-source-trigger'),icon=b.querySelector('.priority-flag,.library-icon').getBoundingClientRect(),chevron=b.querySelector('.select-chevron').getBoundingClientRect();return {left:label.left,labelWidth:label.width,right:r.right,triggerRight:b.getBoundingClientRect().right,iconLeft:icon.left,chevronRight:chevron.right,overflow:n.scrollWidth>n.clientWidth};}));

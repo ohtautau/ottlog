@@ -3201,3 +3201,12 @@ Windows协调端：OTTLOG_PARITY_ORIGIN=http://127.0.0.1:3017，在web执行node
 本机实际通过：miniprogram npm run typecheck；check-todo-panel-source.cjs；check-controls-model.cjs（新增移出非当前保留来源、移出当前原子回退、不改任务／分类、同目标幂等重试、拒绝空队列、基线不变）；check-handle-sort.cjs；web npm run build:tools；check-focus-save-jitter.cjs（115份源码CSS WXSS约束）；check-weapp-styles-test.cjs；node --check web/scripts/check-panel-queue-editor.mjs。
 
 Windows协调端待运行：web目录设置OTTLOG_PARITY_ORIGIN=http://127.0.0.1:3017后执行node scripts/check-panel-queue-editor.mjs。沿全部API隔离夹具，保留鼠标／CDP触摸／键盘手柄、取消／owner、失败重试、保存重开、循环及长队列滚动断言；更新shape为每行一个移出和末尾唯一手柄，新增分组默认展开／独立折叠／键盘、无PUT／toast／队列变化、四位置列对齐／44px／长名省略及完整aria、主队列移出非当前／当前回退／最后禁用／保存重开／同目标失败重试／ghost禁用。浏览器仅准备，未安装或运行；微信原生／真机手势、辅助功能及软键盘待验收。正常小程序构建、产物WXSS和最终网页镜像由协调端统一，本轮未执行；未操作Git、部署、账号、凭据、系统或真实业务/API。结果见.tmp/panel-layout-groups-20261107-result.json。
+### 2026-11-07 编辑器误框及象限队列协调验收
+
+合并运行时源码ca4c5f352ec35abd524de47b00fbb5c2e66eac11，候选ottlog-web:20261107T075819Z-9c5f3e53b0e5。所有测试API均拦截为独立夹具，不写真实账号。check-editor-checklist在1440／390px×任务／便签的今日创建及已有编辑全部通过：普通、鼠标focus和真实Tab／Shift+Tab focus-visible的每个清单输入均border0／透明／无outline和shadow，普通行仅1px底线，完成框22px及2px边界保持；回车／上下／IME／空白清理、鼠标和CDP触摸排序取消、透明附件、同ID失败重试／重开、owner隔离原断言保持。普通/account登录输入两宽度仍有可见边框及≥40px高度，未提交表单。
+
+隔离使用旧正式静态资源的初查可复现行固定底色；当次两个任务入口的输入已呈现border0，未完整复现截图蓝框的所有触发条件。源码通用input三重:not具有较高特异性，已降为:where默认，并由共用清单明确拥有无框状态，不以这次初查冒充历史截图的完整复现。候选真实截图与计算样式确认行透明、分隔及控件保持。
+
+check-panel-queue-editor实际1440×900／390×844通过：四位置44px固定标签、12px间距、44px行及真实旗帜／分类图标，超长名省略无溢出且aria完整；候选两组缺省展开，点击收起和Enter展开，内容隐藏、弹窗高度缩短再恢复，队列／PUT／通知不变。主列表每行一个直接移出、最后唯一手柄；当前项移出回退首项，非当前移出保留来源，至少1项、重开持久化、本机失败同目标重试、ghost禁移出、原鼠标／触摸／键盘拖动、取消、长列表边缘滚动、owner切换均通过。显示修改无撤销提示。布局截图已人工复核，保留忽略目录。
+
+正常小程序typecheck与build通过：115份源／17份产物WXSS、15页（5主＋10分包）、21份ES2019、主包1,403,890字节＜1.5MB、媒体138,608字节＜200KiB。未发布小程序；微信原生／真机触摸、软键盘及原生无框呈现未实测，不用浏览器或编译代替。发布、正式只读复核及备份结果另记最新交接记录。
