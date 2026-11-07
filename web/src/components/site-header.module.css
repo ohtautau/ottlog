@@ -27,7 +27,7 @@
   .brandRow :global(.brand-wordmark) { font-size: 27px; }
   .primary, .desktopAccount { display: none; }
   .dock { display: block; position: absolute; right: 16px; top: 4px; z-index: 100; }
-  .toolStrip { padding: 0 12px 4px; gap: 4px; scroll-padding-inline: 12px; }
+  .toolStrip { padding: 0 12px 4px; gap: 4px; flex-wrap: nowrap; justify-content: flex-start; scroll-padding-inline: 12px; }
   .toolStrip > a { min-width: 56px; min-height: 40px; padding: 8px 12px; }
 }
 @media(prefers-reduced-motion:reduce) { .drawer { transition: none; } }
