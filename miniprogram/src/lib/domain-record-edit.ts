@@ -1,3 +1,4 @@
+import { hasRecordContent, validOptionalEffortScore } from './record-content';
 import { deleteDomainRecord, isDomainState, MAX_DOMAIN_RECORD_LENGTH, type DomainState, type RecordItem, type RecordKind } from './domain-data';
 import { isNoteImage, noteStateFits, validNoteImages } from './note-image-data';
 import type { MemoImage } from './tool-records';
@@ -17,8 +18,8 @@ export function editDomainRecord(state: DomainState, draft: RecordEditDraft, act
   if (draft.pending && draft.pending !== action) throw new Error('请先重试原操作');
   if (action === 'delete') return deleteDomainRecord(state, domain.id, draft.kind, existing.id);
   if (draft.record.id !== existing.id || draft.record.createdAt !== existing.createdAt) throw new Error('记录标识已变化，请重新打开');
-  const record = { ...existing, content: draft.record.content.trim(), images: draft.record.images };
-  if (record.content.length > MAX_DOMAIN_RECORD_LENGTH || !validNoteImages(record.images) || !record.content && !record.images?.length) throw new Error('请输入文字或图片，文字最多 6000 字');
+  const record = { ...existing, content: draft.record.content.trim(), images: draft.record.images, ...(draft.record.effortScore !== undefined ? { effortScore: draft.record.effortScore } : {}) };
+  if (record.content.length > MAX_DOMAIN_RECORD_LENGTH || !validNoteImages(record.images) || !validOptionalEffortScore(record.effortScore) || !hasRecordContent(record)) throw new Error('请输入文字或图片，文字最多 6000 字');
   const next = { ...state, domains: state.domains.map(item => item.id === domain.id ? { ...item, [key]: item[key].map(row => row.id === existing.id ? record : row) } : item) };
   if (!isDomainState(next)) throw new Error('领域记录空间不足，请减少图片后重试');
   return next;
@@ -43,10 +44,10 @@ export function unpackRecordEdit(saved: unknown, domainId: string, kind: RecordK
   if (data.version !== 1 || data.domainId !== domainId || data.kind !== kind || !Array.isArray(data.images) || !data.images.every(isNoteImage)
     || data.pending !== undefined && data.pending !== 'save' && data.pending !== 'delete') throw new Error('编辑草稿格式不兼容，请重试读取');
   const unpack = (row: typeof data.record, allowEmpty = false): RecordItem => {
-    if (!row || row.id !== record.id || row.createdAt !== record.createdAt || typeof row.content !== 'string' || row.content.length > MAX_DOMAIN_RECORD_LENGTH
+    if (!row || row.id !== record.id || row.createdAt !== record.createdAt || typeof row.content !== 'string' || !validOptionalEffortScore(row.effortScore) || row.content.length > MAX_DOMAIN_RECORD_LENGTH
       || row.images !== undefined && (!Array.isArray(row.images) || !row.images.every(index => Number.isInteger(index) && index >= 0 && index < data.images.length))) throw new Error('编辑草稿内容不兼容，请重试读取');
     const next = { ...row, images: row.images?.map(index => data.images[index]) };
-    if (!validNoteImages(next.images) || !allowEmpty && !next.content.trim() && !next.images?.length) throw new Error('编辑草稿内容不兼容，请重试读取');
+    if (!validNoteImages(next.images) || !allowEmpty && !hasRecordContent(next)) throw new Error('编辑草稿内容不兼容，请重试读取');
     return next;
   };
   const original = unpack(data.original);

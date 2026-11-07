@@ -1,3 +1,4 @@
+import { hasRecordContent, validOptionalEffortScore, recordEffortScore } from './record-content';
 import { MAX_DOMAIN_RECORD_LENGTH, applyDomainRecordChanges, isDomainState, saveDomain, saveDomainRecords, type DomainState, type RecordItem, type RecordKind } from './domain-data';
 import { validNoteImages } from './note-image-data';
 import { toolId } from './tool-records';
@@ -20,7 +21,7 @@ export function isProgressDraft(value: unknown): value is ProgressDraft {
   if (!value || typeof value !== 'object') return false;
   const draft = value as ProgressDraft;
   const valid = (record: RecordItem) => !!record && typeof record.id === 'string' && /^[a-zA-Z0-9][a-zA-Z0-9_-]{0,79}$/.test(record.id)
-    && typeof record.content === 'string' && typeof record.createdAt === 'string' && Number.isFinite(Date.parse(record.createdAt)) && validNoteImages(record.images);
+    && typeof record.content === 'string' && typeof record.createdAt === 'string' && Number.isFinite(Date.parse(record.createdAt)) && validNoteImages(record.images) && validOptionalEffortScore(record.effortScore);
   const validKinds = (kinds: unknown): kinds is [RecordKind, RecordKind] => Array.isArray(kinds) && kinds.length === 2 && Array.from(kinds).every(isKind);
   const validPairs = draft.pairs === undefined || draft.pair === true && Array.isArray(draft.pairs) && draft.pairs.length < MAX_PROGRESS_PAIRS
     && Array.from(draft.pairs).every(item => !!item && valid(item.positive) && valid(item.negative) && validKinds(item.kinds));
@@ -33,13 +34,13 @@ export function isProgressDraft(value: unknown): value is ProgressDraft {
       && validKinds(draft.kinds))
     && (draft.legacy === undefined || Array.isArray(draft.legacy) && Array.from(draft.legacy).every(item => !!item && isKind(item.kind) && valid(item.record)));
 }
-const hasContent = (record: RecordItem) => !!record.content.trim() || !!record.images?.length;
+const hasContent = hasRecordContent;
 export const progressRecord = (draft: ProgressDraft) => draft.pair || draft.single || hasContent(draft.positive) ? draft.positive : draft.negative;
 /** A read-only view also keeps the unused lower box empty for old single-record retries. */
 export function progressRows(draft: ProgressDraft): ProgressRow[] {
   return [
     { pairIndex: 0, slot: 'positive', kind: draft.pair ? draft.kinds![0] : draft.single ? draft.kind || 'positive' : 'positive', record: draft.positive },
-    { pairIndex: 0, slot: 'negative', kind: draft.pair ? draft.kinds![1] : 'negative', record: draft.single ? { ...draft.negative, content: '', images: [] } : draft.negative },
+    { pairIndex: 0, slot: 'negative', kind: draft.pair ? draft.kinds![1] : 'negative', record: draft.single ? { ...draft.negative, content: '', images: [], effortScore: undefined } : draft.negative },
     ...(draft.pair ? (draft.pairs || []).flatMap((pair, index): ProgressRow[] => [
       { pairIndex: index + 1, slot: 'positive', kind: pair.kinds[0], record: pair.positive },
       { pairIndex: index + 1, slot: 'negative', kind: pair.kinds[1], record: pair.negative },
@@ -64,7 +65,7 @@ export function clearProgressInput(draft:ProgressDraft,id:string):ProgressDraft 
   const row=progressRows(draft).find(item=>item.record.id===id);
   if(!row)return draft;
   if(row.pairIndex>=MAX_PROGRESS_PAIRS)return {...draft,extraRecords:draft.extraRecords?.filter(item=>item.record.id!==id)};
-  return writeProgressInput(draft,row.kind,{...row.record,content:'',images:[]});
+  return writeProgressInput(draft,row.kind,{...row.record,content:'',images:[],effortScore:undefined});
 }
 /** Allocate a pair once per explicit add action; blank rows remain draft-only. */
 export function appendProgressPair(draft: ProgressDraft): ProgressDraft {
@@ -93,7 +94,7 @@ export function singleProgressDraft(draft: ProgressDraft): ProgressDraft {
   const legacy = uniqueEntries([...(draft.legacy || []), ...progressEntriesOrEmpty(draft)]);
   const record = progressRecord(draft), spare = record.id === draft.positive.id ? draft.negative : draft.positive;
   const kind = progressRows(draft).find(item => item.record.id === record.id)!.kind;
-  return { ...base, single: true, kind, positive: record, negative: { ...spare, content: '', images: [] }, legacy };
+  return { ...base, single: true, kind, positive: record, negative: { ...spare, content: '', images: [], effortScore: undefined }, legacy };
 }
 export function setProgressText(draft: ProgressDraft, content: string): ProgressDraft {
   const next = pairedProgressDraft(draft), record = next.positive;
@@ -117,7 +118,7 @@ export function progressEntries(draft: ProgressDraft) {
   const candidates = progressRows(draft);
   const entries = candidates.flatMap(({ kind, record }) => {
     if (record.content.length > MAX_DOMAIN_RECORD_LENGTH) throw new Error('每个记录框最多 6000 字');
-    return record.content.trim() || record.images?.length ? [{ kind, record: { ...record, content: record.content.trim() } }] : [];
+    return hasContent(record) ? [{ kind, record: { ...record, content: record.content.trim() } }] : [];
   });
   if (!entries.length) throw new Error('请先输入记录内容');
   return entries;
@@ -150,10 +151,14 @@ export function saveAutoProgressDraft(state: DomainState, baselineDraft: Progres
     }
     if (latest && !previous && latest.record.createdAt !== row.record.createdAt) throw new Error('记录编号已存在，请重新打开');
     if (latest && previous && !hasContent(previous.record) && latest.record.createdAt !== row.record.createdAt) throw new Error('记录编号已变化，请重新打开');
-    const base = previous?.record || { ...row.record, content: '', images: [] };
+    const base = previous?.record || { ...row.record, content: '', images: [], effortScore: undefined };
+    const scoreChanged = row.record.effortScore !== base.effortScore;
+    if (latest && scoreChanged && recordEffortScore(latest.record) !== recordEffortScore(base) && recordEffortScore(latest.record) !== recordEffortScore(row.record)) throw new Error('投入分数已变化，未覆盖其他内容，请重试');
+    const effortScore = latest && !scoreChanged ? latest.record.effortScore : row.record.effortScore;
     const content = latest && row.record.content === base.content ? latest.record.content : row.record.content;
     const images = latest && JSON.stringify(row.record.images || []) === JSON.stringify(base.images || []) ? latest.record.images : row.record.images;
-    const record = { ...(latest?.record || row.record), content: content.trim(), images, createdAt: latest?.record.createdAt || row.record.createdAt };
+    const record = { ...(latest?.record || row.record), content: content.trim(), images, effortScore, createdAt: latest?.record.createdAt || row.record.createdAt };
+    if (record.effortScore === undefined) delete record.effortScore;
     if (record.content.length > MAX_DOMAIN_RECORD_LENGTH) throw new Error('每个记录框最多 6000 字');
     if (!hasContent(record)) {
       if (latest) changes.push({ id: row.record.id, domainId: latest.domainId, kind: latest.kind, record: null });

@@ -1,0 +1,4 @@
+.record-action-row { display:flex;align-items:center;justify-content:space-between;gap:2PX;min-width:0;width:100%;min-height:40PX;--control-height:40PX;--editor-icon-size:24PX;--editor-icon-stroke:2PX; }
+.record-action-row button { flex:none;width:32PX;min-width:32PX !important;height:40PX;min-height:40PX;margin:0;padding:0;border:0;background:transparent;box-shadow:none; }
+.record-effort-controls { display:flex;align-items:center;justify-content:flex-end;min-width:0;gap:0;flex:0 1 auto;overflow:hidden; }
+.record-effort-value { min-width:0;flex:0 1 auto;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:12PX;font-variant-numeric:tabular-nums;text-align:center; }

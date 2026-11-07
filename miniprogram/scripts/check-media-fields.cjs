@@ -8,7 +8,7 @@ let spareNegative=editors(tree).find(n=>n.props.value===''&&n.props.recordId!==d
 spareNegative.props.onChange('负二');tree=render();
 const oldPositiveId=editors(tree).find(n=>n.props.value==='正一').props.recordId;
 const oldNegativeId=editors(tree).find(n=>n.props.value==='负一').props.recordId;
-buttons(tree)[0].props.onClick();tree=render();
+buttons(tree)[1].props.onClick();tree=render();
 assert.equal(editors(tree).find(n=>n.props.value==='负二').props.insertionSignal,1);
 disabled=true;mediaWritable=true;tree=render();
 const target=editors(tree).find(n=>n.props.value==='负二');assert.equal(target.props.canInsertImage,true);

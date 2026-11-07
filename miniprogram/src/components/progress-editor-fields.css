@@ -7,14 +7,5 @@
 .progress-record-heading.is-negative { color:var(--domain-negative); }
 .progress-record-field { min-width:0;margin-bottom:8PX;padding-bottom:4PX;border-bottom:1PX solid #334650; }
 .progress-record-field:last-child { border-bottom:0; }
-.progress-record-tools { display:flex;align-items:center;justify-content:flex-end;gap:4PX; }
-.progress-record-tools > button { flex:none;margin:0; }
-.progress-column-tools { display:flex;justify-content:flex-start; }
-.progress-column-tools > button { flex:none;margin:0; }
-
-.progress-attachment-actions { display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:32PX;flex:1;min-width:0; }
-.entry-composer .entry-footer .progress-column-tools > button { flex:none;width:40PX;height:40PX; }
-
-.progress-attachment-actions { --editor-icon-size:24PX;--editor-icon-stroke:2PX; }
-.entry-composer .is-progress-footer { position:relative; }
-.entry-composer .is-progress-footer > button { position:absolute;right:var(--compact-editor-inset);width:auto; }
+.progress-record-tools { display:flex;align-items:center;justify-content:flex-end;gap:4PX;order:-1;min-height:0; }
+.progress-record-tools > button { flex:none;margin:0;width:40PX;height:40PX; }

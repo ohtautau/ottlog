@@ -3265,7 +3265,7 @@ check-panel-queue-editor实际1440×900／390×844通过：四位置44px固定�
 
 Windows协调端在隔离候选3017执行 `cd web && node scripts/check-mobile-layout.mjs`。脚本新建独立浏览器context，所有API由context拦截，第三方网络拒绝，账号为合成fixture；9工具非空结构和360×780、375×667、390×844、430×932、844×390、390×440、1440×900，检查文档水平溢出、选中导航、列表真实高度/滚动、FAB点击可达、计时stage/40px反馈及任务/日期三模式/分类/嵌套队列/三创建/四时长滚轮/账号/格言窗口几何与按钮点击目标；截图和报告在忽略的test-results/mobile-layout。脚本仅准备，选择器及几何待真实运行校正，不等于验收通过。Windows触摸手势、真实软键盘visualViewport/安全区及微信原生/真机边界仍待协调端；本轮不提交、不发布，等待实际观察跟进。
 
-### 2026-11-07 记录附件底栏与显式续行（源码候选，未部署）
+### 2026-11-07 记录附件底栏与显式续行（历史候选，附件设计已由逐条操作覆盖）
 
 基线80bed74c39650e0a8a8c03c78fd096685614c84d，开始时工作区clean。根因是ProgressEditorFields的附件入口在entry-scroll内，只靠180px列最小高度与margin-top:auto；visible又在首字写入后立即追加placeholder。现以同源ProgressAttachmentActions放入EntryComposer原SheetActions，负左正右、32px列间距、24px宿主边界、40px按钮；重试不挤窄两列。子组件只暴露attach(kind)，点击时读最新草稿与该列末条有效稳定ID，按钮和操作共用canAttachProgress上限判断；媒体选择、alpha处理、owner／权限／卸载晚到结果及原子保存业务保持原路径。
 

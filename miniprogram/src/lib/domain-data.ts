@@ -1,3 +1,4 @@
+import { hasRecordContent, validOptionalEffortScore } from './record-content';
 import { habitTimePeriod, isHabitPriority, isHabitTimePeriod, type HabitMetadata } from './habit-metadata';
 import { validNoteImages } from './note-image-data';
 import type { MemoImage } from './tool-records';
@@ -6,7 +7,7 @@ export type GoalKind = 'longTerm' | 'shortTerm';
 export type RecordKind = 'positive' | 'negative';
 export type Goal = { id: string; content: string; status: 'active' | 'completed'; createdAt: string; completedAt?: string };
 export type Habit = HabitMetadata & { id: string; name: string; startedDates: string[] };
-export type RecordItem = { id: string; content: string; createdAt: string; images?: MemoImage[] };
+export type RecordItem = { id: string; content: string; createdAt: string; images?: MemoImage[]; effortScore?: number };
 export type Domain = {
   id: string; name: string; iconId?: string; longTermGoal: Goal | null; shortTermGoal: Goal | null;
   habits: Habit[]; positiveRecords: RecordItem[]; negativeRecords: RecordItem[];
@@ -63,7 +64,7 @@ function isGoal(value: unknown, status: Goal['status']): value is Goal {
 }
 function isRecord(value: unknown): value is RecordItem {
   return isObject(value) && isId(value.id) && typeof value.content === 'string' && value.content.length <= MAX_DOMAIN_RECORD_LENGTH
-    && validNoteImages(value.images) && (!!value.content.trim() || !!(value.images as MemoImage[] | undefined)?.length) && isIso(value.createdAt);
+    && validNoteImages(value.images) && validOptionalEffortScore(value.effortScore) && hasRecordContent(value as RecordItem) && isIso(value.createdAt);
 }
 function serializedBytes(value: unknown): number {
   const json = JSON.stringify(value);

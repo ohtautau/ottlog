@@ -1,3 +1,4 @@
+import { recordEffortScore } from '../lib/record-content';
 import type { ComponentProps, ReactNode } from 'react';
 import { Button, ScrollView, Text, View } from '@tarojs/components';
 import type { RecordItem, RecordKind } from '../lib/domain-data';
@@ -8,7 +9,7 @@ type ColumnProps = {
   kind: RecordKind; children: ReactNode; className?: string; contentClassName?: string; style?: ComponentProps<typeof View>['style']; showHeading?: boolean; scrollable?: boolean;
 } & ({ variant?: 'static' } | { variant: 'create'; disabled?: boolean; createLabel: string; onCreate: () => void });
 type CardProps = Omit<ComponentProps<typeof Button>, 'children'> & {
-  kind: RecordKind; record: Pick<RecordItem, 'content' | 'images'>; metadata?: ReactNode; readOnly?: boolean;
+  kind: RecordKind; record: Pick<RecordItem, 'content' | 'images' | 'effortScore'>; metadata?: ReactNode; readOnly?: boolean;
 };
 const label = (kind: RecordKind) => kind === 'positive' ? '正记录' : '负记录';
 
@@ -34,7 +35,7 @@ export function DomainRecordCard({ kind, record, metadata, readOnly = false, cla
   const body = <><Text className='domain-record-sign'>{kind === 'positive' ? '+' : '−'}</Text>{metadata != null ? <View className='domain-record-body'>{metadata}{content}</View> : content}</>;
   if (readOnly) return <View className={`domain-record is-${kind} ${className}`}>{body}</View>;
   return <Button {...props} className={`domain-record is-${kind} ${className}`} hoverClass={disabled ? 'none' : hoverClass} disabled={disabled}
-    ariaLabel={ariaLabel ?? `编辑${label(kind)}：${record.content}`} onClick={event => { event.stopPropagation(); if (!disabled) onClick?.(event); }}>
+    ariaLabel={ariaLabel ?? `编辑${label(kind)}：${record.content || `投入 ${recordEffortScore(record)} 分`}`} onClick={event => { event.stopPropagation(); if (!disabled) onClick?.(event); }}>
     {body}
   </Button>;
 }
