@@ -34,6 +34,11 @@
   .tool-app-root .focus-feedback-slot { flex: none; height: 40px; min-height: 40px; max-height: 40px; }
   /* Fixed windows use the visual viewport when a browser keyboard is present.
      Existing heading, 24px editor inset and popover placement remain owners. */
+  .tool-app-root :is(.task-detail-overlay,.todo-overlay,.memo-overlay,.daily-editor-overlay,.domain-overlay,.domain-definition-overlay,.home-editor-overlay,.focus-settings-overlay,.todo-schedule-overlay,.icon-library-overlay,.account-window-overlay,.todo-panel-editor-overlay,.form-popover-layer) {
+    top: var(--browser-viewport-top,0px);
+    bottom: auto;
+    height: var(--browser-viewport-height,100dvh);
+  }
   .tool-app-root :is(.todo-sheet,.memo-sheet,.task-detail-panel,.daily-editor-sheet,.daily-detail-sheet,.daily-history-sheet,.domain-sheet,.domain-definition-panel,.focus-settings,.mottos-editor-sheet,.todo-schedule-sheet,.icon-library-sheet,.account-window) {
     min-width: 0; max-width: 100%; min-height: 0;
     max-height: calc(var(--browser-viewport-height,100dvh) - 32px);

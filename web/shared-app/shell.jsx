@@ -44,12 +44,17 @@ export function registerTools(pages) {
           // This keeps keyboard changes from feeding back into ResizeObserver.
           this.measureViewport = () => {
             const height = `${Math.round(window.visualViewport?.height || innerHeight)}px`;
-            if (document.documentElement.style.getPropertyValue('--browser-viewport-height') !== height)
+            const top = `${Math.round(window.visualViewport?.offsetTop || 0)}px`;
+            if (document.documentElement.style.getPropertyValue('--browser-viewport-height') !== height || document.documentElement.style.getPropertyValue('--browser-viewport-top') !== top) {
               document.documentElement.style.setProperty('--browser-viewport-height', height);
+              document.documentElement.style.setProperty('--browser-viewport-top', top);
+              events.trigger('resize', { size: { windowWidth: innerWidth, windowHeight: innerHeight } });
+            }
           };
           this.measureViewport();
           window.addEventListener('resize', this.measureViewport);
           window.visualViewport?.addEventListener('resize', this.measureViewport);
+          window.visualViewport?.addEventListener('scroll', this.measureViewport);
           this.observer = new ResizeObserver(([entry]) => {
             const height = Math.round(entry.contentRect.height);
             if (height && this.host.style.getPropertyValue('--app-page-height') !== `${height}px`) {
@@ -64,7 +69,7 @@ export function registerTools(pages) {
       });
     }
     disconnectedCallback() {
-      queueMicrotask(() => { if (this.isConnected) return; this.observer?.disconnect(); window.removeEventListener('resize', this.measureViewport); window.visualViewport?.removeEventListener('resize', this.measureViewport); document.documentElement.style.removeProperty('--browser-viewport-height'); this.reactRoot?.unmount(); clearMountHost(this.host); });
+      queueMicrotask(() => { if (this.isConnected) return; this.observer?.disconnect(); window.removeEventListener('resize', this.measureViewport); window.visualViewport?.removeEventListener('resize', this.measureViewport); window.visualViewport?.removeEventListener('scroll', this.measureViewport); if (!document.querySelector('ottlog-tools .tool-app-root')) { document.documentElement.style.removeProperty('--browser-viewport-height'); document.documentElement.style.removeProperty('--browser-viewport-top'); } this.reactRoot?.unmount(); clearMountHost(this.host); });
     }
   });
 }

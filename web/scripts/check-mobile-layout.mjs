@@ -31,6 +31,7 @@ try { for (const [width,height] of viewports) {
  // image/notification endpoints, and any future API. No API request continues.
  await context.route('**/*',async route=>{
   const req=route.request(),url=new URL(req.url());
+  if(process.env.OTTLOG_LOCAL_TOOL_BUILD==='1' && url.origin===origin && /^\/tool-app\/app\.(css|js)$/.test(url.pathname)) return route.fulfill({path:'public'+url.pathname,contentType:url.pathname.endsWith('.css')?'text/css':'text/javascript'});
   if(url.pathname.startsWith('/api/')) {
    const key=url.pathname.match(/^\/api\/personal-tools\/([^/]+)$/)?.[1];
    if(key && req.method()==='PUT') {state[key]=structuredClone(req.postDataJSON().data);writes.push(key);}
@@ -65,6 +66,14 @@ try { for (const [width,height] of viewports) {
    if(m.s>m.h+2){expect(['auto','scroll']).toContain(m.o);await node.evaluate(n=>n.scrollTop=n.scrollHeight);expect(await node.evaluate(n=>n.scrollTop)).toBeGreaterThan(0);}
   }
  }
+ async function touchScroll(locator) {
+  await locator.evaluate(n=>n.scrollTop=0);const b=await locator.boundingBox(),cdp=await context.newCDPSession(page);
+  const x=b.x+b.width*.3,start=b.y+b.height-12,end=b.y+12;
+  await cdp.send('Input.dispatchTouchEvent',{type:'touchStart',touchPoints:[{x,y:start}]});
+  for(let step=1;step<=8;step++){await cdp.send('Input.dispatchTouchEvent',{type:'touchMove',touchPoints:[{x,y:start+(end-start)*step/8}]});await page.waitForTimeout(20);}
+  await cdp.send('Input.dispatchTouchEvent',{type:'touchEnd',touchPoints:[]});await cdp.detach();
+  await expect.poll(()=>locator.evaluate(n=>n.scrollTop)).toBeGreaterThan(0);
+ }
  async function click(name) {try{const n=button(name);await n.click({trial:true});await bounds(n,name,40);await n.click();}catch(e){e.message=`${name}: ${e.message}`;throw e;}}
  async function modal(selector,retry=true) {
   const panel=root.locator(selector).last();await bounds(panel,selector);
@@ -91,6 +100,8 @@ try { for (const [width,height] of viewports) {
   if(route==='domains')await expect(root.locator('.domain-entry')).not.toHaveCount(0);
   if(route==='articles')await expect(root).toContainText('手机文章');
   if(route==='mottos')await expect(root).toContainText('手机格言');
+  if(width===390&&height===844&&route==='memos')await touchScroll(root.locator('.memo-list-scroll'));
+  if(width===390&&height===844&&route==='daily')await touchScroll(root.locator('#daily-reminder-scroll'));
   const fab=root.locator('.floating-create-button');
   if(await fab.count()) {await bounds(fab,'FAB',40);await fab.click({trial:true});}
   await page.screenshot({path:`${out}/${width}x${height}-${route}.png`});
@@ -112,6 +123,18 @@ try { for (const [width,height] of viewports) {
  await run('account/motto',async()=>{
   await page.goto(origin+'/today');await page.getByRole('button',{name:/^打开账号窗口/}).click();await modal('[role=dialog]');
   await page.goto(origin+'/mottos');await click('创建格言');await modal('.document-editor-sheet');
+ });
+ if(width<900&&height>600)await run('keyboard-visible-region',async()=>{
+  await page.goto(origin+'/today');await click('创建记录');await click('创建类型：任务');await expect(button('创建类型：任务')).toHaveAttribute('aria-pressed','true');
+  await page.getByRole('textbox',{name:'任务名称',exact:true}).fill('键盘区域隔离任务');
+  const visibleHeight=height-300,offset=30;
+  await page.evaluate(({visibleHeight,offset})=>{Object.defineProperty(visualViewport,'height',{configurable:true,get:()=>visibleHeight});Object.defineProperty(visualViewport,'offsetTop',{configurable:true,get:()=>offset});visualViewport.dispatchEvent(new Event('resize'));visualViewport.dispatchEvent(new Event('scroll'));},{visibleHeight,offset});
+  const inside=async locator=>{await expect.poll(async()=>{const r=await locator.boundingBox();return r.y>=offset-1&&r.y+r.height<=offset+visibleHeight+1;}).toBe(true);};
+  await inside(root.locator('.entry-composer'));await inside(root.locator('.task-detail-footer'));
+  await button('任务标签').click({trial:true});await button('任务分类').click();await inside(root.locator('.form-popover-panel').last());
+  await page.getByRole('textbox',{name:'搜索任务分类',exact:true}).fill('分类');await inside(root.locator('.form-popover-panel').last());
+  await page.evaluate(()=>{delete visualViewport.height;delete visualViewport.offsetTop;visualViewport.dispatchEvent(new Event('resize'));});
+  await expect.poll(()=>page.evaluate(()=>parseInt(document.documentElement.style.getPropertyValue('--browser-viewport-height')))).toBe(height);
  });
  expect(errors).toEqual([]);await context.close();
  results.push({width,height,fixtureWrites:writes,errors});
