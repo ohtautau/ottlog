@@ -24,3 +24,7 @@
 .todo-queue-ghost { z-index:290;pointer-events:none;background:#20333e;border:1PX solid #91bba4;border-radius:8PX;box-shadow:0 6PX 18PX #0005; }
 .todo-panel-add-layer.form-popover-layer { z-index:270; }
 .todo-panel-add.form-choice-trigger { width:100%;justify-content:flex-start;min-height:40PX; }
+
+.todo-source-group-heading.ui-button { display:flex;align-items:center;justify-content:space-between;width:100%;margin:0;text-align:left;--control-text:#9eb4bd; }
+.todo-panel-remove { flex:none;width:40PX; }
+.todo-panel-remove > .ui-button { width:40PX;margin:0; }

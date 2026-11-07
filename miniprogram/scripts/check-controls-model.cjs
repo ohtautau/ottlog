@@ -22,6 +22,18 @@ next=panels.cycleTodoPanelSource(next,'later',1);assert.deepEqual(panels.getTodo
 assert.deepEqual(panels.getTodoPanelQueue(state,'do'),[{kind:'quadrant',quadrantId:'do'}]);assert.equal(panels.cycleTodoPanelSource(state,'do',1),state);
 assert.throws(()=>panels.setTodoPanelQueue(state,'do',[]));assert.throws(()=>panels.setTodoPanelQueue(state,'do',[queue[0],queue[0]]));
 assert.deepEqual(panels.getTodoPanelQueue(categories.deleteTodoCategory(next,'fun'),'later'),[queue[1]]);
+// Removing membership preserves unrelated records, keeps current if present,
+// and falls back atomically to the first remaining source when current leaves.
+const removalBase=panels.setTodoPanelQueue({...state,tasks:[{id:'untouched',title:'保留'}]},'later',queue);
+const nonCurrentRemoved=panels.setTodoPanelQueue(removalBase,'later',[queue[0]]);
+assert.deepEqual(panels.getTodoPanelSource(nonCurrentRemoved,'later'),queue[0]);
+const currentRemoved=panels.setTodoPanelQueue(removalBase,'later',[queue[1]]);
+assert.deepEqual(panels.getTodoPanelSource(currentRemoved,'later'),queue[1]);
+assert.equal(currentRemoved.tasks,removalBase.tasks);assert.equal(currentRemoved.categories,removalBase.categories);
+assert.equal(undo.isTodoDisplayOnlyChange(removalBase,currentRemoved),true);
+assert.equal(panels.setTodoPanelQueue(currentRemoved,'later',[queue[1]]),currentRemoved,'Same-target removal retry is idempotent');
+assert.throws(()=>panels.setTodoPanelQueue(currentRemoved,'later',[]),/至少/);
+assert.deepEqual(panels.getTodoPanelQueue(removalBase,'later'),queue,'Removal never mutates the baseline');
 assert.equal(schedule.shiftScheduleDate('2028-01-31',1,'month'),'2028-02-29');
 assert.equal(schedule.shiftScheduleDate('2027-01-31',1,'month'),'2027-02-28');
 assert.equal(schedule.shiftScheduleDate('2026-03-31',-1,'month'),'2026-02-28');

@@ -9,10 +9,24 @@ import { useHandleSort } from '../lib/use-handle-sort';
 import LibraryIcon from './library-icon';
 import { ChoicePopover, PopoverHeading } from './form-options';
 import ActionButton from './ui-button';
-import { MoreSymbol } from './manage-symbol';
+import { SelectChevron } from './select-trigger';
+import { MoreSymbol, DeleteSymbol } from './manage-symbol';
 import PriorityFlag from './priority-flag';
 import './todo-panel-picker.css';
 import './entity-choice-options.css';
+
+let nextGroupId=0;
+/** Both selection modes share local disclosure state and the existing popover scroll. */
+function SourceGroups({sources,render,onToggle}:{sources:TodoPanelSource[];render:(source:TodoPanelSource)=>ReactNode;onToggle:()=>void}) {
+ const [collapsed,setCollapsed]=useState<string[]>([]),[id]=useState(()=>`todo-source-groups-${++nextGroupId}`);
+ return <View className='entity-choice-options todo-source-groups'>{(['quadrant','category'] as const).map(kind=>{
+  const expanded=!collapsed.includes(kind),title=kind==='quadrant'?'优先级':'分类',controls=`${id}-${kind}`;
+  return <View key={kind} className='todo-source-group'>
+   <ActionButton appearance='quiet' className='todo-source-group-heading' ariaLabel={title} aria-expanded={expanded} aria-controls={controls} onClick={()=>{setCollapsed(previous=>expanded?[...previous,kind]:previous.filter(item=>item!==kind));onToggle();}}><Text>{title}</Text><SelectChevron expanded={expanded}/></ActionButton>
+   <View id={controls} hidden={!expanded}>{expanded&&sources.filter(source=>source.kind===kind).map(render)}</View>
+  </View>;
+ })}</View>;
+}
 
 /** Display sources only; hosts own task matching, assignment and persistence. */
 export default function TodoPanelPicker({ categories, value, onChange, disabled = false, ariaLabel = '更换区域显示', owner = '', trigger, queue, onQueueChange }: {
@@ -20,6 +34,7 @@ export default function TodoPanelPicker({ categories, value, onChange, disabled 
  queue?:readonly TodoPanelSource[];onQueueChange?:(queue:TodoPanelSource[])=>Promise<void>;disabled?: boolean; ariaLabel?: string; owner?: string; trigger?: ReactNode;
 }) {
  const [open,setOpen]=useState(false),[adding,setAdding]=useState(false),[busy,setBusy]=useState(false),[error,setError]=useState('');
+ const [groupLayout,setGroupLayout]=useState(0);
  const generation=useRef(0),scope=useRef(owner),lock=useRef(false);scope.current=`${owner}:${categories.map(item=>item.id).join('|')}`;
  const retry=useRef<null|(()=>Promise<void>)>(null);
  useEffect(()=>{++generation.current;lock.current=false;setOpen(false);setAdding(false);setBusy(false);setError('');retry.current=null;},[owner]);
@@ -47,21 +62,24 @@ export default function TodoPanelPicker({ categories, value, onChange, disabled 
   const key=todoPanelSourceKey(source),current=key===todoPanelSourceKey(value),p=presentation(source),d=sorter.drag;
   return <View key={key} className={`entity-choice-row${ghost?'':' handle-sort-row'}${current?' is-current':''}${!ghost&&d?.active&&d.index===index?' is-placeholder':''}${!ghost&&d?.active&&d.target===index?' is-target':''}`}>
    <ActionButton appearance='quiet' className='entity-choice-option' ariaLabel={source.kind==='quadrant'?`显示象限：${p.text}`:`显示分类：${p.text}`} aria-pressed={current} disabled={busy||ghost} onClick={()=>{if(!sorter.suppressClick())void save(()=>onChange(source));}}>{p.icon}<Text className='entity-choice-label'>{p.text}</Text></ActionButton>
+   <View className='todo-panel-remove' onTouchStart={event=>event.stopPropagation()} {...{onPointerDown:(event:{stopPropagation:()=>void})=>event.stopPropagation()}}>
+    <ActionButton appearance='icon' ariaLabel={`移出显示队列：${p.text}${queue!.length===1?'（至少保留一项）':''}`} disabled={disabled||busy||ghost||queue!.length===1} onClick={event=>{event.stopPropagation();if(ghost||queue!.length<=1||sorter.suppressClick())return;sorter.cancel();const next=queue!.filter(item=>todoPanelSourceKey(item)!==key);void save(()=>onQueueChange!(next));}}><DeleteSymbol/></ActionButton>
+   </View>
    <View {...sorter.bind(index)} className='handle-sort-grip' data-sort-index={index}><ActionButton appearance='icon' ariaLabel={`拖动排序：${p.text}（上下方向键调整）`} disabled={busy||ghost} onClick={event=>event.stopPropagation()}><View className='todo-queue-grip-symbol' aria-hidden><View/><View/><View/></View></ActionButton></View>
   </View>;
  };
   useMessageNotice(error, !busy);
- return <ChoicePopover ariaLabel={ariaLabel} open={open} onOpenChange={next=>{if(!busy){sorter.cancel();setOpen(next);setAdding(false);setError('');retry.current=null;}}} disabled={disabled}
+ return <ChoicePopover ariaLabel={trigger?`${ariaLabel}：${presentation(value).text}`:ariaLabel} open={open} onOpenChange={next=>{if(!busy){sorter.cancel();setOpen(next);setAdding(false);setError('');retry.current=null;}}} disabled={disabled}
   trigger={trigger||<MoreSymbol/>} triggerAppearance={trigger?'quiet':'icon'} triggerSize='compact' triggerIconOnly={!trigger} showIndicator={!!trigger}
-  triggerClassName='todo-panel-source-trigger' layerClassName='todo-panel-source-layer' panelClassName='todo-panel-source-panel' placement='anchor' align='start' preferredSide='below' panelWidth={400} maxHeightRatio={.8} bodySpacing='none' bodyScroll={queueMode?{id:sorter.id,top:sorter.scrollTop,onScroll:sorter.onScroll}:undefined} contentKey={`${JSON.stringify(queue)}:${choices.length}:${error}`}
+  triggerClassName='todo-panel-source-trigger' layerClassName='todo-panel-source-layer' panelClassName='todo-panel-source-panel' placement='anchor' align='start' preferredSide='below' panelWidth={400} maxHeightRatio={.8} bodySpacing='none' bodyScroll={queueMode?{id:sorter.id,top:sorter.scrollTop,onScroll:sorter.onScroll}:undefined} contentKey={`${JSON.stringify(queue)}:${choices.length}:${error}:${groupLayout}`}
   heading={<PopoverHeading title={queueMode?'显示队列':'更换显示'} actions={<ActionButton appearance='icon' size='compact' ariaLabel='关闭区域显示选择' disabled={busy} onClick={()=>{sorter.cancel();setOpen(false);setAdding(false);}}>×</ActionButton>}/>}>
   <View className='entity-choice-body'>
    {queueMode?<View className='entity-choice-options todo-panel-queue-options'>
     {queue!.map((source,index)=>row(source,index))}
-    <ChoicePopover ariaLabel='添加显示项' open={adding} onOpenChange={next=>{if(!busy){sorter.cancel();setAdding(next);}}} disabled={busy} trigger={<Text>添加</Text>} triggerAppearance='quiet' triggerClassName='todo-panel-add' placement='anchor' align='start' preferredSide='below' panelWidth={340} maxHeightRatio={.65} bodySpacing='none' layerClassName='todo-panel-add-layer' heading={<PopoverHeading title='添加显示项' actions={<ActionButton appearance='icon' ariaLabel='关闭添加显示项' disabled={busy} onClick={()=>setAdding(false)}>×</ActionButton>}/>}>
-     <View className='entity-choice-body'><View className='entity-choice-options'>{all.map(source=>{const key=todoPanelSourceKey(source),included=selectedKeys.has(key),p=presentation(source);return <ActionButton key={key} appearance='quiet' className={`entity-choice-option${included?' is-selected':''}`} ariaLabel={`${included?'移出':'加入'}显示队列：${p.text}`} aria-pressed={included} disabled={busy||included&&queue!.length===1} onClick={()=>{const next=included?queue!.filter(item=>todoPanelSourceKey(item)!==key):[...queue!,source];void save(()=>onQueueChange!(next));}}>{p.icon}<Text className='entity-choice-label'>{p.text}</Text></ActionButton>;})}</View></View>
+    <ChoicePopover ariaLabel='添加显示项' contentKey={`${groupLayout}:${JSON.stringify(queue)}`} open={adding} onOpenChange={next=>{if(!busy){sorter.cancel();setAdding(next);}}} disabled={busy} trigger={<Text>添加</Text>} triggerAppearance='quiet' triggerClassName='todo-panel-add' placement='anchor' align='start' preferredSide='below' panelWidth={340} maxHeightRatio={.65} bodySpacing='none' layerClassName='todo-panel-add-layer' heading={<PopoverHeading title='添加显示项' actions={<ActionButton appearance='icon' ariaLabel='关闭添加显示项' disabled={busy} onClick={()=>setAdding(false)}>×</ActionButton>}/>}>
+     <View className='entity-choice-body'><SourceGroups key={owner} onToggle={()=>setGroupLayout(previous=>previous+1)} sources={all} render={source=>{const key=todoPanelSourceKey(source),included=selectedKeys.has(key),p=presentation(source);return <ActionButton key={key} appearance='quiet' className={`entity-choice-option${included?' is-selected':''}`} ariaLabel={`${included?'移出':'加入'}显示队列：${p.text}`} aria-pressed={included} disabled={busy||included&&queue!.length===1} onClick={()=>{const next=included?queue!.filter(item=>todoPanelSourceKey(item)!==key):[...queue!,source];void save(()=>onQueueChange!(next));}}>{p.icon}<Text className='entity-choice-label'>{p.text}</Text></ActionButton>;}}/></View>
     </ChoicePopover>
-   </View>:<View className='entity-choice-options'>{all.map(source=>{const key=todoPanelSourceKey(source),selected=key===todoPanelSourceKey(value),p=presentation(source);return <View key={key} className='entity-choice-row'><ActionButton appearance='quiet' className={`entity-choice-option${selected?' is-selected':''}`} ariaLabel={source.kind==='quadrant'?`显示象限：${p.text}`:`显示分类：${p.text}`} aria-pressed={selected} disabled={busy} onClick={()=>{void save(()=>onChange(source),true);}}>{p.icon}<Text className='entity-choice-label'>{p.text}</Text></ActionButton><View className='entity-choice-selection'>{selected&&<CheckSymbol/>}</View></View>;})}</View>}
+   </View>:<SourceGroups key={owner} onToggle={()=>setGroupLayout(previous=>previous+1)} sources={all} render={source=>{const key=todoPanelSourceKey(source),selected=key===todoPanelSourceKey(value),p=presentation(source);return <View key={key} className='entity-choice-row'><ActionButton appearance='quiet' className={`entity-choice-option${selected?' is-selected':''}`} ariaLabel={source.kind==='quadrant'?`显示象限：${p.text}`:`显示分类：${p.text}`} aria-pressed={selected} disabled={busy} onClick={()=>{void save(()=>onChange(source),true);}}>{p.icon}<Text className='entity-choice-label'>{p.text}</Text></ActionButton><View className='entity-choice-selection'>{selected&&<CheckSymbol/>}</View></View>;}}/>}
    {!!error&&<View className='todo-panel-source-error'><ActionButton appearance='quiet' disabled={busy} ariaLabel='重试保存显示队列' onClick={()=>{void retry.current?.();}}>重试</ActionButton></View>}
   </View>
   {sorter.drag?.active&&sorter.drag.rect&&queue&&<View className='todo-queue-ghost' style={{position:'fixed',left:`${sorter.drag.rect.left}px`,top:`${sorter.drag.point.clientY-sorter.drag.start.clientY+sorter.drag.rect.top}px`,width:`${sorter.drag.rect.right-sorter.drag.rect.left}px`}}>{row(queue[sorter.drag.index],sorter.drag.index,true)}</View>}

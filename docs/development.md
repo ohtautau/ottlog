@@ -3190,3 +3190,14 @@ check-rest-activity-lifecycle-20261105实际1440及390×440通过（管理草稿
 本机实际通过：miniprogram typecheck、check-editor-checklist.cjs、check-handle-sort.cjs、web build:tools、check-focus-save-jitter.cjs（115份源码CSS WXSS约束）、check-weapp-styles-test.cjs及web/scripts/check-editor-checklist.mjs语法检查。未安装依赖或浏览器，未运行浏览器、正常小程序构建／产物WXSS或微信真机；未操作Git、部署、API、系统、镜像、账号或业务数据。
 
 Windows协调端：OTTLOG_PARITY_ORIGIN=http://127.0.0.1:3017，在web执行node scripts/check-editor-checklist.mjs。保留原鼠标／CDP触摸／键盘／IME／失败重试断言，新增1440／390两宽度、任务／便签今日创建及已有编辑所有清单input和行的computed style检查（普通、鼠标点击、Tab／Shift+Tab键盘focus-visible），包含空尾行及完成行：输入四边0、透明、outline/shadow无，行仅1px底分隔，真实22px／2px勾选框仍在。脚本准备不等于浏览器通过；正常构建及微信原生／真机触控、软键盘尚待协调端。结果见.tmp/editor-frames-20261107-result.json。
+
+
+### 2026-11-07 象限位置布局、候选分组与主队列移出候选
+
+保留编辑器误框修复；本轮只改todos位置布局、TodoPanelPicker、队列检查及短文档。四位置沿原EditorHeading／返回，16px边界，44px固定label列＋12px gap＋minmax(0,1fr)来源列，行高44px；真实图标、单行省略文字和末尾chevron同列，触发器aria包含完整来源名。无逐行外框。SourceGroups由添加候选与非queue选择共用，优先级／分类默认展开、轻量无框标题和SelectChevron／aria-expanded／aria-controls，local state随关闭卸载或owner key恢复；展开折叠只通知原ChoicePopover重新测量，不添加滚动层或保存回调。
+
+主行增加DeleteSymbol移出，位于末尾唯一手柄之前；至少一项禁用且aria说明、ghost禁用，pointer／touchstart及click阻止冒泡。沿原save/onQueueChange和setTodoPanelQueue回退、owner/generation/busy及捕获原目标失败重试，不删除分类／任务，不新增撤销。添加层点击已加入项仍可移出。
+
+本机实际通过：miniprogram npm run typecheck；check-todo-panel-source.cjs；check-controls-model.cjs（新增移出非当前保留来源、移出当前原子回退、不改任务／分类、同目标幂等重试、拒绝空队列、基线不变）；check-handle-sort.cjs；web npm run build:tools；check-focus-save-jitter.cjs（115份源码CSS WXSS约束）；check-weapp-styles-test.cjs；node --check web/scripts/check-panel-queue-editor.mjs。
+
+Windows协调端待运行：web目录设置OTTLOG_PARITY_ORIGIN=http://127.0.0.1:3017后执行node scripts/check-panel-queue-editor.mjs。沿全部API隔离夹具，保留鼠标／CDP触摸／键盘手柄、取消／owner、失败重试、保存重开、循环及长队列滚动断言；更新shape为每行一个移出和末尾唯一手柄，新增分组默认展开／独立折叠／键盘、无PUT／toast／队列变化、四位置列对齐／44px／长名省略及完整aria、主队列移出非当前／当前回退／最后禁用／保存重开／同目标失败重试／ghost禁用。浏览器仅准备，未安装或运行；微信原生／真机手势、辅助功能及软键盘待验收。正常小程序构建、产物WXSS和最终网页镜像由协调端统一，本轮未执行；未操作Git、部署、账号、凭据、系统或真实业务/API。结果见.tmp/panel-layout-groups-20261107-result.json。
