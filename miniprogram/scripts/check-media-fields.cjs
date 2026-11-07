@@ -3,6 +3,7 @@ const fs=require('node:fs'),vm=require('node:vm');
 const source=fs.readFileSync(__dirname+'/check-editor-polish.cjs','utf8');
 const extra=`
 // Two rows in each column; parent becomes interaction-locked by this operation.
+disabled=false;tree=render();editors(tree).find(n=>n.props.value==='负一').props.onConfirm();tree=render();
 let spareNegative=editors(tree).find(n=>n.props.value===''&&n.props.recordId!==draft.positive.id&&n.props.recordId!==editors(tree).find(x=>x.props.value==='正二').props.recordId);
 spareNegative.props.onChange('负二');tree=render();
 const oldPositiveId=editors(tree).find(n=>n.props.value==='正一').props.recordId;

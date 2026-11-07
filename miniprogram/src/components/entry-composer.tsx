@@ -26,7 +26,7 @@ import MarkdownNoteEditor from './markdown-note-editor';
 import { noteStateFits } from '../lib/note-image-data';
 import TodoCategoryField from './todo-category-field';
 import { resumeEditorInput } from '../lib/resume-editor-input';
-import ProgressEditorFields from './progress-editor-fields';
+import ProgressEditorFields, { ProgressAttachmentActions, type ProgressEditorHandle } from './progress-editor-fields';
 import SwipePanels from './swipe-panels';
 import EntryPreview from './entry-preview';
 import { initialDomainState, isDomainState, type DomainState } from '../lib/domain-data';
@@ -62,6 +62,7 @@ export default function EntryComposer({ initialMode, preferLastCreatedMode = fal
   onCreated?: (mode: EntryMode, captureConsumed: boolean) => void;
   onCleared?: () => void;
 }) {
+  const progressEditor = useRef<ProgressEditorHandle>(null);
   const todos = usePersonalToolState('todos', initialTodoState), memos = usePersonalToolState('memos', initialMemoState);
   const domains = usePersonalToolState('domains', initialDomainState);
   const catalog = useEntryTags();
@@ -362,11 +363,12 @@ export default function EntryComposer({ initialMode, preferLastCreatedMode = fal
         </>}
         {draft && slide && isDomainState(domains.value) && <EntryPreview draft={draft} domains={domains.value} />}
         {draft && !slide && mode === 'memo' && <MemoEditorFields checklistSignal={checklistSignal} onTags={() => setTagsOpen(true)} actions={paneActions} preview={memoPreview} onPreviewChange={setMemoPreview} minimal showTags={tagsOpen} insertionSignal={imageSignal} key={draft.memo.id} autoFocus={autoFocus && !retryMode} draft={draft.memo} onChange={memo => { if (current.current.writable && current.current.owner === draftOwner.current) { setError(''); const next = { ...draft, memo }; latest.current = next; setDraft(next); } }} tagsText={draft.tagsText} onTagsChange={tagsText => update({ ...draft, tagsText })} tagOptions={catalog.owner === owner ? catalog.tags : []} disabled={locked} mediaWritable={writable && owner === draftOwner.current} owner={draftOwner.current} onBusyChange={imagesBusy} />}
-        {draft?.progress && !slide && mode === 'progress' && isDomainState(domains.value) && <ProgressEditorFields actions={paneActions} key={progressRecord(draft.progress).id} autoFocus={autoFocus && !retryMode} draft={draft.progress} state={domains.value} owner={draftOwner.current} disabled={locked} mediaWritable={writable && owner === draftOwner.current} onBusyChange={imagesBusy} onChange={progress => { if (current.current.writable && current.current.owner === draftOwner.current) { setError(''); const next = { ...draft, progress }; latest.current = next; setDraft(next); } }} />}
+        {draft?.progress && !slide && mode === 'progress' && isDomainState(domains.value) && <ProgressEditorFields ref={progressEditor} actions={paneActions} key={progressRecord(draft.progress).id} autoFocus={autoFocus && !retryMode} draft={draft.progress} state={domains.value} owner={draftOwner.current} disabled={locked} mediaWritable={writable && owner === draftOwner.current} onBusyChange={imagesBusy} onChange={progress => { if (current.current.writable && current.current.owner === draftOwner.current) { setError(''); const next = { ...draft, progress }; latest.current = next; setDraft(next); } }} />}
 
       </View></SwipePanels></ScrollView>
-      <SheetActions className='todo-sheet-footer entry-footer document-autosave-footer'>
-        <View className='document-autosave-tools'>{mode !== 'progress' && <><ActionButton appearance='icon' ariaLabel='编辑标签' disabled={!draft || locked} onClick={() => setTagsOpen(!tagsOpen)}><TaskTagSymbol /></ActionButton><ActionButton appearance='icon' ariaLabel='编辑附件' disabled={!draft || locked} onClick={() => setImageSignal(value => value + 1)}><TaskAttachmentSymbol /></ActionButton></>}{mode === 'memo' && <ActionButton appearance='icon' ariaLabel='添加子任务' disabled={!draft || locked} onClick={()=>setChecklistSignal(value=>value+1)}><TaskChecklistSymbol /></ActionButton>}{mode === 'memo' && <EditorPreviewButton selected={memoPreview} onChange={setMemoPreview} disabled={!draft || locked} label='便签 Markdown 预览' />}</View>
+      <SheetActions className={`todo-sheet-footer entry-footer document-autosave-footer${mode==='progress'?' is-progress-footer':''}`}>
+        {mode === 'progress' && <ProgressAttachmentActions draft={draft?.progress} disabled={!draft || locked || !writable || owner !== draftOwner.current || !!slide} onAttach={kind=>progressEditor.current?.attach(kind)} />}
+        {mode !== 'progress' && <View className='document-autosave-tools'><ActionButton appearance='icon' ariaLabel='编辑标签' disabled={!draft || locked} onClick={() => setTagsOpen(!tagsOpen)}><TaskTagSymbol /></ActionButton><ActionButton appearance='icon' ariaLabel='编辑附件' disabled={!draft || locked} onClick={() => setImageSignal(value => value + 1)}><TaskAttachmentSymbol /></ActionButton>{mode === 'memo' && <ActionButton appearance='icon' ariaLabel='添加子任务' disabled={!draft || locked} onClick={()=>setChecklistSignal(value=>value+1)}><TaskChecklistSymbol /></ActionButton>}{mode === 'memo' && <EditorPreviewButton selected={memoPreview} onChange={setMemoPreview} disabled={!draft || locked} label='便签 Markdown 预览' />}</View>}
         {!!error && draft && <ActionButton appearance='quiet' size='compact' disabled={busy || imageBusy} onClick={() => { setError(''); void save(); }}>重试</ActionButton>}
       </SheetActions>
     </View></View>}

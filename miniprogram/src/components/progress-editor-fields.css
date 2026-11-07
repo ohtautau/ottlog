@@ -1,6 +1,6 @@
 .progress-domain-row { display:flex;align-items:center;justify-content:space-between;min-width:0;gap:8PX; }
 .progress-columns { display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:32PX;min-width:0; }
-.progress-record-column { position:relative;display:flex;flex-direction:column;min-width:0;min-height:180PX; }
+.progress-record-column { position:relative;display:flex;flex-direction:column;min-width:0; }
 .progress-record-column + .progress-record-column::before { content:'';position:absolute;left:-16PX;top:0;bottom:0;border-left:1PX solid #3b505a; }
 .progress-record-heading { display:flex;align-items:center;min-height:40PX;margin-bottom:8PX;font-size:16PX;font-weight:600;line-height:24PX; }
 .progress-record-heading.is-positive { color:var(--domain-positive); }
@@ -9,5 +9,12 @@
 .progress-record-field:last-child { border-bottom:0; }
 .progress-record-tools { display:flex;align-items:center;justify-content:flex-end;gap:4PX; }
 .progress-record-tools > button { flex:none;margin:0; }
-.progress-column-tools { display:flex;justify-content:flex-start;margin-top:auto;padding-top:8PX; }
+.progress-column-tools { display:flex;justify-content:flex-start; }
 .progress-column-tools > button { flex:none;margin:0; }
+
+.progress-attachment-actions { display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:32PX;flex:1;min-width:0; }
+.entry-composer .entry-footer .progress-column-tools > button { flex:none;width:40PX;height:40PX; }
+
+.progress-attachment-actions { --editor-icon-size:24PX;--editor-icon-stroke:2PX; }
+.entry-composer .is-progress-footer { position:relative; }
+.entry-composer .is-progress-footer > button { position:absolute;right:var(--compact-editor-inset);width:auto; }

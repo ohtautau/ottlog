@@ -1,9 +1,10 @@
 import { RECORD_CONTENT_PLACEHOLDER } from './editor-copy';
 import { Text, View } from '@tarojs/components';
-import { useEffect, useRef, useState, type ReactNode } from 'react';
+import { forwardRef, useEffect, useImperativeHandle, useRef, useState, type ReactNode } from 'react';
 import { MAX_DOMAIN_RECORD_LENGTH, type DomainState, type RecordItem, type RecordKind } from '../lib/domain-data';
 import { clearProgressInput, MAX_PROGRESS_PAIRS, hasProgressContent, newProgressInput, progressRows, saveProgressDraft, writeProgressInput, type ProgressDraft } from '../lib/progress-draft';
 import { hasSubtaskText } from '../lib/todo-subtasks';
+import { MAX_NOTE_IMAGES as MAX_MEMO_IMAGES } from '../lib/note-image-data';
 import type { MemoImage } from '../lib/tool-records';
 import DomainChoiceField from './domain-choice-field';
 import MarkdownNoteEditor from './markdown-note-editor';
@@ -17,15 +18,26 @@ export function ProgressRecordField({ slot, kind, pairIndex = 0, children }: { s
 }
 const filled=(record:RecordItem)=>hasSubtaskText(record.content)||!!record.images?.length;
 
+export type ProgressEditorHandle = { attach: (kind: RecordKind) => void };
+export function canAttachProgress(draft: ProgressDraft, kind: RecordKind): boolean {
+  const rows = progressRows(draft), filledRows = rows.filter(row => filled(row.record));
+  const target = filledRows.filter(row => row.kind === kind).slice(-1)[0]?.record;
+  return target ? (target.images?.length || 0) < MAX_MEMO_IMAGES : filledRows.length < MAX_PROGRESS_PAIRS * 2;
+}
+export function ProgressAttachmentActions({draft, disabled, onAttach}: {draft?:ProgressDraft;disabled:boolean;onAttach:(kind:RecordKind)=>void}) {
+  return <View className='progress-attachment-actions'>{(['negative','positive'] as const).map(kind=><View className='progress-column-tools' key={kind}><ActionButton appearance='icon' size='compact' ariaLabel={`${kind==='negative'?'负':'正'}记录附件`} disabled={disabled || !draft || !canAttachProgress(draft,kind)} onClick={()=>onAttach(kind)}><TaskAttachmentSymbol/></ActionButton></View>)}</View>;
+}
+
 /** Each sign has one trailing input, stable record IDs and its own attachment target. */
-export default function ProgressEditorFields({ draft,onChange,state,disabled,mediaWritable = !disabled,owner,onBusyChange,autoFocus,actions }: {
+const ProgressEditorFields = forwardRef<ProgressEditorHandle, {
   draft:ProgressDraft;onChange:(draft:ProgressDraft)=>void;state:DomainState;disabled:boolean;mediaWritable?:boolean;owner:string;
   onBusyChange:(busy:boolean)=>void;autoFocus?:boolean;actions?:ReactNode;
-}) {
+}>(function ProgressEditorFields({ draft,onChange,state,disabled,mediaWritable = !disabled,owner,onBusyChange,autoFocus,actions }, ref) {
   const current=useRef({draft,disabled,mediaWritable,owner});current.current={draft,disabled,mediaWritable,owner};
   const autoFocusTaken=useRef(false);
   const known=useRef(new Set(progressRows(draft).filter(row=>filled(row.record)).map(row=>row.record.id)));
   const [spares,setSpares]=useState(()=>({positive:newProgressInput(),negative:newProgressInput()}));
+  const [revealed,setRevealed]=useState<Record<string,boolean>>({});
   const [focused,setFocused]=useState(''),[insertions,setInsertions]=useState<Record<string,number>>({});
   const [navigationId]=useState(()=>`records-${draft.positive.id}`);
   const moveRef=useRef<(id:string,direction:number)=>void>(()=>{});
@@ -34,7 +46,7 @@ export default function ProgressEditorFields({ draft,onChange,state,disabled,med
     const items=rows.filter(row=>row.kind===kind && (filled(row.record)||known.current.has(row.record.id)&&focused===row.record.id));
     const unused=rows.find(row=>row.kind===kind&&!filled(row.record)&&!known.current.has(row.record.id));
     const placeholder=unused?.record || spares[kind];
-    return {kind,items,placeholder,visible:[...items.map(row=>row.record),...(total<MAX_PROGRESS_PAIRS*2?[placeholder]:[])]};
+    return {kind,items,placeholder,visible:[...items.map(row=>row.record),...(total<MAX_PROGRESS_PAIRS*2 && (!items.length || revealed[placeholder.id])?[placeholder]:[])]};
   });
   function emit(next:ProgressDraft){current.current.draft=next;onChange(next);}
   function change(kind:RecordKind,record:RecordItem,media=false){
@@ -43,31 +55,39 @@ export default function ProgressEditorFields({ draft,onChange,state,disabled,med
     if(!existing && !filled(record)){setSpares(previous=>({...previous,[kind]:record}));return;}
     const clean=!hasSubtaskText(record.content)?{...record,content:''}:record;
     emit(writeProgressInput(current.current.draft,kind,clean));
-    if(filled(clean)){known.current.add(record.id);if(spares[kind].id===record.id)setSpares(previous=>({...previous,[kind]:newProgressInput()}));setFocused(record.id);}
+    if(filled(clean)){setRevealed(previous=>({...previous,[record.id]:false}));known.current.add(record.id);if(spares[kind].id===record.id)setSpares(previous=>({...previous,[kind]:newProgressInput()}));setFocused(record.id);}
   }
   function leave(id:string){
     setFocused(previous=>previous===id?'':previous);
+    setRevealed(previous=>({...previous,[id]:false}));
+    setSpares(previous=>Object.fromEntries(Object.entries(previous).map(([kind,record])=>[kind,record.id===id&&!filled(record)?{...record,content:''}:record])) as typeof previous);
     const row=progressRows(current.current.draft).find(item=>item.record.id===id);
     if(!current.current.disabled&&row&&!filled(row.record)&&known.current.has(id))emit(clearProgressInput(current.current.draft,id));
   }
   function move(id:string,direction:number){
     if(current.current.disabled)return;
     const column=columns.find(item=>item.visible.some(record=>record.id===id));if(!column)return;
-    const index=column.visible.findIndex(record=>record.id===id),next=column.visible[Math.max(0,Math.min(column.visible.length-1,index+direction))];if(next)setFocused(next.id);
+    const candidates=[...column.items.map(row=>row.record),...(total<MAX_PROGRESS_PAIRS*2?[column.placeholder]:[])];
+    const index=candidates.findIndex(record=>record.id===id),next=candidates[Math.max(0,Math.min(candidates.length-1,index+direction))];
+    if(next){if(next.id===column.placeholder.id)setRevealed(previous=>({...previous,[next.id]:true}));setFocused(next.id);}
   }
   moveRef.current=move;
   useEffect(()=>{
     if(typeof document==='undefined')return;
-    const arrow=(event:KeyboardEvent)=>{if(event.isComposing||event.altKey||event.ctrlKey||event.metaKey||!['ArrowUp','ArrowDown'].includes(event.key))return;const target=event.target as HTMLElement;if(target?.getAttribute('data-editor-list')!==navigationId)return;event.preventDefault();moveRef.current(target.getAttribute('data-editor-row')||'',event.key==='ArrowUp'?-1:1);};
+    const arrow=(event:KeyboardEvent)=>{if(event.isComposing||event.keyCode===229||event.shiftKey||event.altKey||event.ctrlKey||event.metaKey||!['Enter','ArrowUp','ArrowDown'].includes(event.key))return;const target=event.target as HTMLElement;if(target?.getAttribute('data-editor-list')!==navigationId)return;event.preventDefault();event.stopPropagation();moveRef.current(target.getAttribute('data-editor-row')||'',event.key==='ArrowUp'?-1:1);};
     document.addEventListener('keydown',arrow,true);return()=>document.removeEventListener('keydown',arrow,true);
   },[navigationId]);
+  useEffect(()=>{
+    if(focused && typeof document!=='undefined')document.querySelector<HTMLTextAreaElement>(`[data-editor-list="${navigationId}"][data-editor-row="${focused}"]`)?.focus();
+  },[focused,navigationId]);
   function attach(kind:RecordKind) {
-    if(current.current.disabled)return;
+    if(current.current.disabled || !current.current.mediaWritable || !current.current.owner || !canAttachProgress(current.current.draft,kind))return;
     const candidates=progressRows(current.current.draft).filter(row=>row.kind===kind&&filled(row.record));
     const target=candidates[candidates.length-1]?.record || columns.find(column=>column.kind===kind)!.placeholder;
     // Capture the column's stable ID at click time, independent of focus.
     setInsertions(previous=>({...previous,[target.id]:(previous[target.id]||0)+1}));
   }
+  useImperativeHandle(ref,()=>({attach}));
   function checkImages(kind:RecordKind,record:RecordItem,images:MemoImage[]){
     const next=writeProgressInput(current.current.draft,kind,{...record,images});
     if(hasProgressContent(next)){
@@ -89,7 +109,7 @@ export default function ProgressEditorFields({ draft,onChange,state,disabled,med
 
         </View>
       </ProgressRecordField>;})}
-      <View className='progress-column-tools'><ActionButton appearance='icon' size='compact' ariaLabel={`${kind==='negative'?'负':'正'}记录附件`} disabled={disabled || total>=MAX_PROGRESS_PAIRS*2&&!visible.some(filled)} onClick={()=>attach(kind)}><TaskAttachmentSymbol/></ActionButton></View>
     </View>)}</View>
   </EditorFieldsLayout>;
-}
+});
+export default ProgressEditorFields;

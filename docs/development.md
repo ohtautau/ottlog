@@ -3264,3 +3264,13 @@ check-panel-queue-editor实际1440×900／390×844通过：四位置44px固定�
 实际通过：web `npx tsc --noEmit`、`npm run build:tools`、定向ESLint（site-header.tsx、shell.jsx、build-tool-app.mjs、check-mobile-layout.mjs）、四份修改CSS的PostCSS解析、`node --check scripts/check-mobile-layout.mjs`。未安装或运行浏览器，未触及.git写入、系统、部署、真实API或数据。
 
 Windows协调端在隔离候选3017执行 `cd web && node scripts/check-mobile-layout.mjs`。脚本新建独立浏览器context，所有API由context拦截，第三方网络拒绝，账号为合成fixture；9工具非空结构和360×780、375×667、390×844、430×932、844×390、390×440、1440×900，检查文档水平溢出、选中导航、列表真实高度/滚动、FAB点击可达、计时stage/40px反馈及任务/日期三模式/分类/嵌套队列/三创建/四时长滚轮/账号/格言窗口几何与按钮点击目标；截图和报告在忽略的test-results/mobile-layout。脚本仅准备，选择器及几何待真实运行校正，不等于验收通过。Windows触摸手势、真实软键盘visualViewport/安全区及微信原生/真机边界仍待协调端；本轮不提交、不发布，等待实际观察跟进。
+
+### 2026-11-07 记录附件底栏与显式续行（源码候选，未部署）
+
+基线80bed74c39650e0a8a8c03c78fd096685614c84d，开始时工作区clean。根因是ProgressEditorFields的附件入口在entry-scroll内，只靠180px列最小高度与margin-top:auto；visible又在首字写入后立即追加placeholder。现以同源ProgressAttachmentActions放入EntryComposer原SheetActions，负左正右、32px列间距、24px宿主边界、40px按钮；重试不挤窄两列。子组件只暴露attach(kind)，点击时读最新草稿与该列末条有效稳定ID，按钮和操作共用canAttachProgress上限判断；媒体选择、alpha处理、owner／权限／卸载晚到结果及原子保存业务保持原路径。
+
+每列初始一个空输入，普通输入／粘贴不续行；Enter／原生confirm或ArrowDown才显示该列唯一下一空行，ArrowUp返回，网页实际聚焦textarea。组合输入与229键码不截获，Shift+Enter保留多行；空白失焦仅清理空草稿，非空记录保持。显示状态只在UI内，不读取迁移；40条、pairs／legacy、账号、同ID自动保存／失败重试不改。网页textarea适配补同Input已有的229及defaultPrevented守卫。
+
+本机通过：mini typecheck；check-progress-draft、check-progress-pairs、check-editor-polish、check-media-fields、check-media-insertion、check-native-alpha、check-followup-autosave、check-todo-autosave、check-controls-model、check-focus-save-jitter（115份源CSS）与check-weapp-styles-test；web tsc／build:tools；新增浏览器脚本语法及定向lint。误调用不存在的check-document-autosave.cjs失败，已改用真实的followup-autosave及todo-autosave检查，不计作通过。网页适配文件完整lint未通过：components.jsx第78行既有react-hooks/refs错误和19条既有unused-vars警告；git show基线经相同lint仍为同一错误，本轮未改该处或禁用规则。最终检查见.tmp/progress-editor-20261107-result.json。
+
+Windows协调端待运行：web目录使用OTTLOG_PARITY_ORIGIN=http://127.0.0.1:3017执行node scripts/check-progress-editor-layout.mjs。全部API拦截，独立fixture，1440×900、390×844、375×667、844×390、390×440及resize模拟键盘可见区域；检查底栏对列／40px／底部留白／点击命中、长短输入与慢保存／正文滚动、显式续行与真实焦点、IME／229／Shift+Enter／空白清理、切类型、真实透明PNG分别落到列末ID、选图取消和owner变更晚到结果。原共享媒体模型另覆盖卸载、record变化和权限撤销；选图期间原关闭守卫保留，不宣称浏览器实测过晚到关闭。脚本仅准备，未安装或运行浏览器；正常mini构建由协调端完成，微信原生／真机键盘、alpha／WebP与交互仍未验收。本轮无.git写入、部署、系统、真实API或账号数据操作。
