@@ -63,7 +63,7 @@ try { for (const [width,height] of viewports) {
   for(const node of await root.locator(selector).all()) {
    await bounds(node,label,40);
    const m=await node.evaluate(n=>({h:n.clientHeight,s:n.scrollHeight,o:getComputedStyle(n).overflowY}));
-   if(m.s>m.h+2){expect(['auto','scroll']).toContain(m.o);await node.evaluate(n=>n.scrollTop=n.scrollHeight);expect(await node.evaluate(n=>n.scrollTop)).toBeGreaterThan(0);}
+   if(m.s>m.h+2){expect(['auto','scroll']).toContain(m.o);await node.evaluate(n=>n.scrollTop=n.scrollHeight);expect(await node.evaluate(n=>n.scrollTop)).toBeGreaterThan(0);if(await node.evaluate(n=>n.classList.contains('habit-list-section-scroll'))&&await node.locator('.daily-suggestion').count()){const visible=await node.evaluate(n=>{const r=n.getBoundingClientRect(),last=[...n.querySelectorAll('.daily-suggestion')].at(-1).getBoundingClientRect();return Math.min(last.bottom,r.bottom)-Math.max(last.top,r.top);});expect(visible,label+' last card remains visible at the end').toBeGreaterThan(0);}}
   }
  }
  async function touchScroll(locator) {

@@ -22,6 +22,9 @@
   .tool-app-root .daily-core .daily-habit-sections { min-height: 0; }
   .tool-app-root .daily-core .daily-habit-pages { min-height: 0; }
   .tool-app-root .daily-core .daily-habit-scroll { overflow-y: auto !important; }
+  /* These bounded sublists have no create action of their own. Reserving a
+     screen-level FAB spacer here can leave their entire final viewport empty. */
+  .tool-app-root .daily-core :is(.daily-time-period-section,.daily-neglected) { --floating-create-clearance: 0px; }
   .tool-app-root .daily-core .daily-time-period-layout { height: auto; min-height: 100%; }
   .tool-app-root .daily-core .daily-time-period-section { flex: none; height: 200px; min-height: 0; }
   .tool-app-root .daily-core .daily-time-period-section:has(.daily-time-period-empty) { height: 112px; }
