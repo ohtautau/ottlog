@@ -5,7 +5,8 @@
 .progress-record-heading { display:flex;align-items:center;min-height:40PX;margin-bottom:8PX;font-size:16PX;font-weight:600;line-height:24PX; }
 .progress-record-heading.is-positive { color:var(--domain-positive); }
 .progress-record-heading.is-negative { color:var(--domain-negative); }
-.progress-record-field { min-width:0;margin-bottom:8PX;padding-bottom:4PX;border-bottom:1PX solid #334650; }
+.progress-record-field { position:relative;min-width:0;margin-bottom:8PX;padding-bottom:4PX;border-bottom:1PX solid #334650; }
 .progress-record-field:last-child { border-bottom:0; }
-.progress-record-tools { display:flex;align-items:center;justify-content:flex-end;gap:4PX;order:-1;min-height:0; }
+.progress-record-tools { position:absolute;top:0;right:0;z-index:1;display:flex;align-items:center;justify-content:flex-end;min-height:0; }
 .progress-record-tools > button { flex:none;margin:0;width:40PX;height:40PX; }
+.progress-record-field.has-delete .markdown-note-editor textarea.memo-body-input { padding-right:40PX; }

@@ -38,7 +38,7 @@ try{for(const [width,height] of viewports){
     const clip=action.getByRole('button',{name:'该条记录附件',exact:true}),b=await clip.boundingBox();
     expect(b.width).toBeGreaterThanOrEqual(32);expect(b.height).toBeGreaterThanOrEqual(40);expect(b.x).toBeCloseTo(a.x,0);
     const plus=await action.getByRole('button',{name:'增加投入分数',exact:true}).boundingBox();
-    expect(plus.x+plus.width).toBeLessThanOrEqual(a.x+a.width+1);expect(plus.y).toBeCloseTo(b.y,0);
+    expect(plus.x+plus.width).toBeLessThanOrEqual(a.x+a.width+1);expect(plus.x+plus.width).toBeGreaterThanOrEqual(a.x+a.width-1);expect(plus.y).toBeCloseTo(b.y,0);
     expect(await action.evaluate(n=>n.scrollWidth<=n.clientWidth+1)).toBe(true);boxes.push(a);
    }
   }
@@ -52,7 +52,7 @@ try{for(const [width,height] of viewports){
  await expect.poll(()=>saved('negative').find(r=>r.id===negativeId)?.effortScore).toBe(1);
  await row('negative').getByRole('button',{name:'减少投入分数',exact:true}).click();
  await expect.poll(()=>saved('negative').find(r=>r.id===negativeId)).toBeUndefined();
- const first=fields('positive').first();await first.fill('');await first.pressSequentially('plain typing');await expect(fields('positive')).toHaveCount(1);
+ const first=fields('positive').first();await first.fill('');const emptyRowHeight=(await row('positive').boundingBox()).height;await first.pressSequentially('p');await expect(fields('positive')).toHaveCount(1);expect(Math.abs((await row('positive').boundingBox()).height-emptyRowHeight),'first character does not add a delete-tool row').toBeLessThanOrEqual(1);await first.pressSequentially('lain typing');await expect(fields('positive')).toHaveCount(1);
  const firstId=await first.getAttribute('data-editor-row');
  await first.focus();await row('positive').getByRole('button',{name:'增加投入分数',exact:true}).evaluate(n=>{n.click();n.click();});
  await expect(row('positive').locator('.record-effort-value')).toHaveText('2');await expect(first).toBeFocused();

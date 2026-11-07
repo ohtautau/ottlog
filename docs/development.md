@@ -1,5 +1,13 @@
 # 开发说明
 
+### 2026-11-07 逐条投入分数与附件协调验收
+
+最新要求取代未发布的固定整页附件底栏候选：每条正文下方复用RecordActionRow，左附件只指向本条稳定ID，右侧“− 数字 +”默认0、整数逐次±1且最低0。RecordItem.effortScore可选，旧记录读取不补字段；非零纯分数为有效内容，0且无文字／图片仍为空。新建与DomainRecordEditor已有编辑沿同一组件；原草稿、40条、legacy／pairs、同ID重试、账号及图片晚到守卫保留。按字段合并分数，修改分数不覆盖远端文字／图片，未改分数时保留远端分数，双方分数冲突拒绝覆盖。API按原JsonElement存取，不需修改或发布API。
+
+Windows实际浏览器使用正式Next外壳、刚构建的共享app.js／app.css及context全拦截API夹具，在1440×900、360×780、390×844、375×667、844×390、390×440全部通过：普通逐字／粘贴／IME与229不补行，显式Enter／Down才续唯一空行并移动真实焦点，Up／Shift+Enter／空白清理；0下界、纯分数增减、同列／异列独立、快速连点不丢增量及不抢焦点；正文长短／慢同步／滚动／切三类型和日期三模式；点击较旧一条的附件也只写其ID、透明PNG alpha、已有编辑增分重开和附件／owner晚到隔离。原首字实测从一个textarea变两个，修复后仍一个；删除入口另改正文右上并给文字预留40px，首字前后行高差≤1px，避免再多出一行工具。
+
+两端类型检查、build:tools、定向脚本lint与CSS解析通过。check-record-effort／editor-polish／media-fields在Windows通过；原确定性UI夹具的组件路径识别改按path.sep分段，解决Linux通过而Windows找不到manage-symbol.ts的问题。服务器已有domain／progress／媒体／自动保存等15项模型记录通过。正常小程序构建通过116源码／17产物WXSS、15页／21个ES2019脚本、主包1,407,985字节及媒体138,608字节；未发布小程序。网页适配器原有hooks/refs lint错误与19条unused-vars警告仍为基线问题，本轮未禁用规则。全部交互是假账号夹具，未写真实业务；微信原生／真机键盘和交互未验收，最终镜像及正式只读结果另记。
+
 ### 2026-11-07 手机网页正式发布
 
 `ottlog-web:20261107T132120Z-07af9ca8ac8f`已由服务器Codex经限定broker发布，实际网页于`2026-11-07T13:24:19.378730782Z`启动且healthy；status／deploy／verify／rollback-check／remove-qa／final-status全部成功。备份`/home/ubuntu/ottlog/backups/api-edge-20261107T132418Z`保留旧网页4c3798954a48，API仍为原remember-login镜像、原d140b927容器及2026-10-31启动时间，业务卷和授权链未动。

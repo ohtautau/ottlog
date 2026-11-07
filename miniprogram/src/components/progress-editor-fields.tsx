@@ -15,8 +15,8 @@ import ActionButton from './ui-button';
 import './progress-editor-fields.css';
 import EditorFieldsLayout from './editor-fields-layout';
 
-export function ProgressRecordField({ slot, kind, pairIndex = 0, children }: { slot:'positive'|'negative';kind:RecordKind;pairIndex?:number;children:ReactNode }) {
-  return <EditorFieldsLayout topSpace={false} className='progress-record-field' data-progress-slot={slot} data-progress-pair={pairIndex}>{children}</EditorFieldsLayout>;
+export function ProgressRecordField({ slot, kind, pairIndex = 0, children, deletable = false }: { slot:'positive'|'negative';kind:RecordKind;pairIndex?:number;children:ReactNode;deletable?:boolean }) {
+  return <EditorFieldsLayout topSpace={false} className={`progress-record-field${deletable?' has-delete':''}`} data-progress-slot={slot} data-progress-pair={pairIndex}>{children}</EditorFieldsLayout>;
 }
 const filled=hasRecordContent;
 
@@ -92,7 +92,7 @@ function ProgressEditorFields({ draft,onChange,state,disabled,mediaWritable = !d
     <View className='entry-pane-heading progress-domain-row'><DomainChoiceField compact ariaLabel='选择记录领域' domains={state.domains} value={draft.domainId} optionPrefix='记录到' disabled={disabled} onChange={domainId=>emit({...current.current.draft,domainId})}/>{actions}</View>
     <View className='progress-columns'>{columns.map(({kind,placeholder,visible})=><View className={`progress-record-column is-${kind}`} key={kind}>
       <View className={`progress-record-heading is-${kind}`}><Text>{kind==='negative'?'负记录':'正记录'}</Text></View>
-      {visible.map((record,index)=>{const empty=record.id===placeholder.id;return <ProgressRecordField key={record.id} slot={kind} kind={kind} pairIndex={index}>
+      {visible.map((record,index)=>{const empty=record.id===placeholder.id;return <ProgressRecordField key={record.id} slot={kind} kind={kind} pairIndex={index} deletable={!empty}>
         <MarkdownNoteEditor minimal format='plain' density='compact' showImageInsertion={false} insertionSignal={insertions[record.id]||0} navigationId={navigationId}
           onFocus={()=>{autoFocusTaken.current=true;setFocused(record.id);}} onBlur={()=>leave(record.id)} onConfirm={()=>move(record.id,1)} autoFocus={focused===record.id || !focused&&!autoFocusTaken.current&&!!autoFocus&&kind==='positive'&&index===0}
           value={record.content} images={record.images} owner={owner} recordId={record.id} disabled={disabled} canInsertImage={mediaWritable} onBusyChange={onBusyChange} maxLength={MAX_DOMAIN_RECORD_LENGTH}
