@@ -405,4 +405,4 @@ export default function Todos() {
   </>;
 }
 
-function TodoPanelSourceIcon({panel}:{panel:ReturnType<typeof todoPanelPresentation>}){return panel.source.kind==='quadrant'?<PriorityFlag color={panel.color} outlined={panel.source.quadrantId==='later'}/>:<LibraryIcon name={panel.iconId} fallback='notes' className='todo-panel-icon'/>;}
+function TodoPanelSourceIcon({panel}:{panel:ReturnType<typeof todoPanelPresentation>}){return <View className='todo-source-icon-slot'>{panel.source.kind==='quadrant'?<PriorityFlag color={panel.color} outlined={panel.source.quadrantId==='later'}/>:<LibraryIcon name={panel.iconId} fallback='notes' className='todo-panel-icon'/>}</View>;}

@@ -1,5 +1,14 @@
 # 开发说明
 
+## 2026-11-07 来源图标槽小范围修复（工作区候选）
+
+根因：优先级旗帜16×20px、分类图库24×24px直接参与flex gap，文字起点相差8px。TodoPanelPicker的presentation统一包todo-source-icon-slot，覆盖候选、主队列／ghost及旧非queue选择；四位置TodoPanelSourceIcon使用同一槽类。槽仅在todo-panel-picker.css定义24×24px、flex:none和居中，原图形尺寸、色彩／outline／iconId、行高、点击区及队列业务均未改。
+
+扩展check-panel-queue-editor.mjs真实DOM断言：1440／390宽下四优先级与至少两分类的槽／原图尺寸、跨组文字起点和图标中心、垂直居中、折叠重开、混合队列／ghost、四位置来源切换及长名边界；longGeometry改从trigger直属文字span读取，保留省略和不溢出断言，并检查移出／手柄边界。原删除、拖动、折叠和失败重试断言保留。
+
+本工作区实际通过：小程序npm run typecheck、网页tsc --noEmit、check-controls-model.cjs、check-todo-panel-source.cjs、网页npm run build:tools、115份源码CSS WXSS约束、node --check web/scripts/check-panel-queue-editor.mjs。未安装或运行浏览器，未执行正常build:weapp／Next生产构建；Windows隔离3017浏览器实跑和正常构建由根协调端完成，微信原生／真机尚待验收。未写.git、部署或接触API／真实数据。报告：.tmp/source-icon-alignment-20261107-result.json。
+
+
 2026-11-05协调端补充候选：真实触控确认隐式指针捕获转交会冒泡lostpointercapture，已按当前滚轮仍持有capture忽略转交；真正取消仍回填原值。矮屏建议窗用网页真实viewport高度覆盖，避免共享源vh被工具剩余高度替换；390×440习惯主列表／提醒改并列独立滚动，保留固定条件行。习惯名称及透明备注按任务内容左对齐，窗口标题居中。休息建议管理时延迟自动完成弹窗，避免打断新增草稿。相关实际验收记录待最终候选完成后补齐。
 
 ## 2026-11-04 本轮协调验收

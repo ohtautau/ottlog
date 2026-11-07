@@ -28,3 +28,5 @@
 .todo-source-group-heading.ui-button { display:flex;align-items:center;justify-content:space-between;width:100%;margin:0;text-align:left;--control-text:#9eb4bd; }
 .todo-panel-remove { flex:none;width:40PX; }
 .todo-panel-remove > .ui-button { width:40PX;margin:0; }
+
+.todo-source-icon-slot { display:flex;flex:none;align-items:center;justify-content:center;width:24PX;height:24PX; }

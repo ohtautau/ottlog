@@ -54,7 +54,7 @@ export default function TodoPanelPicker({ categories, value, onChange, disabled 
  const presentation=(source:TodoPanelSource)=>{
   const quadrant=source.kind==='quadrant'?todoQuadrants.find(item=>item.id===source.quadrantId):undefined;
   const category=source.kind==='category'?choices.find(item=>item.id===source.categoryId):undefined;
-  return {text:quadrant?.title||category?.name||'收集箱',icon:quadrant?<PriorityFlag color={quadrant.color} outlined={quadrant.id==='later'}/>:<LibraryIcon name={category?.iconId} fallback='notes' className='entity-choice-icon'/>};
+  return {text:quadrant?.title||category?.name||'收集箱',icon:<View className='todo-source-icon-slot'>{quadrant?<PriorityFlag color={quadrant.color} outlined={quadrant.id==='later'}/>:<LibraryIcon name={category?.iconId} fallback='notes' className='entity-choice-icon'/>}</View>};
  };
  const reorder=(from:number,to:number)=>{if(!queue||!onQueueChange||from===to)return;const next=[...queue],item=next.splice(from,1)[0];next.splice(to,0,item);void save(()=>onQueueChange(next));};
  const sorter=useHandleSort((queue||[]).map(todoPanelSourceKey),open&&queueMode&&!adding&&!busy&&!disabled,`${owner}:${availableKey}`,reorder);
