@@ -5,10 +5,11 @@ const origin=process.env.OTTLOG_PARITY_ORIGIN||'http://127.0.0.1:3017';
 if(!/^http:\/\/(127\.0\.0\.1|localhost):3017$/.test(origin))throw Error('Use isolated 3017 only');
 const out='test-results/progress-editor';await fs.mkdir(out,{recursive:true});
 const fresh=()=>({todos:{version:1,categories:[],tasks:[]},memos:{version:1,notes:[]},domains:{version:1,domains:[{id:'work',name:'工作',iconId:'work',longTermGoal:null,shortTermGoal:null,habits:[],positiveRecords:[],negativeRecords:[]}],completedGoals:[]}});
-const browser=await chromium.launch(),results=[];
-try{for(const [width,height] of [[1440,900],[390,844],[375,667],[844,390],[390,440]]){
+const browser=await chromium.launch(),results=[];let currentPage,currentViewport;
+try{for(const [width,height] of [[1440,900],[390,844],[375,667],[844,390],[390,440]].filter(([width])=>!process.env.OTTLOG_PROGRESS_WIDTH||width===Number(process.env.OTTLOG_PROGRESS_WIDTH))){
  const context=await browser.newContext({viewport:{width,height},hasTouch:true,isMobile:width<900,serviceWorkers:'block'}),page=await context.newPage(),errors=[],writes=[];
  let owner='progress-isolated',delay=0;const states={[owner]:fresh()};
+ currentPage=page;currentViewport=`${width}x${height}`;page.setDefaultTimeout(7000);
  page.on('pageerror',e=>errors.push(e.message));
  await context.route('**/*',async route=>{
   const req=route.request(),url=new URL(req.url()),key=url.pathname.match(/^\/api\/personal-tools\/([^/]+)$/)?.[1];
@@ -56,7 +57,9 @@ try{for(const [width,height] of [[1440,900],[390,844],[375,667],[844,390],[390,4
   await expect.poll(()=>saved(kind).find(r=>r.id===id)?.images?.length).toBe(1);expect(saved(kind).filter(r=>r.images?.length)).toHaveLength(1);await geometry();
  }
  const alpha=await panel().locator('.memo-image img').first().evaluate(async img=>{await img.decode();const c=document.createElement('canvas');c.width=c.height=64;const x=c.getContext('2d');x.drawImage(img,0,0);return x.getImageData(0,0,1,1).data[3];});expect(alpha).toBe(0);
- await button('创建类型：便签').click();await button('创建类型：记录').click();await geometry();
+ // Type switching shares title text; keep that title within the existing memo limit.
+ await first.fill('切换检查');await expect.poll(()=>saved('positive').find(r=>r.id===firstId)?.content).toBe('切换检查');
+ await button('创建类型：便签').click();await button('创建类型：记录').click();await expect(button('正记录附件')).toBeVisible();await geometry();
  // Keyboard-visible area simulation: real resize invokes existing viewport listeners.
  if(width===390&&height===844){await page.setViewportSize({width,height:440});await fields('positive').first().focus();await geometry();await page.setViewportSize({width,height});await geometry();}
  await page.screenshot({path:`${out}/${width}x${height}.png`});
@@ -65,6 +68,6 @@ try{for(const [width,height] of [[1440,900],[390,844],[375,667],[844,390],[390,4
  // Owner change unmounts the editor even while a result is outstanding.
  await open();chooserPromise=page.waitForEvent('filechooser');await button('正记录附件').click();chooser=await chooserPromise;
  owner='progress-other';states[owner]=fresh();await page.evaluate(()=>window.dispatchEvent(new Event('focus')));await expect(panel()).toHaveCount(0,{timeout:15000});const before=writes.length;await chooser.setFiles(file);await page.waitForTimeout(700);expect(writes.slice(before).filter(w=>w.owner===owner)).toEqual([]);expect(states[owner]).toEqual(fresh());
- expect(errors).toEqual([]);results.push({width,height,status:'passed',writes:writes.length});await context.close();
-}}finally{await fs.writeFile(`${out}/report.json`,JSON.stringify(results,null,2));await browser.close();}
+ expect(errors).toEqual([]);results.push({width,height,status:'passed',writes:writes.length});await context.close();console.log(`PASS progress editor ${width}x${height}`);
+}}catch(error){if(currentPage&&!currentPage.isClosed())await currentPage.screenshot({path:`${out}/${currentViewport}-failure.png`});throw error;}finally{await fs.writeFile(`${out}/report.json`,JSON.stringify(results,null,2));await browser.close();}
 console.log('PASS progress editor layout, explicit rows, real focus, stable media targets and late-result isolation');
