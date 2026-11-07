@@ -28,8 +28,9 @@ try{for(const [width,height] of viewports){
  const attachment=(kind,index=0)=>row(kind,index).getByRole('button',{name:'该条记录附件',exact:true});
  const open=async()=>{await button('创建记录').click();await button('创建类型：记录').click();await expect(attachment('positive')).toBeEnabled();};
  const geometry=async()=>{
-  const boxes=[];const p=await panel().boundingBox();
-  expect(p.y).toBeGreaterThanOrEqual(-1);expect(p.y+p.height).toBeLessThanOrEqual((await page.viewportSize()).height+1);
+  const boxes=[];
+  // visualViewport resize is delivered asynchronously; verify the settled layout.
+  await expect.poll(async()=>{const p=await panel().boundingBox();return p.y>=-1&&p.y+p.height<=(await page.viewportSize()).height+1;}).toBe(true);
   for(const kind of ['negative','positive']){
    const records=panel().locator(`.progress-record-column.is-${kind} .progress-record-field`);
    for(let i=0;i<await records.count();i++){
