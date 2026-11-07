@@ -1,0 +1,62 @@
+/* Web phone geometry has one owner. Native CSS and desktop rules stay intact.
+   --app-page-height is supplied by shell's host ResizeObserver, never guessed. */
+@media (max-width: 899px) {
+  .tool-app-root { --app-unit: .5px; min-height: 0; padding-bottom: 0; }
+  .tool-app-root :is(.core-content,.core-screen,.daily-core,.memo-core,.todo-core) { min-width: 0; min-height: 0; }
+  .tool-app-root :is(.todo-stages,.todo-core,.memo-core) { display: flex; flex-direction: column; height: 100%; min-height: 0; }
+  .tool-app-root .todo-stages .todo-page { position: relative; inset: auto; flex: 1; height: 0; min-height: 0; padding: 0; }
+  .tool-app-root .todo-quadrants { gap: 8px; grid-template-rows: repeat(2,minmax(0,1fr)); }
+  .tool-app-root .todo-quadrant-heading { min-height: 48px; padding: 4px 6px; }
+  .tool-app-root :is(.todo-quadrant-title,.todo-quadrant-caption) { overflow: hidden; text-overflow: ellipsis; }
+  .tool-app-root :is(.todo-quadrant-scroll,.memo-list-scroll) { flex: 1; height: 0; min-height: 0; overflow-y: auto !important; overscroll-behavior: contain; }
+  .tool-app-root .memo-list { display: grid; grid-template-columns: minmax(0,1fr); align-content: start; gap: 12px; }
+  .tool-app-root .memo-note { min-width: 0; }
+  .tool-app-root .today-page { height: auto; padding: 0; }
+  .tool-app-root .today-page .core-screen .today-grid { height: auto; min-height: 100%; grid-template-columns: repeat(2,minmax(0,1fr)); grid-auto-rows: minmax(112px,auto); }
+  .tool-app-root .today-page > .more-section { min-height: 0; padding-bottom: max(16px,env(safe-area-inset-bottom)); }
+  .tool-app-root .daily-page .daily-core > .core-content { display: flex; flex-direction: column; min-height: 0; }
+  .tool-app-root .daily-core .daily-habit-sections { min-height: 0; }
+  .tool-app-root .daily-core .daily-habit-pages { min-height: 0; }
+  .tool-app-root .daily-core .daily-habit-scroll { overflow-y: auto !important; }
+  .tool-app-root .daily-core .daily-time-period-layout { height: auto; min-height: 100%; }
+  .tool-app-root .daily-core .daily-time-period-section { flex: none; height: 200px; min-height: 0; }
+  .tool-app-root .daily-core .daily-time-period-section .habit-list-section-viewport { flex: 1; height: 0; min-height: 0; }
+  .tool-app-root .daily-core .daily-time-period-section .habit-list-section-scroll { height: 100%; min-height: 0; overflow-y: auto !important; }
+  .tool-app-root .daily-core .daily-neglected.habit-list-section { min-height: 0; }
+  .tool-app-root .statistics-content { display: flex; flex-direction: column; min-width: 0; }
+  .tool-app-root :is(.statistics-insights,.statistics-growth-domains,.statistics-domain-choices) { grid-template-columns: minmax(0,1fr); min-width: 0; }
+  .tool-app-root .statistics-insight-metrics { grid-template-columns: repeat(2,minmax(0,1fr)); }
+  .tool-app-root .focus-feedback-slot { flex: none; height: 40px; min-height: 40px; max-height: 40px; }
+  /* Fixed windows use the visual viewport when a browser keyboard is present.
+     Existing heading, 24px editor inset and popover placement remain owners. */
+  .tool-app-root :is(.todo-sheet,.memo-sheet,.task-detail-panel,.daily-editor-sheet,.daily-detail-sheet,.daily-history-sheet,.domain-sheet,.domain-definition-panel,.focus-settings,.mottos-editor-sheet,.todo-schedule-sheet,.icon-library-sheet,.account-window) {
+    min-width: 0; max-width: 100%; min-height: 0;
+    max-height: calc(var(--browser-viewport-height,100dvh) - 32px);
+    --popup-actions-bottom-space: max(16px,env(safe-area-inset-bottom));
+  }
+  .tool-app-root :is(.todo-sheet-scroll,.memo-sheet-scroll,.daily-editor-scroll,.daily-detail-scroll,.domain-sheet-scroll,.focus-settings-scroll,.todo-schedule-body,.mottos-editor-scroll) { min-height: 0; overflow-y: auto !important; overscroll-behavior: contain; }
+  .tool-app-root :is(.editor-heading,.sheet-actions,.focus-settings-heading,.focus-settings-actions) { flex-shrink: 0; }
+  .tool-app-root .focus-settings-grid { grid-template-columns: repeat(4,minmax(0,1fr)); gap: 0; }
+  .tool-app-root .focus-settings-grid > div { min-width: 0; }
+  .tool-app-root .focus-settings-label { white-space: normal; overflow-wrap: anywhere; }
+  .tool-app-root .sheet-actions { padding-bottom: max(16px,env(safe-area-inset-bottom)); }
+  .tool-app-root :is(.ui-button,.ui-choice,.todo-complete,.todo-completed-toggle) { min-height: 40px; }
+}
+@media (min-width: 420px) and (max-width: 899px) {
+  .tool-app-root .memo-list { grid-template-columns: repeat(2,minmax(0,1fr)); }
+  .tool-app-root .domains-list .domain-card-groups { grid-template-columns: repeat(2,minmax(0,1fr)); }
+}
+@media (max-width: 899px) and (min-height: 601px) {
+  .tool-app-root .daily-core .daily-neglected.habit-list-section { height: clamp(120px,25%,180px); }
+}
+@media (max-width: 899px) and (max-height: 600px) {
+  /* Keep the established independent main/reminder columns. */
+  .tool-app-root .daily-core .daily-time-period-section { height: 180px; }
+}
+@media (max-width: 899px) and (min-height: 501px) {
+  .tool-app-root .focus-page .focus-core .focus-clock-card { display: flex; flex-direction: column; }
+  .tool-app-root .focus-page .focus-timer-stage { min-height: 100px; }
+  .tool-app-root .focus-page .focus-action-area { margin-top: 4px; }
+  .tool-app-root .focus-page .focus-primary-actions { margin-top: 0; }
+  .tool-app-root .focus-page .focus-end-slot:has(> .focus-end-space) { height: 0; min-height: 0; margin: 0; }
+}

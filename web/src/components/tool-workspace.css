@@ -31,3 +31,9 @@ ottlog-tools{display:block;min-width:0;min-height:320px}
   [data-tool-layout=viewport] .tool-app-root .core-screen{height:var(--app-page-height);min-height:0;padding:0}
   [data-tool-layout=viewport] .tool-app-root .core-screen>.core-content{flex:1;height:0;min-height:0}
 }
+
+/* Phone shell follows the keyboard viewport; host measurement supplies child height. */
+@media(max-width:899px){
+  body:has([data-tool-layout=viewport]){height:var(--browser-viewport-height,100dvh)}
+  body:has([data-tool-layout=viewport])>main.shell{padding-bottom:max(16px,env(safe-area-inset-bottom));padding-left:max(12px,env(safe-area-inset-left));padding-right:max(12px,env(safe-area-inset-right))}
+}

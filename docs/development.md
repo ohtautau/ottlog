@@ -3234,3 +3234,13 @@ check-panel-queue-editor实际1440×900／390×844通过：四位置44px固定�
 服务器Codex已通过固定broker发布9c5f3e53b0e5，verify／rollback-check通过，QA清理且worker空闲；回滚备份`/home/ubuntu/ottlog/backups/api-edge-20261107T080334Z`保留上一网页39c5b60fa16e，未实际回滚。API仍为原remember-login镜像、原容器ID与2026-10-31T13:24:42.2266606Z启动时间，业务卷／授权覆盖链保留，未发布小程序。临时3017连接已关闭。
 
 协调端实际正式HTTPS只读复核20个宽窄页面、八类工具两域名同账号读数一致、匿名隔离／CSRF／读者权限、图片及pageerror通过。全部业务写入拦截，写入尝试0，前后八类哈希一致。另在正式静态资产上使用完全拦截API的独立夹具，检查清单透明行、新建／已有任务无框、对齐四行及分组／直接移出；夹具没有接触真实业务。正常登录表单边界此前已在两尺寸候选检查通过。本轮无真实数据、队列或设置写入；报告、截图、凭据仍在忽略目录，源码及记录推送GitHub，服务器同源同步。
+
+### 2026-11-07 网页手机布局候选（待 Windows QA）
+
+基线098458c09b7eb1a65f760d76abd63a08343cdfee，开始时工作区clean。仅网页表现层：品牌行76→52px、导航44px及日常工具40px横滑，当前工具自动水平定位；mobile-layout.css集中拥有≤899px尺寸单位、四象限独立滚动、便签/领域响应列、今日快捷卡、习惯可滚动时段/自由区与独立提醒、统计单列、专注真实stage及固定40px反馈、弹窗高度/内部滚动/底部≥16px。保留既有≤600px习惯双列、≤500px专注紧凑网格和24px编辑边界、图标槽/菜单/业务。移除shell.css的手机单位与猜测高度覆盖。
+
+源码未找到既有visualViewport监听；沿原宿主ResizeObserver增加浏览器视口resize监听，将高度写到单一--browser-viewport-height；只在视口事件写入，值相同不写，离开卸载清理，内容实际高度仍只由宿主测量，不从内容反推视口。未改mini、计时deadline、账号或同步模型。
+
+实际通过：web `npx tsc --noEmit`、`npm run build:tools`、定向ESLint（site-header.tsx、shell.jsx、build-tool-app.mjs、check-mobile-layout.mjs）、四份修改CSS的PostCSS解析、`node --check scripts/check-mobile-layout.mjs`。未安装或运行浏览器，未触及.git写入、系统、部署、真实API或数据。
+
+Windows协调端在隔离候选3017执行 `cd web && node scripts/check-mobile-layout.mjs`。脚本新建独立浏览器context，所有API由context拦截，第三方网络拒绝，账号为合成fixture；9工具非空结构和360×780、375×667、390×844、430×932、844×390、390×440、1440×900，检查文档水平溢出、选中导航、列表真实高度/滚动、FAB点击可达、计时stage/40px反馈及任务/日期三模式/分类/嵌套队列/三创建/四时长滚轮/账号/格言窗口几何与按钮点击目标；截图和报告在忽略的test-results/mobile-layout。脚本仅准备，选择器及几何待真实运行校正，不等于验收通过。Windows触摸手势、真实软键盘visualViewport/安全区及微信原生/真机边界仍待协调端；本轮不提交、不发布，等待实际观察跟进。

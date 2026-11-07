@@ -19,3 +19,7 @@
 2026-11-04显示队列：主列表与末行“添加”共用entity-choice-options大框，当前行背景包含手柄区域，不改成逐项小框。四位置编辑列表用16px左右内距、0行间gap、每行至少40px，位置名600字重／正文色，选择入口相隔12px；四行同用来源真实旗帜色或分类LibraryIcon。队列滚动复用ChoicePopover已有ScrollView（bodyScroll仅提供ID／位置／回调），不嵌套新的滚动层。
 
 2026-11-04领域最近记录：复用DomainRecentRecords拥有16px对称水平内距，内部DomainRecordColumn负责分割线两侧等距，空栏和实际记录同起点；不要为页面单独加偏移。网页专注反馈槽恒定40px，空、同步、失败状态都不改变番茄与按钮几何，长内容在槽内滚动并保留重试。
+
+### 2026-11-07 网页手机尺寸归属
+
+≤899px工具内容适配由web/shared-app/mobile-layout.css单一拥有，并在工具样式末尾接入；网站顶栏局部几何仍由site-header.module.css拥有，网页外壳可用高度由tool-workspace.css与shell.jsx宿主测量拥有。手机不再缩小--app-unit，保持.5px及既有40px控件；原生与桌面不受此断点影响。视口高度变量--browser-viewport-height只由网页视口resize事件更新，--app-page-height只由原ResizeObserver更新，避免内容反馈环。24px编辑内距、来源图标槽及ChoicePopover定位仍由原组件拥有，勿逐页复制覆盖。手机几何待Windows及真实软键盘QA。

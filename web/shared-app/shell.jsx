@@ -40,6 +40,16 @@ export function registerTools(pages) {
         this.host = document.createElement('div'); this.host.className = 'tool-app-root'; this.appendChild(this.host);
         setMountHost(this.host, this.dataset.page || 'index', this.dataset.query || '');
         if (this.closest('[data-tool-layout=viewport]')) {
+          // Viewport events only: do not derive the viewport from the resized host.
+          // This keeps keyboard changes from feeding back into ResizeObserver.
+          this.measureViewport = () => {
+            const height = `${Math.round(window.visualViewport?.height || innerHeight)}px`;
+            if (document.documentElement.style.getPropertyValue('--browser-viewport-height') !== height)
+              document.documentElement.style.setProperty('--browser-viewport-height', height);
+          };
+          this.measureViewport();
+          window.addEventListener('resize', this.measureViewport);
+          window.visualViewport?.addEventListener('resize', this.measureViewport);
           this.observer = new ResizeObserver(([entry]) => {
             const height = Math.round(entry.contentRect.height);
             if (height && this.host.style.getPropertyValue('--app-page-height') !== `${height}px`) {
@@ -54,7 +64,7 @@ export function registerTools(pages) {
       });
     }
     disconnectedCallback() {
-      queueMicrotask(() => { if (this.isConnected) return; this.observer?.disconnect(); this.reactRoot?.unmount(); clearMountHost(this.host); });
+      queueMicrotask(() => { if (this.isConnected) return; this.observer?.disconnect(); window.removeEventListener('resize', this.measureViewport); window.visualViewport?.removeEventListener('resize', this.measureViewport); document.documentElement.style.removeProperty('--browser-viewport-height'); this.reactRoot?.unmount(); clearMountHost(this.host); });
     }
   });
 }

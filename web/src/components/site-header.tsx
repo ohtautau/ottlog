@@ -16,6 +16,7 @@ function HeaderNavigation({ pathname }: { pathname: string }) {
   const [open, setOpen] = useState(false);
   const root = useRef<HTMLDivElement>(null);
   const toggle = useRef<HTMLButtonElement>(null);
+  const strip = useRef<HTMLElement>(null);
   const timeout = useRef<ReturnType<typeof setTimeout> | null>(null);
   function cancelHide() { if (timeout.current) clearTimeout(timeout.current); }
   function hideLater() {
@@ -29,6 +30,13 @@ function HeaderNavigation({ pathname }: { pathname: string }) {
     document.addEventListener("pointerdown", outside);
     return () => { document.removeEventListener("pointerdown", outside); if (timeout.current) clearTimeout(timeout.current); };
   }, []);
+  useEffect(() => {
+    // Keep the active tool visible without scrolling the document vertically.
+    const node = strip.current;
+    const active = node?.querySelector<HTMLElement>('[aria-current="page"]');
+    if (!node || !active) return;
+    node.scrollLeft = Math.max(0, active.offsetLeft - (node.clientWidth - active.offsetWidth) / 2);
+  }, [pathname]);
   const links = [{href:"/",title:"首页"},{href:"/posts",title:"公开文章"}];
   const tools = appTools;
   const current = (href: string) => pathname === href || (href !== "/" && pathname.startsWith(`${href}/`));
@@ -41,7 +49,7 @@ function HeaderNavigation({ pathname }: { pathname: string }) {
       <nav aria-label="网站导航" className={styles.primary}>{links.map(link => <Link key={link.href} href={link.href} aria-current={current(link.href)?"page":undefined}>{link.title}</Link>)}</nav>
       <div className={styles.desktopAccount}><AccountMenu/></div>
     </div>
-    <nav aria-label="日常工具" className={`shell ${styles.toolStrip}`}>{tools.map(tool => <Link key={tool.href} href={tool.href} aria-current={current(tool.href)?"page":undefined}>{tool.title}</Link>)}</nav>
+    <nav ref={strip} aria-label="日常工具" className={`shell ${styles.toolStrip}`}>{tools.map(tool => <Link key={tool.href} href={tool.href} aria-current={current(tool.href)?"page":undefined}>{tool.title}</Link>)}</nav>
     <div ref={root} className={styles.dock} data-open={open} onPointerEnter={event => { if (event.pointerType === "mouse") { cancelHide(); timeout.current = setTimeout(() => setOpen(true), 200); } }} onPointerLeave={hideLater}
       onFocusCapture={cancelHide} onBlurCapture={event => { if (!event.currentTarget.contains(event.relatedTarget)) hideLater(); }}
       onKeyDown={event => { if (event.key === "Escape") { setOpen(false); toggle.current?.focus(); } }}>

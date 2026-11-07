@@ -40,6 +40,7 @@ await build({
     import './shared-app/desktop-domains-habits.css';
     import './shared-app/desktop-focus-statistics.css';
     import './shared-app/category-controls.css';
+    import './shared-app/mobile-layout.css';
     registerTools({${pages.map((p, i) => `${JSON.stringify(`pages/${p}/index`)}:Page${i}`).join(',')},'pages/motto-widget/index':MottoWidget});`, resolveDir: root, loader: 'tsx' },
   bundle: true, platform: 'browser', format: 'esm', outfile: path.join(output, 'app.js'), jsx: 'automatic', minify: true, nodePaths: [path.join(root, 'node_modules')],
   define: { API_BASE_URL: '""', MINIPROGRAM_PREVIEW: 'false', 'process.env.NODE_ENV': '"production"' },
