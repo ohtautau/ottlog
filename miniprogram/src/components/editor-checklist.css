@@ -1,8 +1,9 @@
 .editor-checklist { margin-top:12PX;min-width:0; }
 .editor-checklist-scroll { max-height:35vh; }
-.editor-checklist-row { display:flex;align-items:center;gap:4PX;min-height:48PX;border-bottom:1PX solid #334650;background:#20333e; }
+.editor-checklist-row { display:flex;align-items:center;gap:4PX;min-height:48PX;border:0;border-bottom:1PX solid #334650;background:transparent; }
 .editor-checklist-row > button { flex:none;margin:0; }
-.editor-checklist-input { flex:1;width:0;min-width:0;height:44PX;margin:0;padding:8PX 0;border:0;border-radius:0;background:transparent;color:#e9eee7;font-size:15PX;line-height:22PX; }
+.editor-checklist-input { flex:1;width:0;min-width:0;height:44PX;margin:0;padding:8PX 0;border:0;border-radius:0;outline:none;box-shadow:none;background:transparent;color:#e9eee7;font-size:15PX;line-height:22PX; }
+.editor-checklist-input:focus,.editor-checklist-input:focus-visible { border:0;outline:none;box-shadow:none;background:transparent; }
 .editor-checklist-row.is-completed .editor-checklist-input { color:#8da6af;text-decoration:line-through; }
 .editor-checklist-check { position:relative;display:block;box-sizing:border-box;width:22PX;height:22PX;border:2PX solid var(--checklist-color);border-radius:6PX; }
 .editor-checklist-check.is-checked { background:var(--checklist-color); }

@@ -14,18 +14,40 @@ try{for(const width of [1440,390])for(const mode of ['任务','便签']){
  await page.addInitScript(()=>{const set=Storage.prototype.setItem;Storage.prototype.setItem=function(k,v){if(window.__checklistFail&&k.startsWith('ottlog-tool-v1:')&&(/:(todos|memos)$/.test(k)))throw Error('isolated storage failure');return set.call(this,k,v);};});
  const button=name=>page.getByRole('button',{name,exact:true}),list=()=>page.locator('.editor-checklist').first(),rows=()=>list().locator('.handle-sort-row'),inputs=()=>list().locator('input'),saved=()=>mode==='任务'?states['checklist-isolated'].todos.tasks:states['checklist-isolated'].memos.notes,field=mode==='任务'?'subtasks':'checklist';
  const titles=()=>rows().locator('input').evaluateAll(nodes=>nodes.map(n=>n.value));
+ // Computed cascade in every real host, including the empty tail; no CSS string snapshots.
+ const assertFrames=async()=>{
+  const styles=async()=>{
+   const frames=await list().evaluate(root=>({
+    inputs:[...root.querySelectorAll('input')].map(n=>{const s=getComputedStyle(n);return {border:[s.borderTopWidth,s.borderRightWidth,s.borderBottomWidth,s.borderLeftWidth],background:s.backgroundColor,outline:s.outlineStyle,shadow:s.boxShadow};}),
+    rows:[...root.querySelectorAll('.editor-checklist-row')].map(n=>{const s=getComputedStyle(n);return {border:[s.borderTopWidth,s.borderRightWidth,s.borderLeftWidth],bottom:s.borderBottomWidth,background:s.backgroundColor,outline:s.outlineStyle,shadow:s.boxShadow};}),
+    checks:[...root.querySelectorAll('.editor-checklist-check')].map(n=>{const s=getComputedStyle(n);return {width:n.getBoundingClientRect().width,border:s.borderTopWidth};})
+   }));
+   expect(frames.inputs.length).toBeGreaterThan(0);
+   for(const s of frames.inputs){expect(s.border).toEqual(['0px','0px','0px','0px']);expect(s.background).toBe('rgba(0, 0, 0, 0)');expect(s.outline).toBe('none');expect(s.shadow).toBe('none');}
+   for(const s of frames.rows){expect(s.border).toEqual(['0px','0px','0px']);expect(s.bottom).toBe('1px');expect(s.background).toBe('rgba(0, 0, 0, 0)');expect(s.outline).toBe('none');expect(s.shadow).toBe('none');}
+   expect(frames.checks.length).toBeGreaterThanOrEqual(3);for(const s of frames.checks){expect(s.width).toBe(22);expect(s.border).toBe('2px');}
+  };
+  await inputs().evaluateAll(nodes=>nodes.forEach(n=>n.blur()));await styles();
+  for(const input of await inputs().all()){
+   await input.click();await expect(input).toBeFocused();await styles();
+   await page.keyboard.press('Tab');await page.keyboard.press('Shift+Tab');await expect(input).toBeFocused();
+   expect(await input.evaluate(n=>n.matches(':focus-visible'))).toBe(true);await styles();
+  }
+ };
+
  await page.goto(origin+'/today');await button('创建记录').click();await button('创建类型：'+mode).click();
  if(mode==='任务')await page.getByRole('textbox',{name:'任务名称',exact:true}).fill('共用清单任务');
  // Memo deliberately has no title/body: checklist alone is content.
  await button('添加子任务').click();
  for(const title of ['第一项','第二项','第三项']){await inputs().last().fill(title);await page.keyboard.press('Enter');await expect(inputs().last()).toBeFocused();}
+ await assertFrames();
  await expect(rows()).toHaveCount(3);await expect(list().getByRole('button',{name:'取消新增清单项',exact:true})).toHaveCount(1);
  for(const r of await rows().all()){await expect(r.locator('.handle-sort-grip')).toHaveCount(1);await expect(r.getByRole('button',{name:/删除/})).toHaveCount(0);}
  const finalTitle=await inputs().nth(2).inputValue();await button('取消新增清单项').click();await expect(inputs()).toHaveCount(3);expect(await inputs().nth(2).inputValue()).toBe(finalTitle);await button('添加子任务').click();await expect(inputs()).toHaveCount(4);
  await inputs().nth(1).focus();await page.keyboard.press('ArrowUp');await expect(inputs().nth(0)).toBeFocused();await page.keyboard.press('ArrowDown');await expect(inputs().nth(1)).toBeFocused();
  const ime=await inputs().nth(1).evaluate(input=>{const event=new KeyboardEvent('keydown',{key:'ArrowDown',isComposing:true,bubbles:true,cancelable:true});input.dispatchEvent(event);return {prevented:event.defaultPrevented,focused:document.activeElement===input};});expect(ime).toEqual({prevented:false,focused:true});
  await inputs().last().fill('临时');await inputs().nth(3).fill('\u200b\u0300 ');await inputs().nth(0).focus();await expect(rows()).toHaveCount(3);
- await button('完成子任务 1').click();await expect.poll(()=>saved()[0]?.[field]?.[0]?.completed).toBe(true);const id=saved()[0].id,originalIds=saved()[0][field].map(r=>r.id);
+ await button('完成子任务 1').click();await expect.poll(()=>saved()[0]?.[field]?.[0]?.completed).toBe(true);await assertFrames();const id=saved()[0].id,originalIds=saved()[0][field].map(r=>r.id);
  await rows().first().locator('.handle-sort-grip button').focus();await page.keyboard.press('ArrowDown');await expect.poll(titles).toEqual(['第二项','第一项','第三项']);await rows().nth(1).locator('.handle-sort-grip button').focus();await page.keyboard.press('ArrowUp');await expect.poll(titles).toEqual(['第一项','第二项','第三项']);
  const mouse=async(cancel=false)=>{const a=await rows().first().locator('.handle-sort-grip').boundingBox(),b=await rows().nth(2).boundingBox();await page.mouse.move(a.x+a.width/2,a.y+a.height/2);await page.mouse.down();await page.mouse.move(a.x+a.width/2,b.y+b.height-6,{steps:10});await expect(page.locator('.editor-checklist-ghost')).toBeVisible();await expect(list().locator('.is-placeholder')).toHaveCount(1);await expect(list().locator('.is-target')).toHaveCount(1);if(cancel)await page.keyboard.press('Escape');await page.mouse.up();};
  await mouse(true);expect(await titles()).toEqual(['第一项','第二项','第三项']);await mouse();await expect.poll(titles).toEqual(['第二项','第三项','第一项']);await expect.poll(()=>saved().find(r=>r.id===id)[field].map(r=>r.id)).toEqual([originalIds[1],originalIds[2],originalIds[0]]);
@@ -40,6 +62,7 @@ try{for(const width of [1440,390])for(const mode of ['任务','便签']){
  await page.keyboard.press('Escape');await expect(page.locator('.entry-composer')).toHaveCount(0);
  const route=mode==='任务'?'/todos':'/memos';await page.goto(origin+route);
  const open=async()=>{if(mode==='任务')await page.locator('.todo-task-content').filter({hasText:'共用清单任务'}).first().click();else await page.locator('.memo-note-open').first().click();};await open();await expect.poll(titles).toEqual(['第三项','第一项','第二项']);
+ await assertFrames();
  // Same DOM for original-record editing, failure keeps the same parent and children.
  await page.evaluate(()=>window.__checklistFail=true);await inputs().nth(0).fill('失败后重试');await inputs().nth(1).focus();await expect(button('重试')).toBeVisible({timeout:10000});await page.evaluate(()=>window.__checklistFail=false);await button('重试').click();await expect.poll(()=>saved().find(r=>r.id===id)[field][0].title).toBe('失败后重试');expect(saved()).toHaveLength(1);
  await page.keyboard.press('Escape');await page.reload();await open();await expect(inputs().first()).toHaveValue('失败后重试');

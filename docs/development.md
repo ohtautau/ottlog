@@ -3179,3 +3179,14 @@ check-rest-activity-lifecycle-20261105实际1440及390×440通过（管理草稿
 按用户已结束休息的明确说明，已单独备份并仅为所核对的那一轮旧focus添加restStartedId确认标记（acknowledged前缀）；两次最新读取一致、无active、轮ID相同才写入。去掉这一新增字段后的完整对象与原值一致，两域名完整目标核对通过。没有伪造休息session、改历史内容或再次重置个人时长，所有其它字段保留；备份／账号／业务ID仍只在忽略目录。
 
 随后正式HTTPS只读复核20个1440／390px页面、八类工具两域名同账号数据、匿名隔离／CSRF／读者权限、图片及pageerror均通过，专注页实际为准备就绪、25:00、开始专注且无冗余完成提示或旧休息选择；建议15项管理和时长设置仍可查看。所有业务写入被拦截，实际业务写入尝试0，前后八类哈希一致。报告web/test-results/public-release/report.json（忽略）。仅上述用户要求的单轮状态确认有真实写入，未改API容器、未发布小程序，也未宣称微信原生／真机验收通过。
+
+
+### 2026-11-07 清单误框修复（源码候选，未部署）
+
+源码证据：EditorChecklist抽取的行背景固定为#20333e；网页globals.css通用input:not(...)规则特异性(0,3,1)，高于build-tool-app只加一层.tool-app-root后的清单输入(0,2,0)，会覆盖border/background/padding。将必要的通用表单基础、禁用与placeholder选择器改为:where（基础／禁用为零，placeholder仅伪元素权重），保留原默认声明，因此账号、搜索、手动表单仍有默认边界，组件样式优先且不依赖导入顺序。清单行改透明、仅底部分隔，输入补普通及focus/focus-visible的无outline/shadow防护；无新增!important、无TSX／业务修改，完成勾选、选中色、拖动目标／占位和尾行X保持。
+
+同因范围核对：TaskDetailEditor的textarea.task-detail-title及旧subtask输入、MemoEditorFields input/textarea、ProgressEditorFields实际复用的MarkdownNoteEditor.is-minimal textarea.memo-body-input、格言textarea.compact-motto-input和EntityTitleInput的.entity-title-input均已有组件border:0／透明规则；降低基础选择器后这些规则高于通用表单，不需逐宿主补丁。非minimal备注框底色／边界不变。
+
+本机实际通过：miniprogram typecheck、check-editor-checklist.cjs、check-handle-sort.cjs、web build:tools、check-focus-save-jitter.cjs（115份源码CSS WXSS约束）、check-weapp-styles-test.cjs及web/scripts/check-editor-checklist.mjs语法检查。未安装依赖或浏览器，未运行浏览器、正常小程序构建／产物WXSS或微信真机；未操作Git、部署、API、系统、镜像、账号或业务数据。
+
+Windows协调端：OTTLOG_PARITY_ORIGIN=http://127.0.0.1:3017，在web执行node scripts/check-editor-checklist.mjs。保留原鼠标／CDP触摸／键盘／IME／失败重试断言，新增1440／390两宽度、任务／便签今日创建及已有编辑所有清单input和行的computed style检查（普通、鼠标点击、Tab／Shift+Tab键盘focus-visible），包含空尾行及完成行：输入四边0、透明、outline/shadow无，行仅1px底分隔，真实22px／2px勾选框仍在。脚本准备不等于浏览器通过；正常构建及微信原生／真机触控、软键盘尚待协调端。结果见.tmp/editor-frames-20261107-result.json。
