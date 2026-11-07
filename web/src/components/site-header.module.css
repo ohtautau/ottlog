@@ -26,7 +26,7 @@
   .brandRow :global(.logo img) { width: 38px; height: 38px; }
   .brandRow :global(.brand-wordmark) { font-size: 27px; }
   .primary, .desktopAccount { display: none; }
-  .dock { display: block; position: absolute; right: 16px; top: 4px; z-index: 100; }
+  .dock { display: block; position: absolute; right: max(16px,env(safe-area-inset-right)); top: calc(4px + env(safe-area-inset-top)); z-index: 100; }
   .toolStrip { padding: 0 12px 4px; gap: 4px; flex-wrap: nowrap; justify-content: flex-start; scroll-padding-inline: 12px; }
   .toolStrip > a { min-width: 56px; min-height: 40px; padding: 8px 12px; }
 }
@@ -39,4 +39,4 @@
   :global(body:has([data-tool-layout=viewport])) .toolStrip>a{padding-block:7px}
 }
 
-@media(max-width:899px){.toggle{min-height:44px;height:44px}.header{padding-top:env(safe-area-inset-top)}.toolStrip>a{scroll-margin-inline:12px}}
+@media(max-width:899px){.toggle{min-height:44px;height:44px;padding:3px;gap:0}.toggle>span{font-size:20px}.toggle small{font-size:10px;line-height:12px}.header{padding-top:env(safe-area-inset-top)}.toolStrip>a{scroll-margin-inline:12px}}

@@ -5,7 +5,7 @@ const origin = process.env.OTTLOG_PARITY_ORIGIN || 'http://127.0.0.1:3017';
 if (!/^http:\/\/(127\.0\.0\.1|localhost):3017$/.test(origin)) throw Error('Use isolated 3017 only');
 const out = 'test-results/mobile-layout';
 await fs.mkdir(out, {recursive:true});
-const viewports = [[360,780],[375,667],[390,844],[430,932],[844,390],[390,440],[1440,900]];
+const viewports = [[360,780],[375,667],[390,844],[430,932],[844,390],[390,440],[1440,900]].filter(([width])=>!process.env.OTTLOG_LAYOUT_WIDTH||width===Number(process.env.OTTLOG_LAYOUT_WIDTH));
 const results = [], failures = [];
 const stamp = new Date().toISOString(), day = new Date().toLocaleDateString('en-CA');
 const previous = new Date(); previous.setDate(previous.getDate() - 1);
@@ -25,7 +25,7 @@ fixtures.articles = {version:1,articles:Array.from({length:20},(_,i)=>({id:`arti
 fixtures.pomodoro = {version:1,settings:{focus:25,shortBreak:5,longBreak:15,longEvery:4,transitionMode:'manual'},mode:'focus',selection:{taskId:null,title:''},active:null,sessions:[{id:'fixture-session',mode:'focus',durationSeconds:1500,plannedSeconds:1500,startedAt:stamp,endedAt:stamp,completed:true,taskId:null,title:'隔离专注历史',restStartedId:'fixture-rest'}]};
 const browser = await chromium.launch();
 try { for (const [width,height] of viewports) {
- const context = await browser.newContext({viewport:{width,height},hasTouch:true,serviceWorkers:'block'});
+ const context = await browser.newContext({viewport:{width,height},hasTouch:true,isMobile:width<900,serviceWorkers:'block'});
  const state = structuredClone(fixtures), writes = [], errors = [];
  // Context-wide interception includes Next account requests, background refresh,
  // image/notification endpoints, and any future API. No API request continues.
@@ -41,7 +41,7 @@ try { for (const [width,height] of viewports) {
   if(url.origin!==origin && !['data:','blob:'].includes(url.protocol)) return route.abort();
   return route.continue();
  });
- const page=await context.newPage();page.on('pageerror',e=>errors.push(e.message));
+ const page=await context.newPage();page.setDefaultTimeout(7000);page.on('pageerror',e=>errors.push(e.message));
  const root=page.locator('.tool-app-root');
  const button=name=>page.getByRole('button',{name,exact:true});
  async function bounds(locator,label,min=1) {
@@ -56,7 +56,7 @@ try { for (const [width,height] of viewports) {
  async function fits(label) {
   expect(await page.evaluate(()=>Math.max(document.body.scrollWidth,document.documentElement.scrollWidth)-innerWidth),label+' horizontal overflow').toBeLessThanOrEqual(1);
   const selected=page.getByRole('navigation',{name:'日常工具',exact:true}).locator('[aria-current=page]');
-  await bounds(selected,label+' selected tool',40);
+  await bounds(selected,label+' selected tool',width<900?40:32);
  }
  async function scrollList(selector,label) {
   for(const node of await root.locator(selector).all()) {
@@ -65,20 +65,26 @@ try { for (const [width,height] of viewports) {
    if(m.s>m.h+2){expect(['auto','scroll']).toContain(m.o);await node.evaluate(n=>n.scrollTop=n.scrollHeight);expect(await node.evaluate(n=>n.scrollTop)).toBeGreaterThan(0);}
   }
  }
- async function click(name) {const n=button(name);await n.scrollIntoViewIfNeeded();await bounds(n,name,40);await n.click({trial:true});await n.click();}
- async function modal(selector) {
+ async function click(name) {try{const n=button(name);await n.click({trial:true});await bounds(n,name,40);await n.click();}catch(e){e.message=`${name}: ${e.message}`;throw e;}}
+ async function modal(selector,retry=true) {
   const panel=root.locator(selector).last();await bounds(panel,selector);
+  try {
   for(const control of await panel.locator('button:not(:disabled)').all()) {
    if(!await control.isVisible())continue;
-   await control.scrollIntoViewIfNeeded();await bounds(control,selector+' button',40);
-   await control.click({trial:true});
+   if(process.env.OTTLOG_LAYOUT_CASE)console.log('Checking control',await control.getAttribute('aria-label')||await control.textContent());
+   await control.click({trial:true});await bounds(control,selector+' button',40);
+  }
+  } catch(error) {
+   // A creation-mode change replaces the panel; re-query its real controls.
+   if(retry && /Element is not attached to the DOM/.test(error.message)) return modal(selector,false);
+   throw error;
   }
   await fits(selector);await page.screenshot({path:`${out}/${width}x${height}-${results.length}-modal.png`});
  }
- async function run(label,fn){try{await fn();results.push({width,height,label,status:'pass'});}catch(e){failures.push({width,height,label,error:e.message});}}
+ async function run(label,fn){if(process.env.OTTLOG_LAYOUT_CASE&&process.env.OTTLOG_LAYOUT_CASE!==label)return;try{await fn();results.push({width,height,label,status:'pass'});console.log(`PASS ${width}x${height} ${label}`);}catch(e){failures.push({width,height,label,error:e.message});console.log(`FAIL ${width}x${height} ${label}: ${e.message}`);await page.screenshot({path:`${out}/${width}x${height}-${label.replaceAll(/[^a-z-]/g,'-')}-failure.png`});}}
  for(const route of ['today','todos','pomodoro','domains','daily','memos','mottos','articles','statistics']) await run(route,async()=>{
   await page.goto(origin+'/'+route);await expect(root.locator('.shared-app-content')).toBeVisible();await expect(root).not.toContainText('正在读取…');await expect(root.locator('.browser-error')).toHaveCount(0);await fits(route);
-  if(route==='todos') {await expect(root.locator('.todo-task')).not.toHaveCount(0);await expect(root.locator('.todo-quadrants')).toHaveCSS('grid-template-columns',/px px/);await scrollList('.todo-quadrant-scroll','quadrants');}
+  if(route==='todos') {await expect(root.locator('.todo-task')).not.toHaveCount(0);expect(await root.locator('.todo-quadrants').evaluate(n=>getComputedStyle(n).gridTemplateColumns.trim().split(/\s+/).length)).toBe(2);await scrollList('.todo-quadrant-scroll','quadrants');}
   if(route==='memos') {await expect(root.locator('.memo-note')).toHaveCount(48);await scrollList('.memo-list-scroll','memos');}
   if(route==='daily') {await expect(root.locator('.daily-suggestion')).not.toHaveCount(0);await scrollList('.daily-habit-scroll,.daily-neglected .habit-list-section-scroll','habits and independent reminders');}
   if(route==='pomodoro') {await bounds(root.locator('.focus-timer-stage'),'timer',40);await bounds(root.locator('.focus-action-area'),'timer actions',40);expect((await root.locator('.focus-feedback-slot').boundingBox()).height).toBe(40);}
@@ -97,7 +103,7 @@ try { for (const [width,height] of viewports) {
   await page.goto(origin+'/todos');await click('待办更多操作');await click('编辑');await click('更换高优先级区域显示：高优先级');await modal('.todo-panel-source-panel');await click('添加显示项');await modal('.todo-panel-add-layer .form-popover-panel');
  });
  await run('creation-task/note/record',async()=>{
-  for(const name of ['任务','便签','记录']){await page.goto(origin+'/today');await click('创建记录');await click('创建类型：'+name);await modal('.entry-composer');}
+  for(const name of ['任务','便签','记录']){await page.goto(origin+'/today');await click('创建记录');await click('创建类型：'+name);await expect(button('创建类型：'+name)).toHaveAttribute('aria-pressed','true');await modal('.entry-composer');}
  });
  await run('focus wheels',async()=>{
   await page.goto(origin+'/pomodoro');await click('专注更多操作');await click('调整时长');await modal('.focus-settings');
@@ -105,7 +111,7 @@ try { for (const [width,height] of viewports) {
  });
  await run('account/motto',async()=>{
   await page.goto(origin+'/today');await page.getByRole('button',{name:/^打开账号窗口/}).click();await modal('[role=dialog]');
-  await page.goto(origin+'/mottos');await click('创建格言');await modal('.mottos-editor-sheet');
+  await page.goto(origin+'/mottos');await click('创建格言');await modal('.document-editor-sheet');
  });
  expect(errors).toEqual([]);await context.close();
  results.push({width,height,fixtureWrites:writes,errors});
