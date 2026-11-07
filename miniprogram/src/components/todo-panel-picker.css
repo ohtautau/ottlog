@@ -30,3 +30,4 @@
 .todo-panel-remove > .ui-button { width:40PX;margin:0; }
 
 .todo-source-icon-slot { display:flex;flex:none;align-items:center;justify-content:center;width:24PX;height:24PX; }
+.todo-source-icon-slot > .library-icon { width:24PX;height:24PX; }
