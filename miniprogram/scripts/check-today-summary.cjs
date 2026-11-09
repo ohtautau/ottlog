@@ -119,7 +119,7 @@ module.exports = async function checkHomeNavigation({ page, origin, out, width, 
   await page.getByRole('button', { name: '领域', exact: true }).click();
   await expect(page).toHaveURL(/pages\/domains\/index$/);
   await expect(page.locator('.domain-entry-shell:not(.domain-uncategorized-shell) .domain-entry')).toHaveCount(8);
-  await expect(page.locator('.domain-entry-shell:not(.domain-uncategorized-shell) .domain-progress-track')).toHaveCount(8);
+  await expect(page.locator('.domain-entry-shell:not(.domain-uncategorized-shell) .domain-action-index')).toHaveCount(8);
   await expect(page.locator('.domain-uncategorized-shell')).toHaveCount(1);
   await page.locator('.preview-native-tabs a[href="#/pages/index/index"]').click();
   await expect(page).toHaveURL(/pages\/index\/index$/);

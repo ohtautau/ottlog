@@ -26,6 +26,7 @@ import CardCreateButton from '../../components/card-create-button';
 import DomainQuickRecord from '../../components/domain-quick-record';
 import { DomainRecordCard, DomainRecordColumn, DomainRecordColumns } from '../../components/domain-records';
 import DomainRecordEditor from '../../components/domain-record-editor';
+import { DomainActionIndex } from '../../components/domain-progress';
 import { hasVolatilePersonalTool, usePersonalToolState } from '../../lib/use-personal-tool-state';
 import LibraryIcon from '../../components/library-icon';
 import HabitCard from '../../components/habit-card';
@@ -276,6 +277,7 @@ export default function Domains() {
       {ready && valid && !selectedDomain && <View className='tool-empty'>领域不存在或已删除</View>}
       {ready && valid && <View className='domain-detail-grid'>{state.domains.filter(domain => domain.id === domainId).map(domain => <View className='tool-card domain-card' key={domain.id}>
         <View className='domain-heading'><View className='domain-heading-name'><LibraryIcon name={domainIcon(domain)} className='domain-detail-icon' /><Text className='domain-name'>{trimTextEnd(domain.name)}</Text></View>
+          <DomainActionIndex domain={domain} />
           <ActionButton appearance='icon' size='compact' className='domain-count' ariaLabel={`查看${domain.name}已完成目标`} onClick={() => open({ type: 'history', owner, domainId: domain.id, content: '' })}><CompletedGoalsHistorySymbol /></ActionButton>
         </View>
         <View className='domain-goals'>{(['longTerm', 'shortTerm'] as const).map(kind => {

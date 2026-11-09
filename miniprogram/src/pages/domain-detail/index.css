@@ -6,6 +6,7 @@
 .domain-detail-page .domain-records { flex: 1; height: 0; }
 .domain-detail-page .domains-status,.domain-detail-page > .domain-error { flex: none; margin-top: 8PX; }
 .domain-detail-page .domain-heading-name { flex: 1; }
+.domain-detail-page .domain-heading > .domain-action-index { max-width: 50%; }
 .domain-detail-page .domain-name { overflow-wrap: anywhere; }
 .domain-detail-page .domain-goal-edit { margin-right: 4PX; }
 @media(max-height:700px) {

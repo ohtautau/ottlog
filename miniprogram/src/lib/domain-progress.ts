@@ -1,23 +1,20 @@
-import type { DomainCompletionCounts } from './domain-completion';
+import type { Domain } from './domain-data';
+import { recordEffortScore } from './record-content';
 
-/** Visual comparison units only; they do not change saved counts or imply a completion rate. */
-export const DOMAIN_PROGRESS_WEIGHTS = { longTermGoals: 6, shortTermGoals: 3, habits: 1 } as const;
-
-export function domainProgressWeight(counts: Omit<DomainCompletionCounts, 'domainId'>): number {
-  return counts.longTermGoals * DOMAIN_PROGRESS_WEIGHTS.longTermGoals
-    + counts.shortTermGoals * DOMAIN_PROGRESS_WEIGHTS.shortTermGoals
-    + counts.habits * DOMAIN_PROGRESS_WEIGHTS.habits;
-}
-
-export function domainProgressScale(counts: DomainCompletionCounts[]): number {
-  return Math.max(1, ...counts.map(domainProgressWeight));
-}
-
-export function domainProgressSegments(counts: Omit<DomainCompletionCounts, 'domainId'>, scale: number) {
-  const denominator = Math.max(1, scale, domainProgressWeight(counts));
-  return (Object.keys(DOMAIN_PROGRESS_WEIGHTS) as Array<keyof typeof DOMAIN_PROGRESS_WEIGHTS>).map(kind => ({
-    kind,
-    count: counts[kind],
-    width: counts[kind] * DOMAIN_PROGRESS_WEIGHTS[kind] / denominator * 100,
-  }));
+export function domainActionIndex(domain: Pick<Domain, 'positiveRecords' | 'negativeRecords'>): string {
+  // The total can exceed a safe integer. Sum the two decimal parts separately.
+  const base = 1_000_000;
+  let high = 0;
+  let low = 0;
+  for (const records of [domain.positiveRecords, domain.negativeRecords]) {
+    for (const record of records) {
+      const score = recordEffortScore(record);
+      const remainder = score % base;
+      high += (score - remainder) / base;
+      low += remainder;
+    }
+  }
+  high += Math.floor(low / base);
+  const tail = String(low % base);
+  return high ? `${high}${tail.padStart(6, '0')}` : tail;
 }

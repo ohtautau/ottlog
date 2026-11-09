@@ -59,10 +59,9 @@ module.exports = async function checkDomainPreviewUI({ page, origin, out, width,
   await expect(screen().locator('.domain-record-column.is-negative .domain-record')).toHaveCount(4);
   await expect(screen().locator('.domain-record-column.is-positive .domain-record')).toHaveCount(6);
   expect(seeded.data.completedGoals).toHaveLength(36);
-  const expectedCounts = [[3, 6, 1], [2, 4, 1], [1, 3, 1], [2, 2, 2], [0, 5, 1], [1, 1, 1], [0, 1, 0], [2, 3, 1]];
   const domainCards = screen().getByRole('button', { name: /^打开.+领域$/ });
   for (let index = 0; index < 8; index++) {
-    await expect(domainCards.nth(index).locator('.domain-progress-counts > span')).toHaveText(expectedCounts[index].map(String));
+    await expect(domainCards.nth(index).locator('.domain-action-value')).toHaveText('0');
     await expect(domainCards.nth(index).locator('.domain-progress-card-goal .domain-progress-goal-content')).toHaveText(samples.domains[index].shortTermGoal.content);
     await expect(domainCards.nth(index).locator('.domain-progress-long-goal,.domain-progress-goals')).toHaveCount(0);
   }

@@ -137,7 +137,7 @@ module.exports = async function checkDomainManagement({ page, origin, out, width
   await sort().click(); await expect(sort()).toHaveAttribute('aria-pressed', 'false');
   expect(await boxes()).toEqual(before); expect(await headings()).toEqual(headingsBefore);
   await expect(page.locator('#domain-entry-work .domain-progress-card-goal')).toBeVisible();
-  await expect(page.locator('.domain-progress-track')).toHaveCount(8);
+  await expect(page.locator('.domain-action-index')).toHaveCount(8);
   await expect(sort()).toHaveAttribute('aria-pressed', 'false');
   expect(await boxes(), 'Returning to browse preserves card boundaries').toEqual(before);
   expect(await headings(), 'Returning to browse preserves icon and name geometry').toEqual(headingsBefore);

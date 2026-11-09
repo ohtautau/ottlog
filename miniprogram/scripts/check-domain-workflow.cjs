@@ -33,32 +33,15 @@ module.exports = async function checkDomainWorkflow({ page, origin, out, width, 
   const recordInput = () => recordSheet().getByRole('textbox', { name: '记录内容', exact: true });
   const state = () => page.evaluate(() => JSON.parse(localStorage.getItem('ottlog-mini-tool-v1:guest:domains'))?.data);
   const domainOrder = () => screen().locator('.domain-progress-name').evaluateAll(nodes => nodes.map(node => `打开${node.textContent}领域`));
-  async function indexSummary({ long, short, habit = 0, longGoal, shortGoal, longCompleted = false, shortCompleted = false }) {
+  async function indexSummary(shortGoal) {
     const route = await page.evaluate(() => location.hash);
+    await expect(screen().locator('.domain-heading .domain-action-value')).toHaveText('0');
     await page.evaluate(() => { location.hash = '#/pages/domains/index'; });
     const entry = screen().getByRole('button', { name: '打开工作领域', exact: true });
-    await expect(entry.locator('.domain-progress-track'), 'Domain list reuses the same one-line progress summary').toHaveCount(1);
-    for (const [kind, value] of [['long', long], ['short', short], ['habit', habit]]) await expect(entry.locator(`.domain-progress-${kind}-count`)).toHaveText(String(value));
+    await expect(entry.locator('.domain-action-value'), 'Goals and habits do not contribute to the action index').toHaveText('0');
     await expect(entry.locator('.domain-progress-goals,.domain-progress-long-goal'), 'The full two-goal summary stays in detail').toHaveCount(0);
-    await expect(entry.locator('.domain-progress-card-goal .domain-progress-goal-content')).toHaveText(shortGoal || '未设置');
-    if (shortCompleted) await expect(entry.locator('.domain-progress-card-goal')).toHaveClass(/is-completed/);
-    else await expect(entry.locator('.domain-progress-card-goal')).not.toHaveClass(/is-completed/);
-    const segments = await entry.locator('.domain-progress-track').evaluate(node => {
-      const box = node.getBoundingClientRect();
-      return [...node.querySelectorAll('.domain-progress-segment')].map(segment => { const rect = segment.getBoundingClientRect(); return { left: rect.left - box.left, right: rect.right - box.left, fraction: rect.width / box.width, color: getComputedStyle(segment).backgroundColor }; });
-    });
-    const expected = [[long, 6, 'rgb(131, 181, 234)'], [short, 3, 'rgb(232, 149, 154)'], [habit, 1, 'rgb(157, 211, 173)']].filter(([value]) => value);
-    expect(segments).toHaveLength(expected.length);
-    const scale = Math.max(1, long * 6 + short * 3 + habit);
-    let end = 0;
-    for (const [index, [value, weight, color]] of expected.entries()) {
-      expect(segments[index].fraction).toBeCloseTo(value * weight / scale, 2);
-      expect(segments[index].color).toBe(color);
-      expect(segments[index].left, 'List progress segments are continuous').toBeCloseTo(end, 1);
-      end = segments[index].right;
-    }
-    if (habit) await page.screenshot({ path: path.join(out, `domains-progress-populated-${width}.png`) });
-    if (longCompleted) await page.screenshot({ path: path.join(out, `domains-progress-completed-${width}.png`) });
+    await expect(entry.locator('.domain-progress-card-goal .domain-progress-goal-content')).toHaveText(shortGoal);
+    await expect(entry.locator('.domain-progress-card-goal')).not.toHaveClass(/is-completed/);
     await page.evaluate(hash => { location.hash = hash; }, route);
   }
   async function checkDefaultIndex(count = 8) {
@@ -74,7 +57,7 @@ module.exports = async function checkDomainWorkflow({ page, origin, out, width, 
           return { left: box.left, top: box.top - viewport.top, bottom: box.bottom - viewport.bottom, height: box.height, width: box.width,
             iconWidth: iconBox.width, iconHeight: iconBox.height, iconLeftGap: iconBox.left - box.left, iconGap: bodyBox.left - iconBox.right,
             iconVisible: iconStyle.display !== 'none' && iconStyle.visibility === 'visible' && Number(iconStyle.opacity) > 0,
-            tracks: entry.querySelectorAll('.domain-progress-track').length, clipped: [...entry.querySelectorAll('.domain-progress-icon,.domain-progress-name,.domain-progress-counts,.domain-progress-counts > *,.domain-progress-track,.domain-progress-goal')].some(child => { const rect = child.getBoundingClientRect(); return rect.top < box.top - 1 || rect.bottom > box.bottom + 1 || rect.left < box.left - 1 || rect.right > box.right + 1; }) };
+            indexes: entry.querySelectorAll('.domain-action-index').length, clipped: [...entry.querySelectorAll('.domain-progress-icon,.domain-progress-name,.domain-action-index,.domain-progress-goal')].some(child => { const rect = child.getBoundingClientRect(); return rect.top < box.top - 1 || rect.bottom > box.bottom + 1 || rect.left < box.left - 1 || rect.right > box.right + 1; }) };
         }) };
     });
     expect(geometry.rows).toHaveLength(count);
@@ -85,7 +68,7 @@ module.exports = async function checkDomainWorkflow({ page, origin, out, width, 
     expect(geometry.scrollTop).toBe(0);
     expect(new Set(geometry.rows.map(row => Math.round(row.left))).size, 'Main domains use two card columns at every width').toBe(2);
     for (const [index, row] of geometry.rows.entries()) {
-      expect(row.tracks).toBe(1);
+      expect(row.indexes).toBe(1);
       expect(row.top).toBeGreaterThanOrEqual(-1);
       if (index < 8) expect(row.bottom, 'The first eight main-list cards are fully visible').toBeLessThanOrEqual(1);
       else expect(row.top + geometry.viewportTop, 'Further cards start below the card viewport').toBeGreaterThanOrEqual(geometry.gridBottom - 1);
@@ -95,8 +78,8 @@ module.exports = async function checkDomainWorkflow({ page, origin, out, width, 
       expect(row.iconHeight, 'Main domain icons retain a square aspect').toBeCloseTo(40, 1);
       expect(row.iconVisible, 'Every main domain icon is visible').toBe(true);
       expect(row.iconLeftGap, 'Icons retain the card inner left inset').toBeCloseTo(12, 1);
-      expect(row.iconGap, 'Icons leave equal space before the name, counts and progress').toBeCloseTo(row.iconLeftGap, 1);
-      expect(row.clipped, 'Larger icons and the original name, counts and progress remain inside each card').toBe(false);
+      expect(row.iconGap, 'Icons leave equal space before the name and index').toBeCloseTo(row.iconLeftGap, 1);
+      expect(row.clipped, 'Icons, names, indexes and goals remain inside each card').toBe(false);
     }
   }
   async function close() {
@@ -445,11 +428,11 @@ module.exports = async function checkDomainWorkflow({ page, origin, out, width, 
   await checkCount(1);
   await expect(card('工作')).toContainText(longGoal);
   await expect(card('工作').locator('.domain-goal-card').first()).toHaveClass(/is-completed/);
-  await indexSummary({ long: 1, short: 0, longGoal, shortGoal: '完成简历并开始投递', longCompleted: true });
+  await indexSummary('完成简历并开始投递');
   await click('撤销完成工作长期目标');
   await checkCount(0);
   await expect(card('工作').locator('.domain-goal-card').first()).not.toHaveClass(/is-completed/);
-  await indexSummary({ long: 0, short: 0, longGoal, shortGoal: '完成简历并开始投递' });
+  await indexSummary('完成简历并开始投递');
   await click('完成工作长期目标');
   await checkCount(1);
   await historyButton().click();
@@ -464,7 +447,7 @@ module.exports = async function checkDomainWorkflow({ page, origin, out, width, 
   await click('完成工作短期目标');
   await checkCount(2);
   await editGoal('短期', '收集三个真实反馈');
-  await indexSummary({ long: 1, short: 1, longGoal: '在新的方向持续积累作品', shortGoal: '收集三个真实反馈' });
+  await indexSummary('收集三个真实反馈');
 
   // Domain creation uses the shared editor and the original reminders store.
   const legacyHabits = (await state()).domains.find(domain => domain.id === 'work').habits;
@@ -613,7 +596,7 @@ module.exports = async function checkDomainWorkflow({ page, origin, out, width, 
   await expect(habitCalendar.locator('.habit-calendar-log-empty')).toBeVisible();
   await close();
   await checkCount(2); // Habit completion does not count as a goal.
-  await indexSummary({ long: 1, short: 1, habit: 1, longGoal: '在新的方向持续积累作品', shortGoal: '收集三个真实反馈' });
+  await indexSummary('收集三个真实反馈');
   expect((await reminderState()).done['2026-10-03']).toContain(sharedHabit.id);
   await page.evaluate(() => { location.hash = '#/pages/daily/index'; });
   await habitFilter.select('已完成');
@@ -882,19 +865,16 @@ module.exports = async function checkDomainWorkflow({ page, origin, out, width, 
     await page.screenshot({ path: path.join(out, 'domains-wide-1280.png') });
   }
   if (width === 360) {
-    // Invalid habit data must not turn into fabricated zero counts on the new index summary.
+    // Invalid habit data does not gate the independent record score index.
     await page.goto(`${origin}/?domains-invalid-progress#/pages/posts/index`);
     const invalid = { version: 99, items: [{ id: 'preserved', title: '不可覆盖的旧习惯格式' }], done: {} };
     await page.evaluate(({ domainState, reminderState }) => { localStorage.clear(); window.__miniFixture.guestToolStates = { domains: domainState, reminders: reminderState }; location.hash = '#/pages/domains/index'; }, { domainState: saved, reminderState: invalid });
     await expect(screen().locator('.domain-entry')).toHaveCount(9);
-    await expect(screen().locator('.domain-entry .domain-progress-long-count')).toHaveText(Array(9).fill('—'));
-    await expect(screen().locator('.domain-entry .domain-progress-short-count')).toHaveText(Array(9).fill('—'));
-    await expect(screen().locator('.domain-entry .domain-progress-habit-count')).toHaveText(Array(9).fill('—'));
-    await expect(screen().locator('.domain-progress-segment')).toHaveCount(0);
+    await expect(screen().locator('.domain-entry .domain-action-value')).toHaveText(Array(9).fill('0'));
     await expect(screen().locator('.domains-status')).toContainText('习惯记录暂不可用');
     await expect(screen().getByRole('button', { name: '重试', exact: true })).toBeVisible();
     expect(await page.evaluate(() => window.__miniFixture.guestToolStates.reminders)).toEqual(invalid);
     expect(await page.evaluate(() => window.__miniRequests.filter(request => request.path.startsWith('/personal-tools/') && request.method !== 'GET'))).toEqual([]);
   }
-  console.log(`${width}: complete two-column domain cards, shared weighted lines and card short-goal summaries with long goals hidden, customization, completion/undo/history, shared habit creation/editing, quick records, persistence, account separation and storage failures passed`);
+  console.log(`${width}: complete two-column domain cards, action indexes and short-goal summaries, customization, completion/undo/history, shared habit creation/editing, quick records, persistence, account separation and storage failures passed`);
 };

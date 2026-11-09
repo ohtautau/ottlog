@@ -19,9 +19,8 @@ import ActionMenu from '../../components/action-menu';
 import { CardMoveActions } from '../../components/card-corner-actions';
 import PageToolbar, { PageToolbarSummary } from '../../components/page-toolbar';
 import { DomainProgressSummary } from '../../components/domain-progress';
-import { domainCompletionCounts, domainToolbarSummary } from '../../lib/domain-completion';
+import { domainToolbarSummary } from '../../lib/domain-completion';
 import usePageNow from '../../lib/use-page-now';
-import { domainProgressScale } from '../../lib/domain-progress';
 import { hasVolatilePersonalTool, usePersonalToolState } from '../../lib/use-personal-tool-state';
 import { initialDomainState, isDomainState, MAX_DOMAIN_COUNT, reorderDomains, type DomainState, type RecentDomainRecord } from '../../lib/domain-data';
 import { emptyReminderState, isReminderState } from '../../lib/reminder-data';
@@ -43,11 +42,8 @@ export default function Domains() {
   const displayState = domainDisplayState(state);
   const fallbackDomain = uncategorizedDomain(state);
   const ordinaryDomains = state.domains.filter(domain => domain.id !== fallbackDomain.id);
-  const progressReady = writable && habitTool.ready && habitTool.owner === owner && isReminderState(habitTool.value);
-  const progressCounts = progressReady ? domainCompletionCounts(displayState, habitTool.value, now) : [];
   const toolbarSummary = writable ? domainToolbarSummary(state, now) : undefined;
-  const progressScale = domainProgressScale(progressCounts);
-  const progressStatus = !habitTool.ready ? habitTool.status || '正在读取完成记录…' : habitTool.owner !== owner ? '正在确认记录所属账号…' : !isReminderState(habitTool.value) ? '习惯记录暂不可用' : /失败|不可用|暂存|离线|无法/.test(habitTool.status) ? habitTool.status : '';
+  const habitStatus = !habitTool.ready ? habitTool.status || '正在读取习惯…' : habitTool.owner !== owner ? '正在确认习惯所属账号…' : !isReminderState(habitTool.value) ? '习惯记录暂不可用' : /失败|不可用|暂存|离线|无法/.test(habitTool.status) ? habitTool.status : '';
   const [sorting, setSorting] = useState(false);
   const [moveRetry, setMoveRetry] = useState<string | null>(null);
   const [quick, setQuick] = useState(false);
@@ -104,9 +100,8 @@ export default function Domains() {
   async function retryMove() { await change(previous => previous); }
   const entryCard = (domain: typeof state.domains[number], index?: number) => {
     const system = domain.id === fallbackDomain.id, moving = sorting && !system;
-    const counts = progressReady ? progressCounts.find(item => item.domainId === domain.id) ?? null : null;
     const url = system ? '/pages/domain-detail/index?uncategorized=1' : `/pages/domain-detail/index?id=${encodeURIComponent(domain.id)}`;
-    const summary = <DomainProgressSummary domain={domain} state={displayState} counts={moving ? null : counts} scale={progressScale} showGoals={false} showShortTermGoal showProgress={!moving} />;
+    const summary = <DomainProgressSummary domain={domain} state={displayState} sorting={moving} />;
     return <DomainEntryCard id={`domain-entry-${domain.id}`} className={system ? 'domain-uncategorized-shell' : moving ? 'is-sorting' : ''} key={domain.id} disabled={blocked} label={`打开${domain.name}领域`} onOpen={moving ? undefined : () => { void Taro.navigateTo({ url }); }} actions={moving && <CardMoveActions className='domain-entry-actions' objectLabel={`${domain.name}领域`} disabled={blocked || !!moveRetry} upDisabled={index === 0} downDisabled={index === ordinaryDomains.length - 1} onMoveUp={() => void move(domain.id, -1)} onMoveDown={() => void move(domain.id, 1)} />}>{summary}</DomainEntryCard>;
   };
   const cards = [...ordinaryDomains.map(entryCard), entryCard(fallbackDomain)];
@@ -120,15 +115,15 @@ export default function Domains() {
       {ready && !valid && <View className='notice'>领域数据暂不可用<ActionButton className='tool-secondary button-label' onClick={retry}>重新读取</ActionButton></View>}
       {writable && <DomainRecentRecords key={owner} state={state} disabled={blocked} onEdit={item => { if (!saving.current && !definition.busy) setRecordEditor({ ...item, owner }); }} />}
       {writable && <ScrollView key={`cards:${owner}`} id='domain-entry-scroll' className='domain-entry-scroll' scrollY enhanced bounces={false} showScrollbar={false} ariaLabel='领域卡片'>
-        <CardGroupContent className={`domain-card-groups floating-create-content${error || moveRetry || status || progressStatus ? ' has-raised-action' : ''}`}><View className='domain-entry-grid domain-first-grid'>{cards.slice(0, 8)}{cards.length < 8 && createCard}</View>
+        <CardGroupContent className={`domain-card-groups floating-create-content${error || moveRetry || status || habitStatus ? ' has-raised-action' : ''}`}><View className='domain-entry-grid domain-first-grid'>{cards.slice(0, 8)}{cards.length < 8 && createCard}</View>
         <View className='domain-entry-grid domain-continuation-grid'>{cards.slice(8)}{cards.length >= 8 && createCard}</View></CardGroupContent>
       </ScrollView>}
-      {!!(error || moveRetry || status || progressStatus) && <ScrollView className='domains-feedback-scroll' scrollY showScrollbar={false} enhanced bounces={false} ariaLabel='领域保存反馈'>
+      {!!(error || moveRetry || status || habitStatus) && <ScrollView className='domains-feedback-scroll' scrollY showScrollbar={false} enhanced bounces={false} ariaLabel='领域保存反馈'>
         {(error || moveRetry) && <View className='domain-error domain-move-retry'>{!error && <Text>正在保存…</Text>}{moveRetry && <ActionButton size='compact' disabled={blocked} ariaLabel='重试领域排序' onClick={() => { void retryMove(); }}>重试</ActionButton>}</View>}
-        {!!(status || progressStatus) && <View className='tool-status domains-status'><Text>{[status, progressStatus].filter(Boolean).join(' · ')}</Text>{(!ready || !!progressStatus || /不可用|失败|暂存|离线|无法/.test(status)) && <ActionButton appearance='quiet' className='domain-quiet button-label' disabled={blocked} onClick={() => { retry(); habitTool.retry(); }}>重试</ActionButton>}</View>}
+        {!!(status || habitStatus) && <View className='tool-status domains-status'><Text>{[status, habitStatus].filter(Boolean).join(' · ')}</Text>{(!ready || !!habitStatus || /不可用|失败|暂存|离线|无法/.test(status)) && <ActionButton appearance='quiet' className='domain-quiet button-label' disabled={blocked} onClick={() => { retry(); habitTool.retry(); }}>重试</ActionButton>}</View>}
       </ScrollView>}
     </View></View></PageScroll>
-    <FloatingCreateButton raised={!!(error || moveRetry || status || progressStatus)} className='domain-record-trigger' label='添加记录' disabled={!writable || blocked} onClick={() => setQuick(true)} />
+    <FloatingCreateButton raised={!!(error || moveRetry || status || habitStatus)} className='domain-record-trigger' label='添加记录' disabled={!writable || blocked} onClick={() => setQuick(true)} />
     <DomainDefinitionEditor controller={definition} />
     {quick && <DomainQuickRecord onClose={() => setQuick(false)} />}
     {currentRecordEditor && <DomainRecordEditor key={`${owner}:${currentRecordEditor.record.id}`} owner={owner} domainId={currentRecordEditor.domainId} kind={currentRecordEditor.kind} record={currentRecordEditor.record}

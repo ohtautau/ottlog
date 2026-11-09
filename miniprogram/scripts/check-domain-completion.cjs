@@ -136,24 +136,12 @@ function checkMapping() {
 }
 
 function checkProgress() {
-  const low = freeze({ domainId: 'low', longTermGoals: 1, shortTermGoals: 1, habits: 1 });
-  const high = freeze({ domainId: 'high', longTermGoals: 2, shortTermGoals: 1, habits: 3 });
-  const before = JSON.stringify([low, high]);
-  const scale = domainProgress.domainProgressScale([low, high]);
-  assert.equal(scale, 18, 'The global visual scale is the largest combined weighted count, not a category maximum');
-  const first = domainProgress.domainProgressSegments(low, scale), second = domainProgress.domainProgressSegments(high, scale);
-  assert.deepEqual(first.map(item => item.kind), ['longTermGoals', 'shortTermGoals', 'habits']);
-  assert.deepEqual(first.map(item => item.count), [1, 1, 1], 'Visual weighting preserves the underlying completed counts');
-  assert.ok(Math.abs(first[0].width / first[1].width - 2) < 1e-10, 'A long target occupies twice the short-target length');
-  assert.ok(Math.abs(first[1].width / first[2].width - 3) < 1e-10, 'A short target occupies three habit units');
-  for (const [index, count] of [2, 1, 3].entries()) assert.ok(Math.abs(first[index].width - second[index].width / count) < 1e-10, 'Equal units share one cross-domain scale');
-  assert.ok(Math.abs(second.reduce((total, item) => total + item.width, 0) - 100) < 1e-10, 'The maximum combined line fits exactly in one track');
-  assert.ok(Math.abs(first.reduce((total, item) => total + item.width, 0) - 100 * 10 / 18) < 1e-10, 'A smaller combined line retains its relative visual length');
-  const empty = { domainId: 'empty', longTermGoals: 0, shortTermGoals: 0, habits: 0 };
-  assert.equal(domainProgress.domainProgressScale([]), 1);
-  assert.equal(domainProgress.domainProgressScale([empty]), 1);
-  assert.ok(domainProgress.domainProgressSegments(empty, 1).every(item => Number.isFinite(item.width) && item.width === 0), 'Empty progress does not fabricate completion or invalid percentages');
-  assert.equal(JSON.stringify([low, high]), before, 'Visual progress only reads the original counts');
+  const { domainActionIndex } = domainProgress;
+  assert.equal(domainActionIndex({ positiveRecords: [], negativeRecords: [] }), '0');
+  const mixed = freeze({ positiveRecords: [{ effortScore: 3 }, {}], negativeRecords: [{ effortScore: 4 }, { effortScore: 0 }] });
+  assert.equal(domainActionIndex(mixed), '7', 'Both record types contribute and missing scores count as zero');
+  const large = { effortScore: Number.MAX_SAFE_INTEGER };
+  assert.equal(domainActionIndex({ positiveRecords: [large], negativeRecords: [large, { effortScore: 1 }] }), '18014398509481983');
 
   const created = new Date(2026, 9, 1, 9), completed = new Date(2026, 9, 2, 12);
   let state = domainData.saveDomainGoal(initial(), 'work', 'longTerm', '第一条已完成目标', created);
@@ -176,5 +164,5 @@ else {
   checkProgress();
   checkTimezone();
   for (const timezone of ['Asia/Singapore', 'America/New_York', 'UTC']) execFileSync(process.execPath, [__filename, '--timezone'], { env: { ...process.env, TZ: timezone }, stdio: 'inherit' });
-  console.log('Domain completion counts passed: goal kinds, complete/undo, local days, future filtering, shared habit mapping, pause/deletion, archives, weighted cross-domain progress and immutable reads.');
+  console.log('Domain completion counts and action index passed: goal kinds, complete/undo, local days, habit mapping, archives, and exact record score totals.');
 }
