@@ -92,7 +92,7 @@ try{for(const [width,height] of viewports){
  // Existing editing uses the same action row; close/reopen preserves score and ID.
  states['progress-isolated'].domains.domains[0].positiveRecords.push({id:'score-only-history',content:'',effortScore:5,createdAt:'2026-11-01T00:00:00.000Z'});
  await page.goto(origin+'/domains');
- const pure=page.locator('[data-record-id="score-only-history"]');await expect(pure).toContainText('投入 5 分');
+ const pure=page.locator('[data-record-id="score-only-history"]');await expect(pure.locator('.record-effort-badge')).toHaveText('5');
  await pure.click({position:{x:3,y:3}});await expect(page.locator('.record-edit-autosave .record-effort-value')).toHaveText('5');
  await page.locator('.record-edit-autosave').getByRole('button',{name:'增加投入分数',exact:true}).click();
  await expect.poll(()=>saved('positive').find(r=>r.id==='score-only-history')?.effortScore).toBe(6);await page.keyboard.press('Escape');
