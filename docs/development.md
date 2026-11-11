@@ -1,5 +1,13 @@
 # 开发说明
 
+### 2026-11-11 数字标识与行动指数正式发布
+
+用户反馈仍看到“投入 3 分”后，确认正式网页仍运行c98ee19，bd809cb的数字标识／默认摘要收紧及6d72796的领域行动指数此前仅推送GitHub。本次将6d72796构建为`ottlog-web:20261111T102132Z-f775cdde603a`。候选360／1440px确认圆角纯数字3、旧文案元素消失、全部正负记录求和／编辑／删除双视图更新；1440／390／375px即时排序、默认栏隐藏、收窄与清除／失败重试通过。
+
+服务器Codex自动发布请求保持busy且尚未调用部署，协调端终止本次dispatch并确认worker空闲后，沿同一固定broker完成status／deploy／verify／rollback-check／remove-qa／final-status。网页于2026-11-11T10:29:27.157974138Z启动且healthy；备份`/home/ubuntu/ottlog/backups/api-edge-20261111T102926Z`保留49682dae1717。API仍为原remember-login镜像、d140b927容器与2026-10-31启动身份，挂载及授权链核对通过。
+
+正式HTTPS实际资源再次通过数字3／行动指数双视口与摘要栏三视口隔离API检查；同账号两域名八类数据、20个正式页面、前后数据哈希和权限只读核对通过。QA容器及临时3017通道已清理。本次发布网页，小程序实际真机验收仍单独记录。
+
 ### 2026-11-07 逐条投入分数正式发布
 
 运行时代码c98ee19已由服务器Codex经限定broker发布为`ottlog-web:20261107T152424Z-49682dae1717`，实际启动于2026-11-07T15:32:39.903978952Z且healthy。status／deploy／verify／rollback-check／remove-qa／final-status全部成功，备份`/home/ubuntu/ottlog/backups/api-edge-20261107T153239Z`保留上一网页07af9ca8ac8f；API仍为原remember-login镜像、原d140b927容器与2026-10-31启动时间，原卷与授权链保持。
