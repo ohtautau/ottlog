@@ -1,12 +1,13 @@
 .progress-domain-row { display:flex;align-items:center;justify-content:space-between;min-width:0;gap:8PX; }
-.progress-columns { display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:32PX;min-width:0; }
-.progress-record-column { position:relative;display:flex;flex-direction:column;min-width:0; }
-.progress-record-column + .progress-record-column::before { content:'';position:absolute;left:-16PX;top:0;bottom:0;border-left:1PX solid #3b505a; }
-.progress-record-heading { display:flex;align-items:center;min-height:40PX;margin-bottom:8PX;font-size:16PX;font-weight:600;line-height:24PX; }
-.progress-record-heading.is-positive { color:var(--domain-positive); }
-.progress-record-heading.is-negative { color:var(--domain-negative); }
-.progress-record-field { position:relative;min-width:0;margin-bottom:8PX;padding-bottom:4PX;border-bottom:1PX solid #334650; }
+.progress-record-list { display:flex;flex-direction:column;min-width:0; }
+.progress-record-field { display:grid;grid-template-columns:40PX minmax(0,1fr);column-gap:8PX;row-gap:8PX;position:relative;min-width:0;margin-bottom:8PX;padding-bottom:4PX;border-bottom:1PX solid #334650; }
 .progress-record-field:last-child { border-bottom:0; }
+.progress-record-body { position:relative;min-width:0; }
+.progress-record-field > .record-action-row { grid-column:2; }
+.progress-record-type { display:flex;align-items:center;justify-content:center;width:40PX;height:40PX;margin:0;padding:0;background:transparent; }
+.progress-record-type.is-positive { color:var(--domain-positive); }
+.progress-record-type.is-negative { color:var(--domain-negative); }
+.progress-sign-symbol { font-size:24PX;line-height:32PX; }
 .progress-record-tools { position:absolute;top:0;right:0;z-index:1;display:flex;align-items:center;justify-content:flex-end;min-height:0; }
 .progress-record-tools > button { flex:none;margin:0;width:40PX;height:40PX; }
 .progress-record-field.has-delete .markdown-note-editor textarea.memo-body-input { padding-right:40PX; }

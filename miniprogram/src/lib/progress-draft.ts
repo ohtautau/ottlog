@@ -49,7 +49,7 @@ export function progressRows(draft: ProgressDraft): ProgressRow[] {
   ];
 }
 export function newProgressInput():RecordItem {return {id:toolId(),content:'',images:[],createdAt:new Date().toISOString()};}
-/** Independent UI rows preserve old paired draft IDs and never re-sign old records. */
+/** Content edits preserve paired draft IDs and require the existing sign. */
 export function writeProgressInput(draft:ProgressDraft,kind:RecordKind,record:RecordItem):ProgressDraft {
   let next=pairedProgressDraft(draft);
   const existing=progressRows(next).find(row=>row.record.id===record.id);
@@ -59,6 +59,22 @@ export function writeProgressInput(draft:ProgressDraft,kind:RecordKind,record:Re
   else next={...next,extraRecords:existing ? next.extraRecords!.map(item=>item.record.id===record.id?{...item,record}:item) : [...(next.extraRecords || []),{kind,record}]};
   if(!isProgressDraft(next) || progressRows(next).filter(row=>hasContent(row.record)).length>MAX_PROGRESS_PAIRS*2)throw new Error('最多同时填写40条记录');
   return next;
+}
+/** Explicit sign changes retain the record ID and every field of its contents. */
+export function setProgressInputKind(draft: ProgressDraft, id: string, kind: RecordKind): ProgressDraft {
+  if (!isProgressDraft(draft) || !isKind(kind)) throw new Error('记录草稿格式不正确，请重试');
+  const next = pairedProgressDraft(draft);
+  const row = progressRows(next).find(item => item.record.id === id);
+  if (!row) throw new Error('这条记录已不存在，请重新打开');
+  if (row.kind === kind) return draft;
+  const withKind = (kinds: [RecordKind, RecordKind]): [RecordKind, RecordKind] =>
+    row.slot === 'positive' ? [kind, kinds[1]] : [kinds[0], kind];
+  if (row.pairIndex === 0) return { ...next, kinds: withKind(next.kinds!) };
+  if (row.pairIndex < MAX_PROGRESS_PAIRS) return {
+    ...next,
+    pairs: next.pairs!.map((pair, index) => index + 1 === row.pairIndex ? { ...pair, kinds: withKind(pair.kinds) } : pair),
+  };
+  return { ...next, extraRecords: next.extraRecords!.map(item => item.record.id === id ? { ...item, kind } : item) };
 }
 /** Root/legacy slots remain compatible; independently added blank rows can be removed. */
 export function clearProgressInput(draft:ProgressDraft,id:string):ProgressDraft {
@@ -132,6 +148,7 @@ export function saveAutoProgressDraft(state: DomainState, baselineDraft: Progres
   if (!isDomainState(state) || !isProgressDraft(draft) || baselineDraft && !isProgressDraft(baselineDraft)) throw new Error('记录草稿格式不正确，请重新打开');
   const baselineRows = new Map((baselineDraft ? progressRows(baselineDraft) : []).map(row => [row.record.id, row]));
   const baselineDomain = baselineDraft?.domainId || findFallbackDomain(state.domains)?.id;
+  const targetDomain = draft.domainId || findFallbackDomain(state.domains)?.id || '';
   const all = new Map(state.domains.flatMap(domain => (['positive', 'negative'] as const).flatMap(kind => domain[`${kind}Records`].map(record => [record.id, { domainId: domain.id, kind, record }] as const))));
   const changes: { id: string; domainId: string; kind: RecordKind; record: RecordItem | null }[] = [];
   const currentIds=new Set(progressRows(draft).map(row=>row.record.id));
@@ -147,6 +164,8 @@ export function saveAutoProgressDraft(state: DomainState, baselineDraft: Progres
     if (previous && hasContent(previous.record) && (!latest || latest.domainId !== baselineDomain || latest.kind !== previous.kind)) {
       // Only the host can confirm that an identical clear lives in volatile local memory.
       if (retryLocalClear && !latest && !hasContent(row.record)) continue;
+      if (retryLocalClear && latest && previous.kind !== row.kind && latest.domainId === targetDomain && latest.kind === row.kind
+        && JSON.stringify({ ...latest.record, content: latest.record.content.trim(), images: latest.record.images || [] }) === JSON.stringify({ ...row.record, content: row.record.content.trim(), images: row.record.images || [] })) continue;
       throw new Error('原记录已删除或移动，未覆盖其他内容');
     }
     if (latest && !previous && latest.record.createdAt !== row.record.createdAt) throw new Error('记录编号已存在，请重新打开');

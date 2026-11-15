@@ -1,5 +1,5 @@
 .domain-record-content { flex: 1; min-width: 0; overflow-wrap: anywhere; white-space: normal; }
-.domain-record-plain { display: inline; white-space: pre-wrap; font-size: inherit; color: inherit; line-height: 1.65; }
+.domain-record-plain { display: block; white-space: pre-wrap; font-size: inherit; color: inherit; line-height: 1.65; }
 .domain-record-images { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 6PX; margin-top: 6PX; }
 .domain-record-images image { display: block; width: 100%; height: 80PX; border-radius: 8PX; }
 
@@ -16,5 +16,4 @@
   line-height: 18PX;
   text-align: center;
 }
-.domain-record-plain + .record-effort-badge { margin-left: 6PX; }
-.domain-record-images + .record-effort-badge { margin-top: 6PX; }
+.record-effort-tail { display: flex; justify-content: flex-end; margin-top: 4PX; min-width: 0; }

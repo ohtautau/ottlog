@@ -7,12 +7,13 @@ import { trimTextEnd } from '../lib/text-whitespace';
 import { memoPriorityColor, todoQuadrant, type MemoImage } from '../lib/tool-records';
 import type { DomainState } from '../lib/domain-data';
 import { progressRows } from '../lib/progress-draft';
+import { hasRecordContent } from '../lib/record-content';
 import PriorityFlag from './priority-flag';
 import EntityTitleRow from './entity-title-field';
 import { MemoPinRow, memoSurfaceStyle } from './memo-fields-layout';
 import { PinSymbol } from './manage-symbol';
 import ActionButton, { ChoiceButton } from './ui-button';
-import { ProgressRecordField } from './progress-editor-fields';
+import { ProgressRecordField, ProgressRecordSign } from './progress-editor-fields';
 import EditorFieldsLayout from './editor-fields-layout';
 
 /** Gesture snapshots contain no native input or second editable draft. */
@@ -22,10 +23,17 @@ export default function EntryPreview({ draft, domains }: { draft: EntryDraft; do
     <View className='memo-editor-toolbar'>{!plain && <View className='memo-editor-modes'><ChoiceButton selected>书写</ChoiceButton><ChoiceButton>预览</ChoiceButton></View>}<Text className='memo-body-count'>{value.length}</Text>{!plain && <ActionButton className='memo-insert-image'>图片</ActionButton>}</View>
     {!!images?.length && <View className='memo-images'>{images.map(image => <View className='memo-image' key={image.id}><Image src={image.dataUrl} mode='aspectFill' /></View>)}</View>}
   </EditorFieldsLayout>;
-  if (draft.mode === 'progress' && draft.progress) return <EditorFieldsLayout className='progress-editor-fields entry-preview'>
+  if (draft.mode === 'progress' && draft.progress) {
+    const rows = progressRows(draft.progress);
+    const filled = rows.filter(row => hasRecordContent(row.record));
+    const visible = filled.length ? filled : rows.slice(0, 1);
+    return <EditorFieldsLayout className='progress-editor-fields entry-preview'>
     <View className='progress-domain-row entry-preview-domain'><Text>{trimTextEnd(domainDisplayName(domains.domains.find(domain => domain.id === draft.progress!.domainId)?.name || OTHER_DOMAIN_NAME))}</Text></View>
-    <View className='progress-columns'>{(['negative','positive'] as const).map(kind=><View className={`progress-record-column is-${kind}`} key={kind}><View className={`progress-record-heading is-${kind}`}><Text>{kind==='negative'?'负记录':'正记录'}</Text></View>{progressRows(draft.progress!).filter(row=>row.kind===kind).map((row,index)=><ProgressRecordField key={row.record.id} slot={kind} kind={kind} pairIndex={index}>{note(row.record.content,'备注',row.record.images,true,true)}</ProgressRecordField>)}</View>)}</View>
+    <View className='progress-record-list'>{visible.map((row, index) =>
+      <ProgressRecordField key={row.record.id} kind={row.kind} pairIndex={index}><ProgressRecordSign kind={row.kind} index={index} /><View className='progress-record-body'>{note(row.record.content, '记录内容', row.record.images, true, true)}</View></ProgressRecordField>
+    )}</View>
   </EditorFieldsLayout>;
+  }
   const task = draft.mode === 'task';
   return <EditorFieldsLayout className={`entry-preview${task ? '' : ' memo-editor-fields'}`} style={task ? undefined : memoSurfaceStyle()}>
     {task && <View className='entry-preview-task-schedule'><View className='entry-preview-domain'><Text>{'日期 · 提醒 · 重复'}</Text></View></View>}

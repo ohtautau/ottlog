@@ -24,7 +24,7 @@ try{for(const [width,height] of viewports){
   return route.continue();
  });
  const button=name=>page.getByRole('button',{name,exact:true}),panel=()=>page.locator('.entry-composer'),fields=kind=>panel().locator(`.is-${kind} textarea`),saved=kind=>states['progress-isolated'].domains.domains.flatMap(d=>d[`${kind}Records`]);
- const row=(kind,index=0)=>panel().locator(`.progress-record-column.is-${kind} .progress-record-field`).nth(index);
+ const row=(kind,index=0)=>panel().locator(`.progress-record-field.is-${kind}`).nth(index);
  const attachment=(kind,index=0)=>row(kind,index).getByRole('button',{name:'该条记录附件',exact:true});
  const open=async()=>{await button('创建记录').click();await button('创建类型：记录').click();await expect(attachment('positive')).toBeEnabled();};
  const geometry=async()=>{
@@ -32,10 +32,11 @@ try{for(const [width,height] of viewports){
   // visualViewport resize is delivered asynchronously; verify the settled layout.
   await expect.poll(async()=>{const p=await panel().boundingBox();return p.y>=-1&&p.y+p.height<=(await page.viewportSize()).height+1;}).toBe(true);
   for(const kind of ['negative','positive']){
-   const records=panel().locator(`.progress-record-column.is-${kind} .progress-record-field`);
+   const records=panel().locator(`.progress-record-field.is-${kind}`);
    for(let i=0;i<await records.count();i++){
-    const field=records.nth(i),action=field.locator('.record-action-row'),a=await action.boundingBox(),f=await field.boundingBox();
+    const field=records.nth(i),action=field.locator('.record-action-row'),a=await action.boundingBox(),f=await field.locator('.progress-record-body').boundingBox();
     expect(a.x).toBeCloseTo(f.x,0);expect(a.width).toBeCloseTo(f.width,0);
+    const sign=await field.locator('.progress-record-type').boundingBox();expect(sign.width).toBeGreaterThanOrEqual(40);expect(sign.height).toBeGreaterThanOrEqual(40);expect(sign.x+sign.width).toBeLessThanOrEqual(f.x);
     const clip=action.getByRole('button',{name:'该条记录附件',exact:true}),b=await clip.boundingBox();
     expect(b.width).toBeGreaterThanOrEqual(32);expect(b.height).toBeGreaterThanOrEqual(40);expect(b.x).toBeCloseTo(a.x,0);
     const plus=await action.getByRole('button',{name:'增加投入分数',exact:true}).boundingBox();
@@ -45,31 +46,39 @@ try{for(const [width,height] of viewports){
   }
   expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1)).toBe(true);return boxes;
  };
- await page.goto(origin+'/today');await open();await expect(fields('positive')).toHaveCount(1);await expect(fields('negative')).toHaveCount(1);await geometry();
- await expect(panel().locator('.record-effort-value')).toHaveText(['0','0']);
+ await page.goto(origin+'/today');await open();await expect(fields('positive')).toHaveCount(1);await expect(fields('negative')).toHaveCount(0);await geometry();
+ await expect(panel().locator('.record-effort-value')).toHaveText(['0']);
+ await expect(panel().locator('.progress-record-heading')).toHaveCount(0);
+ await button('将第 1 条记录改为负记录').click();
  // Nonzero score alone is content; returning to zero removes that blank saved row.
  const negativeId=await fields('negative').first().getAttribute('data-editor-row');
  await row('negative').getByRole('button',{name:'增加投入分数',exact:true}).click();
  await expect.poll(()=>saved('negative').find(r=>r.id===negativeId)?.effortScore).toBe(1);
  await row('negative').getByRole('button',{name:'减少投入分数',exact:true}).click();
  await expect.poll(()=>saved('negative').find(r=>r.id===negativeId)).toBeUndefined();
+ await button('将第 1 条记录改为正记录').click();
  const first=fields('positive').first();await first.fill('');const emptyRowHeight=(await row('positive').boundingBox()).height;await first.pressSequentially('p');await expect(fields('positive')).toHaveCount(1);expect(Math.abs((await row('positive').boundingBox()).height-emptyRowHeight),'first character does not add a delete-tool row').toBeLessThanOrEqual(1);await first.pressSequentially('lain typing');await expect(fields('positive')).toHaveCount(1);
  const firstId=await first.getAttribute('data-editor-row');
  await first.focus();await row('positive').getByRole('button',{name:'增加投入分数',exact:true}).evaluate(n=>{n.click();n.click();});
  await expect(row('positive').locator('.record-effort-value')).toHaveText('2');await expect(first).toBeFocused();
- await expect(row('negative').locator('.record-effort-value')).toHaveText('0');
+ await button('将第 1 条记录改为负记录').click();
+ await expect.poll(()=>saved('negative').find(r=>r.id===firstId)?.effortScore).toBe(2);
+ await expect(fields('negative').first()).toHaveValue('plain typing');
+ await button('将第 1 条记录改为正记录').click();
+ await expect.poll(()=>saved('negative').find(r=>r.id===firstId)).toBeUndefined();
  await expect.poll(()=>saved('positive').find(r=>r.id===firstId)?.effortScore).toBe(2);await first.fill('粘贴内容\n第二行备注');await expect(fields('positive')).toHaveCount(1);
  await first.focus();const ime=await first.evaluate(n=>{n.dispatchEvent(new CompositionEvent('compositionstart',{bubbles:true}));const e=new KeyboardEvent('keydown',{key:'Enter',isComposing:true,bubbles:true,cancelable:true});n.dispatchEvent(e);n.dispatchEvent(new CompositionEvent('compositionend',{bubbles:true,data:'中文'}));return e.defaultPrevented;});expect(ime).toBe(false);await expect(fields('positive')).toHaveCount(1);
  const ime229=await first.evaluate(n=>{const e=new KeyboardEvent('keydown',{key:'Enter',keyCode:229,bubbles:true,cancelable:true});n.dispatchEvent(e);return e.defaultPrevented;});expect(ime229).toBe(false);await expect(fields('positive')).toHaveCount(1);
  await first.press('Enter');await expect(fields('positive')).toHaveCount(2);await expect(fields('positive').last()).toBeFocused();await fields('positive').last().press('Enter');await expect(fields('positive')).toHaveCount(2);
  await fields('positive').last().fill('正二');await expect(fields('positive')).toHaveCount(2);await fields('positive').last().press('ArrowUp');await expect(first).toBeFocused();await first.press('ArrowDown');await expect(fields('positive').last()).toBeFocused();
- await fields('positive').last().press('ArrowDown');await expect(fields('positive')).toHaveCount(3);await expect(fields('positive').last()).toBeFocused();await fields('positive').last().fill('  ');await fields('negative').first().focus();await expect(fields('positive')).toHaveCount(2);
+ await fields('positive').last().press('ArrowDown');await expect(fields('positive')).toHaveCount(3);await expect(fields('positive').last()).toBeFocused();await fields('positive').last().fill('  ');await first.focus();await expect(fields('positive')).toHaveCount(2);
+ await fields('positive').last().press('Enter');await button('将第 3 条记录改为负记录').click();
  await fields('negative').first().fill('负一');await expect(fields('negative')).toHaveCount(1);await expect(fields('positive')).toHaveCount(2);
  await first.fill('短文');await first.press('Shift+Enter');await expect(first).toHaveValue('短文\n');await expect(fields('positive')).toHaveCount(2);
  delay=1800;await first.fill('长备注\n'.repeat(100));await geometry();
  await panel().locator('.entry-scroll').evaluate(n=>n.scrollTop=n.scrollHeight);await geometry();await expect.poll(()=>saved('positive').find(r=>r.id===firstId)?.content,{timeout:15000}).toBe(('长备注\n'.repeat(100)).trim());delay=0;await geometry();
  // Grow by explicit Enter, including after scroll; neither typing nor save adds a row.
- for(let i=0;i<5;i++){await fields('positive').last().press('Enter');await expect(fields('positive').last()).toBeFocused();await fields('positive').last().fill('追加'+i);await geometry();}
+ for(let i=0;i<5;i++){await panel().locator('textarea').last().press('Enter');await expect(fields('positive').last()).toBeFocused();await fields('positive').last().fill('追加'+i);await geometry();}
  expect(await fields('positive').last().getAttribute('data-editor-row')).not.toBe(firstId);await fields('negative').first().focus();
  const png=await page.evaluate(()=>{const c=document.createElement('canvas');c.width=c.height=64;const x=c.getContext('2d');x.fillStyle='#39ad6c';x.fillRect(16,16,32,32);return c.toDataURL('image/png');});
  const file={name:'transparent.png',mimeType:'image/png',buffer:Buffer.from(png.split(',')[1],'base64')};
@@ -79,6 +88,14 @@ try{for(const [width,height] of viewports){
   const target=attachment(kind);await target.scrollIntoViewIfNeeded();expect(await target.evaluate(n=>{const r=n.getBoundingClientRect();return n.contains(document.elementFromPoint(r.x+r.width/2,r.y+r.height/2));})).toBe(true);
  }
  const alpha=await panel().locator('.memo-image img').first().evaluate(async img=>{await img.decode();const c=document.createElement('canvas');c.width=c.height=64;const x=c.getContext('2d');x.drawImage(img,0,0);return x.getImageData(0,0,1,1).data[3];});expect(alpha).toBe(0);
+ const stable=panel().locator('.progress-record-field').filter({has:page.locator(`textarea[data-editor-row="${firstId}"]`)});
+ await stable.locator('.progress-record-type').tap();await expect.poll(()=>saved('negative').find(r=>r.id===firstId)?.images?.length).toBe(1);
+ await expect(stable.locator('.record-effort-value')).toHaveText('2');
+ await stable.locator('.progress-record-type').click();await expect.poll(()=>saved('positive').find(r=>r.id===firstId)?.images?.length).toBe(1);
+ const beforeAttachCount=await panel().locator('textarea').count();await panel().locator('textarea').last().press('Enter');
+ const pending=panel().locator('.progress-record-field').last(),pendingId=await pending.locator('textarea').getAttribute('data-editor-row');
+ const pendingPicker=page.waitForEvent('filechooser');await pending.getByRole('button',{name:'该条记录附件',exact:true}).click();await (await pendingPicker).setFiles(file);
+ await expect.poll(()=>saved('positive').find(r=>r.id===pendingId)?.images?.length).toBe(1);await expect(panel().locator('textarea')).toHaveCount(beforeAttachCount+1);
  // Type switching shares title text; keep that title within the existing memo limit.
  await first.fill('切换检查');await expect.poll(()=>saved('positive').find(r=>r.id===firstId)?.content).toBe('切换检查');
  await button('创建类型：任务').click();await button('设置日期、提醒和重复').click();

@@ -64,3 +64,25 @@ const full=initial();full.domains[0].positiveRecords=Array.from({length:data.MAX
 assert(data.isDomainState(full));assert.throws(()=>progress.saveProgressDraft(full,draft),/5000/);
 const single=progress.singleProgressDraft(draft);assert.equal(progress.pairedProgressDraft(single).positive.effortScore,2);
 console.log('PASS effort fixtures: optional/invalid/bounds, repeated increments, score-only/zero, JSON reopen, same-ID retry, pack/unpack/edit, 40 rows/legacy, field merge and score conflict');
+
+const switched = progress.setProgressInputKind(draft, draft.positive.id, 'negative');
+assert.equal(progress.progressRows(switched)[0].kind, 'negative');
+assert.equal(switched.positive, draft.positive, 'Changing sign retains every record field and stable ID');
+assert.equal(progress.progressRows(draft)[0].kind, 'positive', 'The original draft stays immutable');
+const movedScore = progress.saveAutoProgressDraft(read, draft, switched);
+assert.equal(find(movedScore), undefined);
+assert.equal(movedScore.domains.find(d => d.id === 'work').negativeRecords.find(r => r.id === draft.positive.id).effortScore, 2);
+assert.equal(progress.saveAutoProgressDraft(movedScore, draft, switched, true), movedScore, 'Exact local sign retry is idempotent');
+assert.throws(() => progress.saveAutoProgressDraft(movedScore, draft, switched), /已删除或移动/);
+const returned = progress.setProgressInputKind(switched, draft.positive.id, 'positive');
+assert.equal(find(progress.saveAutoProgressDraft(movedScore, switched, returned)).id, draft.positive.id);
+const remoteText = clone(read); find(remoteText).content = 'concurrent text';
+assert.equal(progress.saveAutoProgressDraft(remoteText, draft, switched).domains.find(d => d.id === 'work').negativeRecords[0].content, 'concurrent text');
+const oldPair = progress.appendProgressPair(draft);
+const pairSwitch = progress.setProgressInputKind(oldPair, oldPair.pairs[0].negative.id, 'positive');
+assert.equal(pairSwitch.pairs[0].kinds[1], 'positive');
+assert.equal(pairSwitch.pairs[0].negative, oldPair.pairs[0].negative);
+const extraSwitch = progress.setProgressInputKind(batch, batch.extraRecords[0].record.id, 'positive');
+assert.equal(extraSwitch.extraRecords[0].kind, 'positive');
+assert.equal(extraSwitch.extraRecords[0].record, batch.extraRecords[0].record);
+console.log('PASS sign switching: primary, old pairs and extras preserve IDs/media/scores; atomic move, round trip, retry and remote merge');
