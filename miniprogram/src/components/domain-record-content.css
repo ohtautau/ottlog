@@ -16,4 +16,4 @@
   line-height: 18PX;
   text-align: center;
 }
-.record-effort-tail { display: flex; justify-content: flex-end; margin-top: 4PX; min-width: 0; }
+.domain-record-plain.has-content .record-effort-badge { margin-left: 6PX; }

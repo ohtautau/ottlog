@@ -7,7 +7,10 @@
 .progress-record-type { display:flex;align-items:center;justify-content:center;width:40PX;height:40PX;margin:0;padding:0;background:transparent; }
 .progress-record-type.is-positive { color:var(--domain-positive); }
 .progress-record-type.is-negative { color:var(--domain-negative); }
-.progress-sign-symbol { font-size:24PX;line-height:32PX; }
+.progress-sign-symbol { font-size:24PX;line-height:24PX; }
+.progress-record-body .markdown-note-editor.is-minimal { --note-editor-padding:8PX 0; }
+.progress-record-body .markdown-note-editor textarea.memo-body-input,.progress-record-body .markdown-note-editor .memo-body-preview,.entry-composer.is-autosave .progress-record-body .entry-preview-note { line-height:24PX; }
+.entry-composer.is-autosave .progress-record-body .entry-preview-note { padding:8PX 0; }
 .progress-record-tools { position:absolute;top:0;right:0;z-index:1;display:flex;align-items:center;justify-content:flex-end;min-height:0; }
 .progress-record-tools > button { flex:none;margin:0;width:40PX;height:40PX; }
 .progress-record-field.has-delete .markdown-note-editor textarea.memo-body-input { padding-right:40PX; }

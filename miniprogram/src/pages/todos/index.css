@@ -46,7 +46,7 @@
 
 .todo-quadrant { touch-action:pan-y; }
 .todo-panel-editor-overlay { position:fixed;inset:0;z-index:220;display:flex;align-items:center;justify-content:center;padding:16PX; }
-.todo-panel-editor { position:relative;width:100%;max-width:440PX;max-height:calc(100vh - 32PX);overflow-y:auto;box-sizing:border-box;padding:8PX 0 24PX;border:1PX solid #3b505a;border-radius:16PX;background:#20333e;color:#e9eee7; }
+.todo-panel-editor { position:relative;width:100%;max-width:320PX;max-height:calc(100vh - 32PX);overflow-y:auto;box-sizing:border-box;padding:8PX 0 24PX;border:1PX solid #3b505a;border-radius:16PX;background:#20333e;color:#e9eee7; }
 .todo-panel-editor-rows { padding:0 16PX;display:flex;flex-direction:column;gap:0; }
 .todo-panel-editor-row { display:grid;grid-template-columns:44PX minmax(0,1fr);align-items:center;gap:12PX;height:44PX; }
 .todo-panel-editor-row > text { flex:none;color:#e9eee7;font-family:var(--app-font-family);font-size:14PX;font-weight:600; }

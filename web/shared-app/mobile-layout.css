@@ -76,3 +76,11 @@
   .tool-app-root .focus-page .focus-primary-actions { margin-top: 0; }
   .tool-app-root .focus-page .focus-end-slot:has(> .focus-end-space) { height: 0; min-height: 0; margin: 0; }
 }
+
+/* Creation sheets share the viewport edge and half-height at every width. */
+.tool-app-root .todo-overlay.entry-overlay,.tool-app-root .task-detail-overlay.entry-overlay { align-items: flex-end; padding: 0; }
+.tool-app-root .entry-overlay .entry-composer.is-autosave:is(.task-detail-panel,.todo-sheet) {
+  --compact-editor-height: calc(var(--browser-viewport-height,100dvh) * .5);
+  width: 100%; max-width: 100%; height: var(--compact-editor-height);
+  max-height: var(--compact-editor-height); border: 0; border-radius: 20px 20px 0 0;
+}

@@ -31,20 +31,20 @@ type Props = {
   onToggleComplete?: () => void; notes: ReactNode | ((preview:boolean,onPreviewChange:(value:boolean)=>void)=>ReactNode);
   reminderAction?:ReactNode; tagsAction?: ReactNode; attachmentAction?: ReactNode; onTags?: () => void; onAttachment?: () => void;
   pending?: boolean; error?: string; onRetry?: () => void;
-  topBar?: ReactNode; panelClassName?: string;
+  topBar?: ReactNode; panelClassName?: string; overlayClassName?: string;
 };
 
 /** Shared task presentation only; the caller owns autosave, identity and menus. */
 export default function TaskDetailEditor({ owner = '', draft, onChange, onClose, disabled = false, autoFocus = false,
   ariaLabel = '编辑任务', category, priority, more, onMore, onSchedule, scheduleLabel = '日期 · 提醒 · 重复', scheduleOpen,
-  onToggleComplete, notes, reminderAction, tagsAction, attachmentAction, onTags, onAttachment, pending = false, error, onRetry, topBar, panelClassName = '',
+  onToggleComplete, notes, reminderAction, tagsAction, attachmentAction, onTags, onAttachment, pending = false, error, onRetry, topBar, panelClassName = '', overlayClassName = '',
 }: Props) {
   const [notePreview,setNotePreview] = useState(false);
   const checklist = useRef<EditorChecklistHandle>(null);
   const latest = useRef({ draft, disabled }); latest.current = { draft, disabled };
   useEffect(() => { setNotePreview(false); }, [owner, draft.id]);
   useMessageNotice(error);
-  return <View className='task-detail-overlay' catchMove>
+  return <View className={`task-detail-overlay ${overlayClassName}`} catchMove>
     <SheetBackdrop onClose={onClose} />
     <View className={`task-detail-panel ${panelClassName}`} style={{ '--todo-completion-color': todoQuadrant(draft).color } as CSSProperties} role='dialog' ariaLabel={ariaLabel}>
       {topBar}

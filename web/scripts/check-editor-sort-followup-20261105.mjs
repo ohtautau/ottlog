@@ -5,7 +5,7 @@ if(!/^http:\/\/(127\.0\.0\.1|localhost):3017$/.test(origin))throw Error('Use iso
 const browser=await chromium.launch();
 try {for(const viewport of [{width:1440,height:900},{width:390,height:844},{width:375,height:667}]){
  const context=await browser.newContext({viewport}),page=await context.newPage(),writes=[];
- const states={reminders:{version:1,items:[{id:'a',title:'甲低',note:'',group:'工作',kind:'plant',minutes:0,enabled:true,priority:'low',timePeriod:'free',createdAt:1},{id:'b',title:'乙高',note:'',group:'生活',kind:'plant',minutes:0,enabled:true,priority:'high',timePeriod:'free',createdAt:2}],done:{}},domains:{version:1,domains:[],completedGoals:[]},memos:{version:1,notes:[{id:'m',title:'夹具便签',body:'原正文',color:'blue',tags:['工作'],pinned:false,createdAt:'2026-11-01T00:00:00Z',updatedAt:'2026-11-01T00:00:00Z'}]}};
+ const states={reminders:{version:1,items:[{id:'a',title:'甲低',note:'',group:'工作',kind:'plant',minutes:0,enabled:true,priority:'low',timePeriod:'free',createdAt:1},{id:'b',title:'乙高',note:'',group:'生活',kind:'plant',minutes:0,enabled:true,priority:'high',timePeriod:'free',createdAt:2}],done:{}},domains:{version:1,domains:[{id:'growth',name:'成长',iconId:'plant',longTermGoal:null,shortTermGoal:null,habits:[],positiveRecords:[],negativeRecords:[]}],completedGoals:[]},memos:{version:1,notes:[{id:'m',title:'夹具便签',body:'原正文',color:'blue',tags:['工作'],pinned:false,createdAt:'2026-11-01T00:00:00Z',updatedAt:'2026-11-01T00:00:00Z'}]}};
  await page.addInitScript(()=>{const original=Storage.prototype.setItem;Storage.prototype.setItem=function(k,v){if(window.__sortFailLocal&&k.startsWith('ottlog-tool-v1:')&&k.endsWith(':reminders'))throw Error('isolated storage failure');return original.call(this,k,v);};});
  let fail=false;const failures=[],errors=[];page.on('pageerror',e=>errors.push(e.message));
  await page.route('**/api/**',route=>{const req=route.request(),path=new URL(req.url()).pathname,key=path.match(/^\/api\/personal-tools\/([^/]+)$/)?.[1];if(path.startsWith('/api/account/'))return route.fulfill({json:{authenticated:true,userName:'sort-fixture',csrfToken:'isolated'}});if(key){if(req.method()==='PUT'){writes.push({key,data:req.postDataJSON().data});if(fail&&key==='reminders'&&req.postDataJSON().data.sort?.field==='created'){failures.push(structuredClone(req.postDataJSON().data));return route.fulfill({status:500,json:{message:'fixture failure'}});}states[key]=req.postDataJSON().data;}return route.fulfill({json:{data:states[key]??null}});}return route.fulfill({json:{enabled:false,reminders:[],posts:[],items:[]}});});
@@ -13,6 +13,15 @@ try {for(const viewport of [{width:1440,height:900},{width:390,height:844},{widt
  await page.goto(origin+'/daily');await expect(button('排序习惯')).toBeEnabled();await expect(bar).toHaveCount(0);
  const baseline=writes.length,count=await page.locator('.daily-reminder-count').textContent();
  await page.locator('.daily-core-filter').filter({hasText:/^全部$/}).click();await expect(page.locator('.daily-neglected')).toBeVisible();await expect(page.locator('.daily-reminder-count')).toHaveText(count);await expect(main.locator('.habit-sort-tile').first()).toHaveAttribute('id','habit-sort-b');expect(writes.length).toBe(baseline);
+ const todayTab=page.locator('.daily-core-filter').filter({hasText:/^今日$/});
+ for(const label of ['成长','全部']){
+  await page.locator('.daily-core-filter').filter({hasText:new RegExp('^'+label+'$')}).click();
+  const todayBox=await todayTab.boundingBox();expect(todayBox.x).toBeGreaterThanOrEqual(0);
+  await todayTab.click();await expect(todayTab).toHaveAttribute('aria-pressed','true');
+  await expect(page.locator('.daily-time-period-layout')).toBeVisible();
+  await expect(page.locator('.daily-reminder-count')).toHaveText(count);expect(writes.length).toBe(baseline);
+ }
+ await page.locator('.daily-core-filter').filter({hasText:/^全部$/}).click();
  await button('排序习惯').click();await button('创建日期').click();await expect.poll(()=>states.reminders.sort?.field).toBe('created');await button('升序').click();await expect.poll(()=>states.reminders.sort).toEqual({field:'created',direction:'asc'});await expect(main.locator('.habit-sort-tile').first()).toHaveAttribute('id','habit-sort-a');await expect(page.locator('.sort-panel-footer')).toHaveCount(0);await button('关闭习惯排序').click();await expect(page.getByRole('dialog',{name:'保存修改？',exact:true})).toHaveCount(0);
  await expect(bar.locator('.applied-options-text')).toHaveText('排序：创建日期 · 升序');
  expect(await bar.evaluate(node => node.offsetWidth < node.parentElement.clientWidth)).toBe(true);

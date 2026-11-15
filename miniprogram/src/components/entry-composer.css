@@ -2,7 +2,7 @@
 .entry-overlay > .todo-backdrop { position:absolute;inset:0;background:rgba(4,10,16,.7); }
 .entry-composer.todo-sheet { position:relative;display:flex;flex-direction:column;min-height:0;overflow:hidden; }
 .entry-composer .todo-sheet-scroll { flex:1;height:0;min-height:0; }
-@media (min-width:600px) { .entry-overlay { align-items:center;padding:16PX; } }
+.todo-overlay.entry-overlay,.task-detail-overlay.entry-overlay { align-items:flex-end;padding:0; }
 .entry-type-heading { flex:none;padding:16PX var(--task-detail-inset) 0; }
 .entry-composer.todo-sheet { height: min(660PX,calc(100% - 24PX)); max-height: calc(100% - 24PX); }
 .entry-modes { display: flex; flex: 1; min-width: 0; align-items: stretch; gap: 4PX; padding: 4PX; border: 1rpx solid #3b505c; border-radius: 14rpx; background: #13232e; }
@@ -31,3 +31,12 @@
 .entry-composer.is-autosave .memo-pin-row { display:none; }
 .entry-composer.is-autosave .memo-tags-field,.entry-composer.is-autosave .todo-tags-row { border:0; }
 .entry-composer.is-autosave .entity-title-row { border:0; }
+/* Creation keeps the same bottom sheet when switching content types. */
+.entry-overlay .entry-composer.is-autosave.task-detail-panel,.entry-overlay .entry-composer.is-autosave.todo-sheet { --compact-editor-height:50vh;width:100%;max-width:100%;height:var(--compact-editor-height);max-height:var(--compact-editor-height);border:0;border-radius:20PX 20PX 0 0; }
+@media(max-height:500px) {
+  .entry-overlay .entry-composer.task-detail-panel { display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);grid-template-rows:64PX minmax(0,1fr) auto; }
+  .entry-overlay .entry-composer.task-detail-panel > .entry-type-heading { grid-column:1;grid-row:1;padding:8PX 0 0 var(--compact-editor-inset); }
+  .entry-overlay .entry-composer.task-detail-panel > .task-detail-heading { grid-column:2;grid-row:1;min-width:0;padding:8PX var(--compact-editor-inset) 0 8PX; }
+  .entry-overlay .entry-composer.task-detail-panel > .task-detail-scroll { grid-column:1/-1;grid-row:2;height:auto; }
+  .entry-overlay .entry-composer.task-detail-panel > .task-detail-footer { grid-column:1/-1;grid-row:3; }
+}

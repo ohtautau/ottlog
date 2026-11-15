@@ -27,16 +27,23 @@ try{for(const [width,height] of viewports){
  const row=(kind,index=0)=>panel().locator(`.progress-record-field.is-${kind}`).nth(index);
  const attachment=(kind,index=0)=>row(kind,index).getByRole('button',{name:'该条记录附件',exact:true});
  const open=async()=>{await button('创建记录').click();await button('创建类型：记录').click();await expect(attachment('positive')).toBeEnabled();};
- const geometry=async()=>{
-  const boxes=[];
+ const sheetGeometry=async()=>{
   // visualViewport resize is delivered asynchronously; verify the settled layout.
-  await expect.poll(async()=>{const p=await panel().boundingBox();return p.y>=-1&&p.y+p.height<=(await page.viewportSize()).height+1;}).toBe(true);
+  await expect.poll(async()=>{const p=await panel().boundingBox(),v=page.viewportSize();return Math.abs(p.x)<1&&Math.abs(p.width-v.width)<1&&Math.abs(p.height-v.height/2)<1&&Math.abs(p.y+p.height-v.height)<1;}).toBe(true);
+  const sheet=await panel().boundingBox(),viewport=page.viewportSize();
+  expect(sheet.x).toBeCloseTo(0,0);expect(sheet.width).toBeCloseTo(viewport.width,0);
+  expect(sheet.height).toBeCloseTo(viewport.height/2,0);expect(sheet.y+sheet.height).toBeCloseTo(viewport.height,0);
+ };
+ const geometry=async()=>{
+  const boxes=[];await sheetGeometry();
   for(const kind of ['negative','positive']){
    const records=panel().locator(`.progress-record-field.is-${kind}`);
    for(let i=0;i<await records.count();i++){
     const field=records.nth(i),action=field.locator('.record-action-row'),a=await action.boundingBox(),f=await field.locator('.progress-record-body').boundingBox();
     expect(a.x).toBeCloseTo(f.x,0);expect(a.width).toBeCloseTo(f.width,0);
     const sign=await field.locator('.progress-record-type').boundingBox();expect(sign.width).toBeGreaterThanOrEqual(40);expect(sign.height).toBeGreaterThanOrEqual(40);expect(sign.x+sign.width).toBeLessThanOrEqual(f.x);
+    const firstLineCenter=await field.locator('textarea').evaluate(n=>{const s=getComputedStyle(n);return n.getBoundingClientRect().top+parseFloat(s.paddingTop)+parseFloat(s.lineHeight)/2;});
+    expect(firstLineCenter).toBeCloseTo(sign.y+sign.height/2,0);
     const clip=action.getByRole('button',{name:'该条记录附件',exact:true}),b=await clip.boundingBox();
     expect(b.width).toBeGreaterThanOrEqual(32);expect(b.height).toBeGreaterThanOrEqual(40);expect(b.x).toBeCloseTo(a.x,0);
     const plus=await action.getByRole('button',{name:'增加投入分数',exact:true}).boundingBox();
@@ -98,9 +105,9 @@ try{for(const [width,height] of viewports){
  await expect.poll(()=>saved('positive').find(r=>r.id===pendingId)?.images?.length).toBe(1);await expect(panel().locator('textarea')).toHaveCount(beforeAttachCount+1);
  // Type switching shares title text; keep that title within the existing memo limit.
  await first.fill('切换检查');await expect.poll(()=>saved('positive').find(r=>r.id===firstId)?.content).toBe('切换检查');
- await button('创建类型：任务').click();await button('设置日期、提醒和重复').click();
+ await button('创建类型：任务').click();await sheetGeometry();await button('设置日期、提醒和重复').click();
  for(const mode of ['编辑任务日期','编辑提醒日期','编辑重复'])await button(mode).click();
- await button('关闭日期设置').click();await button('创建类型：便签').click();await button('创建类型：记录').click();await expect(row('positive').locator('.record-effort-value')).toHaveText('2');await expect(attachment('positive')).toBeVisible();await geometry();
+ await button('关闭日期设置').click();await button('创建类型：便签').click();await sheetGeometry();await button('创建类型：记录').click();await expect(row('positive').locator('.record-effort-value')).toHaveText('2');await expect(attachment('positive')).toBeVisible();await geometry();
  // Keyboard-visible area simulation: real resize invokes existing viewport listeners.
  if(width===390&&height===844){await page.setViewportSize({width,height:440});await fields('positive').first().focus();await geometry();await page.setViewportSize({width,height});await geometry();}
  await page.screenshot({path:`${out}/${width}x${height}.png`});

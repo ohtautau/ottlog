@@ -335,7 +335,7 @@ export default function EntryComposer({ initialMode, preferLastCreatedMode = fal
   const openSchedule = () => { setFocusReady(false); void Taro.hideKeyboard().catch(() => {}); setScheduleOpen(true); };
   useMessageNotice(error, !busy);
   return <>
-    {mode === 'task' && <TaskDetailEditor owner={draftOwner.current} draft={{ ...task, tags: parseTodoTags(draft?.tagsText || '') }} onChange={changeTask} onClose={() => { void dismiss(); }} disabled={!draft || locked} autoFocus={autoFocus && !retryMode && !scheduleOpen} ariaLabel='创建任务、便签或添加记录' panelClassName='entry-composer is-autosave'
+    {mode === 'task' && <TaskDetailEditor owner={draftOwner.current} draft={{ ...task, tags: parseTodoTags(draft?.tagsText || '') }} onChange={changeTask} onClose={() => { void dismiss(); }} disabled={!draft || locked} autoFocus={autoFocus && !retryMode && !scheduleOpen} ariaLabel='创建任务、便签或添加记录' panelClassName='entry-composer is-autosave' overlayClassName='entry-overlay'
       topBar={typeHeading}
       category={<TodoCategoryField value={task.categoryId} owner={draftOwner.current} disabled={!draft || locked} onChange={categoryId => { const active = latest.current; if (active) changeTask({ ...active.task, categoryId }); }} />}
       priority={<PrioritySelect ariaLabel='任务优先级' open={priorityOpen} onOpenChange={setPriorityOpen} disabled={!draft || locked} optionsAriaLabel='任务优先级' options={todoQuadrants.map((q, index) => ({ value: q.id, label: ['高','中','低','无'][index], ariaLabel: q.title, color: q.color, outlined: q.id === 'later' }))} value={todoQuadrant(task).id} onChange={id => { const q = todoQuadrants.find(q => q.id === id); if (q) changeTask({ ...task, important: q.important, urgent: q.urgent }); }} />}
