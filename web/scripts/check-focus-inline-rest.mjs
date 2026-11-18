@@ -38,7 +38,7 @@ try{for(const [width,height] of [[1440,900],[390,844],[375,667],[844,390],[390,4
   states.pomodoro.active.deadline=Date.now()-1;await page.evaluate(()=>window.dispatchEvent(new Event('focus')));
   const mode=count===4?'longBreak':'shortBreak',label=count===4?'长休息':'短休息';
   await expect(button('开始'+label)).toBeEnabled({timeout:15000});
-  expect(states.pomodoro.mode).toBe(mode);expect(states.pomodoro.active).toBeNull();expect(states.pomodoro.completedFocusCount).toBe(count);
+  await expect.poll(()=>states.pomodoro.mode).toBe(mode);expect(states.pomodoro.active).toBeNull();expect(states.pomodoro.completedFocusCount).toBe(count);
   await expect(button(label)).toHaveAttribute('aria-pressed','true');
   if(width===1440&&count===1){
    states.pomodoro.mode='focus';const readsOnly=writes.length;
