@@ -10,7 +10,7 @@ for(const count of [1,3,4,8]){
  const before=normalizePomodoroState({...initialPomodoroState,completedFocusCount:count-1});
  const running=startTimer(before,now,`focus-${count}`,before.selection);
  const completed=advanceWithBreakChoice(running,now+1500000),snapshot=JSON.stringify(completed);
- assert.equal(completed.completedFocusCount,count);assert.equal(completed.mode,'focus');assert.equal(completed.active,null);
+ assert.equal(completed.completedFocusCount,count);assert.equal(completed.mode,recommend(count,4));assert.equal(completed.active,null);
  assert.equal(recommend(completed.completedFocusCount,completed.settings.longEvery),count%4===0?'longBreak':'shortBreak');
  assert.equal(recommend(normalizePomodoroState(JSON.parse(snapshot)).completedFocusCount,4),recommend(count,4));
  for(const mode of ['shortBreak','longBreak']){const chosen=startChosenBreak(completed,mode,now+1500001,`focus-${count}`);assert.equal(chosen.active.mode,mode);assert.equal(chosen.completedFocusCount,count);}

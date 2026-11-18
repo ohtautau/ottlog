@@ -1,19 +1,18 @@
 import { advanceTimer, automaticBreakId, finishTimer, startTimer, unhandledFocusCompletion, type PomodoroState } from './pomodoro-data';
 
-/** Desktop focus expiry records one session and waits for an explicit rest choice. */
+/** Desktop expiry lands on the matching rest page; starting rest stays explicit. */
 export function advanceWithBreakChoice(state:PomodoroState,now:number):PomodoroState {
-  const next=state.active?.mode==='focus' ? finishTimer(state,now) : advanceTimer(state,now);
-  return next!==state && state.active?.mode==='focus' ? {...next,mode:'focus'} : next;
+  return state.active?.mode==='focus' ? finishTimer(state,now) : advanceTimer(state,now);
 }
 /** Session evidence also accepts legacy states parked on a rest tab; reads never migrate them.
- * Hosts display this prompt only on the focus tab. */
+ * The session is handled only when rest actually starts. */
 export function pendingFocusCompletion(state:PomodoroState) {
   return unhandledFocusCompletion(state);
 }
-export function startChosenBreak(state:PomodoroState,mode:'shortBreak'|'longBreak',now:number,focusId:string):PomodoroState {
+export function startChosenBreak(state:PomodoroState,mode:'shortBreak'|'longBreak',now:number,focusId:string,minutes?:number):PomodoroState {
   const completed=pendingFocusCompletion(state);
   if(!completed || completed.id!==focusId)return state;
-  const started=startTimer({...state,mode},now,automaticBreakId(focusId),state.selection);
+  const started=startTimer({...state,mode},now,automaticBreakId(focusId),state.selection,minutes);
   return started.active ? {...started,active:{...started.active,rootRunId:completed.rootRunId || focusId,originFocusId:focusId}} : state;
 }
 

@@ -3,14 +3,15 @@ import ActionButton from './ui-button';
 import { TaskAttachmentSymbol } from './task-detail-editor';
 import { recordEffortScore } from '../lib/record-content';
 import './record-action-row.css';
-export default function RecordActionRow({ record, disabled, attachmentDisabled, onAttach, onAdjust, onInteraction, onInteractionCancel }: {
-  record: { effortScore?: number }; disabled: boolean; attachmentDisabled?: boolean; onAttach: () => void; onAdjust: (delta: -1 | 1) => void;
+export default function RecordActionRow({ record, disabled, attachmentDisabled, onAttach, onAdjust, onInteraction, onInteractionCancel, showAttachment = true }: {
+  record: { effortScore?: number }; disabled: boolean; attachmentDisabled?: boolean; onAttach?: () => void; onAdjust: (delta: -1 | 1) => void;
   onInteraction?: () => void; onInteractionCancel?: () => void;
+  showAttachment?: boolean;
 }) {
   const keepFocus = { onMouseDown: (event: { preventDefault: () => void }) => event.preventDefault() };
   const score = recordEffortScore(record);
-  return <View className='record-action-row' onTouchStart={onInteraction} onTouchCancel={onInteractionCancel}>
-    <ActionButton appearance='icon' size='compact' ariaLabel='该条记录附件' disabled={disabled || attachmentDisabled} onClick={onAttach}><TaskAttachmentSymbol /></ActionButton>
+  return <View className={`record-action-row${showAttachment ? '' : ' is-score-only'}`} onTouchStart={onInteraction} onTouchCancel={onInteractionCancel}>
+    {showAttachment && onAttach && <ActionButton appearance='icon' size='compact' ariaLabel='该条记录附件' disabled={disabled || attachmentDisabled} onClick={onAttach}><TaskAttachmentSymbol /></ActionButton>}
     <View className='record-effort-controls'>
       <ActionButton {...keepFocus} appearance='icon' size='compact' ariaLabel='减少投入分数' disabled={disabled || score === 0} onClick={() => onAdjust(-1)}>−</ActionButton>
       <Text className='record-effort-value' aria-label={`投入分数 ${score}`}>{score}</Text>

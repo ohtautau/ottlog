@@ -25,7 +25,7 @@ try{for(const [width,height] of viewports){
  });
  const button=name=>page.getByRole('button',{name,exact:true}),panel=()=>page.locator('.entry-composer'),fields=kind=>panel().locator(`.is-${kind} textarea`),saved=kind=>states['progress-isolated'].domains.domains.flatMap(d=>d[`${kind}Records`]);
  const row=(kind,index=0)=>panel().locator(`.progress-record-field.is-${kind}`).nth(index);
- const attachment=(kind,index=0)=>row(kind,index).getByRole('button',{name:'该条记录附件',exact:true});
+ const attachment=()=>panel().getByRole('button',{name:'当前记录附件',exact:true});
  const open=async()=>{await button('创建记录').click();await button('创建类型：记录').click();await expect(attachment('positive')).toBeEnabled();};
  const sheetGeometry=async()=>{
   // visualViewport resize is delivered asynchronously; verify the settled layout.
@@ -36,6 +36,9 @@ try{for(const [width,height] of viewports){
  };
  const geometry=async()=>{
   const boxes=[];await sheetGeometry();
+  await expect(attachment()).toHaveCount(1);await expect(panel().locator('.progress-record-list').getByRole('button',{name:'该条记录附件',exact:true})).toHaveCount(0);
+  const clip=await attachment().boundingBox(),sheet=await panel().boundingBox();
+  expect(clip.x).toBeCloseTo(sheet.x+24,0);expect(clip.width).toBeGreaterThanOrEqual(40);expect(clip.height).toBeGreaterThanOrEqual(40);expect(sheet.y+sheet.height-clip.y-clip.height).toBeGreaterThanOrEqual(8);expect(sheet.y+sheet.height-clip.y-clip.height).toBeLessThanOrEqual(24);
   for(const kind of ['negative','positive']){
    const records=panel().locator(`.progress-record-field.is-${kind}`);
    for(let i=0;i<await records.count();i++){
@@ -44,10 +47,8 @@ try{for(const [width,height] of viewports){
     const sign=await field.locator('.progress-record-type').boundingBox();expect(sign.width).toBeGreaterThanOrEqual(40);expect(sign.height).toBeGreaterThanOrEqual(40);expect(sign.x+sign.width).toBeLessThanOrEqual(f.x);
     const firstLineCenter=await field.locator('textarea').evaluate(n=>{const s=getComputedStyle(n);return n.getBoundingClientRect().top+parseFloat(s.paddingTop)+parseFloat(s.lineHeight)/2;});
     expect(firstLineCenter).toBeCloseTo(sign.y+sign.height/2,0);
-    const clip=action.getByRole('button',{name:'该条记录附件',exact:true}),b=await clip.boundingBox();
-    expect(b.width).toBeGreaterThanOrEqual(32);expect(b.height).toBeGreaterThanOrEqual(40);expect(b.x).toBeCloseTo(a.x,0);
     const plus=await action.getByRole('button',{name:'增加投入分数',exact:true}).boundingBox();
-    expect(plus.x+plus.width).toBeLessThanOrEqual(a.x+a.width+1);expect(plus.x+plus.width).toBeGreaterThanOrEqual(a.x+a.width-1);expect(plus.y).toBeCloseTo(b.y,0);
+    expect(plus.x+plus.width).toBeLessThanOrEqual(a.x+a.width+1);expect(plus.x+plus.width).toBeGreaterThanOrEqual(a.x+a.width-1);
     expect(await action.evaluate(n=>n.scrollWidth<=n.clientWidth+1)).toBe(true);boxes.push(a);
    }
   }
@@ -56,7 +57,9 @@ try{for(const [width,height] of viewports){
  await page.goto(origin+'/today');await open();await expect(fields('positive')).toHaveCount(1);await expect(fields('negative')).toHaveCount(0);await geometry();
  await expect(panel().locator('.record-effort-value')).toHaveText(['0']);
  await expect(panel().locator('.progress-record-heading')).toHaveCount(0);
+ const positiveColor=await row('positive').locator('.progress-sign-symbol').evaluate(n=>getComputedStyle(n).color);
  await button('将第 1 条记录改为负记录').click();
+ expect(await row('negative').locator('.progress-sign-symbol').evaluate(n=>getComputedStyle(n).color)).not.toBe(positiveColor);
  // Nonzero score alone is content; returning to zero removes that blank saved row.
  const negativeId=await fields('negative').first().getAttribute('data-editor-row');
  await row('negative').getByRole('button',{name:'增加投入分数',exact:true}).click();
@@ -90,7 +93,7 @@ try{for(const [width,height] of viewports){
  const png=await page.evaluate(()=>{const c=document.createElement('canvas');c.width=c.height=64;const x=c.getContext('2d');x.fillStyle='#39ad6c';x.fillRect(16,16,32,32);return c.toDataURL('image/png');});
  const file={name:'transparent.png',mimeType:'image/png',buffer:Buffer.from(png.split(',')[1],'base64')};
  for(const [,kind,id] of [['正','positive',firstId],['负','negative',await fields('negative').first().getAttribute('data-editor-row')]]){
-  const chooser=page.waitForEvent('filechooser');await attachment(kind).click();await (await chooser).setFiles(file);
+  await fields(kind).first().focus();const chooser=page.waitForEvent('filechooser');await attachment().click();await (await chooser).setFiles(file);
   await expect.poll(()=>saved(kind).find(r=>r.id===id)?.images?.length).toBe(1);expect(saved(kind).filter(r=>r.images?.length)).toHaveLength(1);await geometry();
   const target=attachment(kind);await target.scrollIntoViewIfNeeded();expect(await target.evaluate(n=>{const r=n.getBoundingClientRect();return n.contains(document.elementFromPoint(r.x+r.width/2,r.y+r.height/2));})).toBe(true);
  }
@@ -101,7 +104,7 @@ try{for(const [width,height] of viewports){
  await stable.locator('.progress-record-type').click();await expect.poll(()=>saved('positive').find(r=>r.id===firstId)?.images?.length).toBe(1);
  const beforeAttachCount=await panel().locator('textarea').count();await panel().locator('textarea').last().press('Enter');
  const pending=panel().locator('.progress-record-field').last(),pendingId=await pending.locator('textarea').getAttribute('data-editor-row');
- const pendingPicker=page.waitForEvent('filechooser');await pending.getByRole('button',{name:'该条记录附件',exact:true}).click();await (await pendingPicker).setFiles(file);
+ await pending.locator('textarea').press('Tab');const pendingPicker=page.waitForEvent('filechooser');await attachment().tap();await (await pendingPicker).setFiles(file);
  await expect.poll(()=>saved('positive').find(r=>r.id===pendingId)?.images?.length).toBe(1);await expect(panel().locator('textarea')).toHaveCount(beforeAttachCount+1);
  // Type switching shares title text; keep that title within the existing memo limit.
  await first.fill('切换检查');await expect.poll(()=>saved('positive').find(r=>r.id===firstId)?.content).toBe('切换检查');

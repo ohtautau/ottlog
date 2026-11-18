@@ -36,7 +36,7 @@ for(const mode of ['shortBreak','longBreak']){const rest=focus.startChosenBreak(
 assert.equal(focus.startChosenBreak(complete,'shortBreak',170000,'wrong-id'),complete);
 console.log('PASS calendar projections (monthly/leap/weekday/far future), invisible subtasks, cyclic display and silent changes, durable explicit break choices.');
 
-assert.equal(complete.mode,'focus');
+assert.equal(complete.mode,'shortBreak');
 assert.equal(focus.advanceWithBreakChoice(started,100001),started);
 assert.equal(focus.advanceWithBreakChoice(timer.pauseTimer(started,110000),200000).active.running,false);
 const reloaded=timer.normalizePomodoroState(JSON.parse(JSON.stringify(complete)));

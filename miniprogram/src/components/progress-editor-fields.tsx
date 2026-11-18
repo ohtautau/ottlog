@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type ReactNode } from 'react';
+import { forwardRef, useEffect, useImperativeHandle, useRef, useState, type ReactNode } from 'react';
 import { Text, View } from '@tarojs/components';
 import { MAX_DOMAIN_RECORD_LENGTH, type DomainState, type RecordItem, type RecordKind } from '../lib/domain-data';
 import {
@@ -37,10 +37,13 @@ export function ProgressRecordSign({ kind, index, disabled, onToggle, onInteract
 }
 
 /** A single list keeps each record's identity, sign, attachments and score together. */
-export default function ProgressEditorFields({ draft, onChange, state, disabled, mediaWritable = !disabled, owner, onBusyChange, autoFocus, actions }: {
+export type ProgressEditorHandle = { attach: () => void; prepareAttachment: () => void; cancelAttachment: () => void };
+type Props = {
   draft: ProgressDraft; onChange: (draft: ProgressDraft) => void; state: DomainState; disabled: boolean;
   mediaWritable?: boolean; owner: string; onBusyChange: (busy: boolean) => void; autoFocus?: boolean; actions?: ReactNode;
-}) {
+  onAttachmentStateChange?: (canAttach: boolean) => void;
+};
+export default forwardRef<ProgressEditorHandle, Props>(function ProgressEditorFields({ draft, onChange, state, disabled, mediaWritable = !disabled, owner, onBusyChange, autoFocus, actions, onAttachmentStateChange }, ref) {
   const current = useRef({ draft, disabled, mediaWritable, owner });
   current.current = { draft, disabled, mediaWritable, owner };
   const known = useRef(new Set(progressRows(draft).filter(row => hasRecordContent(row.record)).map(row => row.record.id)));
@@ -52,6 +55,8 @@ export default function ProgressEditorFields({ draft, onChange, state, disabled,
   });
   const [revealed, setRevealed] = useState(false);
   const [focused, setFocused] = useState('');
+  const [activeId, setActiveId] = useState('');
+  const [attachmentRequest, setAttachmentRequest] = useState<{ id: string } | null>(null);
   const [insertions, setInsertions] = useState<Record<string, number>>({});
   const [navigationId] = useState(() => `records-${draft.positive.id}`);
   const moveRef = useRef<(id: string, direction: number) => void>(() => {});
@@ -59,6 +64,25 @@ export default function ProgressEditorFields({ draft, onChange, state, disabled,
   const items = rows.filter(row => hasRecordContent(row.record) || known.current.has(row.record.id) && focused === row.record.id);
   const total = rows.filter(row => hasRecordContent(row.record)).length;
   const visible = [...items, ...(total < MAX_PROGRESS_PAIRS * 2 && (!items.length || revealed) ? [spare] : [])];
+  const activeEntry = visible.find(row => row.record.id === activeId) || (spare.record.id === activeId && total < MAX_PROGRESS_PAIRS * 2 ? spare : visible[0]);
+  const canAttach = !!activeEntry && !disabled && mediaWritable && !!owner && !attachmentRequest && (activeEntry.record.images?.length || 0) < MAX_NOTE_IMAGES;
+  useImperativeHandle(ref, () => ({
+    attach: () => { if (canAttach) { if (activeEntry.record.id === spare.record.id) setRevealed(true); setAttachmentRequest({ id: activeEntry.record.id }); } },
+    prepareAttachment: () => { interaction.current = activeEntry?.record.id || ''; },
+    cancelAttachment: () => { interaction.current = ''; },
+  }));
+  useEffect(() => { onAttachmentStateChange?.(canAttach); }, [canAttach, onAttachmentStateChange]);
+  useEffect(() => () => { onAttachmentStateChange?.(false); }, [onAttachmentStateChange]);
+  const visibleIds = visible.map(row => row.record.id).join(':');
+  useEffect(() => {
+    if (!attachmentRequest) return;
+    if (!disabled && mediaWritable && owner && visible.some(row => row.record.id === attachmentRequest.id)) {
+      const id = attachmentRequest.id;
+      interaction.current = '';
+      setInsertions(previous => ({ ...previous, [id]: (previous[id] || 0) + 1 }));
+    }
+    setAttachmentRequest(null);
+  }, [attachmentRequest, visibleIds, disabled, mediaWritable, owner]);
 
   function emit(next: ProgressDraft) {
     current.current.draft = next;
@@ -107,6 +131,7 @@ export default function ProgressEditorFields({ draft, onChange, state, disabled,
     if (next) {
       if (next.record.id === spare.record.id) setRevealed(true);
       setFocused(next.record.id);
+      setActiveId(next.record.id);
     }
   }
   moveRef.current = move;
@@ -139,15 +164,12 @@ export default function ProgressEditorFields({ draft, onChange, state, disabled,
     if (entry.record.id === spare.record.id) setSpare({ ...entry, kind });
     interaction.current = '';
     setFocused(entry.record.id);
-  }
-  function attach(id: string) {
-    if (current.current.disabled || !current.current.mediaWritable || !current.current.owner) return;
-    interaction.current = '';
-    setInsertions(previous => ({ ...previous, [id]: (previous[id] || 0) + 1 }));
+    setActiveId(entry.record.id);
   }
   function adjust(fallback: ProgressEntry, delta: -1 | 1) {
     const entry = latestEntry(fallback);
     interaction.current = '';
+    setActiveId(entry.record.id);
     change(entry, { ...entry.record, effortScore: adjustEffortScore(entry.record, delta) }, false, false);
   }
   function checkImages(fallback: ProgressEntry, images: MemoImage[]) {
@@ -170,7 +192,7 @@ export default function ProgressEditorFields({ draft, onChange, state, disabled,
         <ProgressRecordSign kind={kind} index={index} disabled={disabled} onInteraction={() => { interaction.current = record.id; }} onInteractionCancel={() => { interaction.current = ''; }} onToggle={() => toggleKind(entry)} />
         <View className='progress-record-body'>
           <MarkdownNoteEditor minimal format='plain' density='compact' showImageInsertion={false} insertionSignal={insertions[record.id] || 0} navigationId={navigationId}
-            onFocus={() => { autoFocusTaken.current = true; setFocused(record.id); }} onBlur={() => leave(record.id)} onConfirm={() => move(record.id, 1)}
+            onFocus={() => { autoFocusTaken.current = true; setActiveId(record.id); setFocused(record.id); }} onBlur={() => leave(record.id)} onConfirm={() => move(record.id, 1)}
             autoFocus={focused === record.id || !focused && !autoFocusTaken.current && !!autoFocus && index === 0}
             value={record.content} images={record.images} owner={owner} recordId={record.id} disabled={disabled} canInsertImage={mediaWritable} onBusyChange={onBusyChange} maxLength={MAX_DOMAIN_RECORD_LENGTH}
             ariaLabel={index === 0 ? '记录内容' : `第 ${index + 1} 条记录内容`} placeholder={RECORD_CONTENT_PLACEHOLDER}
@@ -179,10 +201,10 @@ export default function ProgressEditorFields({ draft, onChange, state, disabled,
           {!empty && <View className='progress-record-tools'><ActionButton appearance='icon' size='compact' intent='danger' ariaLabel={`删除第 ${index + 1} 条记录`} disabled={disabled}
             onClick={() => { emit(clearProgressInput(current.current.draft, record.id)); setFocused(''); }}><DeleteSymbol /></ActionButton></View>}
         </View>
-        <RecordActionRow record={record} disabled={disabled} attachmentDisabled={!mediaWritable || (record.images?.length || 0) >= MAX_NOTE_IMAGES}
+        <RecordActionRow record={record} disabled={disabled} showAttachment={false}
           onInteraction={() => { interaction.current = record.id; }} onInteractionCancel={() => { interaction.current = ''; }}
-          onAttach={() => attach(record.id)} onAdjust={delta => adjust(entry, delta)} />
+          onAdjust={delta => adjust(entry, delta)} />
       </ProgressRecordField>;
     })}</View>
   </EditorFieldsLayout>;
-}
+});

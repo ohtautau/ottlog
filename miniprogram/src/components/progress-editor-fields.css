@@ -5,8 +5,8 @@
 .progress-record-body { position:relative;min-width:0; }
 .progress-record-field > .record-action-row { grid-column:2; }
 .progress-record-type { display:flex;align-items:center;justify-content:center;width:40PX;height:40PX;margin:0;padding:0;background:transparent; }
-.progress-record-type.is-positive { color:var(--domain-positive); }
-.progress-record-type.is-negative { color:var(--domain-negative); }
+.progress-record-type.is-positive { --control-text:var(--domain-positive,#aecabb);color:var(--domain-positive,#aecabb); }
+.progress-record-type.is-negative { --control-text:var(--domain-negative,#c4b1ad);color:var(--domain-negative,#c4b1ad); }
 .progress-sign-symbol { font-size:24PX;line-height:24PX; }
 .progress-record-body .markdown-note-editor.is-minimal { --note-editor-padding:8PX 0; }
 .progress-record-body .markdown-note-editor textarea.memo-body-input,.progress-record-body .markdown-note-editor .memo-body-preview,.entry-composer.is-autosave .progress-record-body .entry-preview-note { line-height:24PX; }

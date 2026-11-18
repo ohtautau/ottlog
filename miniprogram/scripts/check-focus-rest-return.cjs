@@ -4,8 +4,9 @@ const t=load('pomodoro-data'),f=load('focus-completion');
 const now=Date.parse('2026-11-05T00:00:00Z'),reload=s=>t.normalizePomodoroState(JSON.parse(JSON.stringify(s)));
 const base={...reload(t.initialPomodoroState),unknown:{keep:true},restActivities:[],settings:{...t.initialPomodoroState.settings,shortBreak:6},selection:{taskId:null,title:'fixture',extra:'keep'}};
 const running=t.startTimer(base,now,'focus-a',base.selection),complete=f.advanceWithBreakChoice(running,running.active.deadline);
-assert.equal(f.pendingFocusCompletion(complete).id,'focus-a');assert(!('restStartedId' in reload(complete).sessions[0]));
+assert.equal(complete.mode,'shortBreak');assert.equal(complete.active,null);assert.equal(f.pendingFocusCompletion(complete).id,'focus-a');assert(!('restStartedId' in reload(complete).sessions[0]));
 for(const mode of ['shortBreak','longBreak']){
+ const override=f.startChosenBreak(complete,mode,now+1600000,'focus-a',3);assert.equal(override.active.totalSeconds,180);assert.deepEqual(override.settings,base.settings);
  assert.equal(f.pendingFocusCompletion({...complete,mode}).id,'focus-a','Mode tabs alone do not acknowledge');
  for(const launch of [s=>f.startChosenBreak(s,mode,now+1600000,'focus-a'),s=>t.startTimer({...s,mode},now+1600000,'manual-rest',s.selection)]){
   const snapshot=JSON.stringify(complete),rest=launch(complete),deadline=rest.active.deadline;
@@ -39,5 +40,5 @@ for(const evidence of [{originFocusId:'focus-a',id:'old-rest'},{id:t.automaticBr
 }
 const ownerA=t.finishTimer(f.startChosenBreak(complete,'shortBreak',now+1600000,'focus-a'),now+1600000,true),ownerB=reload(complete);
 assert.equal(f.pendingFocusCompletion(ownerA),null);assert.equal(f.pendingFocusCompletion(ownerB).id,'focus-a','Ack is state-local, never global across owners');
-const page=fs.readFileSync(path.join(__dirname,'../src/pages/pomodoro/index.tsx'),'utf8');assert(!page.includes("className='focus-completion-label'"));assert(page.includes("className='focus-completion-row'"));
+const page=fs.readFileSync(path.join(__dirname,'../src/pages/pomodoro/index.tsx'),'utf8');assert(!page.includes("className='focus-completion-label'"));assert(!page.includes("className='focus-completion-row'"));assert(page.includes("className='focus-rest-suggestions'"));
 console.log('PASS rest return: shared/manual/chosen/native start, zero/early/full/hidden expiry, persistence, legacy evidence, next focus, immutable unknown fields/count/deadline, owner-local evidence');

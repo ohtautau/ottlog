@@ -64,3 +64,14 @@
   .focus-page .focus-action-area.is-paused .focus-end-slot.is-visible { display: block; flex: 1; min-width: 0; height: 40PX; margin: 0; }
   .focus-page .focus-end-slot > button { min-height: 40PX; }
 }
+
+/* Domain and activity fields share their edges and arrow centers in every mode. */
+.focus-context { flex:none;width:100%;min-width:0;min-height:0;max-height:42vh;overscroll-behavior:contain; }
+.focus-context .focus-domain-row { margin:0; }
+.focus-page .focus-core .focus-purpose-slot { width:100%;max-width:none;height:auto;min-height:64PX;margin-top:12PX; }
+.focus-page .focus-core .focus-purpose { height:64PX;min-height:64PX;padding:0 0 0 40PX; }
+.focus-context .focus-rest-suggestions { min-width:0; }
+.focus-context .focus-suggestions-grid { grid-template-columns:repeat(3,minmax(0,1fr));gap:8PX;padding:0; }
+.focus-context .focus-suggestion-card { min-height:80PX;padding:8PX 4PX;gap:6PX; }
+.focus-context .focus-suggestion-card .library-icon { width:32PX;height:32PX; }
+.focus-context .focus-suggestions-actions { display:flex;justify-content:flex-end;padding:0;margin-top:8PX; }
