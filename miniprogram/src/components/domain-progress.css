@@ -1,10 +1,32 @@
 .domain-progress-summary { display: flex; align-items: center; gap: 12PX; box-sizing: border-box; width: 100%; min-width: 0; color: #dbe7e2; }
 .domain-progress-summary.without-goals .domain-progress-icon { flex: none; width: 40PX; height: 40PX; }
-.domain-progress-body { display: flex; flex-direction: column; justify-content: flex-start; gap: 4PX; flex: 1; min-width: 0; min-height: 48PX; }
+.domain-progress-body { display: flex; flex-direction: column; justify-content: flex-start; gap: 2PX; flex: 1; min-width: 0; min-height: 48PX; }
 .domain-progress-name { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 14PX; font-weight: 600; line-height: 18PX; }
-.domain-action-index { display: flex; flex-wrap: wrap; align-items: baseline; column-gap: 6PX; min-width: 0; font-size: 12PX; line-height: 16PX; }
+.domain-progress-title { display:flex;align-items:center;gap:6PX;min-width:0; }
+.domain-progress-title .domain-progress-name { flex:1; }
+.domain-action-index { display:flex;flex-direction:column;gap:2PX;min-width:0;width:100%;font-size:12PX;line-height:16PX; }
+.domain-action-summary { display:flex;align-items:center;gap:6PX;min-width:0; }
 .domain-action-label { flex: none; color: #a8bfc5; white-space: nowrap; }
-.domain-action-value { min-width: 0; color: #b9dbca; font-weight: 600; font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
+.domain-action-value { min-width:0;color:#b9dbca;font-weight:600;font-variant-numeric:tabular-nums;white-space:nowrap;overflow:hidden;text-overflow:ellipsis; }
+.domain-action-track { height:4PX;min-height:4PX;width:100%;overflow:hidden;border-radius:999PX;background:#30474f; }
+.domain-action-fill { height:100%;border-radius:inherit;background:var(--domain-accent,#b9dbca); }
+.domain-action-badge { --domain-rank-color:#b9dbca;position:relative;display:block;flex:none;width:24PX;height:24PX;color:var(--domain-rank-color); }
+.domain-action-summary .domain-action-badge { margin-left:auto; }
+.domain-action-emblem { position:absolute;inset:2PX;border:1PX solid transparent;border-radius:50%; }
+.domain-action-petal { position:absolute;box-sizing:border-box;left:9PX;top:2PX;width:6PX;height:9PX;transform-origin:3PX 10PX;border:1PX solid #48605e;border-radius:70% 15% 70% 15%;background:#243b42; }
+.domain-action-petal.is-lit { background:currentColor;border-color:currentColor; }
+.domain-action-core { position:absolute;left:9PX;top:9PX;width:6PX;height:6PX;border-radius:50%;background:#48605e; }
+.domain-action-badge.has-petals .domain-action-core { background:currentColor; }
+.domain-action-badge.is-tier-1 { --domain-rank-color:#8ed4c9; }
+.domain-action-badge.is-tier-2 { --domain-rank-color:#9cbde7; }
+.domain-action-badge.is-tier-3 { --domain-rank-color:#c4b0e8; }
+.domain-action-badge.is-tier-4 { --domain-rank-color:#e7b0bc; }
+.domain-action-badge.is-tier-5 { --domain-rank-color:#e1c699; }
+.domain-action-badge:not(.is-tier-0) .domain-action-emblem { border-color:currentColor; }
+.domain-action-badge.is-tier-2 .domain-action-emblem,.domain-action-badge.is-tier-3 .domain-action-emblem,.domain-action-badge.is-tier-4 .domain-action-emblem,.domain-action-badge.is-tier-5 .domain-action-emblem { border-radius:5PX;transform:rotate(45deg); }
+.domain-action-badge.is-tier-3 .domain-action-emblem,.domain-action-badge.is-tier-4 .domain-action-emblem,.domain-action-badge.is-tier-5 .domain-action-emblem { box-shadow:0 0 0 1PX currentColor; }
+.domain-action-badge.is-tier-4::after,.domain-action-badge.is-tier-5::after { content:'';position:absolute;right:1PX;top:1PX;width:4PX;height:4PX;transform:rotate(45deg);background:currentColor; }
+.domain-action-badge.is-tier-5::before { content:'';position:absolute;left:1PX;bottom:1PX;width:4PX;height:4PX;transform:rotate(45deg);background:currentColor; }
 .domain-progress-goal { display: flex; align-items: center; gap: 4PX; min-width: 0; font-size: 12PX; line-height: 14PX; }
 .domain-progress-goal-bullet { flex: none; width: 6PX; height: 6PX; border-radius: 50%; background: currentColor; }
 .domain-progress-goal-content { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: #c5d2d5; }

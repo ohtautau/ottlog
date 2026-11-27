@@ -136,12 +136,24 @@ function checkMapping() {
 }
 
 function checkProgress() {
-  const { domainActionIndex } = domainProgress;
+  const { domainActionIndex, domainActionProgress } = domainProgress;
   assert.equal(domainActionIndex({ positiveRecords: [], negativeRecords: [] }), '0');
   const mixed = freeze({ positiveRecords: [{ effortScore: 3 }, {}], negativeRecords: [{ effortScore: 4 }, { effortScore: 0 }] });
   assert.equal(domainActionIndex(mixed), '7', 'Both record types contribute and missing scores count as zero');
   const large = { effortScore: Number.MAX_SAFE_INTEGER };
   assert.equal(domainActionIndex({ positiveRecords: [large], negativeRecords: [large, { effortScore: 1 }] }), '18014398509481983');
+  for (const [total, hundreds, current, petals, tier] of [
+    [0,'0',0,0,0], [99,'0',99,0,0], [100,'1',0,1,0], [101,'1',1,1,0],
+    [250,'2',50,2,0], [499,'4',99,4,0], [500,'5',0,5,0], [599,'5',99,5,0],
+    [600,'6',0,1,1], [1000,'10',0,5,1], [1100,'11',0,1,2], [2600,'26',0,1,5],
+  ]) {
+    const input = freeze({positiveRecords:[{effortScore:Math.floor(total/2)}],negativeRecords:[{effortScore:total-Math.floor(total/2)}]});
+    const result=domainActionProgress(input);
+    assert.equal(result.total,String(total));assert.equal(result.completedHundreds,hundreds);
+    assert.equal(result.current,current);assert.equal(result.petals,petals);assert.equal(result.tier,tier);
+  }
+  const exact=domainActionProgress({positiveRecords:[large],negativeRecords:[large,{effortScore:1}]});
+  assert.equal(exact.completedHundreds,'180143985094819');assert.equal(exact.current,83);assert.equal(exact.petals,4);assert.equal(exact.tier,5);
 
   const created = new Date(2026, 9, 1, 9), completed = new Date(2026, 9, 2, 12);
   let state = domainData.saveDomainGoal(initial(), 'work', 'longTerm', '第一条已完成目标', created);
