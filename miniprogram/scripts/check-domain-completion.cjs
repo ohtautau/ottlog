@@ -144,14 +144,16 @@ function checkProgress() {
   assert.equal(domainActionIndex({ positiveRecords: [large], negativeRecords: [large, { effortScore: 1 }] }), '18014398509481983');
   for (const [total, hundreds, current, points, tier] of [
     [0,'0',0,0,0], [99,'0',99,0,0], [100,'1',0,1,0], [101,'1',1,1,0],
-    [250,'2',50,2,0], [499,'4',99,4,0], [500,'5',0,5,0], [599,'5',99,5,0],
-    [600,'6',0,1,1], [1000,'10',0,5,1], [1100,'11',0,1,2], [2600,'26',0,1,5],
+    [250,'2',50,2,0], [499,'4',99,4,0], [500,'5',0,5,1], [501,'5',1,5,1], [599,'5',99,5,1],
+    [600,'6',0,1,1], [999,'9',99,4,1], [1000,'10',0,5,2], [1001,'10',1,5,2],
+    [1100,'11',0,1,2], [1499,'14',99,4,2], [1500,'15',0,5,3],
+    [1999,'19',99,4,3], [2000,'20',0,5,4], [2499,'24',99,4,4], [2500,'25',0,5,5], [2600,'26',0,1,5],
   ]) {
     const input = freeze({positiveRecords:[{effortScore:Math.floor(total/2)}],negativeRecords:[{effortScore:total-Math.floor(total/2)}]});
     const result=domainActionProgress(input);
     assert.equal(result.total,String(total));assert.equal(result.completedHundreds,hundreds);
     assert.equal(result.current,current);assert.equal(result.points,points);assert.equal(result.tier,tier);
-    if(tier<5){assert.equal(result.nextThreshold,(tier+1)*500+100);assert.equal(result.remainingToNext,result.nextThreshold-total);assert.equal(typeof result.nextRank,'string');}
+    if(tier<5){assert.equal(result.nextThreshold,(tier+1)*500);assert.equal(result.remainingToNext,result.nextThreshold-total);assert.equal(typeof result.nextRank,'string');}
     else {assert.equal(result.nextRank,null);assert.equal(result.nextThreshold,null);assert.equal(result.remainingToNext,null);}
   }
   const exact=domainActionProgress({positiveRecords:[large],negativeRecords:[large,{effortScore:1}]});

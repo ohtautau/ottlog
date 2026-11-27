@@ -8,11 +8,20 @@ const cases=[
  {id:'near',total:'99',current:99,points:0,tier:0},
  {id:'first',total:'100',current:0,points:1,tier:0},
  {id:'partial',total:'250',current:50,points:2,tier:0},
- {id:'full',total:'500',current:0,points:5,tier:0},
+ {id:'full',total:'500',current:0,points:5,tier:1},
  {id:'upgrade',total:'600',current:0,points:1,tier:1},
  {id:'diamond',total:'1100',current:0,points:1,tier:2},
  {id:'star',total:'2600',current:0,points:1,tier:5},
  {id:'large',total:'18014398509481983',current:83,points:4,tier:5},
+ {id:'before-first',total:'499',current:99,points:4,tier:0},
+ {id:'after-first',total:'501',current:1,points:5,tier:1},
+ {id:'before-second',total:'999',current:99,points:4,tier:1},
+ {id:'second',total:'1000',current:0,points:5,tier:2},
+ {id:'after-second',total:'1001',current:1,points:5,tier:2},
+ {id:'third',total:'1500',current:0,points:5,tier:3},
+ {id:'fourth',total:'2000',current:0,points:5,tier:4},
+ {id:'before-highest',total:'2499',current:99,points:4,tier:4},
+ {id:'highest',total:'2500',current:0,points:5,tier:5},
 ];
 const browser=await chromium.launch();
 try{for(const [width,height] of [[320,900],[390,844],[768,900],[1440,900],[390,440]]){
@@ -42,8 +51,10 @@ try{for(const [width,height] of [[320,900],[390,844],[768,900],[1440,900],[390,4
  const checkDialog=async c=>{
   await expect(dialog).toBeVisible();await expect(dialog.locator('.domain-rank-name')).toHaveText(['萌芽','新叶','繁枝','绽放','璀璨','星耀'][c.tier]);
   await expect(dialog.locator('.domain-rank-total')).toHaveText(c.total);
-  await expect(dialog.locator('.domain-rank-needed')).toHaveText(c.tier<5?`还需 ${(c.tier+1)*500+100-Number(c.total)} 点`:'已达最高阶位');
-  if(c.tier<5)await expect(dialog.locator('.domain-rank-threshold')).toHaveText(`累计达到 ${(c.tier+1)*500+100} 点晋升`);
+  await expect(dialog.locator('.domain-rank-needed')).toHaveText(c.tier<5?`还需 ${(c.tier+1)*500-Number(c.total)} 点`:'已达最高阶位');
+  if(c.tier<5)await expect(dialog.locator('.domain-rank-threshold')).toHaveText(`累计达到 ${(c.tier+1)*500} 点晋升`);
+  await dialog.locator('.domain-rank-needed').scrollIntoViewIfNeeded();
+  await expect(dialog.locator('.domain-rank-needed')).toBeInViewport();
   await expect(dialog.getByRole('button',{name:'知道了',exact:true})).toBeInViewport();
   const r=await dialog.boundingBox();expect(r.x).toBeGreaterThanOrEqual(0);expect(r.y).toBeGreaterThanOrEqual(0);expect(r.x+r.width).toBeLessThanOrEqual(width+1);expect(r.y+r.height).toBeLessThanOrEqual(height+1);
  };

@@ -25,11 +25,11 @@ export function domainActionProgress(domain: Pick<Domain, 'positiveRecords' | 'n
   const current = Number(total.slice(-2));
   // Decimal slicing preserves large totals. Only the bounded visual tier uses Number.
   const points = completedHundreds === '0' ? 0 : (Number(completedHundreds.slice(-1)) + 4) % 5 + 1;
-  const tier = Math.floor(Math.max(0, Math.min(Number(completedHundreds), 26) - 1) / 5);
+  const tier = Math.floor(Math.min(Number(completedHundreds), 25) / 5);
   const ranks = ['萌芽', '新叶', '繁枝', '绽放', '璀璨', '星耀'];
   const rank = ranks[tier], nextRank = ranks[tier + 1] ?? null;
-  const nextThreshold = nextRank ? (tier + 1) * 500 + 100 : null;
-  // Any nonterminal tier is below 2600, so subtraction is exact here.
+  const nextThreshold = nextRank ? (tier + 1) * 500 : null;
+  // Any nonterminal tier is below 2500, so subtraction is exact here.
   const remainingToNext = nextThreshold === null ? null : nextThreshold - Number(total);
   return { total, completedHundreds, current, points, tier, rank, nextRank, nextThreshold, remainingToNext };
 }
