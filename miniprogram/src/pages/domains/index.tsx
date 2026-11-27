@@ -18,7 +18,8 @@ import CardCreateButton from '../../components/card-create-button';
 import ActionMenu from '../../components/action-menu';
 import { CardMoveActions } from '../../components/card-corner-actions';
 import PageToolbar, { PageToolbarSummary } from '../../components/page-toolbar';
-import { DomainProgressSummary } from '../../components/domain-progress';
+import { DomainProgressSummary, DomainActionBadgeControl, DomainActionRankDialog } from '../../components/domain-progress';
+import { domainActionProgress } from '../../lib/domain-progress';
 import { domainToolbarSummary } from '../../lib/domain-completion';
 import usePageNow from '../../lib/use-page-now';
 import { hasVolatilePersonalTool, usePersonalToolState } from '../../lib/use-personal-tool-state';
@@ -45,6 +46,10 @@ export default function Domains() {
   const toolbarSummary = writable ? domainToolbarSummary(state, now) : undefined;
   const habitStatus = !habitTool.ready ? habitTool.status || '正在读取习惯…' : habitTool.owner !== owner ? '正在确认习惯所属账号…' : !isReminderState(habitTool.value) ? '习惯记录暂不可用' : /失败|不可用|暂存|离线|无法/.test(habitTool.status) ? habitTool.status : '';
   const [sorting, setSorting] = useState(false);
+  const [badgeDomain,setBadgeDomain] = useState<{owner:string;id:string}|null>(null);
+  useEffect(()=>{setBadgeDomain(null);},[owner,sorting]);
+  useDidHide(()=>setBadgeDomain(null));
+  const currentBadgeDomain = writable && badgeDomain?.owner===owner ? displayState.domains.find(domain=>domain.id===badgeDomain.id) : undefined;
   const [moveRetry, setMoveRetry] = useState<string | null>(null);
   const [quick, setQuick] = useState(false);
   const [recordEditor, setRecordEditor] = useState<(RecentDomainRecord & { owner: string }) | null>(null);
@@ -101,8 +106,9 @@ export default function Domains() {
   const entryCard = (domain: typeof state.domains[number], index?: number) => {
     const system = domain.id === fallbackDomain.id, moving = sorting && !system;
     const url = system ? '/pages/domain-detail/index?uncategorized=1' : `/pages/domain-detail/index?id=${encodeURIComponent(domain.id)}`;
-    const summary = <DomainProgressSummary domain={domain} state={displayState} sorting={moving} />;
-    return <DomainEntryCard id={`domain-entry-${domain.id}`} className={system ? 'domain-uncategorized-shell' : moving ? 'is-sorting' : ''} key={domain.id} disabled={blocked} label={`打开${domain.name}领域`} onOpen={moving ? undefined : () => { void Taro.navigateTo({ url }); }} actions={moving && <CardMoveActions className='domain-entry-actions' objectLabel={`${domain.name}领域`} disabled={blocked || !!moveRetry} upDisabled={index === 0} downDisabled={index === ordinaryDomains.length - 1} onMoveUp={() => void move(domain.id, -1)} onMoveDown={() => void move(domain.id, 1)} />}>{summary}</DomainEntryCard>;
+    const actionProgress = !moving ? domainActionProgress(domain) : undefined;
+    const summary = <DomainProgressSummary domain={domain} state={displayState} sorting={moving} progress={actionProgress} />;
+    return <DomainEntryCard badge={actionProgress && <DomainActionBadgeControl progress={actionProgress} floating label={`查看${domain.name}行动阶位`} onInspect={()=>setBadgeDomain({owner,id:domain.id})} />} id={`domain-entry-${domain.id}`} className={system ? 'domain-uncategorized-shell' : moving ? 'is-sorting' : ''} key={domain.id} disabled={blocked} label={`打开${domain.name}领域`} onOpen={moving ? undefined : () => { void Taro.navigateTo({ url }); }} actions={moving && <CardMoveActions className='domain-entry-actions' objectLabel={`${domain.name}领域`} disabled={blocked || !!moveRetry} upDisabled={index === 0} downDisabled={index === ordinaryDomains.length - 1} onMoveUp={() => void move(domain.id, -1)} onMoveDown={() => void move(domain.id, 1)} />}>{summary}</DomainEntryCard>;
   };
   const cards = [...ordinaryDomains.map(entryCard), entryCard(fallbackDomain)];
   const createDisabled = sorting || blocked || state.domains.length >= MAX_DOMAIN_COUNT;
@@ -129,5 +135,6 @@ export default function Domains() {
     {currentRecordEditor && <DomainRecordEditor key={`${owner}:${currentRecordEditor.record.id}`} owner={owner} domainId={currentRecordEditor.domainId} kind={currentRecordEditor.kind} record={currentRecordEditor.record}
       title={`${currentRecordEditor.domainName} · 编辑${currentRecordEditor.kind === 'positive' ? '正' : '负'}记录`}
       dateLabel={recordDate(currentRecordEditor.record.createdAt)} onClose={() => setRecordEditor(null)} />}
+    {currentBadgeDomain && <DomainActionRankDialog progress={domainActionProgress(currentBadgeDomain)} onClose={()=>setBadgeDomain(null)} />}
   </>;
 }

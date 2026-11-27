@@ -11,12 +11,10 @@
 .domain-action-track { height:4PX;min-height:4PX;width:100%;overflow:hidden;border-radius:999PX;background:#30474f; }
 .domain-action-fill { height:100%;border-radius:inherit;background:var(--domain-accent,#b9dbca); }
 .domain-action-badge { --domain-rank-color:#b9dbca;position:relative;display:block;flex:none;width:24PX;height:24PX;color:var(--domain-rank-color); }
-.domain-action-summary .domain-action-badge { margin-left:auto; }
+.domain-action-summary > .domain-action-badge { margin-left:auto; }
 .domain-action-emblem { position:absolute;inset:2PX;border:1PX solid transparent;border-radius:50%; }
-.domain-action-petal { position:absolute;box-sizing:border-box;left:9PX;top:2PX;width:6PX;height:9PX;transform-origin:3PX 10PX;border:1PX solid #48605e;border-radius:70% 15% 70% 15%;background:#243b42; }
-.domain-action-petal.is-lit { background:currentColor;border-color:currentColor; }
-.domain-action-core { position:absolute;left:9PX;top:9PX;width:6PX;height:6PX;border-radius:50%;background:#48605e; }
-.domain-action-badge.has-petals .domain-action-core { background:currentColor; }
+.domain-action-point { position:absolute;left:8PX;top:0;width:0;height:0;border-left:4PX solid transparent;border-right:4PX solid transparent;border-bottom:12PX solid #344d55;transform-origin:4PX 12PX; }
+.domain-action-point.is-lit { border-bottom-color:currentColor; }
 .domain-action-badge.is-tier-1 { --domain-rank-color:#8ed4c9; }
 .domain-action-badge.is-tier-2 { --domain-rank-color:#9cbde7; }
 .domain-action-badge.is-tier-3 { --domain-rank-color:#c4b0e8; }
@@ -39,3 +37,16 @@
   .domain-progress-goal { font-size: 13PX; line-height: 17PX; }
   .domain-progress-goal-status { font-size: 11PX; }
 }
+
+.domain-action-badge-control { position:relative;flex:none;width:24PX;height:24PX;margin-left:auto; }
+.domain-action-badge-control.is-card-overlay { position:absolute;right:12PX;top:calc(50% - 36PX);margin:0; }
+.domain-action-badge-trigger.ui-button { position:absolute;left:-8PX;top:-8PX;width:40PX;height:40PX;margin:0; }
+.domain-rank-current { display:flex;flex-direction:column;align-items:center;gap:12PX;padding:16PX 0; }
+.domain-rank-star { display:flex;align-items:center;justify-content:center;width:72PX;height:72PX; }
+.domain-rank-star .domain-action-badge { transform:scale(2.5); }
+.domain-rank-name { font-size:22PX;font-weight:650;color:#dbe7e2; }
+.domain-rank-stat { display:flex;align-items:center;justify-content:space-between;gap:12PX;padding:12PX 0;color:#a8bfc5; }
+.domain-rank-total { min-width:0;color:#b9dbca;font-variant-numeric:tabular-nums;overflow-wrap:anywhere; }
+.domain-rank-next { display:flex;flex-direction:column;align-items:center;gap:6PX;padding:16PX 8PX;border-radius:12PX;background:#1a2b35;color:#b9cbd2;text-align:center; }
+.domain-rank-needed { color:#b9dbca;font-size:20PX;font-weight:600; }
+.domain-rank-threshold { font-size:12PX;color:#8fa8b1; }

@@ -26,7 +26,8 @@ import CardCreateButton from '../../components/card-create-button';
 import DomainQuickRecord from '../../components/domain-quick-record';
 import { DomainRecordCard, DomainRecordColumn, DomainRecordColumns } from '../../components/domain-records';
 import DomainRecordEditor from '../../components/domain-record-editor';
-import { DomainActionIndex } from '../../components/domain-progress';
+import { DomainActionIndex, DomainActionRankDialog } from '../../components/domain-progress';
+import { domainActionProgress } from '../../lib/domain-progress';
 import { hasVolatilePersonalTool, usePersonalToolState } from '../../lib/use-personal-tool-state';
 import LibraryIcon from '../../components/library-icon';
 import HabitCard from '../../components/habit-card';
@@ -84,6 +85,9 @@ export default function Domains() {
   const state = domainDisplayState(sourceState);
   const domainId = uncategorizedRoute ? uncategorizedDomain(sourceState).id : route.params.id;
   const writable = ready && valid && !!owner;
+  const [rankOwner,setRankOwner] = useState<string|null>(null);
+  useEffect(()=>{setRankOwner(null);},[owner,domainId]);
+  useDidHide(()=>setRankOwner(null));
   const domainSource = useRef({ owner, writable, state: sourceState });
   domainSource.current = { owner, writable, state: sourceState };
   const habitTool = usePersonalToolState('reminders', emptyReminderState);
@@ -277,7 +281,7 @@ export default function Domains() {
       {ready && valid && !selectedDomain && <View className='tool-empty'>领域不存在或已删除</View>}
       {ready && valid && <View className='domain-detail-grid'>{state.domains.filter(domain => domain.id === domainId).map(domain => <View className='tool-card domain-card' key={domain.id}>
         <View className='domain-heading'><View className='domain-heading-name'><LibraryIcon name={domainIcon(domain)} className='domain-detail-icon' /><Text className='domain-name'>{trimTextEnd(domain.name)}</Text></View>
-          <DomainActionIndex domain={domain} />
+          <DomainActionIndex domain={domain} onInspect={()=>setRankOwner(owner)} />
           <ActionButton appearance='icon' size='compact' className='domain-count' ariaLabel={`查看${domain.name}已完成目标`} onClick={() => open({ type: 'history', owner, domainId: domain.id, content: '' })}><CompletedGoalsHistorySymbol /></ActionButton>
         </View>
         <View className='domain-goals'>{(['longTerm', 'shortTerm'] as const).map(kind => {
@@ -341,5 +345,6 @@ export default function Domains() {
       <SheetActions className='domain-sheet-actions' leading={<ActionButton appearance='icon' size='compact' ariaLabel='编辑习惯' disabled={calendarEdit.busy || habitBusy || detailEdit.locked} onClick={() => { if (!detailEdit.isLocked()) editHabit(currentHabit); }}><EditSymbol /></ActionButton>}><ActionButton appearance='primary' size='large' width='fill' className='tool-primary button-label' disabled={habitBusy || calendarEdit.busy || detailEdit.busy} loading={detailEdit.busy} onClick={() => { if (detailEdit.pending) detailEdit.retry(); else if (!detailEdit.isLocked()) void checkHabit(currentHabit); }}>{detailEdit.pending ? '重试保存' : habitState.done[today]?.includes(currentHabit.id) ? '撤销完成' : '已完成'}</ActionButton></SheetActions>
     </View></View></View>}
     {currentHabitEditor && <HabitEditor key={`${owner}:${currentHabitEditor.item.id}`} draft={currentHabitEditor.item} domains={state.domains} pendingSave={hasVolatilePersonalTool('reminders', owner)} saving={habitBusy || habitArchive.busy} message={habitArchive.error || error} archiveLabel={habitArchive.label} archivePending={habitArchive.retrying} onArchive={() => { void habitArchive.toggle(); }} onChange={item => setHabitEditor(previous => previous?.owner === owner ? { ...previous, item } : previous)} onSave={saveHabit} onDelete={() => { void deleteHabit(); }} onClose={closeHabitEditor} />}
+    {rankOwner===owner && selectedDomain && ready && valid && visible && <DomainActionRankDialog progress={domainActionProgress(selectedDomain)} onClose={()=>setRankOwner(null)} />}
   </>;
 }
